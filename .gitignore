@@ -1,0 +1,12 @@
+# Ignore everything at the root by default (all cloned upstream repos)
+/*
+
+# Allow only the docs and top-level meta files
+!/docs/
+!/CLAUDE.md
+!/.gitignore
+!/README.md
+
+# OS / editor cruft
+.DS_Store
+*.swp
