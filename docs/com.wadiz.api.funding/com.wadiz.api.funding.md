@@ -418,4 +418,7 @@ com.wadiz.api.funding
   - [`api-details/iplicense-catalog-additional.md`](./api-details/iplicense-catalog-additional.md) — IP라이선스/Meta카탈로그/부가서비스 (18개 엔드포인트)
   - [`api-details/misc.md`](./api-details/misc.md) — 인증/UI/리액션/안심번호/참여/멤버십/공지배너/프리오더/영업일/만족도/일시정지/스토어이벤트/첨부/슬랙/유저/샘플 (27개 엔드포인트)
   - [`api-details/batch.md`](./api-details/batch.md) — Spring Batch 모듈 (24개 Job, 20개 도메인 — 알림·번역·AI심의·메이커혜택·정산·운영)
+- [`infrastructure.md`](./infrastructure.md) — adapter/infrastructure 모듈 (외부 HTTP 클라이언트 35개, MyBatis XML 88파일/32폴더, JDBC Repository 79개, Redis 4 해시, Mongo 6 컬렉션)
+- [`core-domain.md`](./core-domain.md) — core/domain 모듈 (도메인 패키지 74개, Gateway 포트 167개, UseCase 241개, 인프로세스 이벤트 26종, 주요 상태 Enum)
+- [`bootstrap.md`](./bootstrap.md) — bootstrap 모듈 (application/batch 엔트리, YML 프로파일 14개, SecurityFilterChain, `@PreAuthorize` SpEL 6개)
 

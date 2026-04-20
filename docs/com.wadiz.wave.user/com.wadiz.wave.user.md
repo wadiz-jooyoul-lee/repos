@@ -1,5 +1,16 @@
 # com.wadiz.wave.user
 
+> **Phase 2 심층 분석 진행 중**. 전체 엔드포인트는 [`api-endpoints.md`](./api-endpoints.md), 도메인별 상세는 `api-details/` 하위 참조.
+>
+> | 도메인 | 파일 | 컨트롤러 수 |
+> |---|---|---|
+> | Supporter Signature V1 | [`api-details/signature-v1.md`](./api-details/signature-v1.md) | 6 |
+> | Supporter Signature V3 | [`api-details/signature-v3.md`](./api-details/signature-v3.md) | 11 |
+> | Social (follow/block/contact/recommendation/feed) | [`api-details/social.md`](./api-details/social.md) | 11 |
+> | Account | [`api-details/account.md`](./api-details/account.md) | 9 |
+> | Misc (privacy/terms/coupon/message/bank/push/maker/link/sourcingclub) | [`api-details/misc-domains.md`](./api-details/misc-domains.md) | ~20 |
+> | Session/Event Invite/CatchUp | [`api-details/session-event-catchup.md`](./api-details/session-event-catchup.md) | 7 |
+
 ## 개요
 와디즈 **User Platform 의 레거시 모놀리식 API** ("Wave" 플랫폼). 회원/계정/소셜(팔로우·차단·피드·연락처)/서포터(Signature V1·V3)/메이커 정보/약관/쿠폰/뱅크 인증/푸시 타깃/링크/소싱클럽 등 사실상 **전사 유저 도메인 전체**를 한 서비스에 모아둔 가장 큰 레거시 코어. Org: `wadiz-service`. Java package: `com.wadiz.wave`.
 
