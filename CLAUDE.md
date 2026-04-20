@@ -27,7 +27,7 @@
 | [nicepay-api](./docs/nicepay-api.md) | 나이스페이·Stripe·Alipay+ PG 연동 | Boot 3 / Java 17 / WebFlux + R2DBC |
 | [kr.wadiz.account](./docs/kr.wadiz.account.md) | OAuth2 인가서버 + 계정 (Auth 2.0) | Boot 3.1 / Kotlin + Java 17 |
 | [kr.wadiz.user.link](./docs/kr.wadiz.user.link.md) | Neo4j 기반 유저 관계 그래프 (userplatform/link) | Boot 3 / Java 17 / Neo4j + Kafka |
-| [com.wadiz.wave.user](./docs/com.wadiz.wave.user.md) | 레거시 Wave User 모놀리식 API | Boot 구버전 / Java 8 / MyBatis |
+| [com.wadiz.wave.user](./docs/com.wadiz.wave.user/) | 레거시 Wave User 모놀리식 API — **심층 분석 진행 중 (57 컨트롤러)** | Boot 구버전 / Java 8 / MyBatis |
 
 ## 2. `wadiz-client` — 클라이언트팀
 
