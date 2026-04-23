@@ -1,5 +1,14 @@
 # com.wadiz.api.reward 분석 문서
 
+> **Phase 2 심층 분석 진행 중**. 전체 엔드포인트는 [`api-endpoints.md`](./api-endpoints.md), 도메인별 상세는 `api-details/` 하위 참조.
+>
+> | 도메인 | 파일 | 컨트롤러 수 |
+> |---|---|---|
+> | Coupon Core | [`api-details/coupon-core.md`](./api-details/coupon-core.md) | 9 |
+> | Coupon External Maker (Braze) | [`api-details/coupon-external-maker.md`](./api-details/coupon-external-maker.md) | 2 |
+> | Collection · Satisfaction · Memo | [`api-details/collection-satisfaction-memo.md`](./api-details/collection-satisfaction-memo.md) | 5 |
+> | reward-batch Job | [`api-details/batch.md`](./api-details/batch.md) | (3 Batch Jobs) |
+
 ## 개요
 - Wadiz의 **리워드(Reward) 도메인** API 서버. 펀딩 참여자에게 제공되는 "쿠폰(Coupon) 발행/지급/사용", "리워드 컬렉션(기획전 묶음)", "리워드 만족도 평가(Satisfaction)", "리워드 메모"를 담당한다.
 - org `com.wadiz.api.reward`, Java package base `com.wadiz.api.reward.*`. Gradle 멀티 모듈(`reward-api`, `reward-batch`, `reward-test`) 구조이며 본 문서는 API 서버(포트 **9050**)를 중심으로 기술한다.

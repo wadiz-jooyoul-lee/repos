@@ -4,6 +4,17 @@
 > artifactId: `markmount:com.wadiz.adm` / packaging: `war`
 > 타깃 도메인: `https://adm.wadiz.kr` (전사 레거시 어드민)
 
+> **Phase 2 심층 분석 진행 중** (197 컨트롤러). 도메인별 상세는 `api-details/` 하위 참조.
+>
+> | 영역 | 파일 |
+> |---|---|
+> | 펀딩 프로젝트 라이프사이클 (심사/오픈/진행/종료/환불) | [`api-details/reward-lifecycle.md`](./api-details/reward-lifecycle.md) |
+> | 정산·결제·쿠폰·포인트·증권 | [`api-details/finance-settlement.md`](./api-details/finance-settlement.md) |
+> | 리워드 콘텐츠·기획전·메이커 커뮤니케이션 | [`api-details/reward-content.md`](./api-details/reward-content.md) |
+> | 프로모션·배너·팝업·메일·푸시·알림 | [`api-details/promotion-marketing.md`](./api-details/promotion-marketing.md) |
+> | 계정·세션·로그인·멤버십 | [`api-details/account-session.md`](./api-details/account-session.md) |
+> | 대시보드·RPA·엑셀·스토어·IP·제휴 | [`api-details/misc-ops.md`](./api-details/misc-ops.md) |
+
 ---
 
 ## 1. 개요
