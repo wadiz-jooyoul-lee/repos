@@ -19,15 +19,15 @@
 | Repo | 역할 | 스택 |
 |---|---|---|
 | [com.wadiz.api.funding](./docs/com.wadiz.api.funding/) | 크라우드펀딩 코어 API (주문·서포터·리워드결제·자동결제·스토어) — **심층 분석 (11파일, 6.5K줄)** | Boot 2.7 / Java 8 / Hexagonal + MyBatis + Mongo + Redis |
-| [com.wadiz.api.reward](./docs/com.wadiz.api.reward.md) | 리워드 수집·쿠폰·만족도·메모 | Boot 2.x / Java 8 / MyBatis |
+| [com.wadiz.api.reward](./docs/com.wadiz.api.reward/) | 리워드 수집·쿠폰·만족도·메모 — **심층 분석 (6파일, 2.7K줄)** | Boot 2.x / Java 8 / MyBatis |
 | [com.wadiz.api.startup](./docs/com.wadiz.api.startup.md) | 투자형(증권형) 스타트업 투자 API | Boot 2.3 / Java 8 / JPA+MyBatis+ES |
 | [co.wadiz.api.community](./docs/co.wadiz.api.community.md) | `wave.user`의 Signature V3 신규 리라이트 + 커뮤니티 | **Boot 4.0 / Java 25** (최신) |
 | [co.wadiz.currency-exchange](./docs/co.wadiz.currency-exchange.md) | 환전 서버 (OpenSearch 기반, dev 브랜치) | Boot 3.4 / Java 21 / OpenSearch |
 | [co.wadiz.fep](./docs/co.wadiz.fep.md) | ⚠️ Front-End *Processor* (결제·Stripe 대외계, FE 아님!) | Boot 3.4 / Java 21 / Hexagonal |
 | [nicepay-api](./docs/nicepay-api.md) | 나이스페이·Stripe·Alipay+ PG 연동 | Boot 3 / Java 17 / WebFlux + R2DBC |
-| [kr.wadiz.account](./docs/kr.wadiz.account.md) | OAuth2 인가서버 + 계정 (Auth 2.0) | Boot 3.1 / Kotlin + Java 17 |
+| [kr.wadiz.account](./docs/kr.wadiz.account/) | OAuth2 인가서버 + 계정 (Auth 2.0) — **심층 분석 (7파일, 4.5K줄)** | Boot 3.1 / Kotlin + Java 17 |
 | [kr.wadiz.user.link](./docs/kr.wadiz.user.link.md) | Neo4j 기반 유저 관계 그래프 (userplatform/link) | Boot 3 / Java 17 / Neo4j + Kafka |
-| [com.wadiz.wave.user](./docs/com.wadiz.wave.user/) | 레거시 Wave User 모놀리식 API — **심층 분석 진행 중 (57 컨트롤러)** | Boot 구버전 / Java 8 / MyBatis |
+| [com.wadiz.wave.user](./docs/com.wadiz.wave.user/) | 레거시 Wave User 모놀리식 API — **심층 분석 (8파일, 4.9K줄, 58 컨트롤러)** | Boot 구버전 / Java 8 / MyBatis |
 
 ## 2. `wadiz-client` — 클라이언트팀
 
@@ -45,14 +45,14 @@
 
 | Repo | 역할 | 스택 |
 |---|---|---|
-| [wadiz-frontend](./docs/wadiz-frontend.md) | 전(全) FE 통합 모노레포 (account/global/help-center/ir/partners/…) | Next.js + Vite / pnpm + turbo |
+| [wadiz-frontend](./docs/wadiz-frontend/) | 전(全) FE 통합 모노레포 (account/global/help-center/ir/partners/…) — **심층 분석 (6파일, 3.9K줄)** | Next.js + Vite / pnpm + turbo |
 
 ## 4. `wadiz-web` — 레거시 코어
 
 | Repo | 역할 | 스택 |
 |---|---|---|
 | [com.wadiz.web](./docs/com.wadiz.web.md) | www.wadiz.kr 본체 (레거시 FE+BE) — `wadiz-frontend`로 점진 이관 중 | Spring 3.2 / Java 8 / WAR |
-| [com.wadiz.adm](./docs/com.wadiz.adm.md) | 전사 레거시 어드민 (JSP) | Spring 3.2 / JSP / Maven WAR |
+| [com.wadiz.adm](./docs/com.wadiz.adm/) | 전사 레거시 어드민 (JSP) — **심층 분석 (7파일, 1.8K줄, 197 컨트롤러)** | Spring 3.2 / JSP / Maven WAR |
 
 ## 5. `wadiz-app` — 모바일
 

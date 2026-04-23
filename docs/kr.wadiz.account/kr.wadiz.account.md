@@ -1,5 +1,15 @@
 # kr.wadiz.account 분석 문서
 
+> **Phase 2 심층 분석 진행 중**. 전체 엔드포인트는 [`api-endpoints.md`](./api-endpoints.md), 도메인별 상세는 `api-details/` 하위 참조.
+>
+> | 영역 | 파일 |
+> |---|---|
+> | inbound Controllers (OAuth2 커스텀 엔드포인트 12개) | [`api-details/inbound-controllers.md`](./api-details/inbound-controllers.md) |
+> | OAuth2 Authorization Server 코어 (authentication + customgrant) | [`api-details/oauth2-auth-core.md`](./api-details/oauth2-auth-core.md) |
+> | Persistence (wadiz/iam DB + Redis) | [`api-details/persistence.md`](./api-details/persistence.md) |
+> | 외부 서비스 연동 (11 externalservice 어댑터) | [`api-details/external-services.md`](./api-details/external-services.md) |
+> | Domain Model (DDD aggregates + Ports) | [`api-details/domain-model.md`](./api-details/domain-model.md) |
+
 ## 개요
 
 `kr.wadiz.account`는 와디즈의 **OAuth2 Authorization Server + 계정(회원) 플랫폼**이다. 표준 OAuth2/OIDC 인가서버 기능(`/oauth/authorize`, `/oauth/token`, `/oauth/revoke`, `/oauth/check_token`, `/oauth/token_key`, `/userinfo`, `/connect/register`, `/.well-known/*`)과 와디즈 자체의 로그인 UI, 이메일/소셜 회원가입, 계정 연결(link), 비밀번호 재설정, 세션 관리 등 계정 도메인 전반을 함께 수행한다.
