@@ -13,7 +13,7 @@
 |---|---|---|
 | **A1 — 펀딩 코어** | [funding-detail](./funding-detail.md) · [funding-payment](./funding-payment.md) · [funding-reward-select](./funding-reward-select.md) · [my-funding](./my-funding.md) · [funding-refund](./funding-refund.md) · [funding-autopay](./funding-autopay.md) | ✅ |
 | **A2 — 계정/가치교환** | [login](./login.md) · [signup](./signup.md) · [mypage](./mypage.md) · [coupon-use](./coupon-use.md) · [supporter-signature](./supporter-signature.md) · [comment](./comment.md) | ✅ |
-| A3 — 부가/스토어 | search · store-detail · store-order · store-wish · notification · wai-agent | ⏸ |
+| **A3 — 부가/스토어** | [search](./search.md) · [store-detail](./store-detail.md) · [store-order](./store-order.md) · [store-wish](./store-wish.md) · [notification](./notification.md) · [wai-agent](./wai-agent.md) | ✅ |
 
 ## 추가 절차
 
