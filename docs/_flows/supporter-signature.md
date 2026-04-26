@@ -100,13 +100,27 @@ public SignatureInfoV3 createSignature(Integer userId, CreateSignatureRequestV3 
 ```
 
 ### 2.3 Gateway — RestTemplate 으로 wave.user 호출
+
+> 📅 **2026-04-26 검증** — RestTemplate target host 확정:
+> - `SupporterSignatureV3Gatewary` baseUrl = `${file['user_api_base_uri']}/v3/supporter-signatures`
+> - `SupporterSignatureGateway` (V1) = `${file['user_api_v1_base_uri']}/users/supporter-signatures`
+> - 환경별 `user_api_base_uri` 값 (`src/main/resources/properties/file-{env}.properties`):
+>   - rc3: `http://rc3-private-gateway.wadizcorp.com:9990/user/api`
+>   - rc: `http://rc-api01:9990/user/api`
+>   - stage: `http://172.31.1.12:9990/user/api`
+>   - local: `http://dev-app01:9990/user/api`
+>
+> → 모두 **9990 사설 게이트웨이 → wave.user** 경로. **community(9011) 로의 전환 아직 미적용**.
+>
+> 즉 `co.wadiz.api.community` 가 V3 11 컨트롤러 풀 구현 (2026-04-26 기준) 됐어도, com.wadiz.web 은 여전히 wave.user 를 호출 중. **두 백엔드가 공존하는 상태**이며 cutover 타이밍은 별도 추적 필요.
+
 ```java
 // kr/wadiz/infrastructure/signature/v3/SupporterSignatureV3UserGatewary.java:40
 @Autowired
 @Qualifier("restTemplateForUserGateway")
 private RestTemplate restTemplate;
 
-// baseUrl = ${wave.user.base.url} + "/api/v3/users/"
+// baseUrl = ${file['user_api_base_uri']}/v3/users/  → 9990 게이트웨이 → wave.user
 
 public SignatureInfoV3 createSignature(final Integer userId, final CreateSignatureRequestV3 request) {
     UriComponents uri = UriComponentsBuilder.fromUriString(baseUrl)

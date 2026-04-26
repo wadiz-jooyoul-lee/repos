@@ -208,6 +208,36 @@ export const withNativeHeaderSpec = async <T extends Record<string, unknown>>(
 
 새로운 **앱 전용 통합 BE 엔드포인트**.
 
+> 📅 **2026-04-26 검증 완료** — BE 컨트롤러 위치·실제 path 확정.
+>
+> ### BE 위치
+> `com.wadiz.api.funding/adapter/application/src/main/java/com/wadiz/api/funding/domain/campaign/nativeapp/`
+> ```
+> nativeapp/
+> ├── NativeProjectController.java     # ★ 컨트롤러
+> ├── NativeProjectFacade.java         # 비즈 로직 합성
+> └── payload/
+>     ├── NativeProjectResponse.java
+>     └── NativeProjectResponseConverter.java
+> ```
+>
+> ### 실제 path 와 path rewrite
+> 컨트롤러 path: **`/api/native/v1/projects/{projectNo}`** (`funding` 없음)
+> 앱이 호출하는 path: **`/api/funding/native/v1/projects/{projectNo}`** (`funding` 있음)
+>
+> → **앱 → BE 사이에 path rewrite 발생**. 추정 경로:
+> - 앱이 `app.wadiz.kr` (또는 유사 게이트웨이) 호출 → 게이트웨이가 `/api/funding/...` prefix 제거 → funding 서비스로 라우팅
+> - 또는 `app-api` (NestJS BFF) 가 funding 서비스로 forward 하면서 prefix 변환
+>
+> ### 보안
+> ```java
+> @PreAuthorize("isOpenedOrComingSoonPosting(#projectNo) or isMaker(#projectNo) or isAdmin()")
+> ```
+> 권한 체크: 오픈/오픈예정 프로젝트, 본인 메이커, 어드민만 접근 가능.
+>
+> ### Response 구조
+> `NativeProjectResponse` (payload) — Phase 2 보강 시 필드 매트릭스 추가 가치.
+
 ### 4.1 응답 데이터 (사내 doc 기반 추정)
 - 이미지/영상 URL
 - 메이커 정보 (compact)
