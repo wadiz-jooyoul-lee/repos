@@ -1,5 +1,30 @@
 # kr.wadiz.account Inbound Controllers 상세 스펙
 
+> 📅 **2026-04-26 master pull 보강** (7 커밋)
+>
+> ### Apple Notification DTO 분리 (`adapters/inbound/dto/`)
+> - **`AppleEventPayload.java`** 신규 — `events` 객체 페이로드 (type, sub_type 등)
+>   - 이벤트 타입: `email-disabled` / `email-enabled` / `consent-revoked` / `account-delete`
+> - **`AppleServerNotificationEvent.java`** 신규 — Apple S2S Notification 요청 본문
+>   - Apple 은 `payload` 필드만 전송 (JWT 형태) — JWT 디코딩하여 type/sub/email 등 추출 필요
+>   - 참고: https://developer.apple.com/documentation/sign_in_with_apple/processing_changes_for_sign_in_with_apple_accounts
+>
+> 기존 `AppleNotificationController` (`POST /webhooks/apple/server-notifications`) 가 위 DTO 사용하도록 갱신.
+>
+> ### 소셜 로그인 BE3-310
+> - **소셜 로그인 시 같은 provider 슬롯 점유 edge case** 분리 처리 (`SocialUserRepository`)
+> - 소셜 계정 목록 연동 시점 **오름차순 정렬** 변경
+>
+> ### FE1-421 — sendWebMessage 브리지 추가
+> - `global-account` layout.html 에 `sendWebMessage` JS 브리지 함수 추가
+> - 의미: account.wadiz.kr 이 앱 WebView 안에서 동작할 때 native 와 메시지 교환하기 위한 브리지 — login flow 의 앱 임베드 흐름에 영향
+>
+> ### 기타
+> - `usercoupon/UserCouponAdapter`, `UserCouponClient`, `fastmail2/NormalMailClient` 변경
+> - `application/ProjectConfig` 변경 (Spring 설정 보강)
+
+---
+
 > **기록 범위**
 >
 > - 이 문서는 `kr.wadiz.account` 레포 안의 `kr.wadiz.oauth2.adapters.inbound` 패키지(및

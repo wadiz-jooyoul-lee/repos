@@ -2,6 +2,35 @@
 
 > 와디즈의 AI 챗·추천·검토 기능을 모아둔 영역. **`apps/wai-ai-agent-launcher`** 가 에이전트 런처 UI, 서버측은 주로 `app-api` (NestJS BFF) 와 외부 AI 서비스/모델 공급자를 조합.
 
+> 📅 **2026-04-26 보강** — funding pull 결과 AI Review 영역 명확해짐.
+>
+> ### `com.wadiz.api.funding` AI Review 컨트롤러 위치 확정
+> ```
+> domain/aireview/
+> ├── AIReviewController.java           POST /api/v1/ai-review/story/request/{campaignId}    # 메이커 → AI 심사 요청
+> └── AIReviewInternalController.java   POST /api/internal/story/response/{campaignId}        # AI 서비스 → 결과 콜백
+> ```
+> - AI 서비스 → funding 으로 비동기 결과 반환 (callback 패턴)
+> - **batch 재시도**: `domain/aireviewpostapprovalretry/AIReviewPostApprovalRetryJobConfig` — 동시 callback 수신으로 번역 못한 케이스 재처리
+>
+> ### 번역 관련 신규
+> - **batch**: `domain/translationqualitymonitor/TranslationQualityMonitorJobConfig` — 번역 품질 모니터링
+> - RWD-5479: AI 심사 RequestKey 에 언어 추가 (동시성 충돌 방지)
+> - POST_APPROVAL 심사 결과 수신 시 자동 번역 요청
+> - 최종승인 후 AI 심사 요청 시 작성언어/옵션언어 기준
+> - 알림톡 Template + payload 다국어 분기
+>
+> ### 인프라 (`adapter/infrastructure/`)
+> - `aireview/AIReviewQueryGatewayImpl.java`
+> - `persistence/aireview/AIReviewMapper.java`
+> - `mapper/aireview/AIReviewMapper.xml` (MyBatis)
+> 즉 funding 자체 MySQL 에 AI 심사 결과·번역 요청 이력을 저장.
+>
+> ### 영향
+> 본 flow 의 § 1.1 "AI Review (메이커 스튜디오)" 부분은 **추정에서 확정**으로 갱신:
+> - 정확한 path: `POST /api/v1/ai-review/story/request/{campaignId}` (앞에 `/web/apip/funding/` proxy)
+> - Internal callback: `POST /api/internal/story/response/{campaignId}` (AI 서비스 → funding)
+
 ## 기록 범위
 - **읽은 파일**:
   - `wadiz-frontend/apps/wai-ai-agent-launcher/` (앱 존재 확인, 세부 코드 미탐색)
