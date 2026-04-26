@@ -15,6 +15,13 @@
 | **A2 — 계정/가치교환** | [login](./login.md) · [signup](./signup.md) · [mypage](./mypage.md) · [coupon-use](./coupon-use.md) · [supporter-signature](./supporter-signature.md) · [comment](./comment.md) | ✅ |
 | **A3 — 부가/스토어** | [search](./search.md) · [store-detail](./store-detail.md) · [store-order](./store-order.md) · [store-wish](./store-wish.md) · [notification](./notification.md) · [wai-agent](./wai-agent.md) | ✅ |
 
+## 앱(Android/iOS) 통합 매핑
+
+각 flow 의 "wadiz-android / wadiz-ios" 섹션을 보완하는 전용 레퍼런스: [`app-mapping.md`](./app-mapping.md)
+
+- 앱과 웹의 **API host·path 차이**, **WebView 위임 영역**, **순수 네이티브 영역** 구분
+- 18개 flow × Android(Retrofit) + iOS(RequestBuilder) 호출 위치 매핑
+
 ## 추가 절차
 
 1. [_template.md](./_template.md) 복사
