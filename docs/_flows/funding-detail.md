@@ -2,6 +2,24 @@
 
 > 서포터가 펀딩 프로젝트 상세 페이지를 열 때 트리거되는 체인. 캠페인 메타·리워드 아이템·카테고리·만족도 삭제 수를 한 번에 묶어 내려준다.
 
+> 📅 **2026-04-26 업데이트** — wadiz-frontend master pull 후 펀딩 상세 화면이 다음과 같이 진화 중:
+>
+> ### 신규 컴포넌트 (`packages/features/src/funding-detail/`)
+> - **`OverseasShippingNotice`** — 해외 배송 안내 섹션 신규
+> - **`RelatedKeywordSection`** — 연관 키워드 노출 (SEO·탐색 강화) + 관련 hooks: `useInfoKeywordMutation`, `useInfoKeywords`, `useProjectTags`
+> - **`DesignModeContext` + `DesignModePanel`** — 디자이너용 디자인 모드 토글 (UI 검토 도구)
+> - **`scrollToAnchor`, `correctScroll`** — 탭 이동·앵커 스크롤 보정 유틸
+>
+> ### 신규: 앱 네이티브 인지 (`packages/features/src/native-detail/`)
+> - `NativeAwareIntro`, `NativeDetailContext`, `useNativeDetailPage`, `withNativeHeaderSpec`
+> - 의미: 본 문서 § 1.2 "wadiz-android/wadiz-ios — Phase 2 미진행" 부분이 진화. **WebView 가 자기가 앱 안에 있음을 감지하여 헤더·인트로 스펙을 네이티브에 맞게 조정** 하는 하이브리드 패턴 적용 중.
+>
+> ### Spec 문서
+> `apps/global/src/pages/funding/[projectNo]/_spec/` 에 8개 spec md 추가 — `FIGMA_ANALYSIS`, `NATIVE_DETAIL_FLOW`, `RENDER_EVENT_REFACTOR`, `SCROLL_ISSUES`, `STYLE_CHANGES`, `DETAIL_MOBILE_COMPONENT_ORDER` 등. 디자인·렌더링 결정 사항 사내 기록.
+>
+> ### 영향
+> 본 flow 의 § 1.1 wadiz-frontend 호출 대상 API/컴포넌트가 늘어남. 핵심 SQL 체인(§ 4)은 **변경 없음**. RelatedKeywordSection 의 `useInfoKeywords` 가 호출하는 새 endpoint 는 별도 추적 필요 (현 시점 미확인).
+
 ## 기록 범위
 - **읽은 파일**:
   - `wadiz-frontend/studio/funding/src/mocks/reward/fundingCampaignHandlers.ts:63` (FE mock으로 실제 호출 패턴 확인)

@@ -1,5 +1,28 @@
 # wadiz-frontend packages 상세 분석
 
+> 📅 **2026-04-26 업데이트** — master pull 후 다음 신규 모듈 추가 확인 (본 문서 본문은 기존 내용, 아래 항목은 보강):
+>
+> ### 신규: `packages/features/src/funding-detail/` 확장
+> - **`lib/`**: `DesignModeContext.tsx`, `DesignModePanel.tsx` — **개발자/디자이너용 디자인 모드 토글** (UI 디자인 검토용 패널)
+> - **`lib/correctScroll.ts`, `scrollToAnchor.ts`** — 펀딩 상세 스크롤 위치 보정 유틸
+> - **`ui/OverseasShippingNotice/`** — 해외 배송 안내 컴포넌트
+> - **`ui/RelatedKeywordSection/`** — 연관 키워드 섹션 (`RelatedKeywordItem`, `RelatedKeywordList`, `RelatedKeywordSection` + hooks `useInfoKeywordMutation`, `useInfoKeywords`, `useProjectTags`) → SEO/탐색 강화
+> - 참고 docs: `apps/global/src/pages/funding/[projectNo]/_spec/*.md` (FIGMA_ANALYSIS, NATIVE_DETAIL_FLOW, RENDER_EVENT_REFACTOR, SCROLL_ISSUES, STYLE_CHANGES, DETAIL_MOBILE_COMPONENT_ORDER, DETAIL_MOBILE_GAP_SPEC) — 디자인·렌더 사양 spec 8개 신규 추가
+>
+> ### 신규: `packages/features/src/native-detail/` (앱 네이티브 펀딩 상세)
+> - `components/NativeAwareIntro.tsx` — 앱 감지 시 인트로 분기
+> - `context/NativeDetailContext.tsx` — 앱 네이티브 상세 컨텍스트
+> - `hooks/useNativeDetailPage.ts` — 앱 모드 hook
+> - `lib/withNativeHeaderSpec.ts` — 네이티브 헤더 스펙 적용 HOC
+> - 의미: 기존 "앱은 펀딩 상세를 WebView 위임" 패턴이 **WebView 가 자기가 앱 안에서 열렸음을 인지하여 헤더·인트로를 네이티브 스펙에 맞춰 조정** 하는 방향으로 진화 중. (`docs/_flows/funding-detail.md` 의 앱 섹션 보강 대상)
+>
+> ### 기타 변경
+> - JS → TS 마이그레이션 진행: `packages/features/src/comments/` (`signatureConfig`, `rewardSignatureCommentAdapter`, `rewardSignatureReplyAdapter`, `ReplyItem` 4건)
+> - `packages/waffle-icons` 신규 아이콘 추가 (`airplane`, `delivery-islands` 등 외)
+> - `packages/i18n` 8개 파일 변경 (다국어 리소스 갱신)
+>
+> ---
+
 > **기록 범위**: `wadiz-frontend/packages/*` 와 `wadiz-frontend/libraries/**` 에서 실제로 관측 가능한 소스·`package.json`·배럴(`index.ts`)만 기록합니다. 런타임 HTTP 동작, Sentry/Braze SDK 내부, app-api/web-api 서버 응답 구조 등은 **외부**로 표기합니다. pnpm workspace(`pnpm-workspace.yaml`)는 `packages/*`·`apps/*`·`apps/devtools/*` 만 등록하고, 각 app `vite.config.ts`의 `resolve.alias`로 `@wadiz/*` 를 `packages/*/src` 에 바로 매핑하므로 패키지 빌드 결과물은 따로 생성되지 않습니다.
 
 ## 1. 개요
