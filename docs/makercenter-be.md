@@ -1,5 +1,27 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-04-26 master pull 보강** (3 커밋, CLIENT-58)
+>
+> ### 어드민 기획전 대리 벌크 신청 신규
+> - **`POST /api/exhibition/{...}/bulk-apply`** (또는 유사) — 어드민이 여러 메이커 프로젝트를 한꺼번에 기획전에 신청
+> - 새 DTO:
+>   ```java
+>   // ReqBulkApplicationApply
+>   @NotNull Integer exhibition_no;
+>   @NotEmpty @Size(max = 1000) List<Long> project_nos;
+>   ```
+> - 새 응답: `ResBulkApplicationResult`
+> - 새 서비스: `ExhibitionApplicationAdminService`
+> - 새 매퍼 항목: `mappers/Exhibition.xml`
+> - DB 마이그레이션: `migration/V004__exhibition_application_apply_manager_idx.sql` (apply_manager 인덱스)
+> - **CSV export 갱신**: utm 소스/미디엄/캠페인/콘텐츠/키워드 모두 노출
+> - 변경된 컨트롤러: `ExhibitionAdminController.java`
+>
+> ### 기타
+> - `MvcConfig`, `XssDeserializeUtil`, `ErrorCode`, `ReqBoardData{Modify,Regist}` 소량 변경
+
+---
+
 ## 개요
 
 `makercenter-be`는 **와디즈 메이커센터**의 백엔드 API 서버입니다. 메이커센터는 와디즈에서 프로젝트를 오픈한 메이커에게 공지사항·이용가이드·이벤트·기획전 모집 등 커뮤니케이션 채널과 제반 정보를 제공하고, 동시에 사내 관리자(운영자)가 컨텐츠를 관리할 수 있는 CMS 기능을 제공합니다.

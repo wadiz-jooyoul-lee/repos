@@ -6,6 +6,52 @@
 
 ---
 
+> 📅 **2026-04-26 master pull 보강** (23 커밋 fast-forward)
+>
+> ### 신규 추가 영역 (32 새 파일, +2,697 / −78)
+> - **`reward/adapter/external/fundingapi/RewardChangeLogGateway`** — funding API 로 리워드 변경 이력 push (RWD-5462: 비노출/최종승인 알림)
+> - **`reward/comment/model/`** 확장 — `MakerProjectCommentNewStatus`, `MakerProjectCommentSearch`, `MakerProjectCommentVo` (메이커 프로젝트 댓글 — 리뷰 + 포토 리뷰 통합 조회 RWD-5294)
+> - **`reward/rewarditem/model/global/`** — `RewardBadge`, `RewardImage`, `RewardPricing` + Response DTO 글로벌 모델 추가 (해외 리워드 표준화)
+> - **`reward/rewarditem/model/constant/`** — `BadgeType`, `DiscountType` (RWD-5374: 가격정책 원가 관리 삭제, ADD_ONLY → NO_DELETE 권한 변경)
+> - **`reward/exception/ForbiddenException`**
+> - **`reward/schedule/service/RewardDeliveryDateRangeCalculator`** (RWD-5362: 리워드 발송일 조회·저장·검증)
+> - **`store/client/model/`** — `StoreContentResponse`, `StoreProductAggregationResponse`, `StoreProductInfoNoticeResponse`, `StoreProjectStatusCountsResponse`
+> - **`common/wrapper/AppUserExceptionResponseWrapper`** — 앱 사용자 에러 응답 래퍼
+> - **`.claude/commands/update-terms.md`** — 약관/정책 HTML 업데이트 슬래시 커맨드 (FE2-264)
+> - 정책 HTML 신규 (`web/resources/terms/`):
+>   - `funding_maker_service_20260403.html`
+>   - `funding_refund_20250923.html`
+>   - `service_reward_20251226.html`
+>
+> ### 변경된 주요 컨트롤러 (10개)
+> - `WEBCampaignController.java` (+113/−51) — RWD-5487 본펀딩 상세 비공개 처리 제거 등
+> - `StoreProjectUiController.java` — CLIENT-59 SEO/JSON-LD 추가
+> - `MakerApiController` (reward), `RewardMakerStudioSubmitApiController`, `CampaignScheduleV2ApiController`, `RewardMakerStudioSectionV2ApiController`
+> - `MakerDashboardController` (mywadiz/dashboard), `GlobalUIController`, `GlobalKoreaUIController`, `DiagnosisController`
+>
+> ### MyBatis SQL 변경
+> - `reward/rewarditem/reward-mapper.xml` (+147줄) — 글로벌 reward 모델 응답 매핑 추가
+> - `reward/comment/comment-mapper.xml` (+71줄) — 메이커 프로젝트 댓글 + 포토 리뷰 통합 쿼리
+> - `reward/campaign/campaign-mapper.xml`, `maker/maker-mapper.xml`, `story/story-mapper.xml`, `comment/comment-image-mapper.xml` 소량 변경
+>
+> ### 삭제된 파일
+> - `web/WEB-INF/jsp/campaign/detailSPA.jsp` — CLIENT-38 wRewardDetailSPA.java project 기반 SEO 시맨틱 HTML 로 대체
+> - `src/main/java/com/wadiz/web/url/dto/BitlyResponseDto.java` — Bitly 단축 URL 의존 제거 (추정)
+>
+> ### 운영 변경
+> - **RWD-5462** — 일정 > 오픈예정·본펀딩 즉시 오픈 기능 삭제
+> - **RWD-5343** — Reward Pricing/Badge/Image History 적재 기능 삭제
+> - **RWD-5483** — `file_service_api_host` URL 에 `/file` 경로 추가 (5개 환경 properties 일괄)
+> - `web/robots.txt` — `/web/wcampaign/search` disallow 추가 (FE1-476)
+>
+> ### 분석 영향
+> - **`docs/_flows/funding-detail.md`**: `WEBCampaignController#detail` 113줄 변경 — 비공개 분기 제거 등 동작 변경. 핵심 SQL 체인은 유지.
+> - **`docs/_flows/comment.md`**: 메이커 프로젝트 댓글 + 포토 리뷰 통합 쿼리 추가. SQL 본문 일부 갱신 권장.
+> - **`docs/_flows/store-detail.md`**: SEO/JSON-LD 추가 (CLIENT-59) — 시맨틱 HTML 향상.
+> - **신규 `RewardChangeLogGateway`**: 리워드 수정 이력을 funding API 로 publish — funding 측 신규 endpoint 가능성. funding Phase 2 문서 보강 후보.
+
+---
+
 ## 1. 개요
 
 `com.wadiz.web` 는 `https://www.wadiz.kr` 본체를 구성하는 Spring 3.2 + JSP 레거시 WAR 프로젝트입니다. 리워드/투자(증권형) 펀딩 상세·청약·결제·마이페이지·커뮤니티 등 **와디즈 유저 사이드 거의 전 기능을 담고 있는 모놀리식 웹 서버**입니다.

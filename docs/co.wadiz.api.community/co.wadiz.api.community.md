@@ -1,7 +1,36 @@
 # co.wadiz.api.community
 
+> 📅 **2026-04-26 master pull (36 커밋, 224 파일 +)** — 본 분석 baseline 시점에는 Phase 0~1 스캐폴드 였으나, 현재는 **Phase 6 v1.3.0 풀 구현 완료**. 이 문서 본문은 baseline 기준 (구버전). 현재 구현은 아래 박스 참조.
+>
+> ### 현재 상태 (2026-04-26)
+> - **202 Java 파일**, **37 REST endpoint**, 10 Swagger Tag
+> - 서비스 포트 `9011` (이전 8080)
+> - Java 25 `--enable-preview` (StructuredTaskScope JEP 505), Virtual Thread, Jackson 3 + 2.x annotations 호환, RestClient 단일화
+> - 모듈 구조:
+>   ```
+>   src/main/java/co/wadiz/community/
+>   ├── config/{middleware, properties, db}
+>   ├── integration/{mail, user, push, campaign, points, event}
+>   ├── module/supporter_signature/   # ★ wave.user V3 11 컨트롤러 풀 이관
+>   │   ├── controller/ service/ repository/{entity,mapper,param}
+>   │   ├── dto/{request,response}/{signature,point,affiliate,communication,keyword}
+>   │   ├── integration/{cache, notification}
+>   │   ├── component/, model/{constant, domain}, event/
+>   └── shared/{wadiz, response, cache, util, common, error}
+>   ```
+> - **공개 API 11 컨트롤러** (V3, wave.user 와 동일 경로):
+>   `/api/v3/supporter-signatures{,/keywords,/points,/interest-degree}`,
+>   `/api/v3/users/{userId}/supporter-signatures`, `/api/v3/supporter-signatures/{comments,affiliates}` 등
+> - 사내 `ARCHITECTURE.md` 추가 — Modular Monolith 설계 철학
+>
+> ### 분석 영향
+> - **`docs/_flows/supporter-signature.md`** — 기존엔 `com.wadiz.web → RestTemplate → wave.user`. 현재 community 가 동일 V3 경로 풀 구현 상태이므로 **RestTemplate target 이 community(9011)로 전환됐는지 / 라우팅 분기 중인지 검증 필요**.
+> - **Phase 2 승격 권장**: 단일 파일 → `docs/co.wadiz.api.community/api-details/` 폴더로 분할 (module/integration/shared 별 심화).
+
+---
+
 ## 개요
-`com.wadiz.wave.user` 의 **Supporter Signature V3** 모듈을 독립 서비스로 포팅하며, 신규 커뮤니티 기능(messaging, points, campaign 등)을 함께 개발 중인 신규 서비스입니다. **현재 Phase 0~1 (스캐폴드만 구축)** 단계이며 도메인 코드는 미구현. Org: `wadiz-service`.
+`com.wadiz.wave.user` 의 **Supporter Signature V3** 모듈을 독립 서비스로 포팅하며, 신규 커뮤니티 기능(messaging, points, campaign 등)을 함께 개발 중인 신규 서비스입니다. **(baseline 시점 Phase 0~1 스캐폴드)** — 현재는 풀 구현 (위 박스 참조). Org: `wadiz-service`.
 
 ## 기술 스택 (현 시점)
 - **Java 25** (LTS toolchain)

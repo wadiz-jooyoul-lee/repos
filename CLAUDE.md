@@ -21,7 +21,7 @@
 | [com.wadiz.api.funding](./docs/com.wadiz.api.funding/) | 크라우드펀딩 코어 API (주문·서포터·리워드결제·자동결제·스토어) — **심층 분석 (11파일, 6.5K줄)** | Boot 2.7 / Java 8 / Hexagonal + MyBatis + Mongo + Redis |
 | [com.wadiz.api.reward](./docs/com.wadiz.api.reward/) | 리워드 수집·쿠폰·만족도·메모 — **심층 분석 (6파일, 2.7K줄)** | Boot 2.x / Java 8 / MyBatis |
 | [com.wadiz.api.startup](./docs/com.wadiz.api.startup.md) | 투자형(증권형) 스타트업 투자 API | Boot 2.3 / Java 8 / JPA+MyBatis+ES |
-| [co.wadiz.api.community](./docs/co.wadiz.api.community.md) | `wave.user`의 Signature V3 신규 리라이트 + 커뮤니티 | **Boot 4.0 / Java 25** (최신) |
+| [co.wadiz.api.community](./docs/co.wadiz.api.community/) | `wave.user`의 Signature V3 신규 리라이트 + 커뮤니티 — **Phase 6 v1.3.0 풀 구현 (37 endpoint, 포트 9011)** | **Boot 4.0 / Java 25** (최신) |
 | [co.wadiz.currency-exchange](./docs/co.wadiz.currency-exchange.md) | 환전 서버 (OpenSearch 기반, dev 브랜치) | Boot 3.4 / Java 21 / OpenSearch |
 | [co.wadiz.fep](./docs/co.wadiz.fep.md) | ⚠️ Front-End *Processor* (결제·Stripe 대외계, FE 아님!) | Boot 3.4 / Java 21 / Hexagonal |
 | [nicepay-api](./docs/nicepay-api.md) | 나이스페이·Stripe·Alipay+ PG 연동 | Boot 3 / Java 17 / WebFlux + R2DBC |
