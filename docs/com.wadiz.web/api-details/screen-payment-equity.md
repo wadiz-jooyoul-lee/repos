@@ -67,16 +67,21 @@
 - `web/waccount/controller/WAccountEquityController.java` — 투자 계정 관리
 - `web/waccount/controller/WAccountJoinEquityController.java` — 투자형 가입 (개인/법인/전문투자자)
 
-### 청약 단계
-| 단계 JSP | 역할 |
+### 청약 JSP — 검증된 실제 view (`WPaymentEquityController` setViewName 기준)
+| JSP | 역할 |
 |---|---|
-| `wpayment/equity1.jsp` | 청약 안내·주의사항 |
-| `wpayment/equity2.jsp` | 본인인증 + 투자 한도 확인 |
-| `wpayment/equity3.jsp` | 투자 의향서·위험고지 동의 |
-| `wpayment/equity3-1.jsp` | (분기) 추가 동의 |
-| `wpayment/equity4.jsp` | 청약 금액 입력 + KSFC 예치금 입금 |
-| `wpayment/equityReserved.jsp` | 청약 완료(예약 상태) |
-| `wpayment/equityFail.jsp` | 청약 실패 |
+| `wpayment/equity/run.jsp` | 청약 진입 |
+| `wpayment/equity/write.jsp` | 청약서 작성 |
+| `wpayment/equity/checklimit.jsp` | 투자 한도 확인 |
+| `wpayment/equity/auth_host.jsp` | 본인인증 |
+| `wpayment/equity/paydeposit.jsp` | KSFC 예치금 입금 |
+| `wpayment/equity/bankpay.jsp` | 가상계좌 입금 |
+| `wpayment/equity/reserve.jsp` | 청약 완료(예약) |
+| `wpayment/equity/complete.jsp` | 완료 |
+| `wpayment/equity/error.jsp` | 에러 |
+| `wpayment/equity/popEquityNotice.jsp` | 위험고지 팝업 |
+
+> 🚨 **이전 문서 오류 정정**: `wpayment/equity1.jsp ~ equity4.jsp` 표기는 잘못이었음. 그 파일은 `wpayment/` 가 아닌 `equity/payment/` 에 존재하고, **컨트롤러에서 참조되지 않는 dead 파일**. dead 후보 분석: `dead-jsp-candidates.md` § 1.2 참조.
 
 ### 의존
 - **한국증권금융 KSFC**: `com.wadiz.api ksd-client` 또는 `KSFCclient 1.0` — 예치금 계좌 직접 통신
@@ -101,8 +106,8 @@
   - `equityDashboard-mapper.xml`
 
 ### 관련 JSP
-- `web/WEB-INF/jsp/wpayment/equity*.jsp` — 7개 단계 페이지
-- `web/WEB-INF/jsp/equity/*.jsp` — 39개 (campaign/8, dashboard/9, payment/10, account/7, guide/1, root/4)
+- `web/WEB-INF/jsp/wpayment/equity/*.jsp` — 10개 (위 표 기준)
+- `web/WEB-INF/jsp/equity/*.jsp` — 39개 (campaign/8, dashboard/9, payment/10, account/7, guide/1, root/4) — **단 payment/* 8개는 dead** (§ dead-jsp-candidates.md)
 - `web/WEB-INF/jsp/wsub/wEasyCard.jsp` — EasyCard 결제 수단
 
 ### 인증/권한

@@ -13,6 +13,7 @@
 > - [`api-details/screen-payment-equity.md`](./api-details/screen-payment-equity.md) — 보상형 결제 + 투자형 청약
 > - [`api-details/screen-account.md`](./api-details/screen-account.md) — 회원가입·로그인·OAuth
 > - [`api-details/screen-mypage-and-main.md`](./api-details/screen-mypage-and-main.md) — 마이페이지 + 통합 메인
+> - [`api-details/dead-jsp-candidates.md`](./api-details/dead-jsp-candidates.md) — 정적 분석 미사용 JSP 152개 (verified dead 14, high-confidence 74, parent layout false-positive 18, 동적 include 의심 14, etc.)
 
 ---
 
