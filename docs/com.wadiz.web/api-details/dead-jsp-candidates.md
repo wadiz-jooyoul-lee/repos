@@ -5,7 +5,8 @@
 > 검증 단계:
 > 1. **1차** 정적 grep — 152개 dead (오류 다수 포함)
 > 2. **2차** leading-slash 패턴 + 변수 기반 view name 보강 — 122개로 축소
-> 3. **3차** Android RemoteConfig (116 URL) + iOS plist+constants (137 URL) 대조 — verified 카테고리 확장
+> 3. **3차** Android RemoteConfig (116 URL) + iOS plist+constants (137 URL) 대조
+> 4. **4차** wadiz-frontend (1518 URL) 대조 + WAccountJoinEquityController 본문 검증
 >
 > **신뢰도 분류**:
 > - 🟢 **VERIFIED DEAD** — 직접 검증 완료 (grep + 컨트롤러 본문 + 앱 URL 대조)
@@ -63,17 +64,22 @@ mv.setViewName(viewName);
 ### 0.4 1차 분석의 잘못된 카운트
 1차 보고서에서 `waccount/equity/` 24개 라고 한 것 — 실제 디렉토리는 12개 파일. 잘못된 추측 list 였음.
 
-## 1. 통계 (3차 정정)
+## 1. 통계 (4차 정정)
 
-| 항목 | 1차 | 2차 | 3차 (모바일 앱 cross-check) |
-|---|---:|---:|---:|
-| 전체 JSP | 447 | 447 | 447 |
-| 정적 reference 합집합 | 295 | 456 | 456 |
-| 정적 reference 0건 | 152 | 122 | 122 |
-| **🟢 VERIFIED DEAD** | — | 19 | **40** (+21 mobile/equity 추가) |
-| **🟢 살아있음 발견 (앱 호출)** | — | — | **2** (wpage/w9, wpage/makerAwards) |
-| **🟡 정적 0건 + 앱 미사용** | — | — | ~75 |
-| **⚪ 검증 한계 잔존** | — | — | ~5 |
+| 항목 | 1차 | 2차 | 3차 | 4차 (FE+컨트롤러 검증) |
+|---|---:|---:|---:|---:|
+| 전체 JSP | 447 | 447 | 447 | 447 |
+| 정적 reference 0건 | 152 | 122 | 122 | 122 |
+| **🟢 VERIFIED DEAD** | — | 19 | 40 | **50** |
+| **🟢 살아있음 발견** | — | — | 2 | **4** (+wpage/wadiztrend/2021, 2022) |
+| **🟡 정적 0건 + 모든 caller 미사용** | — | — | ~75 | ~63 |
+| **⚪ 검증 한계 잔존** | — | — | ~5 | ~5 |
+
+**누적 caller cross-check** (3차+4차):
+- Android RemoteConfigTest.kt: 116 URL
+- iOS remote_config_defaults.plist + URLConstant.swift: 137 URL
+- wadiz-frontend (Next.js 모노레포): 1,518 URL
+- 합계 unique: ~1,700 URL
 
 ## 2. 🟢 검증 완료 dead — 19개
 
@@ -152,12 +158,14 @@ $ grep 'setViewName.*"equity/payment/' src/main/java
 
 다음 사유로 외부 진입/동적 매핑 가능성:
 
-### 3.1 `WPageController` 동적 dispatcher 영향 (24개, 2개 정정)
+### 3.1 `WPageController` 동적 dispatcher 영향 (22개, 4개 정정)
 
-🟢 **3차 검증 (2026-04-27)**: 모바일 앱 webview URL 대조 결과:
-- **`/web/wpage/w9`** → iOS `remote_config_defaults.plist` 등록됨 — 살아있음 (`wpage/w9.jsp` ALIVE)
-- **`/web/wpage/makerAwards`** → iOS plist 등록됨 — 살아있음 (`wpage/makerAwards.jsp` ALIVE)
-- 나머지 24개 → 앱 사용 안함
+🟢 **3차+4차 검증 (2026-04-27)**: 모바일 앱 + wadiz-frontend URL 대조:
+- **`/web/wpage/w9`** → iOS plist + FE 호출 — **ALIVE** (`wpage/w9.jsp`)
+- **`/web/wpage/makerAwards`** → iOS plist + FE 호출 — **ALIVE** (`wpage/makerAwards.jsp`)
+- **`/web/wpage/wadiztrend/2021`** → FE 호출 — **ALIVE** (`wpage/wadiztrend/2021.jsp`)
+- **`/web/wpage/wadiztrend/2022`** → FE 호출 — **ALIVE** (`wpage/wadiztrend/2022.jsp`)
+- 나머지 22개 → 모든 caller (Android+iOS+FE) 미사용
 
 **`@RequestMapping("/web/wpage/*")` + `@PathVariable("pageName")` + `setViewName("wpage/" + pageName)`** 패턴 — pageName whitelist 없음. 즉 **`/web/wpage/{어떤이름}` URL 로 외부 진입 시 `wpage/{어떤이름}.jsp` 자동 렌더**.
 
@@ -185,14 +193,20 @@ public ModelAndView getPage(@PathVariable("pageName") String pageName) {
 
 → **마케팅 메일/SMS/검색엔진 backlink 등에서 직접 URL 진입 가능**. dead 라고 단정 불가. 운영팀에 트래픽 로그 확인 필요.
 
-### 3.2 변수 기반 setViewName 추적 한계 (waccount, 17개)
-`WWEBAccountEquityService`, `WWEBAccountUpdateService`, `WAccountCommonController` 등이 `String targetUrl = ...`; `mv.setViewName(targetUrl)` 패턴 사용. 변수 할당을 모든 분기마다 추적해야 진짜 dead 인지 확정 가능 — 시간 비용 큼.
+### 3.2 변수 기반 setViewName — 일부 verified, 일부 잔존
 
-| 그룹 | JSP 수 | 의심 |
-|---|---:|---|
-| `waccount/equity/wAccountEquityCertification*.jsp` | 10 | `WWEBAccountEquityService` targetUrl 변수에 인증 단계 view 가 동적 할당될 가능성 |
-| `waccount/wAccountUpdate*.jsp`, `wAccountRegistAuthEmail*.jsp` | 5 | `WWEBAccountUpdateService` |
-| `waccount/wAccountNaverCallback.jsp`, `wAccountPlusInvestNice.jsp` | 2 | OAuth callback / 본인인증 — runtime 검증 필요 |
+🟢 **4차 검증 — `waccount/equity/wAccountEquityCertification*.jsp` 10개 → verified dead**
+
+`WAccountJoinEquityController.java:75` 의 `@RequestMapping(value={"join/step1", "join/step2", "join/step3", "join/step4", "join/stepDone"}, method = GET)` 메소드가 호출되며, `WWEBAccountJoinEquityService:546` 가 `mv.setViewName("waccount/equity/joinStep")` 로 처리. 즉 step1~stepDone 모든 단계 → 같은 `joinStep.jsp` 사용. `wAccountEquityCertificationStep*.jsp` 10개는 컨트롤러에서 **0건 사용**.
+
+| JSP | 매핑 |
+|---|---|
+| `waccount/equity/wAccountEquityCertificationError/Step/Step1~6/Step2Bridge/Step3Ocr.jsp` | 컨트롤러 사용 view 는 `joinStep`, `modifyWithDraw` 만 — verified dead |
+
+⚠️ **잔존 의심 (~7개)**: 다른 waccount 후보들 (`wAccountUpdate*`, `wAccountRegistAuthEmail*`, `wAccountNaverCallback`, `wAccountPlusInvestNice` 등)
+- `WWEBAccountUpdateService`, `WWEBAccountEquityService` 등의 `targetUrl` 변수 분기 추적 필요
+- 일부는 string literal 검색에서 발견되어 v2에서 살아남음 (`wAccountUpdateCorpBasicInfo` 등)
+- 나머지는 정적 분석으로 100% 확정 어려움
 
 ### 3.3 ~~모바일 webview 가능성~~ → **검증 완료: 앱 사용 안함 (verified dead 추가)**
 
@@ -265,11 +279,9 @@ grep -E 'mobile/equity' ios-urls.txt → 0
 
 ## 5. 권장 조치 (3차 정정)
 
-### 5.1 즉시 삭제 가능 (verified, 40개)
-- § 2 의 19개
-- + § 3.3 mobile/equity/* 21개 (Android+iOS 미사용 검증 완료)
+### 5.1 즉시 삭제 가능 (verified, 50개)
 
-**대상 그룹**:
+**대상 그룹** (4차 검증 누적):
 | 카테고리 | 수 | 검증 방법 |
 |---|---:|---|
 | 외부 redirect (community) | 3 | urlrewrite |
@@ -280,8 +292,9 @@ grep -E 'mobile/equity' ios-urls.txt → 0
 | wmain/{wmain,aiAgent,settings} | 3 | reference 0건 |
 | winclude orphan (_assetVersions, requirejs) | 2 | reference 0건 |
 | wlayout (_storeHeader, wEventPopup, wtermsCommon) | 3 | extends 0건 |
-| **mobile/equity/* (NEW)** | **21** | **Android+iOS 앱 cross-check** |
-| **합계** | **49** | (단 일부 중복 가능 — 합집합 40개) |
+| **mobile/equity/* (3차)** | **21** | **Android+iOS+FE 모든 caller 미사용** |
+| **waccount/equity/wAccountEquityCertification* (4차)** | **10** | **컨트롤러는 joinStep, modifyWithDraw 만 사용** |
+| **합계** | **59** | 일부 중복 — 합집합 **50개** |
 
 다음 단계 권고:
 1. 운영 access log 1주일치 확인 (해당 URL 진입 0건 확정)
