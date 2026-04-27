@@ -51,7 +51,7 @@
 
 | Repo | 역할 | 스택 |
 |---|---|---|
-| [com.wadiz.web](./docs/com.wadiz.web.md) | www.wadiz.kr 본체 (레거시 FE+BE) — `wadiz-frontend`로 점진 이관 중 | Spring 3.2 / Java 8 / WAR |
+| [com.wadiz.web](./docs/com.wadiz.web/) | www.wadiz.kr 본체 (레거시 FE+BE) — `wadiz-frontend`로 점진 이관 중 — **심층 분석 (8파일, 447 JSP / 303 controller / 264 mapper)** | Spring 3.2 / Java 8 / WAR |
 | [com.wadiz.adm](./docs/com.wadiz.adm/) | 전사 레거시 어드민 (JSP) — **심층 분석 (7파일, 1.8K줄, 197 컨트롤러)** | Spring 3.2 / JSP / Maven WAR |
 
 ## 5. `wadiz-app` — 모바일

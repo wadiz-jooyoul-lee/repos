@@ -4,6 +4,16 @@
 > artifactId: `markmount:com.wadiz.web` / packaging: `war`
 > 최종 webpack manifest 업데이트: 2019-10-23 (`web/WEB-INF/jsp/winclude/_assetVersions.jsp:8`)
 
+> 📅 **2026-04-27 Phase 2 승격** — 단일 파일에서 폴더 구조로 이전. 본 파일은 overview 만 담당하고, 상세는 분리 파일로:
+> - [`api-endpoints.md`](./api-endpoints.md) — 303 controller / 1,987 `@RequestMapping` 전수
+> - [`api-details/jsp-catalog.md`](./api-details/jsp-catalog.md) — **447 JSP** / 41 그룹 / 22 layout / 35 winclude (이전 "122개" 는 그룹 카운트였음 — 실제는 3.6배)
+> - [`api-details/urlrewrite-and-layouts.md`](./api-details/urlrewrite-and-layouts.md) — urlrewrite 459줄 + Filter chain 11개 + ViewResolver + jsp-template-inheritance 트리
+> - [`api-details/mybatis-mappers.md`](./api-details/mybatis-mappers.md) — 264 XML / 1,082 statement / 917 동적쿼리 / 19 SP / 147 typeAlias
+> - [`api-details/screen-campaign-detail.md`](./api-details/screen-campaign-detail.md) — 리워드 캠페인 상세 (SPA 쉘 + SEO)
+> - [`api-details/screen-payment-equity.md`](./api-details/screen-payment-equity.md) — 보상형 결제 + 투자형 청약
+> - [`api-details/screen-account.md`](./api-details/screen-account.md) — 회원가입·로그인·OAuth
+> - [`api-details/screen-mypage-and-main.md`](./api-details/screen-mypage-and-main.md) — 마이페이지 + 통합 메인
+
 ---
 
 > 📅 **2026-04-26 master pull 보강** (23 커밋 fast-forward)
