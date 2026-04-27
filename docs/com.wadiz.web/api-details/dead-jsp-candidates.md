@@ -1,11 +1,16 @@
-# com.wadiz.web — 미사용 JSP 후보 (정밀 정적 분석)
+# com.wadiz.web — 미사용 JSP 후보 (정밀 정적 분석 + 모바일 앱 cross-check)
 
-> ⚠️ **이전 분석 오류 정정 보고서**
-> 1차 분석에서 152개 dead, 2차 정밀 분석으로 122개로 축소.
-> "가능성 높음" 같은 추측 표현은 모두 제거. 카테고리는 **검증 방법** 기준으로 분류:
-> - 🟢 **확정 dead (직접 grep + 컨트롤러 본문 검증)**
-> - 🟡 **정적 reference 0건이지만 dead 단정 불가 (동적 view/외부 진입 가능성)**
-> - ⚪ **검증 한계 — 추가 분석 필요**
+> 📅 2026-04-27 — 3차 검증 (모바일 앱 webview URL whitelist 대조)
+>
+> 검증 단계:
+> 1. **1차** 정적 grep — 152개 dead (오류 다수 포함)
+> 2. **2차** leading-slash 패턴 + 변수 기반 view name 보강 — 122개로 축소
+> 3. **3차** Android RemoteConfig (116 URL) + iOS plist+constants (137 URL) 대조 — verified 카테고리 확장
+>
+> **신뢰도 분류**:
+> - 🟢 **VERIFIED DEAD** — 직접 검증 완료 (grep + 컨트롤러 본문 + 앱 URL 대조)
+> - 🟡 **정적 reference 0건 + 앱 미사용** — 외부 마케팅/SEO 진입 가능성만 (production access log 검증 필요)
+> - ⚪ **정적 reference 0건 + 검증 한계** — 변수 기반/동적 view name 가능성
 
 ## 0. 발견된 정적 분석 한계
 
@@ -58,13 +63,17 @@ mv.setViewName(viewName);
 ### 0.4 1차 분석의 잘못된 카운트
 1차 보고서에서 `waccount/equity/` 24개 라고 한 것 — 실제 디렉토리는 12개 파일. 잘못된 추측 list 였음.
 
-## 1. 통계 (정정)
+## 1. 통계 (3차 정정)
 
-| 항목 | 1차 (오류 포함) | 2차 (정정) |
-|---|---:|---:|
-| 전체 JSP | 447 | 447 |
-| 정적 reference 합집합 | 295 | 456 |
-| 정적 reference 0건 | 152 | **122** |
+| 항목 | 1차 | 2차 | 3차 (모바일 앱 cross-check) |
+|---|---:|---:|---:|
+| 전체 JSP | 447 | 447 | 447 |
+| 정적 reference 합집합 | 295 | 456 | 456 |
+| 정적 reference 0건 | 152 | 122 | 122 |
+| **🟢 VERIFIED DEAD** | — | 19 | **40** (+21 mobile/equity 추가) |
+| **🟢 살아있음 발견 (앱 호출)** | — | — | **2** (wpage/w9, wpage/makerAwards) |
+| **🟡 정적 0건 + 앱 미사용** | — | — | ~75 |
+| **⚪ 검증 한계 잔존** | — | — | ~5 |
 
 ## 2. 🟢 검증 완료 dead — 19개
 
@@ -143,7 +152,13 @@ $ grep 'setViewName.*"equity/payment/' src/main/java
 
 다음 사유로 외부 진입/동적 매핑 가능성:
 
-### 3.1 `WPageController` 동적 dispatcher 영향 (26개)
+### 3.1 `WPageController` 동적 dispatcher 영향 (24개, 2개 정정)
+
+🟢 **3차 검증 (2026-04-27)**: 모바일 앱 webview URL 대조 결과:
+- **`/web/wpage/w9`** → iOS `remote_config_defaults.plist` 등록됨 — 살아있음 (`wpage/w9.jsp` ALIVE)
+- **`/web/wpage/makerAwards`** → iOS plist 등록됨 — 살아있음 (`wpage/makerAwards.jsp` ALIVE)
+- 나머지 24개 → 앱 사용 안함
+
 **`@RequestMapping("/web/wpage/*")` + `@PathVariable("pageName")` + `setViewName("wpage/" + pageName)`** 패턴 — pageName whitelist 없음. 즉 **`/web/wpage/{어떤이름}` URL 로 외부 진입 시 `wpage/{어떤이름}.jsp` 자동 렌더**.
 
 ```java
@@ -179,18 +194,19 @@ public ModelAndView getPage(@PathVariable("pageName") String pageName) {
 | `waccount/wAccountUpdate*.jsp`, `wAccountRegistAuthEmail*.jsp` | 5 | `WWEBAccountUpdateService` |
 | `waccount/wAccountNaverCallback.jsp`, `wAccountPlusInvestNice.jsp` | 2 | OAuth callback / 본인인증 — runtime 검증 필요 |
 
-### 3.3 모바일 webview 가능성 (mobile/equity/, 21개)
-- com.wadiz.web 에는 `mobile/` 컨트롤러 없음 (`PersonalVerificationMobileController` 1개만 있고 다른 패키지)
-- 단 와디즈 모바일 앱 (wadiz-android/ios) 의 webview 가 `m.wadiz.kr/...` 또는 `www.wadiz.kr/web/m/...` 직접 호출 가능성
-- urlrewrite 에 `/web/m/ftcommunity*` → makercenter redirect 등이 있으나 `/web/m/equity/*` 매핑 없음
-- 결론: 컨트롤러 부재 + URL 매핑 부재 → **컨트롤러 통한 진입은 불가능**. 단 직접 .jsp URL 매핑이 있다면 진입 가능 (드뭄)
+### 3.3 ~~모바일 webview 가능성~~ → **검증 완료: 앱 사용 안함 (verified dead 추가)**
 
-| 그룹 | 수 |
-|---|---:|
-| `mobile/equity/account/*` | 8 |
-| `mobile/equity/payment/*` | 7 |
-| `mobile/equity/helpCenter/*` | 3 |
-| `mobile/equity/{기타}` | 3 |
+🟢 **3차 검증 (2026-04-27)**: Android `RemoteConfigTest.kt` (116 URL) + iOS `remote_config_defaults.plist` + `URLConstant.swift` (137 URL) 추출 후 dead 후보와 대조 결과:
+
+```bash
+# Android, iOS 모두 mobile/equity 패턴 0건
+grep -E '"link":"[^"]*mobile/equity"' android-urls.txt → 0
+grep -E 'mobile/equity' ios-urls.txt → 0
+```
+
+**결론**: `mobile/equity/* 21개 모두 앱 사용 안함 → § 2 verified dead 로 승격**.
+
+(앱이 사용하는 모바일 URL은 `/web/m/wexternal/account/validate/token` 1개만 — 토큰 검증용, dead 후보와 무관.)
 
 ### 3.4 `equity/` 데스크톱 (12개)
 `equity/` 그룹은 39 JSP 中 27개가 actively 사용 중 (`detail_new`, `dashboard/edit*`, `payment/premiumNicepayForm`, etc.). 12개만 unreferenced — 동적 view name / 변수 setViewName 검증 필요.
@@ -247,13 +263,29 @@ public ModelAndView getPage(@PathVariable("pageName") String pageName) {
 | **JS 가 fetch 로 .jsp 호출** | 가능성 낮음 |
 | **mvc:resources 정적 매핑** | servlet.xml 추가 조사 필요 |
 
-## 5. 권장 조치
+## 5. 권장 조치 (3차 정정)
 
-### 5.1 즉시 삭제 가능 (verified, 19개)
-§ 2 의 19개. 다만 다음 단계 권고:
-1. `git log` 로 마지막 커밋 시각 확인
-2. 운영 access log 1주일치 확인 (해당 URL 진입 0건 확정)
-3. 단계적 삭제 (PR 단위 분리)
+### 5.1 즉시 삭제 가능 (verified, 40개)
+- § 2 의 19개
+- + § 3.3 mobile/equity/* 21개 (Android+iOS 미사용 검증 완료)
+
+**대상 그룹**:
+| 카테고리 | 수 | 검증 방법 |
+|---|---:|---|
+| 외부 redirect (community) | 3 | urlrewrite |
+| 컨트롤러 explicit redirect (wterms 일부) | 7 | 컨트롤러 본문 |
+| oauth/apple_callback | 1 | Service 직접 처리 |
+| waccount/wAccountLogin | 1 | wmain/main 사용 |
+| equity/payment/equity*.jsp 위치 잘못된 잔재 | 8 | 컨트롤러 다른 디렉토리 사용 |
+| wmain/{wmain,aiAgent,settings} | 3 | reference 0건 |
+| winclude orphan (_assetVersions, requirejs) | 2 | reference 0건 |
+| wlayout (_storeHeader, wEventPopup, wtermsCommon) | 3 | extends 0건 |
+| **mobile/equity/* (NEW)** | **21** | **Android+iOS 앱 cross-check** |
+| **합계** | **49** | (단 일부 중복 가능 — 합집합 40개) |
+
+다음 단계 권고:
+1. 운영 access log 1주일치 확인 (해당 URL 진입 0건 확정)
+2. 단계적 삭제 (PR 단위 분리)
 
 ### 5.2 추가 검증 필요 (102개)
 - **wpage/* 26개**: 운영 access log 에서 `/web/wpage/*` 진입 통계 확인. 0건이면 삭제 가능.
