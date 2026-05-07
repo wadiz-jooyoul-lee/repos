@@ -11,7 +11,7 @@
 
 | Phase | 플로우 | 상태 |
 |---|---|---|
-| **A1 — 펀딩 코어** | [funding-detail](./funding-detail.md) · [funding-detail-native](./funding-detail-native.md) (✨ Android·iOS·Web 하이브리드) · [funding-payment](./funding-payment.md) · [funding-reward-select](./funding-reward-select.md) · [my-funding](./my-funding.md) · [funding-refund](./funding-refund.md) · [funding-autopay](./funding-autopay.md) | ✅ |
+| **A1 — 펀딩 코어** | [funding-detail](./funding-detail.md) · [funding-detail-native](./funding-detail-native.md) (✨ Android·iOS·Web 하이브리드) · [funding-payment](./funding-payment.md) · [funding-reward-select](./funding-reward-select.md) · [my-funding](./my-funding.md) · [funding-refund](./funding-refund.md) · [funding-autopay](./funding-autopay.md) · [funding-create](./funding-create.md) (메이커 스튜디오 개설) | ✅ |
 | **A2 — 계정/가치교환** | [login](./login.md) · [signup](./signup.md) · [mypage](./mypage.md) · [coupon-use](./coupon-use.md) · [supporter-signature](./supporter-signature.md) · [comment](./comment.md) · [feed](./feed.md) (친구·소셜 피드) | ✅ |
 | **A3 — 부가/스토어** | [search](./search.md) · [store-detail](./store-detail.md) · [store-order](./store-order.md) · [store-wish](./store-wish.md) · [notification](./notification.md) · [wai-agent](./wai-agent.md) | ✅ |
 
