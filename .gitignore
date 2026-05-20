@@ -6,6 +6,7 @@
 !/CLAUDE.md
 !/.gitignore
 !/README.md
+!execute_all
 
 # OS / editor cruft
 .DS_Store
