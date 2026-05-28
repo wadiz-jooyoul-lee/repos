@@ -1,6 +1,6 @@
-# Maker / Manager / Employee / Business / BankAccount / Contract / MakerInvitation API 상세 스펙
+# Maker / Manager / Employee / Business / BankAccount / Contract / MakerInvitation / MakerProfile API 상세 스펙
 
-메이커·담당자·사원·사업자·은행계좌·계약정보·초대 관련 **21개 엔드포인트**.
+메이커·담당자·사원·사업자·은행계좌·계약정보·초대·메이커프로필 관련 **23개 엔드포인트** (2026-05-29 갱신).
 
 - **대상 컨트롤러**:
   - `MakerController` (`/api/maker`) — 1개
@@ -15,6 +15,8 @@
   - `ContractInfoStudioController` (`/api/studio/campaigns/{campaignId}/contract-info`) — 1개, `isMaker or isAdmin`
   - `MakerInvitationController` (`/api/maker-invitations`) — 7개
   - `AdminMakerInvitationController` (`/api/admin/maker-invitations`) — 1개, `isAdmin`
+  - `MakerProfileApiController` (`/api/maker-profile`) — 1개, `isMaker or isAdmin` *(RWD-5469, 2026-05-04)*
+  - `MakerProfileInternalApiController` (`/api/internal/maker-profile`) — 1개 *(RWD-5469, 2026-05-04)*
 
 - **저장소**: MySQL 중심. 일부는 외부 API 연동(사업자 OCR, 사업자 진위검증, 계좌 실명확인).
 - **주요 테이블**: `Campaign`, `UserProfile`, `PhotoCommon`, `webpages_UsersInRoles`, `Department`, `Employee`, `MakerInvitation`, `MakerInvitationCode`, `MakerInvitationBenefit`, `CampaignContractInfo`, `CampaignContractRepresentative`
@@ -386,3 +388,29 @@ SELECT * FROM MakerInvitationCode WHERE Code = ?
 - `ProjectPhase`, `ProjectFilter` — My Project 필터
 - `MakerInvitationBenefitType` — 초대 혜택 유형
 - `MakerInvitationUserType` — INVITER / INVITEE
+
+---
+
+## 신규 API (2026-05-29 추가)
+
+### POST `/api/maker-profile/{projectNo}/register` — 메이커 프로필 등록 (RWD-5469)
+
+- **컨트롤러**: `MakerProfileApiController` — 메이커/어드민 접근 (`isMaker or isAdmin`)
+- **역할**: 프로젝트 소유자(메이커)가 외부 시스템에 메이커 프로필을 등록
+- **처리**: `MakerProfileProxy` → `RegisterMakerProfileUseCase`
+- **DB**: 외부 연동 (내부 테이블 미사용 추정)
+
+### POST `/api/internal/maker-profile/{projectNo}/register` — 메이커 프로필 등록 (내부) (RWD-5469)
+
+- **컨트롤러**: `MakerProfileInternalApiController`
+- **역할**: 내부 서비스 호출용 동일 기능 (Internal 경로)
+
+### GET `/api/global/projects/{projectNo}/partners` — 글로벌 프로젝트 파트너 조회 (RWD-5566)
+
+- **컨트롤러**: `GlobalProjectController` (`/api/global/projects`)
+- **역할**: 글로벌 펀딩 프로젝트의 파트너 목록 조회
+- **처리**: `GlobalProjectProxy` → `GlobalProjectPartnerUseCase`
+- **Response** — `GlobalProjectPartnersResponse`:
+  - `partners: List<Item>`
+    - `name: String` — 파트너 이름
+    - `code: String` — 파트너 코드

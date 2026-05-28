@@ -559,7 +559,11 @@ rewardChangeLogMongoRepository.save(RewardChangeLogDto)
 
 - **Method**: `GlobalProjectRewardController.getAllRewardByCountry`
 - **Security**: `@PreAuthorize("isOpenedOrComingSoonPosting(#projectNo) or isMaker(#projectNo) or isAdmin()")`
-- **Query**: `country` (필수), `isPreview` (선택)
+- **Query**:
+  - `shippingCountry` (선택, RWD-5492 신규) — 배송 가능 국가 코드 (**권장**)
+  - `country` (선택, Deprecated) — 하위 호환용. `shippingCountry` 없을 때 fallback
+  - `isPreview` (선택)
+  - ⚠️ `shippingCountry`와 `country` 모두 없으면 `IllegalArgumentException` 발생 (RWD-5492, 2026-04-22)
 
 ### Response — `GlobalProjectRewardResponse.RewardList`
 (rewards: List<Item> — 각 리워드의 id, name, description, limitQty, limitedHours, amount, whenOffering, offeringTime, limitType, rewardType, isAddressRequired, countryCode, shippingCharge, compositionOrSingleOptions[])
@@ -663,3 +667,24 @@ ORDER BY R.DisplayOrder, ROS.OptionLevel, RC.OrderNo, RO.OrderNo
 - `OfferingTime`: 배송 시기
 - `RewardType`: SINGLE / SET
 - `LimitType`: REWARD / OPTION / …
+
+---
+
+## 변경사항 (2026-04-21 ~ 2026-04-24)
+
+### RWD-5345 — 리워드 단건 조회(Item) 응답에서 할인 정보 제외
+
+- `GlobalProjectRewardResponse` 슈퍼클래스에 있던 `discount` 필드가 **`ListItem` 전용**으로 이동
+- **단건 조회 API 응답에는 `discount` 필드 미포함** (리스트 조회에만 포함)
+- 영향 endpoint: `GET /api/global/projects/{projectNo}/rewards/{rewardId}` (단건)
+
+### PRODUCT-781 — RewardBadge 추가
+
+- `RewardMapper.xml` 에 `RewardBadge` 테이블 JOIN 추가
+  ```sql
+  LEFT JOIN RewardBadge RB ON R.RewardId = RB.RewardId AND RB.OrderNo = 1
+  ```
+- 리워드 Summary 앞에 뱃지 타입 prefix 노출:
+  `CONCAT(IFNULL(CONCAT('[', NULLIF(RB.BadgeType,''),'] '),''), R.Summary) AS Summary`
+- **접근 테이블 추가**: `RewardBadge`
+- 영향 endpoint: 리워드 목록 조회 관련 API (결제화면·참여취소화면·배송환불 관리)

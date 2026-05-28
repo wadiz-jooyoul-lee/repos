@@ -6,14 +6,26 @@
 > - DropAccountService가 의존하는 `UserAppContactService.dropData`, `BlockCommandService.unblockAll`, `RecommendationUserInfoService.dropRecommendationRejectionData`, `TermsService.rejectByDropOut`, `SourcingClubService.deleteSourcingClubMember` 는 본 도메인 외 서비스이므로 호출 사실과 전달 인자까지만 기록.
 > - 실제 테이블 DDL은 `ddl/` 디렉터리에 있지만 본 문서는 mapper XML에 나타나는 컬럼만 근거로 삼는다.
 
+## 변경사항 (2026-04-22 ~ 2026-05-14)
+
+| 날짜 | 티켓 | 변경 내용 |
+|---|---|---|
+| 2026-04-22 | BE3-353 | `UserAccountDetail` 에 `language`, `country` 필드 추가; **`POST /api/v1/users/accounts/detail/bulk`** 신규 (최대 1000건) |
+| 2026-04-27 | BE3-353 | `detailBulk` 요청 DTO를 `UserAccountDetailDto.BulkRequest` 로 분리 — `includeDropOut` 필드 추가 (탈퇴 회원 placeholder 포함 여부) |
+| 2026-04-30 | BE3-378 | **`PUT /api/v1/users/{userId}/nickname`** 신규 (`UserNicknameController`); 닉네임 변경 후 Braze `first_name` 동기화 (`CrmApiGateway.sendNickname`, `@Async`) |
+| 2026-05-12 | BE3-378 | 닉네임 예외 코드 변경: `BLOCKED_NICKNAME` → `FORBIDDEN_NICKNAME`, `INVALID_NICKNAME` → `INVALID_NICKNAME_PATTERN` (다국어 시트 기준) |
+
+---
+
 ## 1. 개요
 
 ### 책임
-`account` 도메인은 회원의 **메타 정보 / 프로필 이미지 / 로케일 / 시간대 / 설정 / 투자형(Equity) 가입 진행 상태 / 실명 조회 / 탈퇴** 를 담당한다. 9개 컨트롤러 604 LOC 는 다음 카테고리로 나뉜다.
+`account` 도메인은 회원의 **메타 정보 / 프로필 이미지 / 로케일 / 시간대 / 설정 / 투자형(Equity) 가입 진행 상태 / 실명 조회 / 탈퇴** 를 담당한다. 9개 컨트롤러 → **10개 컨트롤러** 604 LOC 는 다음 카테고리로 나뉜다.
 
 | 카테고리 | 컨트롤러 | 설명 |
 |---|---|---|
-| 계정 정보 허브 | `UserAccountInfosController` | 다른 서비스가 user 메타를 한 번에 가져가는 핵심 API (verifyPassword, detail, SNS link, provider profile, birthDay 관리) |
+| 계정 정보 허브 | `UserAccountInfosController` | 다른 서비스가 user 메타를 한 번에 가져가는 핵심 API (verifyPassword, detail/detailBulk, SNS link, provider profile, birthDay 관리) |
+| 닉네임 | `UserNicknameController` | **신규 (BE3-378)** — 닉네임 변경 + 검증 (차단어/패턴) |
 | 실명 조회 | `FindAccountController` | 투자(equity)서비스용 `TbPersonalUserInfo.RealName` 조회 |
 | 투자 가입 상태 | `JoinEquityAccountController` | 증권형 펀딩 가입 단계/프로모션/가상계좌/적격 여부 단계별 조회 |
 | 탈퇴 | `DropAccountController` | 회원 탈퇴 원자적 처리 (11단계 연쇄) |
@@ -43,7 +55,7 @@
 | 2 | POST | `/api/v1/users/accounts/find/realname/unit` | `FindAccountController.findRealNameForUnit` | `FindAccountRealNameService.findRealNameForUnit` | `TbPersonalUserInfo` |
 | 3 | POST | `/api/v1/users/accounts/{userId}/password/verification` | `UserAccountInfosController.verifyPassword` | `UserAccountInfosService.verifyPasswordByUserId` | `webpages_Membership` |
 | 4 | GET | `/api/v1/users/accounts/type/{accountType}/count` | `UserAccountInfosController.findByAccountTypeCount` | `findByAccntType` | `UserProfile` |
-| 5 | GET | `/api/v1/users/accounts/detail/{userId}` | `UserAccountInfosController.detail` | `UserAccountInfosService.detail` | `UserProfile` ⨯ `PhotoCommon` ⨯ `webpages_Membership` |
+| 5 | GET | `/api/v1/users/accounts/detail/{userId}` | `UserAccountInfosController.detail` | `UserAccountInfosService.detail` | `UserProfile` ⨯ `PhotoCommon` ⨯ `webpages_Membership` (응답에 `language`/`country` 추가, BE3-353) |
 | 6 | GET | `/api/v1/users/accounts/type/{accountType}` | `UserAccountInfosController.findByAccountTypePage` | `findByAccntType(Pageable)` | `UserProfile` |
 | 7 | GET | `/api/v1/users/accounts/type/{accountType}/all` | `UserAccountInfosController.findByAccountType` | `findByAccntType` | `UserProfile` |
 | 8 | GET | `/api/v1/users/accounts/type/initRealNameAuth` | `UserAccountInfosController.initRealNameAuth` | `UserAccountInfosService.initRealName` | `TbPersonalUserInfo` |
@@ -82,8 +94,10 @@
 | 41 | PUT | `/api/v1/users/settings/{userId}/birth-day-display` | `UserSettingsController.putBirthDayDisplaySetting` | `UserSettingsService.setNotShowBirthDaySetting` | `UserSettings`, `UserSettingsLog` |
 | 42 | GET | `/api/v1/users/settings/{userId}/birth-day-display` | `UserSettingsController.getBirthDayDisplaySetting` | `getBirthDayDisplaySetting` | `UserSettings` |
 | 43 | POST | `/api/v1/users/dropAccount/drop` | `DropAccountController.dropAccount` | `DropAccountService.dropAccount` | `UserDropOutLog`, `DestructionPrivacyManager`, `UserProfile`, `webpages_Membership`, `webpages_OAuthMembership`, `InactiveAccountManager`, RabbitMQ, Kakao/Line |
+| 44 | POST | `/api/v1/users/accounts/detail/bulk` | `UserAccountInfosController.detailBulk` | `UserAccountInfosService.detailBulk(userIds, includeDropOut)` | `UserProfile` ⨯ `PhotoCommon` ⨯ `webpages_Membership` (BE3-353) |
+| 45 | PUT | `/api/v1/users/{userId}/nickname` | `UserNicknameController.updateNickname` | `UserNicknameService.modifyNickname` | `UserProfile` (NickName UPDATE) + Braze `first_name` 동기화 (BE3-378) |
 
-**합계: 43개**. (UserLocaleController의 `/location`·`/locale` 매핑은 같은 메서드가 두 경로를 받으므로 1개로 센다.)
+**합계: 45개**. (UserLocaleController의 `/location`·`/locale` 매핑은 같은 메서드가 두 경로를 받으므로 1개로 센다.)
 
 ---
 
@@ -147,7 +161,7 @@
 ```
 
 #### GET `/detail/{userId}?useDefaultRandomImage=true`
-- 응답: `UserAccountDetail` (`account/model/UserAccountDetail.java:11`) — `userId`, `userName`, `nickName`, `accntType`, `mobileNumber`, `ValidEmailFirstCheck`, `validMobileNumber`, `whenCreated`(Asia/Seoul), `profileImageUrl`, `hasPassword`.
+- 응답: `UserAccountDetail` (`account/model/UserAccountDetail.java:11`) — `userId`, `userName`, `nickName`, `accntType`, `mobileNumber`, `ValidEmailFirstCheck`, `validMobileNumber`, `whenCreated`(Asia/Seoul), `profileImageUrl`, `hasPassword`, **`language`** (LanguageCode), **`country`** (CountryCode) ← BE3-353 추가.
 - 주: `useDefaultRandomImage=true` 일 때 `ProfileImageService.getProfileImageUrlWithFixedRandomDefault` 로 fallback. 코멘트 "Deprecate가 목표, Random image 정책은 장기적으로 FE에서 가져가기로 합의" (`UserAccountInfosController.java:49`).
 - SQL (`account-infos-mapper.xml:56`):
 ```xml
@@ -164,6 +178,23 @@
       AND UP.UserStatus = 'NM'
 </select>
 ```
+
+#### POST `/detail/bulk` (BE3-353, 2026-04-22)
+- 요청: `UserAccountDetailDto.BulkRequest { userIds: List<Integer> @NotNull @Size(min=1,max=1000), includeDropOut: boolean (default false) }`
+- 응답: `List<UserAccountDetail>` (입력 순서 보장, 없는 userId → `userId`만 채운 빈 객체)
+- `includeDropOut=true` 이면 탈퇴 회원(`UserStatus='DO'`) 에도 `{userId, nickName, userStatus}` placeholder 반환. PII(`mobileNumber`, `accntType` 등)는 어떤 경우에도 미포함.
+- SQL (`account-infos-mapper.xml` — `detailByUserIds`):
+```xml
+<!-- detailSelectFrom fragment: UserProfile + PhotoCommon + webpages_Membership JOIN, country/language 포함 -->
+<select id="detailByUserIds" resultType="com.wadiz.wave.user.account.model.UserAccountDetail">
+    <include refid="detailSelectFrom"/>
+    WHERE UP.UserId IN
+    <foreach item="userId" collection="userIds" open="(" separator="," close=")">#{userId}</foreach>
+    -- UserStatus 필터 없음 (서비스 단에서 상태별 처리)
+</select>
+```
+- Service(`detailBulk`)는 결과 Map으로 만들어 userIds 순서로 매핑. `UserStatus == 'NM'` 이면 CDN URL + default 이미지 처리. `NM` 아닌 경우 `includeDropOut` 분기 적용.
+- **주의**: Swagger UI에서 `includeDropOut` 누락 이슈가 있었음 — `@ApiModel(value="UserAccountDetailBulkRequest")` 로 model 이름 분리해 수정 (BE3-353 follow-up, 2026-04-27).
 
 #### GET `/type/{accountType}` / `/type/{accountType}/all`
 - 전자는 `@ModelAttribute Pageable`(`page`, `size`) 페이징, 후자는 전체.
@@ -619,7 +650,35 @@ private int decryptUserIdForLong(long number) {
 
 ---
 
-### 3.9 `DropAccountController`
+### 3.9 `UserNicknameController` (신규, BE3-378, 2026-04-30)
+파일: `com.wadiz.wave.user/src/main/java/com/wadiz/wave/user/account/UserNicknameController.java` — Base `/api/v1/users`. `com.wadiz.web` 의 `WAccountUpdateService.modifyNickName` 로직을 wave.user internal API 로 이전.
+
+#### PUT `/{userId}/nickname`
+- 입력: path `userId:Integer`, body `UserNicknameDto.UpdateRequest { nickname }` (nullable — null/blank 이면 서비스에서 validation)
+- 응답: HTTP 204 No Content (성공 시 body 없음)
+- 흐름 (`UserNicknameService.modifyNickname`):
+  1. `NicknameValidator.validate(nickname)` — 차단어(`BlockedNicknameException`) → 패턴/길이(`InvalidNicknameException`) 순 검증
+  2. `userAccountInfosMapper.updateNickName(userId, trimmed)` → `UPDATE UserProfile SET NickName=? WHERE UserId=?`
+  3. `crmApiGateway.sendNickname(userId, trimmed)` (`@Async`) — Braze `first_name` attribute 동기화 (2026-04-30 추가)
+- `@Transactional` 제거됨 — 불필요한 트랜잭션 비용 제거 (BE3-378 follow-up, 2026-05-14)
+- SQL (`account-infos-mapper.xml` 추가):
+```xml
+<update id="updateNickName">
+    UPDATE UserProfile SET NickName = #{nickName} WHERE UserId = #{userId}
+</update>
+```
+
+#### 예외 처리 (코드는 클라이언트 다국어 시트 기준, 2026-05-12 확정)
+| Exception | HTTP | code |
+|---|---|---|
+| `BlockedNicknameException` | 400 | `FORBIDDEN_NICKNAME` |
+| `InvalidNicknameException` | 400 | `INVALID_NICKNAME_PATTERN` |
+
+> 초기 코드는 각각 `BLOCKED_NICKNAME`, `INVALID_NICKNAME` 이었으나 2026-05-12 BE3-378 follow-up에서 다국어 시트 기준으로 변경.
+
+---
+
+### 3.10 `DropAccountController`
 파일: `com.wadiz.wave.user/src/main/java/com/wadiz/wave/user/account/DropAccountController.java:25` — Base `/api/v1/users/dropAccount`.
 
 #### POST `/drop`

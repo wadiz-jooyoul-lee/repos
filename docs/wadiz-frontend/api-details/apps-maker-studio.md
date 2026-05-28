@@ -8,6 +8,17 @@
 > - Upstream 서버(도메인)는 **환경변수(`.env.*`)와 `studio-services/src/utils/fetch.ts` 의 매핑**에서 읽습니다. 변수 값 자체가 배포 도메인입니다.
 > - FE 코드에서 호출되는 서버의 **내부 로직**(SQL/Kotlin 호출 스택 등)은 본 문서의 범위 밖입니다. 서버 측은 `docs/com.wadiz.web/`, `docs/makercenter-be/`, `docs/app-api/` 등을 참조하세요.
 
+## 변경사항 (2026-04-21 ~ 2026-05-27)
+
+| 날짜 | 티켓 | 변경 내용 |
+|---|---|---|
+| 2026-04-21 | FE2-193 | `studio/{funding,startup,store}/src/setupSentry.ts` Sentry allowUrls 정규식에 `wadiz.co` 도메인 추가: `wadiz\.kr` → `wadiz\.(kr\|co)` (클라우드 이전 대응) |
+| 2026-04-21 | FE2-194 | `studio/funding` `IdentifyVerificationField.tsx` 미사용 PostMessage origin 코드 삭제 (클라우드 이전 정리) |
+| 2026-04-21 | FE2-195 | `studio/{funding,startup,store}` MakerQRCode 페이지에서 도메인을 `co`/`kr` 로 분기하여 **동적 URL 생성** — `startup/src/utils/makerPage.js` 에 분기 로직 추가 (클라우드 이전 대응) |
+| 2026-05-27 | FE2-422 | `.github/workflows/app-studio-ci.yml` 및 `build-studio.sh` 에 Sentry 토큰 전달 추가 — 빌드 CI에서 소스맵이 업로드되지 않던 이슈 수정 |
+
+---
+
 ## 개요 — 앱별 성격
 
 `studio/` 3개와 `apps/` 4개(5 바이너리)는 모두 `wadiz-frontend` 모노레포의 워크스페이스 진입점이며, 각 진입점은 독립된 Vite 번들을 생성합니다.

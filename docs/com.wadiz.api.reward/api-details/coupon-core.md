@@ -11,6 +11,51 @@
 
 ---
 
+## 변경사항 (2026-04-27 ~ 2026-05-14)
+
+| 날짜 | 티켓 | 변경 내용 |
+|---|---|---|
+| 2026-04-27~28 | RWD-5510 | 쿠폰 만료 알림톡 시간 양식 변경: `hh시` (12시제) → `HH시` (24시제); `SimpleDateFormat` → `DateTimeFormatter`; 만료 시각을 `LocalDateTime.now().withHour(23).withMinute(59)` 로 고정 표현 |
+| 2026-05-11 | RWD-5549 | `CouponRedeemService.redeemByIssue` 에 `@Bulkhead + @CircuitBreaker(name="couponRedeemByIssue")` + `@Transactional(timeout=5)` 적용 (Resilience4j) |
+| 2026-05-13~14 | RWD-5549 | bulkhead/circuitbreaker 설정값 완화 — 최종: bulkhead `max-concurrent-calls=100`, `max-wait-duration=0ms`; CB `failure-rate-threshold=80`, `slow-call-duration-threshold=5000ms`, `wait-duration-in-open-state=1s` |
+
+### `redeemByIssue` Bulkhead + CircuitBreaker 상세 (RWD-5549)
+
+```java
+@Transactional(timeout = 5)
+@Bulkhead(name = "couponRedeemByIssue")
+@CircuitBreaker(name = "couponRedeemByIssue")
+public CouponTransaction redeemByIssue(CouponTransactionDto.RedeemByIssue request, String issueType)
+```
+
+최종 설정 (`application.yml`, 2026-05-14):
+```yaml
+resilience4j:
+  bulkhead:
+    instances:
+      couponRedeemByIssue:
+        max-concurrent-calls: 100
+        max-wait-duration: 0ms      # 즉시 BulkheadFullException 던짐
+  circuitbreaker:
+    instances:
+      couponRedeemByIssue:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 100
+        minimum-number-of-calls: 30
+        failure-rate-threshold: 80
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 5000ms
+        wait-duration-in-open-state: 1s
+        permitted-number-of-calls-in-half-open-state: 10
+        automatic-transition-from-open-to-half-open-enabled: true
+        ignore-exceptions:
+          - io.github.resilience4j.bulkhead.BulkheadFullException
+```
+
+> `BulkheadFullException` 은 CB에서 실패로 간주하지 않도록 `ignore-exceptions` 에 포함.
+
+---
+
 ## 1. 개요
 
 `com.wadiz.api.reward` 는 크라우드펀딩/스토어 쿠폰의 **발급·등록·사용·반환·회수·취소** 와 **템플릿/발행/집계** 를 담당하는 도메인 API. base prefix `/api/v1/rewards/coupons` 하위 9개 컨트롤러가 다음과 같이 책임 분리돼 있다.

@@ -690,3 +690,34 @@ SL (selected language)
 - 각 호출에 **1초 timeout** 적용. 실패 시 해당 필드만 null로 응답
 
 Gateway 구현체는 별도 외부 서비스 HTTP 연동 (이 레포 내부에 존재하지 않는 funding-core 모듈).
+
+---
+
+## 22. 글로벌 진행 프로젝트 노출 컬렉션 자동화 (Batch)
+
+> API 엔드포인트가 아닌 배치 Job. `CollectionAutomationJobConfig` + `CollectionAutomationTasklet` (RWD-5585, 2026-05-21 신규).
+
+- **목적**: 글로벌 진행 프로젝트를 자동으로 컬렉션에 노출/제외
+- **Strategy**: `GlobalOngoingAutomatedCollection`
+- **외부 호출**: `CollectionClient` (reward 서비스 HTTP 연동)
+
+### SQL — `AutomatedCollectionMapper.findGlobalOngoingProjectIds`
+
+```sql
+SELECT C.CampaignId
+FROM Campaign C
+WHERE C.WhenOpen <= NOW()       -- ⚠️ 변경: 기존 C.IsOpen = TRUE (RWD-5585, 2026-05-22)
+  AND C.WhenClose >= NOW()
+  AND C.IsDel = FALSE
+  AND C.IsHidden = FALSE
+  AND EXISTS (
+    SELECT 1
+    FROM CampaignShippingCountry CC
+    WHERE CC.CampaignId = C.CampaignId
+      AND CC.CountryCode != 'KR'
+  )
+```
+
+> `IsOpen` 플래그 대신 `WhenOpen <= NOW() AND WhenClose >= NOW()` 시간 기반 조건으로 변경 — 실시간 오픈 여부 판정.
+
+**접근 테이블**: `Campaign`, `CampaignShippingCountry`
