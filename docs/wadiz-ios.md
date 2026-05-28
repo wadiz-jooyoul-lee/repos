@@ -443,3 +443,34 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **Crashlytics DSYM 업로드** — post-build script `Tuist/.build/checkouts/firebase-ios-sdk/Crashlytics/run` 자동 실행 (`Projects/App/Project.swift:130-136`).
 - **OSS License** — `Tuist/Package.resolved` 를 빌드 전 `Projects/App/Resources` 로 복사 → `AcknowList` 가 런타임에 표시 (`Projects/App/Project.swift:107-113`).
 - **중복 구현 주의** — `/api/funding/wishes` 찜 추가는 `Service/Activity/ActivityAPI.swift:29` 와 `App/Wish/WishesAPI.swift:33` 두 곳에 존재 (Service 레이어로 이주 중). `/api/ftaccountConfirm/*` 역시 `Service/SmsAuth` 와 `App/Protocol/ProtocolFTAccountConfirm.swift` 중복. 마이그레이션 잔재.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+### 모듈화 / 아키텍처
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| AppRouterService Service Module 분리 | 2026-05-27 | FE1-636 |
+| 프로젝트 오픈 Feature Module 분리 | 2026-05-27 | FE1-634 |
+| 프리오더 SwiftUI 전환 및 ServiceHome 모듈 이동 | 2026-04-23 | FE1-325 |
+| 개발모드 글로벌 메뉴 제거 및 국가변경 메뉴 일원화 | 2026-05-15 | FE1-639 |
+
+### 기능 추가 / 변경
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| wadiz.ai 도메인 제거 대응 | 2026-05-20 | FE1-724 |
+| 검색 결과 쿠폰 국가별 통화 표시 적용 | 2026-05-20 | FE1-673 |
+| 유저 활동 데이터 작업 | 2026-05-18 | FE1-543 |
+| OneLink deferred=false 케이스 AppRouterService 처리 추가 | 2026-05-18 | FE1-689 |
+| 딥링크 cold start 시 광고 스킵 처리 | 2026-04-20 | FE1-416 |
+| 웹뷰 인라인 미디어 자동재생 정책 복구 | 2026-04-22 | FE1-472 |
+
+### 인프라 / 보안
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| fastlane 2.235.0 업데이트 (jwt 보안 취약점 해결) | 2026-05-27 | FE1-717 |
+| Claude 관련 GitHub Actions 워크플로우 제거 | 2026-05-13 | FE1-662 |
+| review-loop 프로젝트 스킬 추가 | 2026-05-28 | FE1-785 |

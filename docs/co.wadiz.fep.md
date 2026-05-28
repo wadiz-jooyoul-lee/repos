@@ -81,17 +81,17 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 
 | Method | Path | Controller.method | 용도 |
 |--------|------|-------------------|------|
-| POST | /api/v1/accounts | AccountController.createAccount (AccountController.java:34) | Stripe Connect Express 계정 생성 |
-| POST | /api/v1/accounts/{accountId}/link | AccountController.createAccountLink (AccountController.java:41) | Stripe 온보딩 링크 생성 |
-| GET  | /api/v1/accounts/{accountId}/status | AccountController.getAccountStatus (AccountController.java:50) | 계정 상태(capabilities, requirements) 조회 |
-| GET  | /api/v1/accounts/{accountId}/payout-info | AccountController.getAccountPayoutInfo (AccountController.java:67) | 정산용 외부 은행계좌 조회 |
-| POST | /api/v1/transfers | TransferController.createTransfer (TransferController.java:24) | Connect 계정으로 Transfer(이체) 생성 |
-| POST | /api/v1/transfers/{transferId}/reverse | TransferController.reverseTransfer (TransferController.java:46) | Transfer 취소(Reversal) |
-| POST | /api/v1/webhooks/stripe | StripeWebhookController.handleStripeWebhook (StripeWebhookController.java:21) | Stripe 웹훅 (account.updated만 처리) |
+| POST | /api/internal/v1/accounts | AccountController.createAccount (AccountController.java:34) | Stripe Connect Express 계정 생성 |
+| POST | /api/internal/v1/accounts/{accountId}/link | AccountController.createAccountLink (AccountController.java:41) | Stripe 온보딩 링크 생성 |
+| GET  | /api/internal/v1/accounts/{accountId}/status | AccountController.getAccountStatus (AccountController.java:50) | 계정 상태(capabilities, requirements) 조회 |
+| GET  | /api/internal/v1/accounts/{accountId}/payout-info | AccountController.getAccountPayoutInfo (AccountController.java:67) | 정산용 외부 은행계좌 조회 |
+| POST | /api/internal/v1/transfers | TransferController.createTransfer (TransferController.java:24) | Connect 계정으로 Transfer(이체) 생성 |
+| POST | /api/internal/v1/transfers/{transferId}/reverse | TransferController.reverseTransfer (TransferController.java:46) | Transfer 취소(Reversal) |
+| POST | /api/internal/v1/webhooks/stripe | StripeWebhookController.handleStripeWebhook (StripeWebhookController.java:21) | Stripe 웹훅 (account.updated만 처리) |
 
 ## 주요 API 상세 분석
 
-### 1. POST /api/v1/accounts — Stripe Connect 계정 생성
+### 1. POST /api/internal/v1/accounts — Stripe Connect 계정 생성
 
 - 컨트롤러: AccountController.java:34
 - 입력 DTO CreateAccountRequest (payload/CreateAccountRequest.java:8):
@@ -106,14 +106,14 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 - DB 상호작용: 없음 (FEP은 Stripe ID를 로컬에 저장하지 않음 — Stripe가 source of truth)
 - 이벤트: SNS finance-event.fifo, category=LOG, eventType=ACCOUNT_CREATED
 
-### 2. POST /api/v1/accounts/{accountId}/link — 온보딩 링크 발급
+### 2. POST /api/internal/v1/accounts/{accountId}/link — 온보딩 링크 발급
 
 - 컨트롤러: AccountController.java:41
 - 입력 DTO CreateAccountLinkRequest: refreshUrl, returnUrl
 - 처리: stripeClient.v1().accountLinks().create(...) with Type.ACCOUNT_ONBOARDING (StripeGatewayImpl.java:65-80)
 - 이벤트: eventType=ACCOUNT_LINK_CREATED를 category=LOG로 SNS 발행
 
-### 3. POST /api/v1/transfers — 이체 생성
+### 3. POST /api/internal/v1/transfers — 이체 생성
 
 - 컨트롤러: TransferController.java:24
 - 헤더: Idempotency-Key 필수 (Stripe 멱등키로 그대로 전달)
@@ -128,7 +128,7 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 - 외부 연동: Stripe /v1/transfers
 - 예외: StripeException → ExternalPgException으로 래핑, GlobalExceptionHandler.java:37에서 pgStatusCode 기반으로 4xx 통과
 
-### 4. POST /api/v1/transfers/{transferId}/reverse — 이체 취소
+### 4. POST /api/internal/v1/transfers/{transferId}/reverse — 이체 취소
 
 - 컨트롤러: TransferController.java:46
 - 헤더: Idempotency-Key 필수
@@ -136,20 +136,20 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 - 처리: stripeClient.v1().transfers().reversals().create(transferId, params, requestOptions) (StripeGatewayImpl.java:113-141)
 - 이벤트: TRANSFER_REVERSED 발행 (SnsTransferEventPublisher.java:36-39, category=LOG)
 
-### 5. GET /api/v1/accounts/{accountId}/status — 계정 상태 조회
+### 5. GET /api/internal/v1/accounts/{accountId}/status — 계정 상태 조회
 
 - 컨트롤러: AccountController.java:50
 - 처리: stripeClient.v1().accounts().retrieve(accountId) (StripeGatewayImpl.java:144-171)
-- 응답: chargesEnabled, payoutsEnabled, detailsSubmitted와 requirements.currentlyDue/eventuallyDue/pastDue/disabledReason
+- 응답: chargesEnabled, payoutsEnabled, detailsSubmitted와 requirements.currentlyDue/eventuallyDue/pastDue/disabledReason + **pendingVerification, errors** (ERP-1025 추가)
 - DB: 없음, 로그 이벤트: 없음 (조회성 API)
 
-### 6. GET /api/v1/accounts/{accountId}/payout-info — 정산용 은행계좌 조회
+### 6. GET /api/internal/v1/accounts/{accountId}/payout-info — 정산용 은행계좌 조회
 
 - 컨트롤러: AccountController.java:67
 - 처리: AccountRetrieveParams.builder().addExpand("external_accounts")로 확장 조회 후 BankAccount 타입만 필터링 (StripeGatewayImpl.java:173-202) — 카드는 제외
-- 응답: bankName, last4, currency, country, accountHolderName
+- 응답: bankName, last4, currency, country, accountHolderName + **Stripe BankAccount 전체 필드** (ERP-1025 확장)
 
-### 7. POST /api/v1/webhooks/stripe — Stripe 웹훅 수신
+### 7. POST /api/internal/v1/webhooks/stripe — Stripe 웹훅 수신
 
 - 컨트롤러: StripeWebhookController.java:21
 - 입력: @RequestBody String payload + Stripe-Signature 헤더
@@ -183,7 +183,7 @@ Agent와 Batch는 동일한 failed_event 컬렉션을 각자 Document 클래스�
 
 | Collection | Document 클래스 | 주요 필드 | 용도 |
 |-----------|----------------|-----------|------|
-| finance_log | FinanceLog (finance-fep-application-agent/src/main/java/co/wadiz/fep/agent/document/FinanceLog.java:12) | id, eventType, payload(Object), createdAt | 모든 금융 이벤트(LOG 카테고리) 원본 적재 |
+| finance_log | FinanceLog (finance-fep-application-agent/src/main/java/co/wadiz/fep/agent/document/FinanceLog.java:12) | id, **externalId**, eventType, payload(Object), createdAt | 모든 금융 이벤트(LOG 카테고리) 원본 적재 (externalId: 2026-05-14 추가) |
 | failed_event | FailedEvent (FailedEvent.java:14) | id, eventId, eventType, payload, status(PENDING/RETRY/DEAD), retryCount, maxRetry, nextRetryAt, createdAt, updatedAt | DLQ 실패 이벤트 추적 및 재시도 스케줄 |
 | BATCH_JOB_* (자동) | Spring Batch Meta | MongoJobRepositoryFactoryBean이 생성 | Batch Job/Step Execution 메타데이터 |
 
@@ -198,7 +198,7 @@ Agent와 Batch는 동일한 failed_event 컬렉션을 각자 Document 클래스�
 | 파트너 | 엔드포인트 | 어디서 |
 |--------|-----------|--------|
 | Stripe Connect | https://api.stripe.com/v1/accounts, /v1/account_links, /v1/transfers, /v1/transfers/{id}/reversals | StripeGatewayImpl.java (stripe-java:31.3.0 SDK 동기 호출) |
-| Stripe Webhook | FEP 수신: POST /api/v1/webhooks/stripe → Webhook.constructEvent 서명 검증 | StripeWebhookVerifier.java:28 |
+| Stripe Webhook | FEP 수신: POST /api/internal/v1/webhooks/stripe → Webhook.constructEvent 서명 검증 | StripeWebhookVerifier.java:28 |
 
 나이스페이/Alipay+는 FEP에 없음 — nicepay-api 레포 담당.
 
@@ -269,3 +269,24 @@ SQS Queues (infra/localstack/init-aws.sh):
 - application.yml:19의 API_AUTH_API_KEY에 실제 값으로 보이는 64자 hex 토큰이 default로 박혀 있음 — 운영 전 ENV로 덮어써야 함.
 - KR 국가 거절은 AccountService.java:22에 문자열 비교로 구현 — ISO 국가코드 전체 블랙/화이트리스트 체계가 아님.
 - GlobalExceptionHandler.handleRuntime(GlobalExceptionHandler.java:52)이 모든 RuntimeException을 500으로 떨어뜨리는데, SnsAccountEventPublisher.java:53가 SNS 실패 시 RuntimeException을 던지므로 Webhook 응답이 500이 되어 Stripe가 재시도 — 의도된 설계.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 내부 API URL `/api/v1/` → `/api/internal/v1/` 일괄 변경 | 2026-05-20 | ERP-1025 |
+| 계정 상태 조회 응답에 `pendingVerification`, `errors` 필드 추가 | 2026-04-24 | ERP-1025 |
+| 정산 계좌 조회 응답 Stripe BankAccount 전체 필드 확장 | 2026-04-24 | ERP-1025 |
+| Stripe API 응답 전체 필드 추가 | 2026-04-24 | ERP-1025 |
+| account.updated 웹훅에 requirements.errors 파싱 추가 | 2026-04-24 | ERP-1025 |
+| account.updated 이벤트에 Stripe 이벤트 ID 추가 | 2026-04-27 | ERP-1025 |
+| SNS 메시지에 environment 속성 추가 | 2026-04-29 | ERP-1025 |
+| FinanceLog에 `externalId` 필드 추가 | 2026-05-14 | - |
+| JVM 메모리 설정 최적화 | 2026-05-15 | ERP-1025 |
+| 라이브(Live) 배포 설정 추가 | 2026-05-19 | ERP-1025 |
+| rc-funding, rc2-funding, clive 환경 설정 추가 | 2026-04-20 ~ 2026-05-28 | ERP-1025 |
+| GitHub Actions workflow 통합 및 clive 환경 추가 | 2026-05-28 | ERP-1025 |

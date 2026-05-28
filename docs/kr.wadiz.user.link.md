@@ -463,3 +463,19 @@ RETURN uasign AS result
 21. **Swagger 설정** — `swagger-custom.servers`로 Local 서버 단일 지정, `use-auth: false`(이 서비스는 내부 플랫폼 API이므로 앞단 Gateway에서 토큰 검증).
 22. **Neo4j 버전 차이 대응** — `use [DATABASE]` 문법은 Community에서 실패하므로 `WadizNeo4jClient.java`에서는 Driver.session()에 `database` 인자를 주지 않고, 확장만 남겨둠(`README.md:87-90`).
 23. **Build group ID `com.example`** — 초기 Spring Initializr 템플릿 잔재(`build.gradle:10`). 실제 패키지/이미지는 `kr.wadiz.user.link` / `userplatform/link`로 이미 분리됨.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| Neo4j Docker 셋업 자동화 (RC4) | 2026-04-17 | BE3-315 |
+| S3 경로 user-platform prefix 수정, sync 워크플로우 제거 | 2026-04-21 | BE3-315 |
+| neo4j 디렉토리 통합 (infra/schema/migrations) + 초기 스키마 추가 | 2026-04-27 | BE3-315 |
+| .env + NEO4J_AUTH_FILE로 컨테이너 재생성 fragility 해결 | 2026-04-27 | BE3-315 |
+| setup-neo4j.sh 호출 방식 — 환경변수 → 옵션 파라미터 | 2026-05-15 | BE3-315 |
+| setup-neo4j.sh `--s3-bucket` 필수 옵션 추가 (dev/live 버킷 분리) | 2026-05-15 | BE3-315 |
+| AWS Secrets Manager 문서 보강 (IAM·회전 절차) | 2026-05-15 | BE3-315 |

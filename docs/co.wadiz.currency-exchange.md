@@ -2,27 +2,29 @@
 
 > ⚠️ 분석은 `dev` 브랜치 기준입니다. `main` 브랜치는 README만 있는 빈 상태이며 실제 코드는 모두 `origin/dev` 에 있습니다.
 
-> 📅 **2026-04-26 dev pull 보강** (24 커밋, SCOUT-1 시리즈)
+> 📅 **2026-05-29 갱신** (최초 2026-04-26 → 이후 SCOUT-1 시리즈 계속)
 >
-> ### 신규 엔드포인트 — `display-country-code` 기반 변환
+> ### 신규 엔드포인트 — `display-country-code` 기반 변환 (2026-04-26 시점)
 > External 컨트롤러에 **2개 추가** (Internal 에는 없음 — 외부 노출 전용):
 > - `POST /api/v1/external/conversion/display-country-code` — 표시 국가 코드로 환전 금액 변환 (단건)
 > - `POST /api/v1/external/conversion/display-country-code/bulk` — 일괄 조회
 >
 > 즉 External 컨트롤러는 **9 endpoint** (이전 7 + 신규 2). Internal 은 **7 endpoint** 동일 (대칭 깨짐).
 >
-> ### 주요 변경 (SCOUT-1)
-> - **`wadiz-country` 헤더로 표시 국가 코드 수신** (한 번에 1개 국가만)
-> - 헤더 validation 추가 (`wadiz-country` 미존재/잘못된 값 거부)
-> - **소수점 정책 변경**:
->   - 환전 금액: 10째 자리 floor → **3째 자리 ceil** 로 변경
->   - 표시 통화의 소수점 유무에 따라 표시 금액 형식 분기
-> - **금액 타입 통일**: 표시 금액(BigDecimal) 외 모두 **Long** 타입으로 변경
-> - 매매기준율(baseRate) 에 **weight 반영** 하여 표시 금액 계산
-> - 응답 형식 수정 + 누락된 응답 모델 추가
+> ### 추가 변경 (SCOUT-1, 2026-04-28 ~ 2026-05-27)
+> - **Hexagonal Architecture 리팩토링** (2026-05-17): controller→service→repository layered 에서 hexagonal(adapter/port)로 전환
+>   - 패키지: `controller/` → `adapter/exchangeRate/in/web/`, `adapter/exchangeRate/out/`, `adapter/holiday/out/`
+>   - 포트: `application/exchangeRate/port/out/`, `application/holiday/port/out/`
+> - **캐싱 추가** (2026-05-17): `CacheConfig.java` — 성능 개선용 캐시 레이어
+> - **마이너스 금액 환전 방식 변경** (2026-05-27)
+> - **Tomcat + OpenSearch timeout 설정 추가** (2026-05-19), 이후 Tomcat timeout 제거 (2026-05-27)
+> - **RC2 + Live 환경 GitHub Actions workflow 추가** (2026-05-27)
+> - `wadiz-country` 헤더 validation, 소수점 정책(10자리 floor → 3자리 ceil), 금액 Long 타입 통일
 >
 > ### 영향
-> 본 문서 § "API 엔드포인트 목록" 의 External 컨트롤러는 **9 endpoint 로 갱신** 필요. SQL 변환 로직은 변경 (소수점 정책) 됐으나 OpenSearch 인덱스 구조는 유지.
+> - 본 문서 § "아키텍처" — **layered 구조 서술 → hexagonal 구조로 갱신 필요**
+> - § "API 엔드포인트 목록" — External 9 endpoint, 컨트롤러 경로 변경
+> - § 주요 API 상세 — 소수점 정책 변경 (`FLOOR 10` → `CEIL 3`) 반영 필요
 
 ## 개요
 와디즈 글로벌 결제·표시용 **환율 변환 서비스**. 대만달러(TWD), 미달러(USD) 등 외화 ↔ 원화(KRW) 변환을 OpenSearch 인덱스에 저장된 일일 환율 문서를 기반으로 계산합니다. 서포터/메이커 수수료율을 분리해 적용하며, 결제·표시 통화 분리 케이스(payment vs display)도 지원합니다. Org: `wadiz-service`. Java package: `co.wadiz.currencyexchange`.
@@ -37,10 +39,13 @@
 - Spring REST Docs (asciidoctor) — 정적 docs 빌드 후 `bootJar` 에 `static/docs` 로 포함
 
 ## 아키텍처
-- 단일 모듈, layered (controller → service → repository) 구조.
+- 단일 모듈, **Hexagonal Architecture** (adapter/port 구조, 2026-05-17 리팩토링).
+  - 이전: `controller → service → repository` layered
+  - 현재: `adapter/in/web` → `application/port` → `adapter/out` (OpenSearch/Cache)
 - 데이터: OpenSearch index `exchange-rate-v2-*` (일자별 환율 문서, 일일 인덱스 추정).
 - 서버 포트 `8080`, 헬스체크 `/actuator/health`, 메트릭 `/actuator/metrics`.
 - 환율 적재는 외부(별도 배치) — 본 서비스는 **읽기 전용 조회·계산 서비스**.
+- **캐싱** (`CacheConfig.java`) — 성능 최적화 레이어 추가 (2026-05-17).
 
 ## API 엔드포인트 목록
 
@@ -75,7 +80,7 @@
 - **처리 로직**:
   1. `getExchangeRateDocument(base, target, validAt)` — OpenSearch에서 환율 문서 1건 조회.
   2. `getFinalExchangeRate(feeType, doc)` — `SUPPORTER` → `finalSupporterBaseRate`, `MAKER` → `finalMakerBaseRate` 선택.
-  3. `CurrencyConversionUtils.convert(amount, rate, 10, FLOOR, unit)` — 소수 10째자리 floor 라운딩.
+  3. `CurrencyConversionUtils.convert(amount, rate, 3, CEIL, unit)` — 소수 3째자리 ceil 라운딩 (이전: 10째자리 floor, SCOUT-1 변경).
 - **DB 상호작용** (OpenSearch):
   ```
   GET /<index-prefix>exchange-rate-v2-*/_search
@@ -152,8 +157,27 @@
 - **읽기 전용 환율 조회 서비스** — 환율 데이터 적재(스케줄러/배치)는 다른 시스템에서 수행, 본 서비스는 조회·계산만.
 - **Virtual Threads 활성** — Boot 3.4 + JDK 21 조합에서 IO-bound API에 적합.
 - **Internal vs External 컨트롤러 동일 로직** — 라우팅·인증 분리 목적으로 코드 복제. SecurityConfig 분기 가능성 높음 (현 시점 미확인).
-- **소수점 10째 floor** — 일관된 라운딩 정책으로 정합성 보장 (서버/클라이언트 모두 동일 규칙 필요).
+- **소수점 3째 ceil** — SCOUT-1 에서 10째 floor → 3째 ceil 로 변경됨. 표시 통화의 소수점 유무에 따라 표시 금액 형식도 분기.
 - **두 단계 환율 (payment / display)** — 글로벌 다통화 표시 요구사항 반영. display 환율은 "매매기준율"(`baseRate`), payment 환율은 수수료 반영(`finalXxxBaseRate`).
 - README가 "환전 서버" 한 줄뿐이라 main 브랜치를 처음 클론하면 빈 repo로 보임 — `dev` 브랜치 체크아웃 필요.
 - Spring REST Docs로 `index.adoc` → 정적 문서가 `static/docs` 로 임베드되어 운영 시 `/docs/...` 로 접근 가능.
 - ECR repo path `core/currency-exchange-api` — 인프라 팀에서 "core" 도메인으로 분류.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (이전: 2026-04-26)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| Hexagonal Architecture 리팩토링 (adapter/port 구조) | 2026-05-17 | SCOUT-1 |
+| 성능 개선 캐싱 추가 (`CacheConfig.java`) | 2026-05-17 | SCOUT-1 |
+| 마이너스 금액 환전 방식 변경 | 2026-05-27 | SCOUT-1 |
+| Tomcat + OpenSearch timeout 설정 추가 | 2026-05-19 | SCOUT-1 |
+| RC2 + Live 환경 GitHub Actions workflow 추가 | 2026-05-27 | SCOUT-1 |
+| External 신규 API: display-country-code 단건/bulk (9 endpoint) | 2026-04-28 | SCOUT-1 |
+| wadiz-country 헤더 수신 + ISO 국가코드 validation | 2026-04-28 | SCOUT-1 |
+| 소수점 정책 변경: 10자리 floor → 3자리 ceil | 2026-04-28 | SCOUT-1 |
+| 금액 타입 Long 통일 (표시 금액 제외) | 2026-04-28 | SCOUT-1 |
+| RC 환경 GitHub Actions workflow 추가 | 2026-04-28 | CM2-175 |
