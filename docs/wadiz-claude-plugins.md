@@ -85,3 +85,17 @@ templates/
 - 플러그인 매니페스트(`plugin.json`)는 `commands` `agents` `hooks` `mcpServers` `lspServers` 모두 선택 — 팀 자유도가 높음.
 - 모바일(`client/`)에 `commands/` 가 없는 이유: 릴리즈 워크플로를 skill로 내장.
 - 신규 플러그인은 `templates/plugin-template/` 복사 → 명세 갱신만으로 등록 가능.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| [Shared] create-project 통합 스킬 신설 (3개 스킬 통합) | 2026-04-29 | - |
+| [Client] regular-release 스킬 대규모 개선 (체크포인트·이어하기·시간기반 CI·자동대기) | 2026-05-07 | - |
+| [FE2] FE 개발 workflow 스킬 추가 (Review·Verify 단계 분리) | 2026-05-06~12 | FE2-180 |
+| [Shared] create-project 정상 프로젝트 시그니처 1:1 일치 (submit-approval 보강) | 2026-05-13 | - |
+| [Client] regular-release 서비스 식별자 수정 (com.wadiz.adm → co.wadiz.adm) | 2026-05-07 | - |

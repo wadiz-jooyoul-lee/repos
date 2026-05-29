@@ -514,3 +514,34 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 17. **모바일 분리 흔적**: `/WEB-INF/jsp/mobile/` 디렉토리가 존재하며 `spring-mobile-device 1.1.3` 으로 User-Agent 감지. 반응형 전환 이후에도 일부 mobile JSP 잔존(`mobile/equity/*.jsp`).
 18. **기획전/이벤트 redirect 전량 하드코딩**: `/web/wevent/{slug}` 50여개가 urlrewrite.xml 에 일일이 기술(1:1 매핑). 신규 이벤트 추가시 urlrewrite 수정 필요 → 운영 부담 포인트.
 
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+### 인프라 / 아키텍처
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| cloud/onprem profile 자동 활성화 분기 (jib.to.image property 기반) | 2026-05-19 | RWD-5578 |
+| wave-data 버전 분기 — onprem 1.1.15 / cloud 3.1.1 Maven profile | 2026-05-19 | RWD-5578 |
+| CJCookieServletFilter / UserCookieService cookie Domain 분기 | 2026-05-20 | RWD-5578 |
+| Redis Cluster/Standalone 양쪽 mode 지원 구조 도입 | 2026-04-24 | COMMON-155 |
+| onprem env profile 자동 활성화 (`-Denvironment=<id>`) | 2026-05-20 | RWD-5578 |
+
+### 신규 기능 / 화면
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 글로벌 선정산 — 선정산 서비스 이용약관·메이커 이용약관 글로벌 분기 노출 | 2026-05-21~22 | FE2-402 |
+| og:title, og:description 소셜 메타데이터 추가 | 2026-05-19~20 | CLIENT-107 |
+| 검색 엔진 비노출 처리 | 2026-05-19 | FE2-387 |
+| hreflang 추가 (WAi·메이커·글로벌 경로), sitemap.xml 개선 | 2026-04-24~27 | CLIENT-74 |
+| 봇 요청 시 `/` → `/home` 301 리다이렉트 | 2026-04-24 | CLIENT-77 |
+| JSP 메타데이터 하드코딩 제거 및 title prefix 정규화 | 2026-05-20 | CLIENT-80 |
+| 매출UP 배너 NEW 판정 일(day) 단위 비교로 변경 | 2026-05-20 | RWD-5582 |
+| 오픈예정→본펀딩 리다이렉트 302 → 301 변경 | 2026-04-23 | CLIENT-73 |
+| /step10 진입 시 펀딩 상세 페이지로 301 redirect | 2026-04-27 | FE1-541 |
+| 사후심의 스토리 RevivalHistoryId 기준 조회, StoryVersion deprecated | 2026-04-24~27 | RWD-5500 |
+| 얼리버드 뱃지 — 참여내역·환불리스트·참여완료메일·엑셀 파일 | 2026-04-24~27 | RWD-5379 |
+| Stripe Connect 배포일·시행일 업데이트 | 2026-05-19 | FE2-395 |

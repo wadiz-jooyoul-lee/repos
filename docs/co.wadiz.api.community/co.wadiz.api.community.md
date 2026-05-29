@@ -1,14 +1,15 @@
 # co.wadiz.api.community
 
-> 📅 **2026-04-26 master pull (36 커밋, 224 파일 +)** — 본 분석 baseline 시점에는 Phase 0~1 스캐폴드 였으나, 현재는 **Phase 6 v1.3.0 풀 구현 완료**. 이 문서 본문은 baseline 기준 (구버전). 현재 구현은 아래 박스 참조.
+> 📅 **2026-05-29 갱신** (최초 분석: 2026-04-26 master pull, 36 커밋) — 본 분석 baseline 시점에는 Phase 0~1 스캐폴드 였으나, 현재는 **Phase 6 v1.3.0 풀 구현 완료 + Live 배포 완료**. 이 문서 본문은 baseline 기준 (구버전). 현재 구현은 아래 박스 참조.
 >
-> ### 현재 상태 (2026-04-26)
-> - **202 Java 파일**, **37 REST endpoint**, 10 Swagger Tag
-> - 서비스 포트 `9011` (이전 8080)
-> - Java 25 `--enable-preview` (StructuredTaskScope JEP 505), Virtual Thread, Jackson 3 + 2.x annotations 호환, RestClient 단일화
+> ### 현재 상태 (2026-05-29)
+> - **202+ Java 파일**, **37 REST endpoint**, 10 Swagger Tag
+> - 서비스 포트 `9380` (이전 9011 → 2026-04 변경)
+> - **Java 21 LTS** (Eclipse Temurin, 2026-04 Java 25 → 21 다운그레이드), Virtual Thread, Jackson 3 + 2.x annotations 호환, RestClient 단일화
+> - **root package**: `co.wadiz.api.community` (이전 `co.wadiz.community` → RWD-5550 리네임)
 > - 모듈 구조:
 >   ```
->   src/main/java/co/wadiz/community/
+>   src/main/java/co/wadiz/api/community/
 >   ├── config/{middleware, properties, db}
 >   ├── integration/{mail, user, push, campaign, points, event}
 >   ├── module/supporter_signature/   # ★ wave.user V3 11 컨트롤러 풀 이관
@@ -21,7 +22,15 @@
 > - **공개 API 11 컨트롤러** (V3, wave.user 와 동일 경로):
 >   `/api/v3/supporter-signatures{,/keywords,/points,/interest-degree}`,
 >   `/api/v3/users/{userId}/supporter-signatures`, `/api/v3/supporter-signatures/{comments,affiliates}` 등
+> - **추가된 API**: `GET /api/v3/supporter-signatures/affiliates/targets` (포인트 적립 대상 조회, RWD-5453)
+> - **제거된 API**: 지지서명 ID 조회 API 제거 (dangling 체인 cascade 삭제, RWD-5532)
 > - 사내 `ARCHITECTURE.md` 추가 — Modular Monolith 설계 철학
+> - **EKS 배포 인프라** 도입 — jib 컨테이너 빌드 + k8s ConfigMap bootstrap + GitHub Actions (RC1/RC2/Live)
+> - **Consul Discovery** 연동 (rc1/localdev 프로파일)
+> - **logback-spring.xml** 로깅 레이어 도입 (live 로그 정책 funding 서비스와 동치, RWD-5598)
+> - **DB**: 전용 community-api DB 계정으로 분리 (main/replica), MySQL 5.7 호환 SQL 컨벤션 정착
+> - **mysql-connector-j 8.0.33** 고정 (RWD-5598)
+> - **@ConditionalOnBean** production 에서 제거 — dev/test 환경 가드는 autoconfigure.exclude 로만 유지
 >
 > ### 분석 영향
 > - **`docs/_flows/supporter-signature.md`** — 기존엔 `com.wadiz.web → RestTemplate → wave.user`. 현재 community 가 동일 V3 경로 풀 구현 상태이므로 **RestTemplate target 이 community(9011)로 전환됐는지 / 라우팅 분기 중인지 검증 필요**.
@@ -33,12 +42,13 @@
 `com.wadiz.wave.user` 의 **Supporter Signature V3** 모듈을 독립 서비스로 포팅하며, 신규 커뮤니티 기능(messaging, points, campaign 등)을 함께 개발 중인 신규 서비스입니다. **(baseline 시점 Phase 0~1 스캐폴드)** — 현재는 풀 구현 (위 박스 참조). Org: `wadiz-service`.
 
 ## 기술 스택 (현 시점)
-- **Java 25** (LTS toolchain)
+- **Java 21 LTS** (Eclipse Temurin; 초기 Java 25에서 RWD-5508 에서 다운그레이드)
 - **Spring Boot 4.0.5**
 - **Gradle 9.4.1 Kotlin DSL**
 - **MyBatis 4.0.1** + **QueryDSL 7.0** (`io.github.openfeign.querydsl` fork)
 - **MapStruct 1.6.3**
-- **SpringDoc 3.0.0** (OpenAPI)
+- **SpringDoc 3.0.0** (OpenAPI, GroupedOpenApi + @Tag 통합)
+- **mysql-connector-j 8.0.33** (고정, RWD-5598)
 - Redis, RabbitMQ, JPA(예정)
 - 가장 신스택 — 회사 내 미래 표준 검증용 성격.
 
@@ -125,3 +135,28 @@ src/test/java/co/wadiz/community/
 - **two-tier SLA RestClient** (`campaignShortRestClient` 1s/2s) — 빠른 fallback 용도 사전 마련.
 - **Phase 6 OAuth2 활성** 주석 처리 — 인증 통합 시점이 도메인 구현 이후로 잡혀 있음.
 - 도메인 코드는 비어 있어 분석 가치는 **설정 패턴** 위주. 진행도 추적은 git log로 확인 권장.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (이전: 2026-04-26)
+
+| 변경 내용 | 관련 이슈 | 비고 |
+|---|---|---|
+| Java 25 → Java 21 LTS (Eclipse Temurin) 다운그레이드 | RWD-5508 | EKS 인프라 정렬 |
+| 서비스 포트 9011 → 9380 | RWD-5466/5508 | |
+| root package `co.wadiz.community` → `co.wadiz.api.community` | RWD-5550 | 전체 패키지 리네임 |
+| EKS 배포 인프라 도입 (jib + k8s ConfigMap + GitHub Actions) | RWD-5509 | RC1/RC2/Live |
+| Consul Discovery 연동 | RWD-5466 | rc1/localdev 프로파일 |
+| 새 API: `GET /affiliates/targets` (포인트 적립 대상 조회) | RWD-5453/5466 | |
+| 지지서명 ID 조회 API 제거 | RWD-5532 | dangling chain cascade 삭제 |
+| Swagger UI GroupedOpenApi + @Tag 통합 | RWD-5532 | 그룹 dropdown, cloud prefix |
+| Cache 레이어 JSON 직렬화 재설계 | RWD-5509 | |
+| @ConditionalOnBean production 제거 | RWD-5509 | dev/test는 autoconfigure.exclude 유지 |
+| DB community-api 전용 계정 분리 (main/replica) | RWD-5550 | |
+| logback-spring.xml 로깅 레이어 도입 | RWD-5598 | live 로그 정책 funding 동치 |
+| mysql-connector-j 8.0.33 고정 | RWD-5598 | |
+| HTTP pool keep-alive validate 30s → 1s (race 회피) | RWD-5577 | |
+| BIT(1) IS TRUE 술어 일괄 치환 | RWD-5577 | MySQL 5.7 호환 |
+| application-dev.yml → application-odev.yml 리네임 | RWD-5509 | |

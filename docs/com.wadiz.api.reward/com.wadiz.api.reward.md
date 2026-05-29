@@ -272,3 +272,16 @@ JPA Entity + MyBatis 테이블을 종합.
 - **멀티 트랜잭션 매니저**: `@WadizTx` 또는 `@Transactional("wadizTransactionManager")` 를 `wadiz_db` 접근 시 명시해야 함.
 - 보안 토큰(알림, funding, backoffice 등)이 `application-default.yml`에 평문으로 포함되어 있음 — 실제 운영 환경은 별도 주입 권장.
 - Java 1.8 + Spring Boot 2.6.7 + springdoc 1.x 조합으로, 서비스 중 상대적으로 **중간 연식**의 스택.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| `redeemByIssue` 장애 차단 — Bulkhead + Circuit Breaker 적용 | 2026-05-11~14 | RWD-5549 |
+| 쿠폰 만료일 시간 양식 변경 (24시 표현) | 2026-04-28 | RWD-5510 |
+| 부스터 쿠폰 유효기간·카톡 푸시 발송 유효기간 오류 수정 | 2026-04-27 | RWD-5510 |
+| reward-model version up | 2026-04-28 | RWD-5510 |
