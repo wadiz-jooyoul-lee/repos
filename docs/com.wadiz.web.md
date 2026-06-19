@@ -52,6 +52,55 @@
 
 ---
 
+> 📅 **2026-06-18 master pull 보강** (205 커밋 / +8,790 −3,481, 256 파일)
+>
+> SEO(sitemap/robots/메타데이터) 동적화와 펀딩 상세 캐시 정합성, 글로벌 Stripe 정산·달러 결제, 사후심사 권한 보강이 핵심입니다.
+>
+> ### 펀딩 상세 캐시 정합성 (FE1-959)
+> - `WEBCampaignController#selectCampaign` 의 304 처리를 **로그인 사용자에 한해 ETag 기반**으로 변경 (`WEBCampaignController.java:106-122`). ETag 소스는 `lastModified:userId:성인인증상태` 를 MD5 해시한 값. 본문에 로그인·성인인증 상태가 SSR 되므로, 콘텐츠 시간만으로 304 를 주면 **다른 사용자 상태가 캐시되어 노출되는 인증 sync 갭** 이 발생하던 문제 해소.
+> - 비로그인(봇 포함)은 사용자 무관 본문이므로 기존 `Last-Modified` 경로 유지 → SEO 304 보존.
+> - `DefaultInterceptor` 에서 전역 `ADULT_VERIFICATION` request attribute 주입 제거 (`DefaultInterceptor.java:158-161` 삭제). 성인인증 상태 조회 책임을 펀딩 상세 컨트롤러로 이전 — 미사용 성인인증 ETag 축·전역 렌더 제거.
+>
+> ### SEO 동적화 (CLIENT-86 / CLIENT-104 / CLIENT-53 / CLIENT-133)
+> - **신규 패키지 `com.wadiz.web.seo`** — sitemap 전용. `SeoSitemapController`(144줄) + `SitemapSearcherGateway`(searcher 페이징 순회 수집) + `SitemapXmlBuilder`(urlset 렌더).
+>   - 정적 `sitemap.xml`(index)·`sitemap-static.xml` 은 `web/` 의 정적 템플릿을 읽어 **현재 환경 도메인으로 치환**해 서빙 (1회 치환 후 `ConcurrentHashMap` 캐시).
+>   - 동적 `sitemap-funding.xml`·오픈예정·스토어 는 searcher 목록으로 렌더하고 결과를 **ehcache `sitemapXml` 캐시**에 저장(목록이 아닌 **렌더된 XML 문자열** 캐시로 변경). 펀딩·오픈예정 sitemap 엔트리에 글로벌 hreflang + 언어 변형 4개를 각각 url 엔트리로 등록.
+>   - 신규 정적 파일: `web/sitemap-static.xml`, `web/sitemap.xsl`. `web/sitemap.xml` 은 index 구조로 전환(531 → 대폭 축소). (CLIENT-86)
+> - **robots-noindex 앱 설정 조회** (CLIENT-104) — `AppSettingsRobotsNoIndex` 모델 + `AppSettingsService.getAppSettingsRobotsNoIndex()` (인메모리 **TTL 5분 캐시**, 실패 시 직전 캐시 유지). app-api 의 `web-server`/`robots-noindex` feature 설정에서 `corpNos`·`fundingProjectNos` 를 읽어 `DefaultInterceptor` 가 모델로 주입 → `robotsNoindex.jsp`(campaign/makerprofile) 가 `campaignId` 매칭 시 `<meta name="robots" content="noindex">` 출력. 비노출 목록을 JSP 하드코딩에서 모델 주입 값으로 전환.
+> - **정적 페이지 메타데이터 시트화** (CLIENT-53) — `GlobalKoreaUIController` 등의 하드코딩 `og/twitter/title/description` 을 제거하고 `html-metadata*.properties` 시트 기반 동적 메타데이터로 전환(`about_slogan_innovation_begins_page.meta.*` 등). 부수적으로 `AppSettingsService` 를 `settings` → **`app.service` 패키지로 이동**.
+> - **robots.txt** (CLIENT-133) — 인증/개인화 신규 SPA 경로 대량 disallow 추가(`/web/wish`, `/wish`, `/my-wadiz/`, `/studio/`, `/notifications`, `/social/friends`, `/refer-a-friend`, `/create-project`, `/maker/*` 등), Sitemap 지시문 유지.
+>
+> ### 약관/정책 HTML (FE2-498 / FE2-539 / FE2-426 / FE2-454)
+> - 수수료 반환 범위 변경에 따른 **선정산 서비스 이용약관**(`early_payout_20260430.html`) + **메이커 이용약관**(`funding_maker_service_20260522.html`, 1,268줄) 개정 (FE2-498/539, Stripe connect 정산·환불 정책 반영).
+> - 신규/개정 정책 HTML: `funding_report_20250930.html`(상품정보제공고시), `property_20230829.html`, `reward_screening_policy_20260413.html`(리워드 심사 정책), `ad_review_20240530.html`.
+> - **지식재산권 보호 정책 폐지** — 심사/신고/광고심사 정책 목록에서 제거 (FE2-426/454).
+>
+> ### 글로벌 Stripe 정산·달러 결제 (RWD-5285 / RWD-5375 / RWD-5661)
+> - **`StripeFundingGateway`**(140줄) + Stripe Account/Person/BankAccount/Payout 응답 모델 + `CreateStripeAccount(Link)Request`. 정산정보(`CampaignContractorService`, `settlement`)에 Stripe Connect / PayoutMethod(`PayoutMethodType`, `CampaignPayoutMethodRepository`) 도입 — intro/임시저장 분기, Stripe Account·세금계산서 email 까지 확인 후 정산 상태 판단.
+> - **달러 결제/환불·달러 쿠폰** — `BackingPaymentFx`(환율 적용 결제) + `CurrencyExchangeClient`/`ExchangeRateConvert(Request|Response)` 로 환전 서버 연동, `ServiceType.GLOBAL_STRIPE` 추가, 쿠폰 다운로드/조회 v2 분기(국가·환율 기준). `payment-fx-mapper.xml` 신규.
+> - 국가 통관정보 필요 여부 유형 세분화 — `CustomsInfoRequiredType` (RWD-5621).
+>
+> ### 사후심사·메이커 스튜디오 (RWD-5514 / RWD-5609 / RWD-5706)
+> - **추가질문(QnA) v2 API** — `MakerCommunicationAddQuestionV2Controller`(80줄), `MakerMessage`/`QnAFile`/`QnAFileMapping` 모델, 첨부파일 업로드, 사후심사 재제출(`SectionStatus.REVIVAL_APPLY_FEEDBACK`), 피드백 reset. v1 deprecated, `SectionType` enum 을 funding-core 로 이관.
+> - 사후심사 제출 시 Adm 수정 항목 제어용 **`CampaignMarker` 저장/신규 MarkerId** 추가, 정보 피드백 시 수정 권한 체크(메이커정보 권한 ALL 로 변경) (RWD-5609/5706).
+>
+> ### 본인인증·계정
+> - **성인인증 자가증명 앱 v3 PUT API** (BE3-488) — `APIAccountV3Delegate#updateAdultVerification` (`PUT /v3/account/adult-verification/my`). **글로벌(비KR) 전용** — 국내는 NICE ID 인증 필요로 거부, `ageConfirmed` 필수.
+> - 대표자 본인인증 필요 유무 판단 API 수정 (RWD-5710).
+> - **암복호화 추상화 레이어** — `com.wadiz.core.crypto.*`(CryptoApiClient/CryptoHelper/DamoTextCryptor 등) 신규, crypto-api 연동 (RWD-5415).
+>
+> ### 운영/기타
+> - **스쿨 신청 폼** offline·컨설팅 유형 추가 + 미사용 코드 정리 (RWD-5600).
+> - 펀딩 진행 중 **배송지 변경·배송 상태 노출** 허용 (FE1-788).
+> - 지지서명 트래킹을 커뮤니티 신규 API(`SignatureTrackingClient`, `SupporterSignatureV3UserCommunityGateway`)로 교체 (RWD-5548).
+> - `file_service_api_host` properties 갱신, 메일 푸터 로고 링크 `wadiz.ai → wadiz.kr`(BE3-496), 정산 스케줄 NPE 방어·역직렬화 수정(SCOUT-72), 정산정보 계약정보 복호화 후 검증(RWD-5692).
+>
+> ### 분석 영향
+> - **`docs/_flows/funding-detail.md`**: 304/캐시 로직이 로그인 사용자 ETag 분기로 변경 — sync 갭 설명 반영 필요.
+> - **신규 SEO 흐름**: `/sitemap*.xml` 동적 서빙 + robots-noindex 가 컨트롤러/인터셉터로 이동. 4.1 URL 표·6장에 SEO 섹션 보강 후보.
+
+---
+
 ## 1. 개요
 
 `com.wadiz.web` 는 `https://www.wadiz.kr` 본체를 구성하는 Spring 3.2 + JSP 레거시 WAR 프로젝트입니다. 리워드/투자(증권형) 펀딩 상세·청약·결제·마이페이지·커뮤니티 등 **와디즈 유저 사이드 거의 전 기능을 담고 있는 모놀리식 웹 서버**입니다.
@@ -185,6 +234,7 @@ URL은 대부분 `/web/*` 접두어(과거 `/ko/Campaign/Details/*` 호환성 �
 | `/web/redirect/hashkey/*`, `/web/redirect/keyword/*` | 단축 URL 리다이렉트 | `web/redirect/controller/*` | — |
 | `/web/wterms/*`, `/web/waccount/wAccountLogin` 등 | 약관/계약/본인인증 | `web/wterms/*`, `web/waccount/*` | `wterms/*.jsp` |
 | `/web/diagnosis/ping` | 헬스체크 | `web/diagnosis/controller/DiagnosisController.java` | JSON |
+| `/sitemap.xml`, `/sitemap-static.xml`, `/sitemap-funding.xml`(+오픈예정·스토어) | SEO sitemap (정적은 도메인 치환, 동적은 searcher 렌더 + ehcache 캐시) | `web/seo/controller/SeoSitemapController.java` | XML |
 | `/api/*` | (Jersey) account/campaign/ftcampaign/login/notification/waccount/wcampaign/wcode/wmain/wmypage/wpoint/store/startupApp/membership/social | `com.wadiz.api.**` | JSON |
 | `/web/apip/*` | 외부 API 프록시 (main-api / funding-api) | `com.wadiz.core.httpproxy.ApiProxyServlet` | JSON |
 | `/web/maker-proxy/*` | maker-api 프록시 (스튜디오 SPA 용) | `com.wadiz.core.httpproxy.MakerApiProxyServlet` | JSON |
@@ -519,7 +569,7 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-06-18** (최초: 2026-04-20)
 
 ### 인프라 / 아키텍처
 | 변경 내용 | 날짜 | 관련 이슈 |
@@ -545,3 +595,19 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 | 사후심의 스토리 RevivalHistoryId 기준 조회, StoryVersion deprecated | 2026-04-24~27 | RWD-5500 |
 | 얼리버드 뱃지 — 참여내역·환불리스트·참여완료메일·엑셀 파일 | 2026-04-24~27 | RWD-5379 |
 | Stripe Connect 배포일·시행일 업데이트 | 2026-05-19 | FE2-395 |
+| 펀딩 상세 ETag(로그인 사용자) 기반 304 — 로그인·성인인증 상태 캐시 sync 갭 해소, 성인인증 전역 렌더 제거 | 2026-06-18 | FE1-959 |
+| SEO sitemap 동적화 — index 구조 전환, 정적 도메인 치환, 펀딩·오픈예정·스토어 searcher 렌더 + ehcache 캐시, hreflang/언어변형 등록 | 2026-06-05~15 | CLIENT-86 |
+| robots-noindex 앱 설정 조회(인메모리 TTL 5분 캐시) → 펀딩/메이커프로필 noindex meta 모델 주입 | 2026-06-15~17 | CLIENT-104 |
+| 정적 페이지 하드코딩 메타데이터를 html-metadata 시트 기반 동적 메타데이터로 전환, AppSettingsService → app.service 패키지 이동 | 2026-06-07~10 | CLIENT-53 |
+| robots.txt 인증/개인화 신규 SPA 경로 대량 disallow(/web/wish, /studio/, /maker/* 등) | 2026-05-29~06-10 | CLIENT-133 |
+| 글로벌 Stripe Connect 정산·PayoutMethod 도입, 달러 결제/환불·달러 쿠폰(환전 서버 연동, GLOBAL_STRIPE) | 2026-04~05 | RWD-5285 / RWD-5375 / RWD-5661 |
+| 국가 통관정보 필요 여부 유형 세분화 (CustomsInfoRequiredType) | 2026-06-02 | RWD-5621 |
+| 사후심사 추가질문(QnA) v2 API·첨부파일·재제출, v1 deprecated, SectionType funding-core 이관 | 2026-05 | RWD-5514 |
+| 사후심사 제출 시 Adm 수정 항목 제어용 CampaignMarker/MarkerId, 메이커정보 권한 ALL | 2026-06-08~16 | RWD-5609 / RWD-5706 |
+| 성인인증 자가증명 앱 v3 PUT API (PUT /v3/account/adult-verification/my, 글로벌 전용) | 2026-06-09 | BE3-488 |
+| 대표자 본인인증 필요 유무 판단 API 수정 | 2026-06-17 | RWD-5710 |
+| 암복호화 추상화 레이어 도입(com.wadiz.core.crypto) 및 crypto-api 연동 | 2026-05-19 | RWD-5415 |
+| 선정산·메이커 이용약관 개정(수수료 반환 범위), 지식재산권 보호 정책 폐지 | 2026-05~06 | FE2-498 / FE2-539 / FE2-426 / FE2-454 |
+| 스쿨 신청 폼 offline·컨설팅 유형 추가 | 2026-05~06 | RWD-5600 |
+| 펀딩 진행 중 배송지 변경·배송 상태 노출 허용 | 2026-05-28 | FE1-788 |
+| 지지서명 트래킹을 커뮤니티 신규 API로 교체 | 2026-06-04 | RWD-5548 |

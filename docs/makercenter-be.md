@@ -1,5 +1,21 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-06-16 master pull 보강** (3 커밋)
+>
+> ### FE2-421 — 2026 ISMS 대응: 어드민 계정 발급 절차 변경
+> - **`PATCH /api/manager/modify`** 의 슈퍼관리자(SU) 처리 로직 수정 (`ManagerService.java:436-446`)
+> - 기존: `work`(담당 업무) 값은 **본인 정보 수정일 때만** 반영
+> - 변경: SU가 수정하면 **본인/타인 구분 없이 항상 `work`를 반영** (`manager.setWork(...)`를 본인 분기 밖으로 이동). 비밀번호 변경은 여전히 본인 수정일 때만.
+>
+> ### CLIENT-141 — 세션 자동 로그아웃 2시간→24시간
+> - `application.yml`의 `server.servlet.session.timeout` 을 `7200`(2h) → `86400`(24h)으로 조정. 미사용 방치 시 자동 로그아웃 시간을 와디즈 본 서비스와 동일하게 맞춤.
+>
+> ### FE2-447 — 어드민 PDF 첨부 시 content-type 지정
+> - `S3Util.uploadFile` 에서 업로드 파일 확장자가 `pdf`면 `ObjectMetadata.setContentType("application/pdf")` 지정 (`S3Util.java:29-40`)
+> - 미지정 시 S3 기본값 `application/octet-stream` 으로 저장되어 앱 웹뷰가 PDF로 인식하지 못하고 "No Preview"가 뜨던 문제 해결. 그 외 확장자는 기존대로 octet-stream 유지.
+
+---
+
 > 📅 **2026-04-26 master pull 보강** (3 커밋, CLIENT-58)
 >
 > ### 어드민 기획전 대리 벌크 신청 신규
@@ -408,10 +424,13 @@ DB: `wadiz_makercenter` (MySQL/MariaDB, Master/Slave). MyBatis 매퍼 XML에서 
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-06-16** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 어드민 계정 수정 시 SU는 본인/타인 구분 없이 `work` 항상 반영(ISMS 대응) | 2026-06-09 | FE2-421 |
+| 세션 자동 로그아웃 2시간→24시간(`session.timeout` 86400) | 2026-06-05 | CLIENT-141 |
+| 어드민 PDF 첨부 시 S3 content-type `application/pdf` 지정 | 2026-06-02 | FE2-447 |
 | 기획전 신청폼 문항 진입 GTM 이벤트 수집 추가 | 2026-05-26 | CLIENT-119 |
 | 게시글 `is_raw_html` 컬럼 및 DTO 필드 추가 | 2026-05-22 | CLIENT-116 |
 | 클라우드 이전 — 메이커센터 서버에서 `wadiz.co` 도메인 허용 | 2026-05-22 | FE-11896 |

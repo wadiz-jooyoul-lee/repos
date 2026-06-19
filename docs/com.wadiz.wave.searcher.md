@@ -174,6 +174,25 @@ public void timerBulkLastEnteredFeeds() {
 - **검색 결과의 광고 카드 mixin** — `service/advertise/AdvertisementServiceImpl` 가 `business.wadiz.kr` 광고 API 와 결합. 현재 응답에 어느 시점에 광고가 끼는지(server-side mix vs FE composition) 별도 분석 필요.
 - **AI 검색** — `external/searchai` 패키지 + `search-ai` 외부 API 가 있음. 어느 검색 엔드포인트가 이걸 호출하는지(임베딩/시맨틱 보강) 별도 추적.
 
+## 최근 변경사항
+
+**분석 갱신일: 2026-06-01** (이전: 2026-04-29)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 통합검색 응답 `hasCoupon` 을 ES 원본 필드 대신 `countryTypes` 기반 파생값으로 변경 | 2026-05-30 | DISPLAY-1564 |
+
+### `hasCoupon` 파생 로직 (DISPLAY-1564)
+
+`/api/search/v2/products`, `/api/search/v3/integrate` 등 통합검색 응답의 쿠폰 보유 여부(`hasCoupon`)를, ES 도큐먼트에 색인된 `hasCoupon` 필드를 그대로 내려주던 방식에서 **요청 국가코드(`countryCode`) 와 도큐먼트의 `countryTypes` 매칭으로 계산해 내려주는 방식**으로 변경. 즉 "이 쿠폰이 해당 국가에 노출되는가"를 응답 시점에 동적으로 판정.
+
+- **`model/CountryCode.java`** — 헬퍼 2개 추가
+  - `matchingCountryTypes()` : 이 국가에 매칭되는 `countryTypes` 후보 목록을 동적 생성. `KR` 이면 `[KR, ALL]`, 그 외(US/CN/JP 등)는 `[{code}, ALL, GLOBAL_ALL]`.
+  - `matchesAny(Collection<String> countryTypes)` : 인자의 `countryTypes` 중 위 후보에 하나라도 포함되면 `true`. `null`/빈 컬렉션이면 `false`.
+- **`model/campaign/IntegrateCampaign.java`** — `Set<String> countryTypes` 필드 신규 추가. `@JsonProperty(WRITE_ONLY)` + `@ApiModelProperty(hidden = true)` 로 **입력(역직렬화) 전용**, 즉 ES 도큐먼트에서 읽어들이기만 하고 API 응답에는 노출하지 않음.
+- **`model/search/converter/IntegrateCampaignToResponseConverter.java`** — MapStruct 변환 4종(`convertToStore`/`convertToFunding`/`convertToComingSoon`/`convertToPreOrder`)에 `@Mapping(target = "hasCoupon", ... qualifiedByName = "mapHasCoupon")` 추가. `mapHasCoupon` 은 `countryCode == null` 이면 `false`, 아니면 `countryCode.matchesAny(source.getCountryTypes())` 반환.
+- **`core/campaign/converter/IntegrateCampaignResultConverter.java`** — 4-arg `convert` 오버로드(`@Context CountryCode` 포함)에 동일한 `mapHasCoupon` 매핑 추가.
+
 ## 참고
 
 - 본 서비스 호출자(외부 경계) 정리는 [`docs/_flows/search.md`](./_flows/search.md) (검색 플로우)

@@ -125,7 +125,42 @@
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-06-18** (최초: 2026-04-20)
+
+### 계정 / 로그인 (2026-06)
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 와디즈 앱 웹뷰에서 구글/페이스북 SNS 로그인·가입 차단(임베디드 웹뷰 OAuth 정책 대응). 차단 시 안내 알럿 노출, `isWadizAndroidApp`/`isWadizIosApp` UA 플래그로 앱 웹뷰 판별 | 2026-06-17 | FE1-846 |
+| 인앱 SNS 차단 로직(`inAppBlacklist`/`isInAppBlock`/`inAppBlackHandler`)을 `apps/account/src/shared/oauth/inAppBlock.js` 단일 모듈로 공통화(기존 import는 re-export 유지). 차단 표시명을 `WADIZ_APP` 상수로 통합 | 2026-06-17 | FE1-846 |
+| JSP 문서 캐싱으로 인한 로그인 갱신 이슈 수정 — `AccountSettings` 생성자에서 `window.wadiz.globals` 기반 초기화 제거, 항상 `initialize()` 호출로 세션 확인하도록 변경 | 2026-06-16 | FE1-950 |
+
+### 개발자 도구 — 앱 설정 콘솔(app-settings-console) 전면 개편 (2026-06)
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| FSD(Feature-Sliced Design) 구조로 재구성(app/pages/entities/shared), axios→네이티브 fetch 전환, CSS Modules + WDS 토큰 도입, Button·Select·AppSettingCard 컴포넌트 분리 | 2026-06-15~16 | CLIENT-104 |
+| `local` 환경 + `platform`(web/web-server) 선택 추가, 환경·플랫폼 선택값을 URL 쿼리 파라미터로 유지, 우측 상단 환경 워터마크 표시, app-settings API 네임스페이스 방식 호출 | 2026-06-15~16 | CLIENT-104 |
+| 상세는 [`api-details/apps-maker-studio.md` §8-A](./api-details/apps-maker-studio.md) 참조 | | |
+
+### 글로벌 / 펀딩 상세 (2026-06)
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 직접 입력 옵션 안내문구 노출 — by-country 리워드 응답의 `optionGuide` 필드 정합 및 안내문구 폰트/색상/간격 디자인 대응 | 2026-06-18 | FE1-979 |
+| 마이와디즈 공지 배너 여백 보정(PC 16px/MO 10px) + 서포터 클럽 혜택 가로 스크롤 페이드 그라데이션 오버레이 추가 | 2026-06-16 | FE1-952 |
+
+### 스튜디오 / 스토리 AI (2026-06)
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 스토리 생성 AI 진입구 확대 — 프로젝트 만들기 페이지·펀딩 스튜디오에 StoryGenerationBanner/StoryGenerationSection·AITextButton 등 진입 UI 추가 | 2026-06-15 | FE2-532 |
+| 펀딩 스튜디오 시작·종료일 기간 표기 오류 수정 — 기간 계산 유틸(`helpers/date.ts`) 추가 후 일정/오픈예정 현황 페이지에 적용 | 2026-06-16 | FE2-543 |
+| 스튜디오 e2e schedule GitHub Action 추가(시크릿 키 inputs 선언 포함) | 2026-06-17 | FE2-549 |
+
+### studio-services 신규 API 클라이언트 (2026-06)
+| 변경 내용 | 관련 이슈 |
+|---|---|
+| `funding/campaign-markers.services.ts` — 인디맨드 펀딩 여부 조회(`/web/apip/funding/campaign-markers/{id}/indemand-funding`) | |
+| `funding/studio-stripe-accounts.services.ts` — Stripe Connect 계정 상태 조회(`PayoutMethodType` NICE/PINGPONG/STRIPE, `StripeKycStatus` 10종) | |
+| `reward/maker-communications.services.ts` — 언어별 메이커 피드백 최신/히스토리·추가 질문 조회(`/web/reward/api/v2/maker-communications/...`) | |
+| `reward/studio-campaigns.services.ts` — 사후심사 재제출(`revival-re-submit`) 및 스튜디오 캠페인 상태/배너 응답 타입 | |
 
 ### 글로벌 / 결제
 | 변경 내용 | 날짜 | 관련 이슈 |

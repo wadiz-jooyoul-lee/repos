@@ -140,7 +140,7 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 
 - 컨트롤러: AccountController.java:50
 - 처리: stripeClient.v1().accounts().retrieve(accountId) (StripeGatewayImpl.java:144-171)
-- 응답: chargesEnabled, payoutsEnabled, detailsSubmitted와 requirements.currentlyDue/eventuallyDue/pastDue/disabledReason + **pendingVerification, errors** (ERP-1025 추가)
+- 응답: chargesEnabled, payoutsEnabled, detailsSubmitted와 requirements.currentlyDue/eventuallyDue/pastDue/disabledReason + **pendingVerification, errors** (ERP-1025 추가) + **capabilities** (Map<String,String>, 예: card_payments=active, transfers=active — StripeGatewayImpl.java:176-185에서 account.getCapabilities() raw JSON을 파싱, ERP-1025 추가)
 - DB: 없음, 로그 이벤트: 없음 (조회성 API)
 
 ### 6. GET /api/internal/v1/accounts/{accountId}/payout-info — 정산용 은행계좌 조회
@@ -157,7 +157,7 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 - 처리 로직:
   1. StripeWebhookVerifier.verifyAndParse (StripeWebhookVerifier.java:22-29) — Webhook.constructEvent(payload, sig, secret), 서명 불일치 시 400
   2. account.updated 이벤트만 분기 처리 → AccountWebhookService.handleAccountUpdated(rawJson) (AccountWebhookService.java:24-52) — Jackson JsonNode로 수동 파싱
-  3. AccountUpdatedCommand 생성 → SnsAccountEventPublisher.publishAccountUpdated (SnsAccountEventPublisher.java:30-36)
+  3. AccountUpdatedCommand 생성 → SnsAccountEventPublisher.publishAccountUpdated (SnsAccountEventPublisher.java:30-36). 발행 이벤트(AccountUpdatedEvent)에는 chargesEnabled/payoutsEnabled/detailsSubmitted/requirements 외에 **capabilities** 맵도 포함 — 웹훅 JSON의 `capabilities` 오브젝트를 String 값만 추려 파싱(AccountWebhookService.toStringMap, ERP-1025 추가).
   4. SNS에 category=STRIPE_ACCOUNT_UPDATED, messageGroupId=account-{accountId} (FIFO 키)로 publish + 동시에 category=LOG로 이중 기록
 - 외부 연동: Stripe → FEP 수신 / FEP → SNS 발행 / Agent가 SQS stripe-account-updated-webhook.fifo에서 구독
 
@@ -233,6 +233,7 @@ SQS Queues (infra/localstack/init-aws.sh):
 ### 인프라/설정
 
 - spring-cloud-starter-kubernetes-client-config + bootstrap.yml / bootstrap-kubernetes.yml → ConfigMap에서 환경별 설정 로드(live/rc/dev).
+- 배포 환경 프로파일: odev / cdev / dev / rc / rc2 / rc4 / clive / live (api·agent·batch별 application-{env}.yml). GitHub Actions deploy-api/agent/batch 워크플로우가 브랜치(dev/rc/rc2/rc4/cloud_dev/cloud_live/main)별로 gitops 경로(core/{rc1,rc2,rc4,cdev,clive}/fep-*.yaml)에 매핑(deploy-api.yml). API 문서 도메인 표(index.adoc)에 odev=dev-platform.wadizcorp.net/fep, rc/rc2/rc4=rc{,2,4}-platform.wadizcorp.net/fep, cdev=api.dev.wadiz.co/fep 등록.
 - Jib 이미지 빌드: ECR 843734097580.dkr.ecr.ap-northeast-2.amazonaws.com/core/fep-{api,agent,batch} 태그 주입(-Dimage.tag).
 - LocalStack(docker-compose.yml + infra/localstack/init-aws.sh)으로 개발환경에서 SNS/SQS/토픽/구독 자동 생성.
 
@@ -255,6 +256,12 @@ SQS Queues (infra/localstack/init-aws.sh):
 
 - StripeWebhookController.java:34에서 오직 account.updated만 분기 처리. 그 외 Stripe 이벤트(charge.*, payout.*, transfer.* 등)는 200 OK로 무시됨.
 
+### NICE 연동 RestClient 설정 (NicepayConfig)
+
+- `nicepayRestClient` 빈(NicepayConfig.java:18): baseUrl=NicepayProperties.apiUrl, 기본 헤더 `Content-Type: application/json` + `Charset: utf-8`.
+- 요청/응답 로깅 interceptor 추가 — 요청 URI/헤더/body(UTF-8 문자열), 응답 상태/헤더를 INFO 로그로 기록(NicepayConfig.java:25-35).
+- **인코딩 최종 상태(ERP-1025)**: NICE 요청 본문은 **원본 UTF-8 그대로 전송**한다. 작업 중 `Content-Type: charset=EUC-KR` 및 본문 EUC-KR 인코딩을 시도한 커밋(2aa4866 등)이 있었으나, Jackson 호환성 문제로 모두 되돌려졌고(9c524d7 revert) 최종적으로는 `application/json` Content-Type에 `Charset: utf-8` 헤더만 남았다. 즉 EUC-KR 변환은 적용되지 않은 net 결과.
+
 ### Ingress 인증
 
 - 고정 API Key Bearer 방식 (api.auth.api-key 프로퍼티, 기본값 하드코딩 — 운영에서는 ENV 오버라이드 전제). JWT/OAuth 등은 사용하지 않음.
@@ -274,10 +281,16 @@ SQS Queues (infra/localstack/init-aws.sh):
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-06-19** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| NicepayConfig에 NICE API 요청/응답 로깅 interceptor 추가 | 2026-06-04 | ERP-1025 |
+| NICE 요청 인코딩 최종 정리 — EUC-KR 변환 시도 후 모두 revert, `application/json` + `Charset: utf-8` 헤더로 원본 UTF-8 전송 유지 | 2026-06-04 | ERP-1025 |
+| account.updated 웹훅 발행 이벤트에 `capabilities`(Map) 필드 추가 | 2026-06-01 | ERP-1025 |
+| 계정 상태 조회 응답에 `capabilities`(Map) 필드 추가 | 2026-06-01 | ERP-1025 |
+| 배포 환경 odev / cdev / rc4 추가 및 환경별 application yml·CI/CD 분기 정리 | 2026-06-01 ~ 2026-06-02 | ERP-1025 |
+| rc/rc2/clive/live에 nicepay api-url 추가, 미사용 stripe.accounts 설정 제거 | 2026-05-28 ~ 2026-05-29 | ERP-1025 |
 | 내부 API URL `/api/v1/` → `/api/internal/v1/` 일괄 변경 | 2026-05-20 | ERP-1025 |
 | 계정 상태 조회 응답에 `pendingVerification`, `errors` 필드 추가 | 2026-04-24 | ERP-1025 |
 | 정산 계좌 조회 응답 Stripe BankAccount 전체 필드 확장 | 2026-04-24 | ERP-1025 |

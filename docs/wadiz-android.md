@@ -51,12 +51,15 @@ Gradle 서브프로젝트 전수 (`settings.gradle.kts:31-69`). 각 모듈 한 �
 ### `build-config`
 - `build-config` — 버전/bearer 토큰 등 `buildConfigField` 주입 담당. `BuildConfig` 를 공유하기 위한 라이브러리 모듈. (`build-config/build.gradle.kts:19-36`)
 
+### `scripts` (codegen 전용 JVM 모듈)
+- `scripts` — 디자인 토큰 codegen 전용 순수 Kotlin/JVM 모듈 (`application` 플러그인, JVM 11). `JsonToColorGenerator` 가 `wadiz-client/design-tokens` 의 `color.normalized.tokens.json` 을 읽어 `Color.kt` / `GradationColor.kt` / `ExtraColor.kt` 를 생성. `./gradlew :scripts:generateColors` 태스크. (`scripts/build.gradle.kts`, `scripts/src/main/java/com/wadiz/scripts/JsonToColorGenerator.kt`) — i18n 동기화 워크플로(i18n-scheduler/worker)와 동일 패턴의 컬러 동기화(colors-scheduler/worker) 자동 PR 봇.
+
 ### `core/*`
 | 모듈 | 역할 |
 | --- | --- |
-| `core:analytics` | Firebase/Braze/Wadi-tag(heatmap)/Clarity 래퍼 |
+| `core:analytics` | Firebase/Braze/Wadi-tag(heatmap)/Clarity/GA4 전자상거래 래퍼 |
 | `core:common` | 공통 상수(`WadizConstant`), 유틸, arch 인터페이스 |
-| `core:data` | Repository 구현 (network → domain 변환), mapper, firebase, ads cache |
+| `core:data` | Repository 구현 (network → domain 변환), mapper, firebase, ads cache, `abtest/MainHomeExperimentProvider`(Remote Config 기반 A/B 할당) |
 | `core:database` | Room DB |
 | `core:datastore` | DataStore Preferences/Proto 저장소 (`HiddenPreferenceHelper` 등) |
 | `core:design-system` | WDS 컴포넌트, Compose UI 토큰, drawable |
@@ -118,7 +121,7 @@ Gradle 서브프로젝트 전수 (`settings.gradle.kts:31-69`). 각 모듈 한 �
 Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `ServerMode.Server` 라는 Kotlin 인터페이스를 런타임에 **`WadizHiddenMenu.getServerMode()`** 가 반환하고, 이 인스턴스를 Hilt 로 주입해 `apiUrl`, `platformUrl`, `appApiUrl` 등 속성을 Retrofit `baseUrl()` 에 전달한다. (`core/legacy/wadiz-common/src/main/java/com/markmount/wadiz/util/ServerMode.kt:6-72`)
 
 - `release` 빌드 타입 → `feature/src/release/java/.../WadizServerSelector.kt:41-54` 가 **고정 Live URL** 반환. 히든 메뉴 없음 (`hasMenu()=false`).
-- `debug` / `qa` 빌드 타입 → `feature/src/debug/java/.../WadizServerSelector.kt` 가 히든 메뉴(`AlertDialog`) 로 `dev | cdev | rc | rc2 | rc3 | stage | live | local` 중 선택, `HiddenPreferenceHelper` 에 저장 후 `exitProcess(0)` 재시작.
+- `debug` / `qa` 빌드 타입 → `feature/src/debug/java/.../WadizServerSelector.kt` 가 히든 메뉴(`AlertDialog`) 로 `cdev | rc | rc2 | rc3 | stage | live | local` 중 선택, `HiddenPreferenceHelper` 에 저장 후 `exitProcess(0)` 재시작. (FE1-764: CDEV 실사용 정착에 따라 기존 `dev` 환경 제거됨. `ANDROID-3037` 으로 도입된 cdev 는 서버/앱 배포 후 전환되는 리모트 환경)
 - `core:build-config` 는 URL 이 아닌 **외부 파트너 bearer token** 과 `SERVER_MODE` 문자열만 `buildConfigField` 로 노출 (`build-config/build.gradle.kts:23-36,47,57,68`).
 
 ### 환경별 URL 전체 표
@@ -255,7 +258,8 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 
 | Feature 모듈 | 엔드포인트 | 도메인 | 용도 | 트리거 화면/이벤트 |
 | --- | --- | --- | --- | --- |
-| `feature:main-tab` | `GET /main2/api/v9/main` | `platformUrl(.main)` | **홈 메인 큐레이션** (페이지, 추천, ai) | 홈 탭 렌더 / Pull-to-refresh. `PlatformMainAPIService.kt:23` |
+| `feature:main-tab` | `GET /main2/api/v9/main` | `platformUrl(.main)` | **홈 메인 큐레이션** (페이지, 추천, ai) | 홈 탭 렌더 / Pull-to-refresh. `PlatformMainAPIService.kt:25` |
+| `feature:main-tab` | `GET /main2/api/v10/main` (헤더 `X-Experiment`, `X-Device-Type=ANDROID_APP`) | `platformUrl(.main)` | **홈 AI 추천 A/B 실험판** (FE1-686) — 실험 파라미터를 쿼리→헤더로 전환 | 홈 탭 렌더 시 실험군 할당된 경우. `PlatformMainAPIService.kt:37` |
 | `feature:main-tab` | `GET /main2/api/v1/quickmenu` | `platformUrl(.main)` | 홈 상단 퀵메뉴 | 홈 진입. `PlatformMainAPIService.kt:48` |
 | `feature:main-tab` | `POST /main2/api/v1/recentview` | `platformUrl(.main)` | 최근 본 프로젝트 일괄 조회 | 홈 최근 본 섹션. `PlatformMainAPIService.kt:39` |
 | `feature:main-tab` | `GET /main2/api/v3/my-wadiz` | `platformUrl(.main)` | 홈 하단 마이와디즈 요약 | 홈 스크롤 | `PlatformMainAPIService.kt:53` |
@@ -455,6 +459,8 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 - **Wadiz AI (`feature:wai`)** — `wadiz.ai` 도메인 진입용 네이티브 래퍼. 별도 `aiDomainUrl`.
 - **Clarity heatmap** (`com.microsoft.clarity:clarity-compose`) — Compose 화면 세션 리플레이/히트맵. `core:analytics`.
 - **Waditag (자체 분석)** — Firebase Analytics + AppsFlyer 외에 **사내 `analytics.wadiz.kr`** 에 GET(ScreenView) / POST(Click) 로 이벤트 전송. action=2010 이 PV.
+- **Compose 임프레션(노출) 수집 — Modifier.Node 재작성 (FE1-799)** — 기존 `composed{}` 기반 `Modifier.impression` 이 recomposition 마다 인스턴스를 재생성하고 노드마다 `ProcessLifecycleOwner` 옵저버를 등록(노드 N개 = 옵저버 N개)해 홈 노출이 과수집되던 근본 원인(`ANDROID-3068`)을 제거. `ModifierNodeElement` + `Modifier.Node`(`BaseImpressionNode`/`ImpressionNode`/`GenericImpressionNode`)로 재작성, 가시성은 `registerOnLayoutRectChanged` + `RelativeLayoutBounds.fractionVisibleInWindow`(임계 >0.5, 1000ms hold) 로 측정. 신규 `ImpressionGate`(`view/compose/ImpressionGate.kt`)가 앱당 1개 옵저버로 통합(background 경계는 기존 ON_PAUSE/RESUME 유지). 콜사이트 37개 시그니처 무변경. (테스트 `ImpressionNodeTest`/`ImpressionGateTest`/`ImpressionUiTest`)
+- **메인홈 AI 추천 A/B 테스트 + GA4 전자상거래 (FE1-686)** — `core:data/abtest/MainHomeExperimentProvider` 가 Firebase Remote Config 기반으로 실험군을 할당하고, 홈 요청을 `/main2/api/v10/main` (실험 파라미터를 헤더 `X-Experiment` 로 전송)으로 분기. GA4 전자상거래 item-level 에 `experiment`(값 `{실험명}_{실험군}`, 예 `RECOMMENDATION_A`) + `item_source` 필드 추가(`EcommerceInterface`/`Ga4Tag`). A/B 노출·클릭은 데이터팀용 `ua_event+와디탁` 발사를 제거하고 Firebase 목표 이벤트(`main_home_recommendation_impression`/`_click`) 1건 + GA4 전자상거래 `experiment` 필드로 통합(`TraceModelMainHomeAb`). `Modifier.mainHomeAbTracking` 이 전자상거래 impression 과 A/B impression 을 하나의 `Modifier.impression(List)` 로 합쳐 발사(노출 modifier 중첩 시 안쪽 `onVisibilityChanged` 가 가려져 `view_item_list` 0건이던 회귀 해결). 와디태그(WADI) detail 채널에서 `item_source`/`experiment` 가 빠지던 회귀도 별도 수정(FE1-805).
 - **다중 Firebase 설정** — `app/google-services.json`, `build-config/google-services.json`, `feature/src/{debug|local|rc|release|stage}/google-services.json` 등 환경별 분리.
 - **중복 Retrofit Provider 주의** — `WadizStoreApiProvider.WadizStoreApiProvider()` 재귀 이름이 오타성 매서드 (`WadizAppAPIProvider.kt:246-251`). 실제 동작은 `WadizStoreAPIService` 주입.
 - **Play Policy Lint** — `play-policy-insights-lint` 0.1.4 로 Google Play 정책(Accessibility, Background Location 등) 위반 사전 감지 (`app/build.gradle.kts:66-81`).
@@ -465,7 +471,27 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-06-19** (이전: 2026-05-29, 최초: 2026-04-20)
+
+### 주요 릴리즈 (v26.23.0)
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| Compose 임프레션 수집 Modifier.Node 재작성 (옵저버 N개 누적/과수집 제거) | 2026-06-01 | FE1-799 |
+| 메인홈 AI 추천 A/B 테스트 구조 + GA4 전자상거래 `experiment`/`item_source` 필드 도입 (wadiTrace 제거, `/main2/api/v10/main` + `X-Experiment` 헤더, impression 노드 중첩 회귀 fix) | 2026-05-29 | FE1-686 |
+| 와디태그(WADI) detail 채널 `item_source`/`experiment` 누락 회귀 수정 | 2026-06-01 | FE1-805 |
+| CDEV 실사용 정착 → 기존 DEV 환경 제거 | 2026-05-29 | FE1-764 |
+| 디자인 토큰(컬러) 자동 동기화 — `scripts` 모듈 + `JsonToColorGenerator` + colors-scheduler/worker 워크플로 | 2026-05-11 | FE1-633 |
+| WebView blob/data 등 미지원 스킴 다운로드 크래시 방어 | 2026-06-01 | FE1-802 |
+| 라이브커머스 PIP 미진입 수정 (prefetch 지원 기기 + 메이커 모드 포함) | 2026-06-01 | FE1-807/809 |
+| 상세 네이티브 프래그먼트 재진입 시 스켈레톤 겹침 수정 | 2026-06-01 | FE1-810 |
+| 검색결과 탭 전환 시 스크롤 최상단 초기화 수정 | 2026-06-01 | FE1-811 |
+| 글로벌 메인홈 오픈예정 랭킹(마지막 카드) 미노출 수정 (죽은 가드 제거) | 2026-06-01 | FE1-801 |
+| 글로벌(한/미/일 외) 쿠폰 추천 미노출 수정 (`displayDiscountAmount` 금액 Int→Double 파싱) | 2026-05-29 | QA-22165 |
+| 검색결과 사용가능 쿠폰 국가·통화 적용 (쿠폰 API v2 + currency 추가) | 2026-05-21 | FE1-675 |
+| 성인인증 후 같은 프로젝트 재진입 시 상세 겹침 수정 (펀딩 URL path 정규식 한정) | 2026-05-28 | FE1-749 |
+| 계정 변경 후 위시리스트에 이전 계정 위시 노출 문제 수정 | 2026-05-21 | FE1-718 |
+| 디자인 시스템 메시지 박스 컬러 변경 | 2026-05-21 | FE1-720 |
+| 디버그 빌드에서만 Cloud 전환 로직 사용하도록 안정성 개선 | 2026-04-16 | FE1-402 |
 
 ### 주요 릴리즈 (v26.20 ~ v26.21.2)
 | 변경 내용 | 날짜 | 관련 이슈 |

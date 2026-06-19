@@ -1,6 +1,6 @@
 # Batch 모듈 상세 스펙
 
-Spring Batch 기반 **24개 Job** (20개 도메인). 별도 `bootstrap/batch` 모듈로 독립 실행 JAR를 생성하며(`BatchBootstrap.main`), `adapter/batch`에 모든 Job/Step/Tasklet이 정의된다.
+Spring Batch 기반 **28개 Job** (24개 도메인; 2026-06 스팸가드 3종·`stripeConnectReminderJob` 추가). 별도 `bootstrap/batch` 모듈로 독립 실행 JAR를 생성하며(`BatchBootstrap.main`), `adapter/batch`에 모든 Job/Step/Tasklet이 정의된다.
 
 > **기록 범위**: 이 레포의 Tasklet · Reader/Writer 클래스와 MyBatis Mapper XML에서 직접 관찰 가능한 호출만 기록. UseCase 구현체(`StoryTranslationUseCase`, `LanguageExpansionUseCase`, `MakerClubUseCase`, `AIReviewUseCase`, `TranslationQualityMonitorUseCase` 등)는 외부 jar(`funding-core`) 또는 `core/domain` 내부에 있어 내부 호출 순서·SQL은 확인 불가. Gateway 포트를 경유하는 내부 로직은 **"UseCase 호출 (core 내부)"** 로 표시.
 >
@@ -47,6 +47,36 @@ Spring Batch 기반 **24개 Job** (20개 도메인). 별도 `bootstrap/batch` �
 | **운영/인프라** | `safeNumberReleaseJob` | Tasklet |
 | **운영/인프라** | `collectionCampaignGradeJob` | Tasklet |
 | **운영/인프라** | `migrationOngoingStoryJob` | Tasklet |
+| **스팸가드** | `signatureSpamGuardJob` | Tasklet |
+| **스팸가드** | `personalMessageSpamGuardJob` | Tasklet |
+| **스팸가드** | `miniBoardSpamGuardJob` | Tasklet |
+| **Stripe** | `stripeConnectReminderJob` | Step 4개 (순차) |
+
+---
+
+## 스팸가드 카테고리 (2026-06 신규, RWD-5694)
+
+게시판 피싱 봇 글을 감지해 삭제하고 Slack 웹훅으로 리포트하는 배치 3종. 판정 로직은 공용 `core/domain/spamguard/PhishingDetection`(알려진 피싱 템플릿 n-gram Jaccard 유사도 + 도메인 스푸핑 링크·wadiz 사칭 링크·피싱 키워드)에 위임한다. 각 Tasklet은 최근 N분(스캔 윈도우, 기본 10분) 게시물을 조회 → 판정 → 삭제 → Slack 리포트하며 `enabled`/`dryRun` 프로퍼티로 제어한다.
+
+| Job | 대상 게시판 | 설정/게이트웨이 | 삭제 방식 |
+|---|---|---|---|
+| `signatureSpamGuardJob` | 지지서명(Signature) | `SignatureSpamGuardJobConfig`·`SignatureSpamGuardGatewayImpl` | Community API `DELETE /api/v3/supporter-signatures/{id}` (`DELETED_BY_ISSUE`) — RWD-5697 |
+| `personalMessageSpamGuardJob` | 1:1 메신저(PersonalMessageBoard) | `PersonalMessageSpamGuardJobConfig`·GatewayImpl | DB 직접 처리(MyBatis Mapper) |
+| `miniBoardSpamGuardJob` | 미니 게시판 댓글(MiniBoardCommon) | `MiniBoardSpamGuardJobConfig`·GatewayImpl | DB 직접 처리(MyBatis Mapper) |
+
+---
+
+## Stripe 카테고리 (2026-06 신규, RWD-5285)
+
+### `stripeConnectReminderJob`
+
+**설정 파일**: `domain/stripeconnectreminder/StripeConnectReminderJobConfig.java`
+
+Stripe Connect 메이커 정산 계정 인증이 지연된 메이커에게 리마인드 메일을 보내는 Job. **Step 4개 순차 실행**:
+- Step 1·2: 사업자 인증 진행 1·2차 리마인드 (`CREATED`/`NOT_SUBMITTED` + 3일·7일 경과)
+- Step 3·4: 추가 서류 1·2차 리마인드 (`ADDITIONAL_INFO_REQUIRED` + 3일·7일 경과)
+
+Step 실패 격리(`.on("*")`)로 어떤 ExitStatus든 다음 Step 진행, Tasklet 내부 try/catch로도 격리하여 항상 COMPLETED 종료. Jenkins cron 매일 09:00 KST 실행.
 
 ---
 

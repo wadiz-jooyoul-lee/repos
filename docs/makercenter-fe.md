@@ -70,10 +70,13 @@
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-06-19** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 전역 서체 Pretendard 적용 + 전역 스타일 통합 (`global.scss` 신설, `mui-css-baseline.scss`·`main.scss` 통합), 에디터 본문(`.fr-view`) 서체 Pretendard 상속, 불필요 서체 NotoSansKR 제거, 모바일 인풋 포커스 시 페이지 자동확대 방지 | 2026-06-05~09 | FE2-465 |
+| 앱 웹뷰 첨부파일 다운로드 시 blob 대신 https 원본 URL 처리 (blob 스킴 크래시 회피, PC는 파일명 지정 다운로드 유지) | 2026-06-01 | FE2-447 |
+| 채널톡(Channel.io) 제거 + 구 Footer dead asset(`Footer.tsx`/`.module.scss`·`wadizCopy.svg`·`chatCircle.svg`) 제거 | 2026-06-01 | FE2-425 |
 | 기획전 신청폼 문항 진입 GTM 이벤트 수집 추가 | 2026-05-26 | CLIENT-119 |
 | 게시글 본문 렌더 시 `fr-view` 래퍼 조건부 부착 | 2026-05-22 | CLIENT-116 |
 | 로그인 완료 이벤트 수집 추가 | 2026-05-20 | CLIENT-110 |

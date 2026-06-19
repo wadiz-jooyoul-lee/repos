@@ -3,7 +3,7 @@
 > 📅 **2026-05-29 갱신** (최초 분석: 2026-04-26 master pull, 36 커밋) — 본 분석 baseline 시점에는 Phase 0~1 스캐폴드 였으나, 현재는 **Phase 6 v1.3.0 풀 구현 완료 + Live 배포 완료**. 이 문서 본문은 baseline 기준 (구버전). 현재 구현은 아래 박스 참조.
 >
 > ### 현재 상태 (2026-05-29)
-> - **202+ Java 파일**, **37 REST endpoint**, 10 Swagger Tag
+> - **202+ Java 파일**, **44 REST endpoint** (공개 37 + adm 관리자 7, RWD-5698), 12 컨트롤러
 > - 서비스 포트 `9380` (이전 9011 → 2026-04 변경)
 > - **Java 21 LTS** (Eclipse Temurin, 2026-04 Java 25 → 21 다운그레이드), Virtual Thread, Jackson 3 + 2.x annotations 호환, RestClient 단일화
 > - **root package**: `co.wadiz.api.community` (이전 `co.wadiz.community` → RWD-5550 리네임)
@@ -23,6 +23,7 @@
 >   `/api/v3/supporter-signatures{,/keywords,/points,/interest-degree}`,
 >   `/api/v3/users/{userId}/supporter-signatures`, `/api/v3/supporter-signatures/{comments,affiliates}` 등
 > - **추가된 API**: `GET /api/v3/supporter-signatures/affiliates/targets` (포인트 적립 대상 조회, RWD-5453)
+> - **추가된 adm 관리자 API (RWD-5698)**: `/api/v3/admin/supporter-signatures/**` + `/api/v3/admin/users/{userId}/supporter-signatures/**` — 다중조건 검색(삭제 포함), 답글 목록, 개별 삭제/복구, 답글 생성/삭제/복구 (2 컨트롤러 · 7 endpoint). Swagger '지지서명' 그룹에 함께 노출
 > - **제거된 API**: 지지서명 ID 조회 API 제거 (dangling 체인 cascade 삭제, RWD-5532)
 > - 사내 `ARCHITECTURE.md` 추가 — Modular Monolith 설계 철학
 > - **EKS 배포 인프라** 도입 — jib 컨테이너 빌드 + k8s ConfigMap bootstrap + GitHub Actions (RC1/RC2/Live)
@@ -139,6 +140,20 @@ src/test/java/co/wadiz/community/
 ---
 
 ## 최근 변경사항
+
+**분석 갱신일: 2026-06-17** (직전: 2026-05-29)
+
+| 변경 내용 | 관련 이슈 | 비고 |
+|---|---|---|
+| adm 관리자 지지서명 API 신설 — 2 컨트롤러 (`SupporterSignatureAdminController` / `SupporterSignatureAdminUserController`) + `SupporterSignatureAdminService` | RWD-5698 | base `/api/v3/admin/supporter-signatures`, `/api/v3/admin/users/{userId}/supporter-signatures` |
+| 새 API: `GET /admin/supporter-signatures/search` (다중조건 검색, 삭제 포함) | RWD-5698 | param `includeDeleted`/`commentIncludeDeleted`/`includeEmptyContent`/`statusType` 등 |
+| 새 API: 관리자 답글 목록 `GET /{signatureId}/comments`, 개별 삭제/복구, 답글 생성/삭제/복구 | RWD-5698 | userId scope 컨트롤러로 분리 (소유자 검증) |
+| `includeEmptyContent` / `commentIncludeDeleted` 검색 파라미터 추가 | RWD-5698 | 검색 commentCount 삭제포함 기본화 |
+| admin API Swagger '지지서명' 그룹 노출 (`/api/v3/admin/**` pathsToMatch 추가) | RWD-5698 | `OpenApiConfig` |
+| 단건 삭제 API 삭제상태 일원화 + `DELETED_BY_ISSUE` 유형 추가 | RWD-5697 | `delete(signatureId, statusType)` 단일 위임, `isDeleteStatus()` helper (비삭제 상태 403) |
+| 트래킹 생성 요청 `affiliateType` 필수값 검증 (`@NotNull` + Schema REQUIRED) | RWD-5548 | `CreateTrackingRequest` |
+| clive(IDC live ECR) GitHub Actions workflow 추가 | RWD-5613 | `aws_deploy_ecr_clive.yml` |
+| APM/관측 agent 정책 — Elastic 1.55.6 + WhaTap weaving live 정상 동작 확인 | RWD-5607 | CLAUDE.md (코드 변경 0) |
 
 **분석 갱신일: 2026-05-29** (이전: 2026-04-26)
 

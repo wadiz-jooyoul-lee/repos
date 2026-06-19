@@ -1,6 +1,7 @@
 # co.wadiz.api.community — API 엔드포인트 전수 목록
 
-> 2026-04-26 기준 풀 구현 상태. **11 컨트롤러 · 37 REST endpoint**. 모든 path 가 `wave.user` V3 와 1:1 일치 (이관 완료).
+> 2026-04-26 기준 풀 구현 상태. **12 컨트롤러 · 44 REST endpoint**. 공개 API(`/api/v3/...`) 는 `wave.user` V3 와 1:1 일치 (이관 완료).
+> **2026-06-17 갱신 (RWD-5698)**: adm(관리자) 지지서명 관리 API 2 컨트롤러 · 7 endpoint 추가 (`/api/v3/admin/...`). 검색(삭제 포함)·답글 조회·개별 삭제/복구·답글 생성/삭제/복구.
 > 상세 분석: [`api-details/supporter-signature-module.md`](./api-details/supporter-signature-module.md)
 
 ## 1. SupporterSignatureController (`controller/SupporterSignatureController.java:30`)
@@ -100,8 +101,24 @@ base: `/api/v3/users/{userId}/supporter-signatures`
 |---|---|---|
 | POST | `/{signatureId}/affiliates` | 제휴 등록 |
 
-## 11. (예상 11번째 컨트롤러)
-사내 doc 기준 11 컨트롤러 명시. 본 grep 으로 10개 확인 — 추가 1개는 별도 위치 (예: `module/supporter_signature/component/` 또는 `module/messaging/`) 가능. 추적 필요.
+## 11. SupporterSignatureAdminController (`controller/v3/SupporterSignatureAdminController.java:36`)
+base: `/api/v3/admin/supporter-signatures` — **RWD-5698 신규 (adm 관리자용, userId 불필요한 전역 조회/검색)**
+
+| Method | Path | 용도 |
+|---|---|---|
+| GET | `/search` | 지지서명 다중조건 검색 (삭제 포함). param: campaignId, userId, content, startDate, endDate, includeDeleted, commentIncludeDeleted, includeEmptyContent, statusType, page, size, sortType |
+| GET | `/{signatureId}/comments` | 답글 목록 조회 (삭제 포함). param: includeDeleted, page, size, sortType |
+
+## 12. SupporterSignatureAdminUserController (`controller/v3/SupporterSignatureAdminUserController.java:34`)
+base: `/api/v3/admin/users/{userId}/supporter-signatures` — **RWD-5698 신규 (adm 관리자용, userId scope·소유자 검증 동반)**
+
+| Method | Path | 용도 |
+|---|---|---|
+| DELETE | `/{signatureId}` | 지지서명 개별 삭제 |
+| POST | `/{signatureId}/restore` | 지지서명 개별 복구 |
+| POST | `/{signatureId}/comments` | 답글 생성 |
+| DELETE | `/comments/{commentId}` | 답글 삭제 |
+| POST | `/comments/{commentId}/restore` | 답글 복구 |
 
 ---
 
@@ -115,9 +132,10 @@ base: `/api/v3/users/{userId}/supporter-signatures`
 | Point (관리자/유저) | 2 | 9 |
 | Communication (관리자/유저) | 2 | 6 |
 | Affiliate (관리자/유저) | 2 | 4 |
-| **합계 (관측)** | **10** | **37** |
+| **adm Admin (검색·삭제/복구·답글)** | **2** | **7** |
+| **합계 (관측)** | **12** | **44** |
 
-→ wave.user signature-v3 의 컨트롤러 11개와 동일 path. **1:1 이관**.
+→ 공개 API(`/api/v3/...`) 10 컨트롤러·37 endpoint 는 wave.user signature-v3 와 동일 path (**1:1 이관**). adm 관리자 API(`/api/v3/admin/...`) 2 컨트롤러·7 endpoint 는 community 신규 (RWD-5698).
 
 ## wave.user 와의 차이점 (관측 가능한 것만)
 - 패키지: `com.wadiz.wave.user.supporter.signature.v3.*` → `co.wadiz.community.module.supporter_signature.controller.*`
