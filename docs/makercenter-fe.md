@@ -1,25 +1,27 @@
 # makercenter-fe
 
 ## 개요
-**메이커(프로젝트 개설자)용 사용자 포털** SPA. `makercenter.wadiz.kr` (live) / `dev.makercenter.wadiz.kr` (dev) 에 배포되어 메이커가 자신의 프로젝트를 등록·운영하는 화면을 제공합니다. Org: `wadiz-client`. 패키지명 `wadiz-makercenter`.
+**메이커(프로젝트 개설자)용 사용자 포털** (Next.js 앱). `makercenter.wadiz.kr` (live) / `dev.makercenter.wadiz.kr` (dev) 에 배포되어 메이커가 자신의 프로젝트를 등록·운영하는 화면을 제공합니다. Org: `wadiz-client`. 패키지명 `wadiz-makercenter`.
 
 ## 기술 스택
-- React + **Vite 6** (CRA → Vite 마이그레이션 완료, dev 포트 4020).
-- Material-UI **v4 + v5 공존** (점진 이관).
-- 상태: Recoil + React Query v3.
-- HTTP: Axios `0.21.1`.
-- 테스트: Playwright (E2E), Vitest.
+- **Next.js 16** (App Router) + React 19, dev 포트 4020 (`next dev`). (구 CRA/Vite SPA에서 Next.js로 마이그레이션 완료.)
+- **TypeScript** 전면 적용 (src 하위 `.tsx`/`.ts`만, `.js`/`.jsx` 없음).
+- 스타일: **SCSS Modules**(`*.module.scss`, sass) — MUI는 더 이상 사용하지 않음.
+- 상태: **Redux Toolkit**(`@reduxjs/toolkit`). (Recoil/React Query 미사용.)
+- HTTP: Axios `1.15`.
+- 테스트: Playwright (E2E).
 - Sentry 연동.
 
 ## 앱 구성
-- 단일 SPA. 주요 폴더:
-  - `src/api/` — API 모듈 (`home.js`, `board.js`, `exhibition.js`, `main.js`, `data.js`)
-  - `src/pages/`, `src/components/`, `src/hooks/`, `src/recoil/`, `src/utils/`
+- Next.js App Router + FSD(Feature-Sliced Design) 구조. 주요 폴더(`src/`):
+  - `app/` — App Router 엔트리 (`layout.tsx`, `page.tsx`, `[lang]`, `oauth`, `robots.ts`, `sitemap.ts`, `providers/`)
+  - `entities/` — 도메인 API/모델 (`home`, `board`, `exhibition`, `data`, `menu`)
+  - `features/`, `widgets/`, `views/`, `shared/`(`api`, `config`, `lib`, `providers`, `types`, `ui`), `hooks/`
 
 ## 서버 연결 설정 (핵심)
 
-### Axios 인스턴스 (`src/api/axiosInstance.js:3-13`)
-- `baseURL = ${VITE_BASE_URL}/api`
+### Axios 인스턴스 (`src/shared/api/axiosInstance.ts`)
+- `baseURL = ${process.env.NEXT_PUBLIC_BASE_URL}/api`
 - `withCredentials: true` (쿠키 세션 기반)
 - `validateStatus: status === 200` (단순 검증, 그 외는 에러)
 - 응답 인터셉터: 코드 `4010` / `4012` 감지 시 `auth:expired` CustomEvent 디스패치 → 글로벌 핸들러가 OAuth 재로그인 트리거.

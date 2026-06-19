@@ -97,7 +97,7 @@
 | `SignUpAPI` | 회원가입/이메일 코드 |
 | `SocialAPI` | 카카오 친구/다중 팔로우 |
 
-> 참고: 위 26개 타겟 구조는 본 분석 범위(2026-06-19) 이전 리팩토링으로 이미 정착돼 있었으며, 본 문서의 "기능별 API 호출 매핑" 표 일부 파일 경로(예: `MainAPIImpl.swift`)는 신규 타겟명(`Main2APIImpl.swift`)으로 점진 갱신 중이다.
+> 참고: 위 26개 타겟 구조는 본 분석 범위(2026-06-19) 이전 리팩토링으로 이미 정착돼 있었다. 구 `MainAPI`는 `Main1API`(`.publicApi(.main1)` 도메인) + `Main2API`(`.platform(.main2)` 도메인, base path `/main2`)로 분리됐고, 본 문서의 "기능별 API 호출 매핑" 표 경로도 신규 타겟명으로 갱신 완료했다.
 
 ### `Projects/Core`
 하나의 Project 에 4 개 Framework 타겟 (`CLAUDE.md:109`): **`Networking`** (HTTPClient, RequestBuilder, APIDomain, Interceptor, WadizSession), **`Persistence`** (Macro 의존), **`Preference`** (AppPreference, ServerMode), **`UI`** (공통 UI + i18n.json).
@@ -113,7 +113,7 @@
 | `Projects/Core/Preference` (+ ServerMode) | `core/legacy/wadiz-common/util/ServerMode.kt` + `core/datastore` (HiddenPrefs) | 동일 8개 환경 모델 |
 | `Projects/Core/Persistence` | `core/database` (Room) | iOS 는 Core Data 대신 자체 Persistence + Macro |
 | `Projects/Core/UI` + `i18n.json` | `core:design-system` + `core:i18n` | 동일한 i18n.json 포맷 공유 |
-| `Projects/API/*` (7 타겟) | `core/network/service/**` (17 ApiService) | Android 는 `ServerMode.xxxUrl` 속성을 baseUrl 분기 키로 쓰는 반면 iOS 는 `APIDomain` enum |
+| `Projects/API/*` (26 타겟) | `core/network/service/**` (17 ApiService) | Android 는 `ServerMode.xxxUrl` 속성을 baseUrl 분기 키로 쓰는 반면 iOS 는 `APIDomain` enum |
 | `Projects/Service/*` | `core/data/repository/**` (+일부 feature 내부) | iOS 는 Service 레이어가 Android Repository + UseCase 일부 역할 |
 | `Features/Home` | `feature:main-tab` | 1:1 |
 | `Features/CreditCardOCR` | `feature:ocr` | 1:1, 둘 다 온디바이스 |
@@ -146,7 +146,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `.ad` | `https://service.wadiz.kr/api/v1/ad/host` | 동일 | `https://rc2-service.wadiz.kr/api/v1/ad/host` | `https://dev-service.wadiz.kr/api/v1/ad/host` | 홈 KeyVisual/Wad Sections |
 | `.analytics` | `https://analytics.wadiz.kr` (KR) / `https://analytics.wadiz.ai` (글로벌) | 동일 | `https://rc-analytics.{domain}` | `https://dev-analytics.{domain}` | **와디태그(Waditag) V1/V2** |
 | `.service` | `https://service.wadiz.kr` | 동일 | `https://rc2-service.wadiz.kr` | `https://dev-service.wadiz.kr` | 검색/펀딩소프트/프리오더/카테고리/스토어 검색 |
-| `.platform(.main)` | `https://platform.wadiz.kr` | `https://stage-platform.wadiz.kr` (**main만**) | `https://rc2-platform.wadizcorp.net` | `https://dev-platform.wadizcorp.net` | `/main2/…` 홈/퀵메뉴/랭킹/추천 |
+| `.platform(.main2)` | `https://platform.wadiz.kr` | `https://stage-platform.wadiz.kr` (**main만**) | `https://rc2-platform.wadizcorp.net` | `https://dev-platform.wadizcorp.net` | `/main2/…` 홈/퀵메뉴/랭킹/추천 |
 | `.platform(.inbox)` / `.keyword` / `.notiChannel` / `.push` / `.wish` / `.activities` / `.global` | 동일 (stage 에서도 `platform.wadiz.kr`) | 동일 | RC 계열 `wadizcorp.net` | Dev 계열 | 각 플랫폼 MSA |
 | `.searchAI` | `https://searchai.wadiz.kr` | 동일 | `https://rc-api.dev-searchai.wadizdata.team` | `https://api.dev-searchai.wadizdata.team` | 연관 키워드 AI |
 | `.webOrigin` | `https://www.wadiz.kr` / `.ai` | `https://stage.wadiz.kr` | `https://rc2.wadiz.kr` | `https://dev.wadiz.kr` | 분석 이벤트 `Origin` 헤더용 |
@@ -231,16 +231,16 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `App/Account/SetMarketingAlarm` + `Features/Setting/NotificationSetting` | `POST noti-channel/v2/marketingconsents`, `GET noti-channel/v2/marketingconsents` | `.platform(.notiChannel)` | 채널별 마케팅 동의 | 동일. `SetAlarmAPI.swift:66,119`, `NotificationAPI.swift:58,87` |
 | `App/Account/TermsAPI` | `GET api/v2/terms/accepter` | `.api` | 약관 동의자 조회 | 설정 > 약관. `TermsAPI.swift:63` |
 
-### 홈 / 서비스홈 (`Features/Home`, `API/MainAPI`, `Features/ServiceHome`, `App/Sources/Banner`, `App/Sources/AD`, `App/Sources/Exhibition`)
+### 홈 / 서비스홈 (`Features/Home`, `API/Main2API`, `Features/ServiceHome`, `App/Sources/Banner`, `App/Sources/AD`, `App/Sources/Exhibition`)
 
 | 모듈 | 엔드포인트 | APIDomain | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| `MainAPI` | `GET /main2/api/v9/main` 또는 `/main2/api/v10/main` | `.platform(.main)` | 홈 메인 큐레이션 (추천 A/B) | 홈 탭 로드/Pull-to-refresh. **FE1-698(2026-05~29)** 로 추천 A/B 실험군이 내려오면 `v10`, 아니면 기존 `v9` 폴백. 실험 참여 시 `X-Device-Type: IOS_APP` + `X-Experiment: {experimentName}_{experimentGroup}` 헤더 동봉. `Main2APIImpl.swift:16,24,26` |
-| `MainAPI` | `GET /main2/api/v3/my-wadiz` (+v? 버전 파라미터) | `.platform(.main)` | 홈 하단 마이와디즈 요약 | 홈 스크롤. `MainAPIImpl.swift:38-43` |
-| `MainAPI` | `GET /main2/api/v1/recommendation/item` | `.platform(.main)` | 연관 추천 | 상세 진입 후 추천. `MainAPIImpl.swift:47-53` |
-| `MainAPI` | `GET /main2/api/v1/quickmenu?id={id}` | `.platform(.main)` | 퀵메뉴 | 홈 진입. `MainAPIImpl.swift:57-66` |
-| `MainAPI` | `GET /main2/api/v1/pc/ranking/store` | `.platform(.main)` | 스토어 랭킹 | 서비스홈/홈. `MainAPIImpl.swift:69-73` |
-| `MainAPI` | `GET /main2/api/v1/banner/key-visual/{type}` | `.platform(.main)` | 홈 키비주얼 배너 | 홈 상단. `MainAPIImpl.swift:76-80` |
+| `Main2API` | `GET /main2/api/v9/main` 또는 `/main2/api/v10/main` | `.platform(.main2)` | 홈 메인 큐레이션 (추천 A/B) | 홈 탭 로드/Pull-to-refresh. **FE1-698(2026-05~29)** 로 추천 A/B 실험군이 내려오면 `v10`, 아니면 기존 `v9` 폴백. 실험 참여 시 `X-Device-Type: IOS_APP` + `X-Experiment: {experimentName}_{experimentGroup}` 헤더 동봉. `Main2APIImpl.swift:15` |
+| `Main2API` | `GET /main2/api/v{version}/my-wadiz` | `.platform(.main2)` | 홈 하단 마이와디즈 요약 | 홈 스크롤. `Main2APIImpl.swift:40-45` |
+| `Main2API` | `GET /main2/api/v1/recommendation/item` | `.platform(.main2)` | 연관 추천 | 상세 진입 후 추천. `Main2APIImpl.swift:49-53` |
+| `Main2API` | `GET /main2/api/v1/quickmenu?id={id}` | `.platform(.main2)` | 퀵메뉴 | 홈 진입. `Main2APIImpl.swift:59-66` |
+| `Main2API` | `GET /main2/api/v1/pc/ranking/store` | `.platform(.main2)` | 스토어 랭킹 | 서비스홈/홈. `Main2APIImpl.swift:70-73` |
+| `Main2API` | `GET /main2/api/v1/banner/key-visual/{type}` | `.platform(.main2)` | 홈 키비주얼 배너 | 홈 상단. `Main2APIImpl.swift:77-80` |
 | `App/Banner` | `GET /main/display-ads/event`, `GET /main/display-ads/marketing` | `.publicApi` | 디스플레이 배너 | 홈/이벤트 섹션. `BannerAPI.swift:50,63` |
 | `App/Exhibition` | `GET /main/featured/reward` | `.publicApi` | 리워드 기획전 | 기획전 탭. `ExhibitionAPI.swift:25,28` |
 | `App/AD/AdService` | `GET /keyvisual`, `GET /wad/sections/{code}`, `GET /event` | `.ad` / `.service` / `.ad` | 광고 키비주얼 / 섹션 / 이벤트 | 홈/서비스홈. `AdService.swift:89,101,113` |
@@ -364,7 +364,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **파일**: `Projects/Features/Home/Sources/Presentation/HomeViewController.swift`, `HomeViewModel.swift`, `Data/HomeRepositoryImpl.swift`, `Data/HomeMapper.swift`.
 - 트리거: 루트 `AppCoordinator` 가 `TabCoordinator` → `HomeCoordinator` → `HomeViewController` 생성. 최초 `viewDidLoad` → `viewModel.fetch()`.
 - `HomeViewModel` (MVVM, Combine/`AnyPublisher` 또는 async) → `HomeRepositoryImpl.fetchMain(...)`
-- Repository → `MainAPI.fetchMain(MainRequest(header: encUserId, variant), query: …)` → `RequestBuilder(domain: .platform(.main), path: "/main2/api/v9/main", method: .get)` + `set(queryName:)` chain → `HTTPClient.request` (`Interceptor adapt/retry`) → `MainResponse`
+- Repository → `Main2API.fetchMain(MainRequest(header: encUserId, variant), query: …)` → `RequestBuilder(domain: .platform(.main2), path: "/main2/api/v9/main", method: .get)` + `set(queryName:)` chain → `HTTPClient.request` (`Interceptor adapt/retry`) → `MainResponse`
 - `HomeMapper` 가 `MainResponse` → `HomeSectionModel[]` 변환 → `HomeViewController` 의 `UICollectionView` (IGListKit) 섹션 렌더
 - 병렬 호출: `fetchMainQuickMenu`, `fetchMainStoreRanking`, `fetchKeyVisualBanner`, `AdService.fetchKeyVisual`, `MainRepositoryImpl.fetchMainMyWadiz`
 
@@ -379,7 +379,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - 트리거: `LoginHomeViewController` → 이메일 로그인 or 소셜 버튼
 - `LoginHomeViewModel` (`Projects/Features/Login/Sources/LoginHome/Presentation/LoginHomeViewModel.swift`) → `LoginAPI.loginEmail(path: "/api/v4/login/email", body)`
 - 응답 후 `UserService` (`Projects/Service/Sources/User`) 가 `UserCredential` (KeychainSwift) + `UserDefaults sessionId` 저장 → Swinject 에서 credentialProvider 갱신 → 다음 요청부터 `WadizRequestInterceptor.adapt` 가 `authKey/userId/sessionId` 헤더 자동 추가
-- 후속: `AccountAPI.userRefresh` (`/api/v3/account/info/refresh`), `AccountAPI.requestToken`, `MainAPI.fetchMain` (홈 진입)
+- 후속: `AccountAPI.userRefresh` (`/api/v3/account/info/refresh`), `AccountAPI.requestToken`, `Main2API.fetchMain` (홈 진입)
 - 실패 시 `NetworkError.unauthorized` → `logoutCallback()` → AppCoordinator 가 `LoginCoordinator` 로 루트 복귀
 
 ### 4) 서포팅 (결제)
@@ -401,7 +401,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **버전**: Tuist `4.113.1` (`.tuist-version`)
 - Workspace `wadiz.xcworkspace` + `Projects/App/wadiz.xcodeproj` 생성은 `tuist generate` 로만. Xcode 프로젝트 파일은 레포에 커밋 X.
 - `Tuist.swift:5` 로 Xcode 26.0 까지 호환 지정.
-- `Tuist/ProjectDescriptionHelpers/Project+Templates.swift` 에 `.shared`, `.model`, `.networking`, `.preference`, `.home`, `.login`, `.mainAPI` 등 공통 의존 매크로 정의.
+- `Tuist/ProjectDescriptionHelpers/TargetDependency+Templates.swift` 에 `.shared`, `.model`, `.networking`, `.preference`, `.home`, `.login`, `.main1API`, `.main2API` 등 공통 의존 매크로 정의.
 
 ### Configurations & xcconfig
 - `Debug` (Dev scheme), `QA` (QA scheme), `Release` (Release scheme).

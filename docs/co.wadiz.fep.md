@@ -8,7 +8,7 @@ Wadiz Finance FEP(Front-End Processor = 결제 대외계)는 와디즈 내부 �
 2. Stripe 웹훅(account.updated)을 수신하여 내부 이벤트로 변환 후 SNS 발행.
 3. 모든 금융 이벤트를 MongoDB로 영속화, 실패 이벤트는 DLQ에서 수집해 Spring Batch가 재발행.
 
-FEP는 Stripe Connect 전용. 나이스페이/Alipay+ 연동 코드는 존재하지 않음(별도 nicepay-api 레포 담당). KR(한국) 국가는 명시적으로 거절(AccountService.java:21-23).
+FEP의 주력은 Stripe Connect(해외 정산)이며 KR(한국) 국가는 Stripe 계정 생성 시 명시적으로 거절(AccountService.java:21-23). 다만 Stripe 외에도 **NICE 정산(payout) 연동**(NICE submall 정산 요청·취소·조회, `adapter/out/nicepay`)과 **환율 조회**(한국은행 ECOS + OpenExchangeRate, `adapter/out/exchangeRate` + `application/service/exchangeRate`)가 내부 API로 함께 들어와 있다. PG 결제(승인/취소) 본체는 여전히 별도 nicepay-api 레포가 담당하고, FEP의 NICE 연동은 "정산(payout)"에 한정된다. (Alipay+ 연동 코드는 없음)
 
 멀티모듈:
 
@@ -48,9 +48,11 @@ application/
   service/   AccountService, TransferService, AccountQueryService, AccountWebhookService
 domain/      BusinessType 등 VO
 adapter/
-  in/web/    Controller, payload DTO, ApiAuthenticationFilter, GlobalExceptionHandler
-  out/stripe/ StripeGatewayImpl, StripeConfig, StripeWebhookVerifier
-  out/event/  Sns*Publisher
+  in/web/    Controller(Account/Transfer/Webhook + NicePayoutController, ExchangeRateController), payload DTO, ApiAuthenticationFilter, GlobalExceptionHandler
+  out/stripe/      StripeGatewayImpl, StripeConfig, StripeWebhookVerifier
+  out/nicepay/     NicepayGatewayImpl(정산 요청/취소/조회), NicepayEncKeyGenerator, NicepayConfig, message DTO
+  out/exchangeRate/ ExchangeRateGatewayImpl(한국은행·OpenExchangeRate 호출)
+  out/event/       Sns*Publisher
 ```
 
 의존 방향: adapter → application → domain (역방향 금지).
@@ -199,8 +201,10 @@ Agent와 Batch는 동일한 failed_event 컬렉션을 각자 Document 클래스�
 |--------|-----------|--------|
 | Stripe Connect | https://api.stripe.com/v1/accounts, /v1/account_links, /v1/transfers, /v1/transfers/{id}/reversals | StripeGatewayImpl.java (stripe-java:31.3.0 SDK 동기 호출) |
 | Stripe Webhook | FEP 수신: POST /api/internal/v1/webhooks/stripe → Webhook.constructEvent 서명 검증 | StripeWebhookVerifier.java:28 |
+| NICE 정산(payout) | POST /api/internal/v1/nice/payouts/inquiry (정산 조회). Gateway는 정산 요청/취소/조회 지원, NicepayEncKeyGenerator로 거래 암호화키 생성(SID 정산 0102001/취소 0103001/조회 0101002) | NicePayoutController.java, NicepayGatewayImpl.java |
+| 환율 | GET /api/internal/v1/exchange-rate/korea-bank (한국은행 ECOS), GET /api/internal/v1/exchange-rate/open-exchange-rate (OpenExchangeRate) | ExchangeRateController.java, ExchangeRateService.java |
 
-나이스페이/Alipay+는 FEP에 없음 — nicepay-api 레포 담당.
+PG 결제(승인/취소) 본체는 nicepay-api 레포 담당. FEP의 NICE 연동은 정산(payout)에 한정. Alipay+는 FEP에 없음.
 
 ### 이벤트 브로커 (AWS SNS/SQS only)
 
