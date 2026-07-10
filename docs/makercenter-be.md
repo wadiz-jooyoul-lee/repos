@@ -1,5 +1,52 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-07-10 master pull 보강** (103 커밋)
+>
+> ### CLIENT-167 / CLIENT-168 / CLIENT-170 / CLIENT-165 — 기획전 API REST 대이관
+> 레거시 `/api/exhibition/*`(단수·봉투 응답) 전체를 `/api/exhibitions/*`(복수·REST 표준)로 이관. 컨트롤러를 도메인별 4개로 분리(`controller/exhibition/` 패키지 신설).
+> - **`controller/exhibition/ExhibitionAdminController.java:33-104`** — 어드민 CRUD. `GET /api/exhibitions`(목록), `GET /{exhibId}`(상세), `POST`(등록 201), `PUT /{exhibId}`(수정), `DELETE /{exhibId}`(삭제 204). 문항 조회 `GET /{exhibId}/questions`, `GET /questions`.
+> - **`controller/exhibition/ExhibitionApplicationAdminController.java:37-99`** — 신청 관리. `GET /{exhibId}/applications`(목록), `GET /{exhibId}/applications/export`(CSV), `POST /{exhibId}/applications`(대리 벌크), `PATCH /{exhibId}/applications/{applicationId}/withdraw`(강제 철회 204), `GET /email-templates`(템플릿 미리보기).
+> - **`controller/exhibition/ExhibitionUserController.java:36-100`** — 메이커 세션 self-service. `GET /{exhibId}/application-form`(공개), `GET /user/projects`, `POST /user/applications`(신청 201), `GET /user/withdrawal-form`, `PATCH /user/applications/{applicationId}/withdraw`.
+> - 레거시 컨트롤러 2개(`ExhibitionAdminController`, `ExhibitionUserController`) 삭제, `ExhibitionApplyService` → `ExhibitionApplicationUserService`로 리네임.
+> - **`interceptor/JwtAuthInterceptor.java:32-83`** — `/api/exhibitions/**` 전용 어드민 JWT 인증. 실패 시 레거시의 `ApiException(봉투 500)` 대신 `ResponseStatusException(401)`을 던져, 비-auth 예외가 401로 오변환되던 사각지대 제거.
+> - **`config/MvcConfig.java:74-101`** — `/api/exhibitions/**`에 `jwtAuthInterceptor` 등록. `/*/projectNos`·`/*/application-form`(공개)과 `/user/**`(세션)는 exclude. `/user/**`는 `makerRequestInterceptor`(세션)로 분리.
+> - **`exception/RestExceptionHandler.java:38-98`** — `@RestControllerAdvice(basePackages="...controller.exhibition")` 스코프 advice. `ResponseEntityExceptionHandler` 상속으로 프레임워크 예외(검증·파싱·타입미스매치)까지 커버, 응답을 봉투 없는 `ResApiError{message}`(HTTP status가 의미 전달)로 통일. JWT 만료/위조도 401 처리.
+> - **`data/response/ResApiError.java`** — 표준 에러 바디(메시지 단일 필드) 신설.
+>
+> ### CLIENT-125 / CLIENT-126 / CLIENT-121 / CLIENT-127 — 다국어(i18n) 인프라
+> ko 원문은 무손실 유지하고 en/ja/zh 번역을 측면 테이블에 저장·조회하는 다국어 기반 구축.
+> - **`interceptor/LanguageInterceptor.java:18-33`** — 모든 `/api/**` 요청에서 `Wadiz-Language` 헤더만 신뢰(BE 재결정·쿠키 파싱 없음). 미지원/부재 시 `ko` 폴백. 요청 속성 `wadiz_language` 설정.
+> - **`constant/I18nConstants.java`** — 지원 언어 `ko/en/ja/zh`, 번역 대상 `en/ja/zh`, 측면 판별자(menu/board/category/popular_word/menu_page_url), `Wadiz-Translate-Skip: Y`(한국어만 저장) 헤더 정의.
+> - **측면 테이블 3종** — `migration/V007__create_content_label_language.sql`(라벨: 메뉴/게시판명/말머리/추천검색어), `V008__create_board_post_language.sql`(게시글 본문), `V009__create_banner_language.sql`(top 배너 HTML). 엔티티/매퍼 각 3종 신설.
+> - **`service/PlatformTranslateClient.java:44-59`** — 사내 번역 API(`wadiz.global-api-url`) 동기 클라이언트. text/html 엔드포인트 분리, sourceLang 항상 ko, 언어당 병렬 호출. 한계 가드: HTML 60,000자·텍스트 128KiB·50건 분할.
+> - **`service/ContentTranslationService.java:29-34`** — 어드민 저장 시 translate-then-save 오케스트레이션. 번역은 트랜잭션 밖 호출, upsert/delete는 호출자 트랜잭션 참여. 해시 비교로 변경 컬럼만 재번역. skip 헤더·미변경·오버사이즈 시 no-op.
+> - **`service/SearchService.java:33-52`** — 통합검색 ko는 기존 FULLTEXT 무손실 유지, 비ko는 측면 테이블 LIKE 매칭(`utils/SearchLikeUtil.java`)으로 분기.
+> - **무코드 백필** — 인앱 백필 컨트롤러/서비스는 제거되고(CLIENT-127), `resources/sql/i18n-backfill-*.sql` + `translate.py`/`gen_load_sql.py` 등 스크립트 기반 CSV 백필(`i18n-backfill-runbook.md`)로 대체.
+>
+> ### CLIENT-164 — 콘텐츠 번역 실패/오버사이즈 에러코드
+> - **`exception/ErrorCode.java:92-95`** — `TRANSLATE_FAILED(2200)`, `TRANSLATE_RATE_LIMITED(2201)`, `TRANSLATE_OVERSIZE(2202)` 추가. 게시글 본문이 60,000자를 초과하면 번역을 생략하고 "한국어로만 저장 가능" 안내(2202).
+>
+> ### CLIENT-182 — OAuth 로그인 화면 언어 힌트 전달
+> - **`controller/OAuthController.java:38-40`, `service/OAuthService.java:35-43`** — authorize 진입 시 명시적 `Wadiz-Language`를 대표 로케일(`I18nConstants.toRepresentativeLocaleOrNull`: ko-KR/en-US/ja-JP/zh-CN)로 변환해 authorize URL에 `ui_locales`로 조건부 부착. null이면 미부착(인증서버 기본).
+>
+> ### CLIENT-162 — 기획전 신청 프로젝트 번호 공개 조회 API
+> - **`controller/exhibition/ExhibitionController.java:33-34`** — `GET /api/exhibitions/{exhibId}/projectNos`(무인증). `service/ExhibitionApplicationService.findProjectNumbers`로 해당 기획전에 신청된 프로젝트 번호 목록 반환(`ResAppliedProjects{projectNos}`).
+>
+> ### CLIENT-174 — 신청자 CSV에 본프로젝트 오픈일 컬럼
+> - **`service/ExhibitionApplicationAdminService.java:111,140,418-419`** — Funding API 응답의 `openDateTime`을 "프로젝트 상태" 뒤 "본프로젝트 오픈일" 컬럼으로 CSV에 출력. nullable 필드라 미설정 건은 공란 처리.
+>
+> ### FE2-542 / FE2-646 — 관리자·권한 변경 감사 로그
+> - **`controller/AuditLogController.java:29-30`** — `GET /api/audit/manager-logs`(JWT). 관리자 대상 감사 로그 조회.
+> - **`service/AuditLogService.java:58-148`** — 관리자 생성·상태·담당업무(work)·레벨·권한 변경, 그룹 권한·삭제·멤버 변경(변경 전/후 스냅샷) 적재. 매퍼 `AuditLogMapper`/`AuditLog.xml`, 엔티티 `AuditLog` 신설.
+>
+> ### FE2-646 — 관리자 회원 등록 API(/regist) 제거
+> - 슈퍼관리자 전용 `POST /api/manager/regist`(이메일·만료일·비밀번호 검증 포함) 엔드포인트 제거. 계정 발급은 가입 요청(signup)+승인 흐름으로 일원화(FE2-421 연계).
+>
+> ### FE2-666 — CORS 허용 오리진에 wadiz.io 추가
+> - **`application-prod.yml:66-67`, `application-dev.yml:66-67`** — 허용 오리진에 `https://*.wadiz.io` 추가(기존 `*.wadiz.co` 유지).
+
+---
+
 > 📅 **2026-06-16 master pull 보강** (3 커밋)
 >
 > ### FE2-421 — 2026 ISMS 대응: 어드민 계정 발급 절차 변경
@@ -424,10 +471,20 @@ DB: `wadiz_makercenter` (MySQL/MariaDB, Master/Slave). MyBatis 매퍼 XML에서 
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-16** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| OAuth authorize에 언어 힌트(`ui_locales` 대표 로케일) 조건부 부착 | 2026-07-03 | CLIENT-182 |
+| CORS 허용 오리진에 `*.wadiz.io` 추가 | 2026-07-01 | FE2-666 |
+| 그룹 멤버 변경 감사 로그(변경 전/후 스냅샷) 적재 | 2026-06-26 | FE2-646 |
+| 관리자 회원 등록 API(`POST /api/manager/regist`) 제거 | 2026-06-26 | FE2-646 |
+| 기획전 API REST 대이관(`/api/exhibition/*`→`/api/exhibitions/*`, 봉투 제거·JwtAuthInterceptor·scoped RestExceptionHandler) | 2026-06-25~30 | CLIENT-167/168/170/165 |
+| 신청자 CSV에 본프로젝트 오픈일 컬럼 추가 | 2026-06-25 | CLIENT-174 |
+| 게시글 본문 60,000자 초과 시 번역 불가 안내(2202) + 번역 에러코드 2200~2202 | 2026-06-23 | CLIENT-164 |
+| 기획전 신청 프로젝트 번호 공개 조회 API(`GET /api/exhibitions/{id}/projectNos`) | 2026-06-23 | CLIENT-162 |
+| 관리자/권한 변경 감사 로그 적재·조회(`GET /api/audit/manager-logs`) | 2026-06-22 | FE2-542 |
+| 다국어(i18n) 인프라 — 측면 테이블 3종·LanguageInterceptor·동기 번역-저장·검색 비ko LIKE 분기·무코드 백필 | 2026-06-09~22 | CLIENT-125/126/121/127 |
 | 어드민 계정 수정 시 SU는 본인/타인 구분 없이 `work` 항상 반영(ISMS 대응) | 2026-06-09 | FE2-421 |
 | 세션 자동 로그아웃 2시간→24시간(`session.timeout` 86400) | 2026-06-05 | CLIENT-141 |
 | 어드민 PDF 첨부 시 S3 content-type `application/pdf` 지정 | 2026-06-02 | FE2-447 |

@@ -52,6 +52,66 @@
 
 ---
 
+> 📅 **2026-07-10 master pull 보강** (2026-06-19 이후 ~150 커밋)
+>
+> 콘텐츠 룰(욕설·부적절 표현) 사전 차단 연동, 글로벌 상세/기획전 컨트롤러 도메인 분리 리팩토링, SEO canonical/noindex 정교화, Framer 랜딩 프록시(`/web/about`), 개인정보 처리방침 개정, 알리페이 부분환불 차단, 미사용 startup 화면 정리가 핵심입니다.
+>
+> ### 커뮤니티 콘텐츠 룰 사전 차단 (RWD-5712 / RWD-5731)
+> - **신규 게이트웨이 `kr.wadiz.infrastructure.community.contentrule.*`** — `ContentRuleCommunityGateway`(community-api `POST /api/v1/content-rule/{contentType}/{userId}/evaluations` 호출) + `ContentRuleContentType` + `ContentRuleEvaluateDto`. 판정 `BLOCK` 이면 작성 거부.
+> - **리워드 댓글** (RWD-5712): 응원/의견/체험리뷰 글·답글 및 새소식 댓글 작성·수정 시 **영속화 직전** 평가 후 `BLOCK` 이면 `kr.wadiz.community.exception.CommunityForbiddenException`(403)으로 `@Transactional` 롤백 (`web/reward/comment/service/CommentService.java`). 답글(depth=1)은 부모 글 타입 조회, 새소식(groupId=3)은 `NEWS_COMMENT`, 만족도·미상은 평가 제외. 평가 불가(transport/HTTP 오류)는 fail-closed(500).
+> - **1:1 문의(개인 메시지)** (RWD-5731): `ContentRuleContentType.PERSONAL_MESSAGE` 추가. `PersonalMessageBoardService` 영속화 코어를 `doPostMessage` 로 분리, `postMessage`/`postImage` 진입점에서 1회씩 평가(중복 제거). 이미지는 파일 저장 전 빈 본문 평가(Redis fast-path)로 차단 사용자 파일·DB 미영속. 차단 시 컨트롤러가 "부적절한 내용이 포함되어 메시지를 보낼 수 없습니다." 노출 (`web/board/personalmessage/service/PersonalMessageBoardService.java:309`). **배포 의존성: community-api 의 해당 contentType 선배포 필요.**
+>
+> ### 글로벌/글로벌코리아 상세·기획전 컨트롤러 분리 (integrated-funding-detail, PR #10406 / CLIENT-173)
+> - `GlobalUIController`(−221줄)·`GlobalKoreaUIController`·Store*UiController 의 상세/기획전/컬렉션/선물하기/스토어 매핑을 **도메인별 신규 컨트롤러로 분리** — `GlobalFundingDetailController`(214줄), `GlobalIntegratedExhibitionController`, `GlobalKoreaFundingDetailController`(226줄), `GlobalKoreaCollection/ServiceHome/StoreCollection/StoreDetail/StoreGiftController` 7종 (`GlobalKorea-` 접두사로 통일). URL 매핑은 신규 `web/fw/config/GlobalUrlMappingConfig.java` 로 집중.
+> - 상세 SEO 마크업을 별도 JSP 조각으로 분리: `web/WEB-INF/jsp/global/detail-seo-head.jsp`·`detail-seo-body.jsp` (+ global-korea 동일). 하드코딩 메타 주입 베이스 클래스 `AbstractGlobalController` 제거, `LocaleRedirectService` 신설.
+> - FE1-959 로그인 사용자 ETag 304 분기를 이 통합 컨트롤러(`GlobalFundingDetailController`)에도 이식.
+>
+> ### SEO canonical/noindex 정교화 (CLIENT-130 / CLIENT-154~156 / CLIENT-161 / CLIENT-173 / FE2-590)
+> - **정책 페이지**(`wterms`): 이전 버전 경로에 `X-Robots-Tag` 헤더 + `noindex` 메타 주입, 효력상실 배너 노출, 개정 이력 링크 `nofollow`, 현행·이전 canonical 적용 (`web/WEB-INF/jsp/wlayout/wterms.jsp`). FE1-1167 로 이전 버전 배너 문구 분기.
+> - **news 경로 canonical 을 부모 펀딩 상세로 통합** (`web/global/controller/GlobalFundingDetailController.java`, CLIENT-130).
+> - **canonical fallback 을 자기참조 URL 로 변경** (`web/WEB-INF/jsp/global/index.jsp`, `winclude/mainHead.jsp`, CLIENT-161).
+> - **JSON-LD publisher 를 와디즈 `Organization @id` 로 일원화**, global-korea index.jsp 에도 JSON-LD 추가 (FE2-590).
+> - global-korea 상세·선물하기 메타 제목에 브랜드 접미사 추가 (CLIENT-173).
+> - 네이버 EP(카탈로그피드) API URL 오류 수정 (`web/catalogfeed/controller/CatalogFeedController.java`, RWD-5760).
+>
+> ### Framer 랜딩 프록시 (FE1-635 / RWD-5752)
+> - **신규 `com.wadiz.core.httpproxy.FramerProxyServlet`** + `FramerProxyProperties` — Framer 호스팅 랜딩을 프록시 서빙. `PKIX path building failed` 대응(TrustAllStrategy + NoopHostnameVerifier), 커넥션 eviction·재시도 핸들러 추가.
+> - `/web/about`(+`/about`, `/ja/about`, `/zh/about`) 를 Framer 프록시로 매핑 (`web/WEB-INF/web.xml:217-226`). 기존 `WMainController#about`(JSP) 매핑 제거. (about2 로 실험 후 about 으로 전환)
+>
+> ### 약관/정책 개정
+> - **개인정보 처리방침 개정 + 행태정보 처리 현황 페이지 신설** (FE1-1089) — `web/resources/terms/privacy.html` 개정, `privacy_20260120.html`(이전본), `privacy_behavioral_information.html`(+`.jsp`) 추가, `WWEBTermsController` +203줄.
+> - 후원 관련 약관·후원 정의 수정(FE2-654), 메이커 이용약관 `funding_maker_service_20260616.html`, 리워드 심사정책 `reward_screening_policy_20260602.html`, `service_reward_20260421.html` 신규.
+>
+> ### 결제·정산·환불
+> - **알리페이 부분환불 미지원** (RWD-5768) — `NotAllowedAlipayPartialRefundException` 신규, `BackingPaymentRefundService` 에서 알리페이 부분환불 차단 + 에러 코드 추가. currency 지정 일원화(RWD-5674).
+> - **nicepay subpath 분기** (RWD-5784) — `reward/payment/api/PaymentApiSupport.java` + `file-*.properties` 5개 환경 일괄.
+> - **선정산 비율 카테고리 분기 제거 → 60% 통일** (`reward/settlement/service/CampaignSettlementService.java`, RWD-5777).
+>
+> ### 사후심사·메이커 스튜디오
+> - **요금제 재판단 후 서비스 요금 상태 변경** (RWD-5675) — `RewardMakerStudioSectionApiController` + `RewardMakerStudioRequirementSectionService`. 프로젝트 정보 저장 시 카테고리 변경 감지→슬랙 알림, funding-api 로 요금제 변경 push(`PlanChangeNotifier`, `PlanChangeNotificationRequest`, `PricingSyncResult` 신규).
+> - **사후심사 재제출 시 `RevivalHistory` 기록**(최근 피드백 TransactionNo 포함) + 사후심사 enum 정리, 제출 시 `CampaignMarker` 제거 (RWD-5740, `RewardMakerStudioSubmitService`).
+>
+> ### 미사용 startup 화면 정리 (FE-11444 / FE-11445 / FE-11446)
+> - `wStartupRequestingAdministrator.jsp`·`wRedirectAppStartupDetail.jsp` + `WStartupMainController` 의 `/registration/administrator`·`/detail/preview` 매핑 삭제, 유일 호출자 사라진 `CorporationAdminRequestApiController` 제거.
+> - `/web/wstartup/maker/registration` → `/web/maker/registration` urlrewrite 302 redirect 이관.
+>
+> ### 따라잡기(catch-up) V3 (BE3-464)
+> - **신규 `kr.wadiz.catchup.*` 헥사고날 패키지** — `APICatchUpV3Delegate` + `CatchUpActionGateway`/`CatchUpServiceV2`/`CatchUpActionOrchestrator`. 액션 country 를 요청 헤더에서 추출해 funding 전달, funding 응답 body status 검사(HTTP 200 + envelope 4xx 대응).
+>
+> ### 인프라/기타
+> - **Docker 이미지 정비** — `docker/Dockerfile`·`entrypoint.sh`·`push-to-ecr.sh`·redisson.yml 도입. 톰캣 Connector `URIEncoding=UTF-8`(CM2-183), `.well-known` context path 추가(RWD-5772), `/mnt/data` 정적 파일 서빙 context(CM2-186, images/ft#images/wwwwadiz).
+> - 마이와디즈 메인 경로를 로그인 인터셉터 제외에 추가 (QA-22413, `spring/dispatcher/interceptor.xml`).
+> - 펀딩 참여 상세 **취소·실패 시 배송지 정보 미노출** (FE1-973, `web/wmypage/controller/WMyFundingController.java`).
+> - 1:1 상담 조회 기간 **5년 → 3년** 제한(전자상거래법 보유기간 근거, 데이터 파기 아닌 조회 제한, RWD-5771).
+> - 스쿨 신청 완료 브레이즈 이벤트에 PD컨설팅 포함 여부(`has_consulting`) 속성 추가 (RWD-5723).
+>
+> ### 분석 영향
+> - **글로벌 흐름 문서**: `GlobalUIController` 단일 컨트롤러 가정이 깨짐 — 상세/기획전/스토어가 도메인별 컨트롤러로 분리됨. 6장·4.1 URL 표의 global/globalkorea 항목 컨트롤러 경로 갱신 후보.
+> - **커뮤니티 흐름**: 댓글·1:1 메시지에 community content-rule 사전 차단 게이트가 삽입됨(fail-closed). `docs/_flows/comment.md` 보강 후보.
+> - **`docs/_flows/funding-detail.md`**: about 페이지가 JSP → Framer 프록시로 전환.
+>
+> ---
+>
 > 📅 **2026-06-18 master pull 보강** (205 커밋 / +8,790 −3,481, 256 파일)
 >
 > SEO(sitemap/robots/메타데이터) 동적화와 펀딩 상세 캐시 정합성, 글로벌 Stripe 정산·달러 결제, 사후심사 권한 보강이 핵심입니다.
@@ -569,7 +629,7 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-18** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (최초: 2026-04-20)
 
 ### 인프라 / 아키텍처
 | 변경 내용 | 날짜 | 관련 이슈 |

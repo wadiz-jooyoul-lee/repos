@@ -1,5 +1,14 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-07-10 pull 보강** (2 커밋, feature/supporter-e2e-testid-skill)
+>
+> ### [FE1] `supporter-e2e-testid` 스킬 신설
+> - 와디즈 서포터 E2E용 `data-testid` 추가·전환·동기화 스킬. 기능을 받아 FE 코드에서 요소를 찾아 testid를 부여하고 그 testid로 Page Object를 작성하며, 신규 PO의 취약 셀렉터(class·text·role)를 testid로 전환한다. testid SSOT는 FE(`wadiz-frontend`)이며 국내(`web-test-automation`)·글로벌(`web-test-automation-global`) 3개 repo를 동일 문자열로 동기화한다. `disable-model-invocation: true`로 `/supporter-e2e-testid` 수동 호출 전용 (`plugins/fe1/skills/supporter-e2e-testid/SKILL.md`).
+> - 진입 모드 3종(A 엘리먼트 명시 / B 기능 기술 / C 신규 PO 전환)과 Phase 0 3개 repo 존재 확인 절차를 정의. references/에 작명 규칙(`naming-convention.md`), 라우터 분리 기반 FE 소스 판정(`serving-map.md`), strict mode 중복 점검(`strict-mode-audit.md`), FE1-927 전수 전환 선례(`conversion-history/` — 도메인별 섹션 12개 + 와플 prop 주입 가이드) 동봉 (총 16파일 약 2,086줄).
+> - fe1 플러그인 매니페스트 버전 0.1.1 → **0.3.0** bump (`plugins/fe1/.claude-plugin/plugin.json`).
+>
+> ---
+
 ## 개요
 와디즈 **클라이언트개발팀(FE개발1팀, FE개발2팀, 클라이언트 직속)**이 Claude Code 플러그인을 공유·배포·재사용하는 마켓플레이스 저장소입니다. Org: `wadiz-client`.
 

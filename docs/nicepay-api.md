@@ -1,3 +1,25 @@
+> 📅 **2026-07-10 main pull 보강** (10 커밋)
+>
+> ### RWD-5755 실시간 대사(reconciliation)용 SQS FIFO 직접 발행 신설
+> - 결제/취소 성공 시 대사 이벤트를 **nicepay-api 본체가 직접 SQS FIFO 큐로 SendMessage**. 기존 문서(구 "외부 의존성"장 하단)의 "본체에서 SQS를 직접 send/receive하는 흐름은 확인되지 않음"은 **더 이상 사실이 아님** — 이제 직접 발행한다.
+> - 신규 발행기 `PaymentReconciliationPublisher.publish(...)` (`publisher/PaymentReconciliationPublisher.java:38-67`): `SqsAsyncClient`로 풀 큐 URL에 직접 SendMessage(크로스계정 대응, GetQueueUrl 없음). FIFO 특성상 `MessageGroupId=oid`(없으면 tid 폴백, 주문 단위 순서 보장), `MessageDeduplicationId={keyTid}_{PAYMENT|CANCEL}`(멱등성, `PaymentReconciliationPublisher.java:70-76`). 3회 backoff(200ms, jitter 0.5) 재시도 후 실패는 로깅만 하고 결제 응답엔 전파 안 함(eventual consistency). `aws.sqs.payment-requested.queue-url` 미설정이면 skip.
+> - 이벤트 DTO `PaymentReconciliationEvent` (`model/PaymentReconciliationEvent.java:24-64`): tid/cancelTid/oid/campaignId/billingAmount/cancelAmount/balanceAmt/isPartialCancel/status/currency/payBy/pgService/processedAt. `@JsonInclude(NON_NULL)`. `eventType/eventId/matchId`는 orchestrator가 status(`PAID`/`CANCELLED`)로 파생하므로 producer는 보내지 않음.
+> - 변환기 `ReconEventFactory` (`publisher/ReconEventFactory.java`): Stripe 예약결제(`fromStripeApproval` status=succeeded일 때만 PAID / `fromStripeCancel` refund succeeded·pending·void canceled 통합)와 Nicepay 간편결제(`fromAuthApproval` / `fromAuthCancel`, KRW·NICEL 고정) 4종 지원. payBy는 승인 시 `clickpayCl`(16 kakaopay/20 naverpay/22 applepay/25 tosspay) 기준(`ReconEventFactory.java:151-162`), pgService는 STRIPE 또는 NICEL.
+> - 발행 연결점:
+>   - Stripe 예약결제: `ReserveResponseHandler.publishReconciliation(...)` — `/reserve/approval`·`/reserve/cancel`·`/reserve/cancel-intent`만 대상(`/reserve/setup`은 결제 아니므로 제외), `Schedulers.boundedElastic()`에서 fire-and-forget (`controller/ReserveResponseHandler.java:122-149`).
+>   - Nicepay 간편결제: `AuthService.publishApprovalRecon/publishCancelRecon` — 승인/취소 성공 코드 확인 후 fire-and-forget (`service/AuthService.java:549-570`).
+>
+> ### SQS 의존성 전환 (RWD-5755)
+> - `build.gradle`: 기존 `software.amazon.awssdk:sqs:2.31.78` 직접 의존을 **`io.awspring.cloud:spring-cloud-aws-starter-sqs`(BOM 3.0.4 관리)로 교체**하고, EKS IRSA(web identity) 자격증명용 `software.amazon.awssdk:sts` 추가(없으면 노드 인스턴스 롤 폴백 → SendMessage 403) (`build.gradle:65-67, 107`).
+> - `application.yml`: `spring.cloud.aws.region.static=${AWS_REGION:ap-northeast-2}`, credentials 미설정 → `DefaultCredentialsProvider` 체인(IRSA). `application-local.yml`: 로컬은 dev/rc와 동일 대사 큐 `rc1-wadiz-payment-requested.fifo`(계정 843734097580) 사용.
+>
+> ### 클라우드 배포 워크플로우 추가
+> - `.github/workflows/aws_deploy_ecr_cloud_dev.yml`, `aws_deploy_ecr_cloud_live.yml` 신규(ECR 배포, `클라우드 세팅` c3b4909).
+>
+> (참고: 이번 범위의 Gradle wrapper 7.6.1, RWD-5622 refund `setCurrency` 주석 비활성, RWD-5375은 기존 문서에 이미 반영됨 — net-new 아님.)
+
+---
+
 # nicepay-api 분석
 
 ## 개요

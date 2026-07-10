@@ -1,5 +1,43 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-07-10 master pull 보강** (2026-06-18 이후 master, net-new 9테마)
+>
+> 컬렉션 자동화 3종 추가, 글로벌 서포터 목록 서포터클럽 뱃지, 정산내역서 다운로드 보안 강화, ISMS 5년 조회 제한이 핵심입니다.
+>
+> ### RWD-5763 / RWD-5790 / RWD-5744 — 자동화 컬렉션 키워드 3종 추가·튜닝
+> - `CollectionKeyword` enum에 신규 키워드 3개 추가 (**`CollectionKeyword.java:20-22`**): `SUPPORT_FANDOM`(`supportfandom`, 후원·팬덤 = SOCIAL 요금제), `LOCAL_FUNDING`(`localfunding`, 로컬 = LOCAL 요금제+사업자), `BOOKMARKS`(`bookmarks`, 글로벌 전자책·클래스 = 비KR 배송 + `CategoryType.CLASS`).
+> - 각 키워드마다 `@Helper` 전략 클래스(`SupportFandomAutomatedCollection`·`LocalFundingAutomatedCollection`·`BookmarksAutomatedCollection`)를 추가하면 `collectionAutomationJob`에 자동 편입되는 구조. `AutomatedCollectionMapper.xml`에 후보 조회 SQL 추가.
+> - RWD-5744: 왓츠넥스트코리아 컬렉션에서 전자책·클래스 카테고리를 제외하고, `AutomatedCollectionMapper.xml` 하드코딩 카테고리 코드를 `CategoryType.PUBLISH/CLASS` 상수 참조 + foreach 파라미터로 정리.
+>
+> ### RWD-5781 — 글로벌 서포터 목록 응답에 서포터클럽 여부(hasMembership) 추가
+> - `GlobalProjectSupporterResponse`에 `Boolean hasMembership` 필드 추가 (**`GlobalProjectSupporterResponse.java:45`**). 신규 펀딩 상세 서포터 탭의 클럽 뱃지 노출용(QA-22487). 멤버십 일괄 조회(`MembershipQueryGateway`)로 세팅하고, 익명/탈퇴 회원은 기존 `user` null 가드로 미노출.
+> - 서포터 목록 MyBatis 생성자 매핑 오류(RWD-5781 후속)를 Enhanced 패턴 적용으로 해소.
+>
+> ### RWD-5761 — 메이커 회원 ID 조회 내부 bulk API 2건
+> - **`CampaignInternalController.java:61`** `GET /api/internal/campaigns/maker-user-ids` — 캠페인 ID 목록으로 메이커 회원 ID 일괄 조회(소스: `Campaign.UserId`).
+> - **`NewsInternalController.java:25`** `GET /api/internal/news/maker-user-ids` — 새소식(CampaignUpdate) ID 목록으로 `campaignId`·메이커 회원 ID 조회(CampaignUpdate→Campaign 조인). 둘 다 상태 필터 없는 순수 lookup, 미존재 ID는 결과에서 생략.
+>
+> ### SCOUT-82 / SCOUT-83 — 정산내역서 다운로드 보안·검증 강화
+> - Path Traversal 차단(`../`, `./`, `/`, `\` 포함 시 400)과 `campaignId` 소유권 검증(serviceCode + campaignId prefix 매칭)을 `StatementUsecase` 서비스 레이어로 이동. `StatementDownloadQuery`에 `campaignId` 필드 추가 (SCOUT-82).
+> - 스토어 캠페인은 `Campaign` 테이블에 없어 `getBizModel()`이 null → `ProjectType.fromName()`에서 예외가 나던 문제를 사업자번호 기반 검증으로 해결. `StatementDownloadQuery`·`SettlementInternalController`에 optional `businessRegistrationNumber` 파라미터 추가, 제공 시 사업자번호로 prefix 검증(미제공 시 기존 bizModel 로직) (SCOUT-83).
+> - 내부 API 사용처가 Store뿐이므로 `SettlementInternalController` 파라미터명 `campaignId → projectNo`로 변경.
+>
+> ### RWD-5738 — 펀딩 내역 조회 5년 경과 데이터 제외 (ISMS)
+> - `FundingMapper.xml`의 공통 WHERE 조각 `fundingListWhereClause`에 `AND A.RegDate > DATE_SUB(NOW(), INTERVAL 5 YEAR)` 추가 (**`FundingMapper.xml:161`**). 개인정보 파기는 5년 이전(`<=`), 조회는 5년 이후(`>`)로 경계를 비중복 처리.
+>
+> ### RWD-5675 — 프로젝트 요금제 변경 Slack 알림 + 글로벌 메이커 CorpType 고정
+> - 신규 엔드포인트 `POST /api/v1/slack/campaigns/{projectNo}/plan-change/send` (**`SlackController.java:59`**, `PlanChangeNotificationRequest` — before/after PlanType + status). ⚠️ 구현 초기 `category-change/send`(`CategoryChangeNotificationRequest`)로 추가됐으나 같은 이슈 안에서 요금제 변경(plan-change)으로 개명·재용도되어 최종 반영됨.
+> - 요금제 판단(`PackagePlanDeterminationGatewayImpl`)에서 글로벌 메이커인 경우 `CorpType`를 `IB`로 고정 (**`PackagePlanDeterminationGatewayImpl.java`**). (2026-06-18 문서의 "서비스요금 개인/사업자 분기" RWD-5671의 후속 보정.)
+>
+> ### RWD-5720 — 캠페인 계약 실명인증 복호화 CryptoHelper 마이그레이션
+> - `CampaignContractMapper.xml`의 `findVerifiedRealName`에서 `damo.DEC_B64()` 호출 제거(암호화 원문 반환)하고, `CampaignAgreementCommandGatewayImpl`의 `isRepresentativeVerified()`에서 `CryptoHelper`로 복호화하도록 이전. DB 함수 복호화 → 애플리케이션 복호화로 통일.
+>
+> ### RWD-5774 / RWD-5375 — 리팩터링·의존성
+> - AIReview payload(`AIReviewRequest`·`InputParameter`)의 `@Setter` 제거 및 `AIReviewQueryGatewayImpl` builder 누적 방식 전환, `funding-core` 1.0.146-SNAPSHOT 반영 (RWD-5774). AI 심사 호출 URL 수정(RWD-5764).
+> - 환전 응답 `convertedAmounts` 타입이 `BigDecimal → Long`으로 변경됨에 맞춰 `CurrencyExchangeClientTest` 컴파일 에러 수정 (RWD-5375).
+
+---
+
 ## 1. 프로젝트 개요
 
 - **프로젝트명**: com.wadiz.api.funding
@@ -427,7 +465,7 @@ com.wadiz.api.funding
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-18** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (직전: 2026-06-18, 최초: 2026-04-20)
 
 ### 신규 기능 (2026-06-18 갱신분)
 

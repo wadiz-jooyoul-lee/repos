@@ -6,6 +6,44 @@
 
 ---
 
+> 📅 **2026-07-10 develop pull 보강** (90 커밋, 26.23.2 → 26.27.0)
+>
+> ### FE1-1001 — 와디즈 에디션 탭 신설 (하단 탭바 "친구" 대체)
+> - 하단 탭바(BNB)의 `친구(feed)` 탭을 **와디즈 에디션(edition)** 탭으로 교체. `TabBarIndex.feed → .edition`, 라벨 "에디션", waditag action "와디즈에디션". 친구 지면은 push 네비바로 복구 (`Projects/App/Sources/NativeBase/Controller/TabBarIndex.swift`, `TabBarEvent.swift`, `LocalTabBarController.swift`).
+> - 신규 `EditionWebViewController` (기본 진입 `/web/wevent/513`, 네비바 "와디즈 에디션"). 에디션 페이지 내 상세 URL 은 `ProjectDetailURLMatcher` 로 판별해 **별도 웹뷰로 분리** 로드, `sessionStorage.SWIPE_EVENT_PAGE` 컨텍스트 주입. `BaseWebViewController` 에 `additionalUserScripts()` hook 추가 (`Projects/App/Sources/WebView/Edition/EditionWebViewController.swift`, `WebView/BaseWebViewController.swift`).
+> - 에디션 탭 N뱃지: `EditionTabBadgeStateUseCase` + 앱-스코프 싱글턴 Assembly (cold start 기준 노출/진입 시 제거). 친구 카운트 뱃지 로직은 App→Home 으로 이전 (`Projects/App/Sources/.../EditionActivity/`).
+>
+> ### FE1-961 — PIPKit SPM 의존성 제거, Core/UI `FloatingViewKit` 자체 구현
+> - 외부 `PIPKit`(SPM) 패키지를 제거하고 라이브커머스 PIP 를 `Projects/Core/Sources/UI/FloatingViewKit` 로 완전 재작성. `@MainActor` caseless enum 네임스페이스 + `FloatingViewEventDispatcher`(드래그·스냅) + `FloatingViewLayout`(6영역 판정 순수함수, 단위테스트 대상). `Tuist/Package.swift`·`TargetDependency+Templates.swift`(`.pipKit`)·`App/Project.swift` 에서 PIPKit 선언 제거. → 기술스택의 "PIPKit 1.1.0" 은 더 이상 유효하지 않음.
+>
+> ### FE1-1047 / FE1-1093 — Navigator 모듈을 Features → Service 계층으로 이주
+> - cross-feature 직접 참조 규칙 위반 해소를 위해 `Navigator` 를 Features 레이어에서 **Service 계층 단일 framework** 로 이주. Search/MyActivity 의 dead `.navigator` 의존·import 정리. 이주 직후 import 누락 빌드 실패는 FE1-1093 으로 후속 수정.
+>
+> ### FE1-984 — ProjectDetailURLMatcher App → Shared 이동, /ko/funding 서브패스 대응
+> - `ProjectDetailURLMatcher` 를 App→`Projects/Shared`(public) 로 이동. globalDetail 정규식에 서브패스(`supporters/community/news/refund-policy/reward-details`) + 로케일 프리픽스(`/en/funding`, `/ko/funding`) 조합 추가. 스크린샷 공유 스낵바(`isEnableWadizSnackbar`)·`FirebasePerformanceTraceManager` 의 하드코딩 path 판별을 Matcher 기반으로 교체.
+>
+> ### FE1-1001(웹뷰) / FE1-985 — 상세 웹뷰 표시 버그 수정
+> - 상세→상세 뒤로가기 시 `WKWebView` opacity 미복원으로 흰 화면 되던 문제 수정(FE1-985). GIF 썸네일/배너 CDN 최적화 제외 가드 추가(FE1-970).
+>
+> ### FE1-1009 — 스타트업 메뉴 `startupMenuEnabled` 플래그 기반 비노출
+> - `FeatureFlagsResponse.startupMenuEnabled`(fail-open default=true) 추가. 플래그 false 시 More 단축 아이콘·알림 설정의 스타트업 섹션을 로케일 무관 숨김. `MoreRepository`/`MoreRepositoryImpl` 신설로 `AppSettingAPI` 의존성을 Repository 계층에 격리.
+>
+> ### FE1-968 — 대체 앱 아이콘 교체 (blackbird 2025 → 펀딩 페스티벌 2026)
+> - `AppIcon` 대체 아이콘셋 `icon_blackbird_2025` 제거, `icon_fundingfestival_2026` 추가. Dev/QA/Release xcconfig `ALTERNATE_APPICON_NAMES` 갱신. 교체 자동화 스킬 `.claude/skills/replace-alternate-appicon` 추가.
+>
+> ### FE1-1015 / FE1-1064 — 최근 검색어 API 식별자 헤더 보완
+> - `RecentSearchAPI` 의 register/delete/deleteAll 에 `deviceId`(`_waid` 쿠키, 항상)·`encUserId`(로그인 시) 헤더 주입 — 공통 헤더의 uuid/userId 와 헤더명이 달라 단건 삭제에서 500 나던 문제 수정. 재클릭/동일 키워드 재검색 시 서버 전송 보완(FE1-1064).
+>
+> ### FE1-1025 — 비 iOS 플랫폼 리소스 제거 (App Store 심사 Guideline 2.3.10 대응)
+> - Android/Google Play/Galaxy/Windows 로고 에셋 8종을 xcassets 에서 제거(코드 미사용이나 번들 포함으로 심사 감지). `deeplink_test.html`·`i18n.json`(`android_description_markdown`) 의 Android 참조도 제거.
+>
+> ### 개발 하네스 / CI (FE1-891 · FE1-1095 · FE1-1138 · FE1-1049 · FE1-1177)
+> - 정제→계획→구현→검증 **하네스 파이프라인** 구축(FE1-891) + 결정 로직 python 스크립트 추출·단위테스트(FE1-1095).
+> - `.claude/hooks/` + `.claude/settings.json` 배선(FE1-1138 R1~R9): 보호 브랜치 커밋 차단, 강제 언랩·신규 storyboard/xib·생성파일 편집·시크릿 접근·SwiftLint 위반 차단, ARCHITECTURE 동반 경고(Stop 훅). `make hooks-test` 102 green.
+> - GitHub Actions 배포 워크플로우에 `environment`(adhoc/release) 부여해 **GitHub Deployments** 이력 추적(FE1-1049). Ad Hoc 프로비저닝 4종에 iPhone 17 기기 추가·재생성(FE1-1177). `make verify` lint 회귀 복구(FE1-1051).
+
+---
+
 ## 개요
 
 | 항목 | 값 | 참조 |
@@ -13,7 +51,7 @@
 | Bundle ID | `com.markmount.wadiz` | `Projects/App/Project.swift:94`, `Projects/App/SupportingFiles/Configuration/Base.xcconfig:9` |
 | Extension Bundle IDs | `.WadizWidget`, `.MakerStoreProjectIntents`, `.notificationservice` | `Projects/App/Project.swift:300,325,349` |
 | 지원 OS 최소 | **iOS 16.1** | `Tuist/ProjectDescriptionHelpers/Environment.swift:5` |
-| MARKETING_VERSION / BUILD | `26.23.2` / `26.23.2.1` | `Projects/App/Project.swift:7-8` |
+| MARKETING_VERSION / BUILD | `26.27.0` / `26.27.0.9` | `Projects/App/Project.swift:7-8` |
 | 배포 채널 | **App Store (Release)** / **TestFlight (QA)** / Fastlane develop / Adhoc | `fastlane/Fastfile:27-55`, `.github/workflows/` |
 | Schemes | `wadiz-dev` (Debug), `wadiz-qa` (QA), `wadiz-release` (Release) | `Projects/App/Project.swift:393-441` |
 | Development Team | `PN5T77486L` | `Projects/App/SupportingFiles/Configuration/Release.xcconfig:12`, `Environment.swift:8` |
@@ -452,7 +490,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **Crashlytics DSYM 업로드** — post-build script `Tuist/.build/checkouts/firebase-ios-sdk/Crashlytics/run` 자동 실행 (`Projects/App/Project.swift:130-136`).
 - **OSS License** — `Tuist/Package.resolved` 를 빌드 전 `Projects/App/Resources` 로 복사 → `AcknowList` 가 런타임에 표시 (`Projects/App/Project.swift:107-113`).
 - **중복 구현 주의** — `/api/funding/wishes` 찜 추가는 `Service/Activity/ActivityAPI.swift:29` 와 `App/Wish/WishesAPI.swift:33` 두 곳에 존재 (Service 레이어로 이주 중). `/api/ftaccountConfirm/*` 역시 `Service/SmsAuth` 와 `App/Protocol/ProtocolFTAccountConfirm.swift` 중복. 마이그레이션 잔재.
-- **라이브커머스 PIP (FE1-809, 2026-06-02)** — 메이커 모드 웹뷰(`MakerWebViewController`)에서 PIPKit(`PIPKit 1.1.0`) 기반 Picture-in-Picture 라이브커머스 영상을 띄운다. 노출 여부·URL 은 `Service/LiveCommerce` 가 Remote Config `liveCommercePip` 로 게이트. **FE1-865(2026-06-11)** 로 SceneDelegate 환경에서 PIP 최초 노출 시 `safeAreaInsets` 가 0 인 채 프레임이 계산돼 `UITabBar` 를 가리던 버그를 다음 runloop 의 `setNeedsUpdatePIPFrame()` 재계산으로 보정 (`PIPKit+Extension.swift`).
+- **라이브커머스 PIP (FE1-809, 2026-06-02)** — 메이커 모드 웹뷰(`MakerWebViewController`)에서 Picture-in-Picture 라이브커머스 영상을 띄운다. (**FE1-961, 2026-06-19 이후**: 외부 `PIPKit` SPM 을 제거하고 `Core/UI` 자체 구현 `FloatingViewKit` 으로 교체 — 아래 최상단 보강 블록 참조.) 노출 여부·URL 은 `Service/LiveCommerce` 가 Remote Config `liveCommercePip` 로 게이트. **FE1-865(2026-06-11)** 로 SceneDelegate 환경에서 PIP 최초 노출 시 `safeAreaInsets` 가 0 인 채 프레임이 계산돼 `UITabBar` 를 가리던 버그를 다음 runloop 의 `setNeedsUpdatePIPFrame()` 재계산으로 보정 (`PIPKit+Extension.swift`).
 - **HWP/HWPX 웹뷰 첨부 (QA-22250, 2026-06-15)** — iOS 가 hwp/hwpx 를 기본 인식하지 못해 웹 `accept` 에 내려도 파일 선택기에서 비활성화되던 문제를, `Info.plist`/`Info_Dev.plist` 에 `UTImportedTypeDeclarations` 로 확장자(hwp/hwpx) ↔ MIME(`application/x-hwp`, `application/haansofthwpx`) 매핑을 선언해 해결.
 - **WADIZChannelIO 스킴 제거 (FE1-796, 2026-05-29)** — `More` 모듈의 `WADIZChannelIO` 커스텀 스킴 핸들러 제거.
 
@@ -460,7 +498,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-19** (이전: 2026-05-29, 최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (이전: 2026-06-19, 2026-05-29, 최초: 2026-04-20)
 
 ### 모듈화 / 아키텍처
 | 변경 내용 | 날짜 | 관련 이슈 |

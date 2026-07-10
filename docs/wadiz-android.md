@@ -5,6 +5,46 @@
 
 ---
 
+> 📅 **2026-07-10 main pull 보강** (직전 갱신 2026-06-19 이후 132커밋, v26.24 ~ v26.27.2)
+>
+> ### FE1-992 — 와디즈 에디션 GNB 웹뷰 탭 신설
+> - 홈 상단 GNB에 "에디션" 진입점을 추가하고, 별도 네이티브 화면이 아닌 **GNB 웹뷰**로 렌더하는 신규 탭 도입. 전용 프래그먼트/컴포저와 웹뷰 보관 객체를 신설 (`feature/main-tab/src/main/java/com/markmount/wadiz/view/main/edition/EditionGnbFragment.kt`, `feature/main-tab/.../view/main/gnb/GnbWebViewScreen.kt`, `GnbWebViewModel.kt`, `feature/src/main/java/com/markmount/wadiz/view/main/GnbWebViewRetainer.kt`)
+> - GNB 웹뷰 로드 동작(loadUrl/reload)·URL 결정 로직을 store(Retainer)로 일원화하고, `GnbWebViewStore → GnbWebViewRetainer` 로 네이밍 정리. 에디션 기획전 URL을 네비게이션 맵(`NavigationState.kt`)에 추가하고 GA 태깅·딥링크·피드 앱바를 보정
+> - prefetch 미지원 기기에서 에디션 탭이 빈 화면 뜨던 문제 수정(웹뷰 등록을 prefetch 최적화 가드 밖으로 분리), 웹 가로 스크롤 영역(`touch.started`) 수신 시 SwipeRefresh가 가로 터치를 부모에 넘기지 않도록 처리 (`feature/.../webview/common/CommonWebMessageHandler.kt`). 에디션 GNB 아이콘 drawable 신규 (`core/design-system/src/main/res/drawable/ic_edition*.xml`, `artwork_tint_edition_*.xml`)
+>
+> ### FE1-1005 / 1020 / 1021 / 1022 / 1024 — Firebase Remote Config 실시간 반영 파이프라인
+> - **포그라운드**: Realtime 리스너(`addOnConfigUpdateListener`)의 `onUpdate`에서 로그만 남기고 `activate()`를 호출하지 않아 push된 변경분이 active로 승격되지 않던 문제 수정 — `onUpdate`에서 `activate()` 호출(IO 디스패처) (`core/data/.../data/remote/firebase/RemoteConfigImpl.kt`)
+> - **백그라운드**: Realtime 리스너가 포그라운드 전용이라, 앱 복귀 시 `AppObserver.onStart` 재fetch 및 15분 주기 `WorkManager PeriodicWork`(`RemoteConfigSyncWorker`, `core/work`)로 백그라운드 fetch+activate 데워두기. `WadizInitializer.scheduleRemoteConfigSync()`로 분리, `enqueueUniquePeriodicWork(KEEP)` 등록
+> - **race 수정**(FE1-1024): 설정 적용 시 `settings/defaults await` 로 초기 fetch 순서 보장, `runCatching`의 `CancellationException` 일관 전파
+>
+> ### FE1-994 — 클라우드(Cloud) 전환 시 스타트업 메뉴 비노출
+> - Cloud 서버는 스타트업 서비스를 제공하지 않으므로 더보기 그리드 메뉴를 `buildList`로 변경해 `serverMode.isCloud()` 시 "스타트업 찾기" 항목 제외 (`feature/more/.../feature/more/HomeMoreViewModel.kt`)
+>
+> ### FE1-1052 / 1016 — 최근 검색어 서버 전송 시점·식별자 변경
+> - (FE1-1052) 최근 검색어 칩·인기검색어·인기/광고태그를 **탭한 시점에 즉시** `addHistory`(user-activity 등록)하도록 변경. 기존엔 결과 첫 스크롤/카드 클릭 시에만 전송됐음. `registerRecentKeyword()` 헬퍼 + `isSameLastKeyword` 중복 전송 가드
+> - (FE1-1016) 최근 검색어 등록/삭제 `deviceId` 소스를 `getUUID()` → 쿠키 `_waid`(`getWadizWaIdCookieValue`)로 변경, 로그인 무관 항상 전송·부재 시 null 허용. `getWaIdCookieValue()`가 bare host를 `CookieManager`가 파싱 못 해 항상 null 반환하던 잠재버그 수정(`https://` 접두 보강) — 비로그인 메인 홈 waId도 복구 (`core/common/.../common/StringExt.kt`, `WadizPlatformAPIService.kt`, `WadizPlatformDataSource.kt`)
+>
+> ### FE1-995 / 972 — PIP 라이브커머스 분석·크래시
+> - (FE1-995) PIP 라이브커머스(`/web/live`) 웹뷰가 웹→앱 PV 위임(`WebInterface.sendAnalyticsData`)을 연결하지 않아 waditag PV(tagview)가 누락되던 문제 수정. `CommonWebMessageHandler` 재사용, Braze/AppsFlyer 이벤트 위임 배선, 검색 위 PIP 콘텐츠 이동 수정 (`feature/.../view/pip/PipViewModel.kt`, `PipWebViewHolder.kt`, `PipActivity.kt`)
+> - (FE1-972) PIP 크래시 수정
+>
+> ### FE1-1013 — 휴대폰 인증 429(TOO_MANY_AUTHENTICATION_CODE_REQUESTS) 대응
+> - 인증번호 요청 엔드포인트를 `/web/v3/account/phone-number/code` → **`/api/v3/account/phone-number/code`** 로 변경(본 문서 아래 표도 반영). `ErrorCode`에 `TOO_MANY_AUTHENTICATION_CODE_REQUESTS` 추가해 인증 횟수 초과 전용 안내 문구(따라잡기 본인인증 + 공통 본인인증 i18n) 노출 (`core/network/.../network/service/api/AppV3APIService.kt:270`, `.../network/error/ApiErrorException.kt`)
+>
+> ### 네비게이션·웹뷰 안정화 (버그픽스 묶음)
+> - FE1-1103 오프라인 상세 진입 후 뒤로가기 먹통 수정(진입 인덱스 -1 오판 → 유효 인덱스 커밋 전까지 미기록, 성공 로드 시 재캡처)
+> - FE1-1067 뒤로가기 시 성인인증 재노출 수정(`ReuseWebFragment`), FE1-964 탑레벨 재진입 스택정리(`NavigationState.kt`, `deeplink_v2.html`)
+> - FE1-1098 웹뷰 프리패치 크래시(`AwPrefetchManager.onPrefetchResponseCompleted`) — 콜백 executor를 `Runnable::run` → null(메인스레드 기본 동작)로 변경 (`GnbWebViewRetainer.kt`)
+> - FE1-1000 인트로 로딩 중 백그라운드 전환 시 이메일 인증 다이얼로그 크래시, FE1-1081 검색결과 카테고리 모달 데이터 오수집, QA-22393 알림 유도 모달 중복 노출 차단
+>
+> ### FE1-880 / 893 — 하네스 엔지니어링 v1 (개발 도구, 앱 런타임 무관)
+> - Claude Code 세션 대상 품질 게이트 도입: `config/detekt/detekt.yml`(네이밍 + `UndocumentedPublic*` focused 룰) + `config/detekt/baseline.xml`(기존 위반 19,508건 스냅샷 면제, 신규만 검사), Stop 훅 `.claude/hooks/stop_detekt_check.py`
+>
+> ### 기타
+> - FE1-967 펀딩 페스티벌 기획전 시즌 앱 런처 아이콘 변경, FE1-1069 Clarity SDK 3.8.0 → 3.8.2 업그레이드, FE1-1084 와디즈 에디션 노출 이슈 수정
+
+---
+
 ## 개요
 
 | 항목 | 값 | 참조 |
@@ -242,7 +282,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | `feature:setting` | `PUT /api/v3/account/email` | `apiUrl` | 이메일 변경 | 설정 > 이메일. `AppV3APIService.kt:196` |
 | `feature:setting` | `POST /api/v3/account/email/code` | `apiUrl` | 이메일 변경 인증코드 요청 | 동일. `AppV3APIService.kt:188` |
 | `feature:setting` | `GET /api/v3/account/phone-number` / `PUT /api/v3/account/phone-number` | `apiUrl` | 전화번호 조회/수정 | 설정 > 전화번호. `AppV3APIService.kt:257,271` |
-| `feature:setting` | `POST /web/v3/account/phone-number/code` | `apiUrl` | 전화번호 인증코드 요청 | 동일. `AppV3APIService.kt:263` |
+| `feature:setting` | `POST /api/v3/account/phone-number/code` | `apiUrl` | 전화번호 인증코드 요청 (FE1-1013: `/web/v3`→`/api/v3` 변경) | 동일. `AppV3APIService.kt:270` |
 | `feature:setting` | `POST /api/v3/account/password` / `PUT /api/v3/account/password` | `apiUrl` | 비밀번호 설정/변경 | 설정 > 비밀번호. `AppV3APIService.kt:213,221` |
 | `feature:setting` | `POST /api/v3/account/password/verification` | `apiUrl` | 비밀번호 확인 | 비밀번호 변경 전 재확인 모달. `AppV3APIService.kt:204` |
 | `feature:setting` | `POST /api/v3/account/profile-image` (Multipart) / `DELETE /api/v3/account/profile-image` | `apiUrl` | 프로필 이미지 업로드/삭제 | 프로필 이미지 편집. `AppV3APIService.kt:280,288` |
@@ -471,7 +511,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-19** (이전: 2026-05-29, 최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (이전: 2026-06-19, 2026-05-29, 최초: 2026-04-20)
 
 ### 주요 릴리즈 (v26.23.0)
 | 변경 내용 | 날짜 | 관련 이슈 |

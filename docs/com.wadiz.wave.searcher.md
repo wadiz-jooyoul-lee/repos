@@ -4,6 +4,31 @@
 
 > 📅 분석 기준: 2026-04-29 클론, `main` 브랜치 (별도 dev 브랜치 미확인).
 
+---
+
+> 📅 **2026-07-10 master pull 보강** (16 커밋)
+>
+> ### 신규 엔드포인트: 검색 홈 추천 피드 `GET /api/search/home-feed` (DISPLAY-1594)
+> - `SearchHomeFeedController.getHomeFeed` 신규. 헤더 `encUserId`(암호화 회원 식별값, 없으면 복호화 스킵)·`deviceId`·`wadiz-language`(기본 ko)·`wadiz-country`(기본 KR), 쿼리 `offset`(기본 0)·`size`(기본 40, 상한 200). `encUserId`/`deviceId` 둘 다 없으면 400 (`SearchHomeFeedController.java:30-48`).
+> - ES 인덱스 **`search_home_feed-alias`** 를 `key`(로그인 `USER:{userId}` → 비로그인 `DEVICE:{deviceId}` → 기본 `-1` 폴백)로 조회해 플랫 `products[]` 를 얻고, **출력 인덱스 기반 슬롯 규칙**으로 카드(PROJECT/VIDEO/IMAGE/BANNER/KEYWORD)를 조합 (`SearchHomeFeedService.java:50-56`, `model/home/SearchHomeFeed.java:26`, `model/home/SearchHomeFeedType.java`).
+>   - 슬롯 규칙: `i<=14` 는 `i%3` 0=PROJECT·1=META(영상/이미지)·2=BANNER, `i>=15` 는 2=META·그 외 PROJECT (`slotOf`, `SearchHomeFeedService.java:304-313`).
+>   - **KEYWORD 고정 슬롯(index 2)은 KR 에서만** 노출(광고키워드 SA + 메이커 해시태그 최대 3). 비KR 은 이 자리를 이미지(PROJECT) 카드로 채움 (`SearchHomeFeedService.java:271-277`).
+>   - KEYWORD 슬롯 타이틀은 `MessageService`(messages_*.properties)로 언어별 제공 (`SearchHomeFeedService.java:148`).
+>   - PROJECT/META 카드는 언어별 `integrate_search_{lang}` 인덱스에서 `campaignId` 로 enrich, enrich 실패(프로젝트 없음) 아이템은 응답에서 스킵 (`SearchHomeFeedService.java:159-189`, `toProjectMap` `:356-375`).
+>   - `offset/size` 윈도우 페이징 + `hasNext`. plan 은 절대 index 규칙이라 페이징해도 i==0 부터 결정적으로 재생성되어 경계 불변, enrich 는 윈도우 한정 (`SearchHomeFeedService.java:120-127`).
+>   - 메타 소재(국가별)·배너(언어별) **3분 로컬 캐시** `searchHomeMetaCache`/`searchHomeBannerCache` (`config/CacheConfig.java:105,108`, `SearchHomeFeedService.java:115-116`).
+> - 후속 픽스(같은 이슈): 글로벌(KR 외)은 **STORE 프로젝트 미노출** + 리워드류는 `shippingCountryCodes` 에 요청 국가코드 포함된 캠페인만 enrich (스토어 문서는 배송국가 비어 있어 필터 미적용) (`IntegrateCampaignQueryService.java:224-240`, `IntegrateCampaign.SHIPPING_COUNTRY_CODES` `:43`); 영상 슬롯은 VIDEO 메타 우선(이미지보다 앞) 안정 정렬 (`SearchHomeFeedService.java:259-262`); 페이지 내부 **같은 type 카드끼리만 순서 셔플**(KEYWORD·BANNER 환기 영역은 고정) (`shuffleWithinSameType`, `:214-242`); 비KR 환기 배너가 index 2 에 오노출되던 문제 수정. QA-22526 도 영상/이미지 슬롯 소재 분리 픽스.
+>
+> ### 통검 응답에 정률 쿠폰 할인 상한 금액 `maxDiscountRateLimitAmount` 추가 (DISPLAY-1599)
+> - `/api/search/v2/products` 등 통합검색 응답에 `maxDiscountRateLimitAmount`(최대 정률 쿠폰 할인 상한, `Integer`) 노출. 변환 체인 4개 모델(`IntegrateCampaign.java:205` → `IntegrateCampaignResult.java:95` → `IntegrateSearchResult.java:74` → `IntegrateSearchResponse.java:100`)에 필드 추가.
+>
+> ### 카테고리 조회 국가 분기·정렬 (DISPLAY-1598)
+> - `searchCategoryInfo` 에 `countryCode` 파라미터 추가. **비KR 국가는 `serviceType=STORE` 카테고리를 children 포함 재귀 제외**(enum 없는 값은 US 폴백) (`CategorySearchService.java:322-336`). `v2/categories`·`v4 service-home`·`v3/home`(글로벌)에 `wadiz-country` 헤더 연동, `v3/home` 캐시키(`KEY_HOME_CARD_V3`)에 countryCode 추가해 국가별 캐시 분리.
+> - 카테고리 ES 조회를 **`ordinal` 오름차순 정렬**(depth1 정렬, children 은 색인 시점 보장) (`CategorySearchService.java:366`).
+> - 슈퍼메이커 카테고리 배너 삭제.
+
+---
+
 ## 개요
 
 - 검색·카테고리·피드·메이커 팔로우·소셜 활동·홈카드 등 **읽기 위주** 엔드포인트의 단일 진입점.

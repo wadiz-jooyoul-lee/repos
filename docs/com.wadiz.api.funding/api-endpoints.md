@@ -126,6 +126,7 @@
 | GET | `/api/internal/campaigns/{campaignId}/base-info` |
 | GET | `/api/internal/campaigns/{campaignId}/makers/{userId}` |
 | GET | `/api/internal/campaigns/maker-business-info` |
+| GET | `/api/internal/campaigns/maker-user-ids` (캠페인별 메이커 회원 ID bulk 조회, RWD-5761) |
 
 ### Campaign Studio — `campaign/CampaignStudioController` (`/api/studio/campaigns/{campaignId}`)
 | Method | Path |
@@ -335,6 +336,11 @@
 | GET | `/api/studio/campaigns/{campaignId}/news/availability` |
 | GET | `/api/studio/campaigns/{campaignId}/news/isSendNotification` |
 | GET | `/api/studio/campaigns/{campaignId}/news/writes/check-status` |
+
+### News Internal — `news/NewsInternalController` (`/api/internal/news`)
+| Method | Path |
+|---|---|
+| GET | `/api/internal/news/maker-user-ids` (새소식별 campaignId·메이커 회원 ID bulk 조회, RWD-5761) |
 
 ### News Notification
 | Method | Path |
@@ -579,6 +585,7 @@
 | POST | `/api/attachments/friend-talk` | `AttachmentController` |
 | POST | `/api/v1/slack/campaigns/{projectNo}/hidden/send` | `SlackController` |
 | POST | `/api/v1/slack/campaigns/{projectNo}/story-modified/send` | `SlackController` |
+| POST | `/api/v1/slack/campaigns/{projectNo}/plan-change/send` | `SlackController` (요금제 변경 알림, RWD-5675) |
 | POST | `/api/internal/slack/campaigns/{campaignId}/hidden/send` | `SlackInternalController` |
 | POST | `/api/internal/slack/campaigns/{campaignId}/story-modified/send` | `SlackInternalController` |
 | POST | `/api/internal/users` | `UserInternalController` |

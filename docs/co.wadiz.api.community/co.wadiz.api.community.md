@@ -1,5 +1,35 @@
 # co.wadiz.api.community
 
+> 📅 **2026-07-10 master pull 보강** (24 커밋)
+>
+> 직전 갱신(2026-06-17, endpoint 44) 이후 **콘텐츠 룰 차단(Content Rule)** 신규 도메인이 추가됐다. 생성 시점 결정론적 룰(ML/외부DB/LLM 0)로 피싱·홍보를 동기 평가·차단하는 1차 게이트 + CDC(Kafka) 기반 URL 평판 후처리 차단. 2개 신규 모듈(`module/content_rule`, `module/content_profiler`) + 무의존 코어(`shared/contentrule`). **신규 컨트롤러 1개 · endpoint 3개 추가 → 총 13 컨트롤러 · 47 endpoint**.
+>
+> ### RWD-5712 — content-rule 생성 시점 Rulebase 1차 차단 게이트
+> - **`module/content_rule/controller/ContentRuleController.java:32,41`** REST 진입점 신설(`@RequestMapping("/api/v1/content-rule")`). `POST /{contentType}/{userId}/evaluations`(룰 평가 → `{status:OK|BLOCK}`), `DELETE /blocked-users/{userId}`(확정 차단 사용자 해제, 멱등). 내부망/서비스 토큰 전제 — 공개 금지, 부작용 없는 평가만.
+> - **`module/content_rule/dto/EvaluationStatus.java:17`** 내부 4-state `Action`(ALLOW/HOLD/BLIND/BLOCK)을 호출자 관점 2-state(OK/BLOCK)로 축약. 점수·verdict·firedRules 는 감사 로그에만 적재.
+> - **`module/content_rule/dto/EvaluateRequest.java:11`** body 는 `content` 만. 계정 신호(D군)는 호출자가 넘기지 않고 community 가 contentType+userId 로 내부 조회.
+> - `shared/contentrule` 무의존 코어(JDK + Guava(PSL) + ICU4J(confusable), Spring 비의존): `ContentRuleEngine`/`ContentRulePolicy`(임계값 90/70/40)/`ContentRuleEvaluator`(신호구성→평가→감사로그→차단적재). REST 진입점과 community 내부 in-process guard(지지서명·댓글 생성·수정 4경로, 차단 시 `ForbiddenApiException`(403) 롤백)가 동일 정책 공유.
+> - 차단 적재 Redis+DB 분리: Redis 활성 차단(TTL 1주)+사전차단 fast-path, DB `wadiz_community.content_rule_block_log` append 이력(전용 `@CommunityDbTransactional`). 확정 차단 시 Slack 실시간 알림(`module/content_rule/notify/ContentRuleBlockNotifier`).
+>
+> ### RWD-5713 — content-profiler CDC 기반 URL 평판 후처리 차단
+> - **`module/content_profiler/integration/kafka/`** Kafka CDC 컨슈머 신설(`AbstractCdcThreatConsumer` 베이스 + Signature/SupporterSignatureComment/MiniBoard/PersonalMessage/Satisfaction/SatisfactionReply 6종). 영속화된 콘텐츠를 CDC 로 후처리 평가해 URL 평판 악성 시 차단.
+> - **`module/content_rule/controller/ContentRuleController.java:48`** `DELETE /url-reputations?url=` 신규 — 공유 URL 평판 캐시 항목 제거(관리/오탐 정정, 저장 시점과 동일 정규화 후 제거, 멱등).
+> - **`shared/contentrule/model/ContentType.java:25`** `SATISFACTION`/`SATISFACTION_COMMENT` 편입 → enum **12종**. 만족도는 생성 경로가 없어 생성시점 차단 제외, **CDC 경로에서만** 평가(soft-delete=`wadiz_reward.{Satisfaction,SatisfactionReply}.IsDeleted`).
+>
+> ### RWD-5731 — 1:1 문의(PERSONAL_MESSAGE) 위협 탐지 추가 + ContentType rename
+> - **`shared/contentrule/model/ContentType.java:24`** `PERSONAL_MESSAGE`(1:1 메신저형 게시판, 메시지 단위 단일 타입) 추가.
+> - **`shared/contentrule/model/ContentType.java:22`** `SIGNATURE`/`SIGNATURE_COMMENT` → `SUPPORTER_SIGNATURE`/`SUPPORTER_SIGNATURE_COMMENT` 리네임(in-process 전용이라 REST/wire 영향 없음). 호출부(`SupporterSignatureUserService`, `SupporterSignatureCommunicationUserService`)·테스트·코퍼스 JSON 동기화.
+> - **`module/content_rule/repository/crossdb/SpamCleanupMapper.java` / `cleanup/SpamDuplicateDeleter.java`** 도배 정리에 1:1 문의 추가. soft-delete 컬럼 부재로 **hard delete**(root=`UpperMessageNo -1` 보존, child 만).
+>
+> ### RWD-5762 — 1:1 문의 메이커 발신 메시지 URL 평판 평가 bypass (오탐 완화)
+> - **`module/content_profiler/integration/kafka/dto/PersonalMessageData.java:47`** `isFromMaker()` 추가 — 작성자(`RegisterUserId`)가 대화방 주인(`ClientUserId`)과 다르면 메이커 발신(null 가드 fail-safe).
+> - **`module/content_profiler/integration/kafka/PersonalMessageCdcConsumer.java:54`** 메이커 발신 시 평가 skip. IPQS 90점(확정 악성) 판정이 실제 메이커 자사 홈페이지였던 오탐 케이스 대응.
+>
+> ### RWD-5797 — live inbox 링크 이중 scheme 복구 (hotfix)
+> - **`src/main/resources/application-live.yml:204`** `wadiz.domain.kr` 에서 `https://` 제거(`https://www.wadiz.kr` → `www.wadiz.kr`). 알림 URL 템플릿(`supporter.signature.*`)이 `https://{0}` 형식이라 domain 에 scheme 포함 시 `https://https://...` 이중 scheme 로 live inbox/push 링크 깨짐. live 한정 hotfix(전 프로파일 정합화는 RWD-5754 정식 배포).
+>
+> ---
+>
 > 📅 **2026-05-29 갱신** (최초 분석: 2026-04-26 master pull, 36 커밋) — 본 분석 baseline 시점에는 Phase 0~1 스캐폴드 였으나, 현재는 **Phase 6 v1.3.0 풀 구현 완료 + Live 배포 완료**. 이 문서 본문은 baseline 기준 (구버전). 현재 구현은 아래 박스 참조.
 >
 > ### 현재 상태 (2026-05-29)

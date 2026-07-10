@@ -2,6 +2,23 @@
 
 > ⚠️ 분석은 `dev` 브랜치 기준입니다. `main` 브랜치는 README만 있는 빈 상태이며 실제 코드는 모두 `origin/dev` 에 있습니다.
 
+> 📅 **2026-07-10 pull 보강** (6 커밋, `dev` — CM2-175 배포/환경 통합)
+>
+> ### `clive`(cloud-live) 환경 추가
+> - OpenSearch 클라이언트 `@Profile` 에 `clive` 추가 → dev/rc/rc2/live/**clive** 5개 프로파일에서 `OpenSearchClient` 빈 생성 (`infrastructure/opensearch/config/OpenSearchConfig.java:40`).
+>
+> ### GitHub Actions 배포 워크플로우 통합 (cloud 전용 → 기존 워크플로우로 흡수)
+> - 별도 `aws_deploy_ecr_cloud_dev.yml` **삭제** — cloud 환경을 기존 워크플로우로 통합 (`.github/workflows/aws_deploy_ecr_cloud_dev.yml`).
+> - live 워크플로우: gitops value 파일 경로에 `core/clive/currency-exchange-api.yaml` 추가 → live + clive 동시 배포 (`.github/workflows/aws_deploy_ecr_live.yml:22-24`).
+> - rc 워크플로우: `core/rc4/currency-exchange-api.yaml` 추가 → rc1 + rc4 동시 배포 (`.github/workflows/aws_deploy_ecr_rc.yml:22-24`).
+> - dev 워크플로우: value 경로 `core/odev/...` → `core/dev/...` 로 정정 (`.github/workflows/aws_deploy_ecr_dev.yml:22-23`).
+>
+> ### 영향
+> - 순수 배포/환경 설정 변경. **엔드포인트·OpenSearch 쿼리·환전 계산 로직 변경 없음** (아래 본문 유효).
+> - 본 문서 § "외부 의존성"·"특이사항"의 환경(profile) 목록에 `clive`(cloud-live) 추가 고려.
+>
+> ---
+>
 > 📅 **2026-05-29 갱신** (최초 2026-04-26 → 이후 SCOUT-1 시리즈 계속)
 >
 > ### 신규 엔드포인트 — `display-country-code` 기반 변환 (2026-04-26 시점)

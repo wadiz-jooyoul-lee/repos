@@ -1,7 +1,8 @@
 # co.wadiz.api.community — API 엔드포인트 전수 목록
 
-> 2026-04-26 기준 풀 구현 상태. **12 컨트롤러 · 44 REST endpoint**. 공개 API(`/api/v3/...`) 는 `wave.user` V3 와 1:1 일치 (이관 완료).
+> 2026-04-26 기준 풀 구현 상태. 공개 API(`/api/v3/...`) 는 `wave.user` V3 와 1:1 일치 (이관 완료).
 > **2026-06-17 갱신 (RWD-5698)**: adm(관리자) 지지서명 관리 API 2 컨트롤러 · 7 endpoint 추가 (`/api/v3/admin/...`). 검색(삭제 포함)·답글 조회·개별 삭제/복구·답글 생성/삭제/복구.
+> **2026-07-10 갱신 (RWD-5712/5713)**: Content Rule V1 API 1 컨트롤러 · 3 endpoint 추가 (`/api/v1/content-rule/...`). 생성 시점 룰 평가·차단 해제·URL 평판 캐시 제거. → **총 13 컨트롤러 · 47 REST endpoint**.
 > 상세 분석: [`api-details/supporter-signature-module.md`](./api-details/supporter-signature-module.md)
 
 ## 1. SupporterSignatureController (`controller/SupporterSignatureController.java:30`)
@@ -120,6 +121,17 @@ base: `/api/v3/admin/users/{userId}/supporter-signatures` — **RWD-5698 신규 
 | DELETE | `/comments/{commentId}` | 답글 삭제 |
 | POST | `/comments/{commentId}/restore` | 답글 복구 |
 
+## 13. ContentRuleController (`module/content_rule/controller/ContentRuleController.java:27`)
+base: `/api/v1/content-rule` — **RWD-5712/5713 신규 (콘텐츠 룰 평가·차단. 내부망/서비스 토큰 전제, 공개 금지)**
+
+| Method | Path | 용도 |
+|---|---|---|
+| POST | `/{contentType}/{userId}/evaluations` | 콘텐츠 룰 평가 — 결정론적 룰로 피싱/홍보 평가 후 `{status: OK\|BLOCK}` 반환 (RWD-5712) |
+| DELETE | `/blocked-users/{userId}` | 확정 차단 사용자 해제 (관리/이의제기 복구, 멱등) (RWD-5712) |
+| DELETE | `/url-reputations?url=` | 공유 URL 평판 캐시 항목 제거 (관리/오탐 정정, 멱등) (RWD-5713) |
+
+> `contentType` PathVariable 은 `shared/contentrule/model/ContentType` enum 12종 (CHEER, OPINION, EXPERIENCE_REVIEW, SUPPORTER_SIGNATURE + 각 `*_COMMENT`, NEWS_COMMENT, PERSONAL_MESSAGE, SATISFACTION/SATISFACTION_COMMENT). 만족도 2종은 CDC 후처리 경로 전용.
+
 ---
 
 ## 통계
@@ -133,9 +145,10 @@ base: `/api/v3/admin/users/{userId}/supporter-signatures` — **RWD-5698 신규 
 | Communication (관리자/유저) | 2 | 6 |
 | Affiliate (관리자/유저) | 2 | 4 |
 | **adm Admin (검색·삭제/복구·답글)** | **2** | **7** |
-| **합계 (관측)** | **12** | **44** |
+| **Content Rule V1 (평가·차단해제·캐시제거)** | **1** | **3** |
+| **합계 (관측)** | **13** | **47** |
 
-→ 공개 API(`/api/v3/...`) 10 컨트롤러·37 endpoint 는 wave.user signature-v3 와 동일 path (**1:1 이관**). adm 관리자 API(`/api/v3/admin/...`) 2 컨트롤러·7 endpoint 는 community 신규 (RWD-5698).
+→ 공개 API(`/api/v3/...`) 10 컨트롤러·37 endpoint 는 wave.user signature-v3 와 동일 path (**1:1 이관**). adm 관리자 API(`/api/v3/admin/...`) 2 컨트롤러·7 endpoint 는 community 신규 (RWD-5698). Content Rule V1(`/api/v1/content-rule/...`) 1 컨트롤러·3 endpoint 는 community 신규 (RWD-5712/5713, 내부망 전제).
 
 ## wave.user 와의 차이점 (관측 가능한 것만)
 - 패키지: `com.wadiz.wave.user.supporter.signature.v3.*` → `co.wadiz.community.module.supporter_signature.controller.*`

@@ -1,3 +1,13 @@
+> 📅 **2026-07-10 main pull 보강** (3 커밋)
+>
+> ### 펀딩 스토리 HTML 후처리에 Vimeo iframe 지연 로딩 추가 (FE1-1178)
+> - 스토리 HTML 처리 파이프라인의 1-1단계로 `replaceVimeoIframes()`가 새로 삽입됨. YouTube placeholder 변환(1단계) 직후, img `src→data-src` 변환(2단계) 직전에 실행 (`src/api/funding/projects/project.service.ts:67-68`).
+> - `player.vimeo.com` iframe의 `src`를 `data-vimeo-src`로 보관하고 `src=""`로 비워 초기 동시 로딩·자동재생을 차단, 기존 `style`은 보존하면서 `opacity:0`을 덧붙임 (`project.service.ts:131-146`). background 제거·autopause 및 뷰포트 진입 시 복원은 클라이언트 `useStoryOptimize`가 담당(주석 명시).
+> - `replaceGifImagesToVideoTags()` JSDoc이 `Vimeo→lazy`를 포함하도록 갱신됨 (`project.service.ts:24`). 단일/다중 Vimeo iframe 처리 테스트 2건 추가 (`project.service.spec.ts`).
+> - 나머지 2커밋은 릴리스/버그픽스 머지(#470·#471)로 net-new 코드 없음.
+>
+> ---
+
 # app-api 분석 문서
 
 ## 개요

@@ -1,5 +1,15 @@
 # com.wadiz.api.reward 분석 문서
 
+> 📅 **2026-07-10 master pull 보강** (net-new 1건 + 반영/취소 이력)
+>
+> ### (issue key 없음) — 쿠폰 다통화 Repository 실행 시 IllegalAccessError 해결
+> - **`src/main/java/com/wadiz/api/reward/coupon/infra/repository/JpaCouponTemplateCurrencyEntityRepository.java:11`** — 기존 `JpaCouponTemplateCurrencyRepository.java` 안에 **package-private inner interface** 로 있던 `JpaCouponTemplateCurrencyEntityRepository`(Spring Data JPA repository)를 **별도 파일의 top-level `public interface`** 로 분리. 실행 시 발생하던 `IllegalAccessError`(접근 제한자 문제) 회피가 목적. 메서드(`findByIdTemplateNo`, `deleteByIdTemplateNo`)·엔티티(`CouponTemplateCurrency`, RWD-5486 다통화 쿠폰 표시금액용)는 그대로. 커밋 `27bc477e`/`6302a1d7`(2026-06-08, joona.choi).
+>
+> ### 클라우드 이전(CM2-102) 반영 후 전량 Revert — 현 master는 기존 인프라 유지
+> - PR #475 "Cloud live into master"(2026-06-30)로 GitHub Actions/Kubernetes/jib·GPR·`hazelcast-kubernetes.yaml` 기반 클라우드 이전(CM2-102)이 master 에 병합되었으나, PR #478 `Revert "Cloud live into master"`(2026-07-03)로 **전량 되돌려짐**. 따라서 현 master HEAD 는 배포는 여전히 **`Jenkinsfile-API`/`Jenkinsfile-BATCH`**, 클러스터/디스커버리는 **Consul + Hazelcast(비 k8s)** 로 유지된다(`.github/workflows/` 비어 있음, `application-odev.yml`·`hazelcast-kubernetes.yaml` 부재). 위 IllegalAccessError 수정만 revert 를 넘어 잔존.
+
+---
+
 > **Phase 2 심층 분석 진행 중**. 전체 엔드포인트는 [`api-endpoints.md`](./api-endpoints.md), 도메인별 상세는 `api-details/` 하위 참조.
 >
 > | 도메인 | 파일 | 컨트롤러 수 |

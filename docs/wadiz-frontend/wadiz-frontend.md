@@ -1,5 +1,58 @@
 # wadiz-frontend
 
+> 📅 **2026-07-10 master pull 보강** (직전 갱신 2026-06-18 이후 약 684 커밋, 이슈키 60여 종)
+>
+> 상위 net-new 테마만 추립니다. QA-22xxx 계열 버그픽스 37종 다수는 개별 나열 생략.
+>
+> ### FE2-670 — apps/global E2E 테스트 앱 신규 추가
+> - `apps/global`(글로벌 SPA) 전용 Playwright E2E 프로젝트를 별도 앱으로 신설. 메이커 홈 시나리오부터 시작하며 rc·rc2 환경 스케줄과 브랜치 체크아웃 매핑 포함 (`apps/global-e2e/` — `playwright.config.ts`, `auth.setup.ts`, `maker/`, `helpers/env.ts`)
+>
+> ### FE2-423 / FE2-648 / FE2-649 / FE2-567 — 매출UP 메이커 광고 페이지 신설
+> - 글로벌 앱에 메이커 광고 제안 페이지 신규 구현. WAi greeting instruction(인사말 지침·천 단위 컴마·80자 요약·`<br />` 전용 줄바꿈 규칙), 단계별 전략, 광고 상품 카드 섹션 리뉴얼, 지면별 GA 데이터 수집 (`apps/global/src/pages/maker/ad/` — `MakerAdPage.tsx`, `_lib/salesUpGreetingInstruction.ts`, `_lib/salesUpStrategy.constants.ts`, `_lib/salesUpFallbackCopy.ts`, `_ui/SalesUpOpeningSection/`, `_ui/AdServiceCardSection/`)
+> - 메이커홈 WAi greeting 본문 지침 분리·고도화 (FE2-567)
+>
+> ### FE1-1060 / FE1-1061 / FE2-634 — 클라우드 도메인 wadiz.co → wadiz.io 전환
+> - 클라우드 환경 도메인을 `wadiz.co` 에서 `wadiz.io` 로 교체하는 전역 설정 변경. 게이트웨이·스토리 이미지 클라우드 판별과 WAi WebSocket 호스트를 `.io` 기준으로 통일, cdev 환경 교체, `getCloudTld` 제거로 `.io` 전용화 (`static/packages/fetch-api/src/utils/fetchUrl.ts`, `apps/global/src/features/wai/lib/useWAiWebSocket.ts`, `static/services/admin/proxyInfo.js`)
+> - clive 웹 호스트 `clive.wadiz.io` → `www.wadiz.io`, 스튜디오 클라우드 도메인 `.co` → `.io` (FE2-634)
+> - 로컬 인증서를 `wadiz.io`·`wadiz.com` 포함 4개 TLD로 갱신 (FE1-1061)
+>
+> ### FE1-988 — GNB 친구 탭 → 와디즈 에디션 탭 교체
+> - 하단 네비게이션(BottomNavigationBar) 친구 탭을 "와디즈 에디션" 탭으로 교체, 데스크탑에서 에디션 기획전 네비게이션·목록 노출, 신규 에디션 아이콘 추가 (`packages/ui/src/BottomNavigationBar/BottomNavigationBar.constants.tsx`, `packages/waffle-icons/src/components/EditionIcon.ts`·`EditionOIcon.ts`, `assets/edition.svg`)
+>
+> ### FE1-927 — 펀딩 상세 E2E testid 대량 추가 (regression 대비)
+> - 펀딩 상세의 탭바(탭별), 커뮤니티 필터·섹션·CTA·팔로우·모달, 리워드 선택 모달 Continue to Checkout 버튼 등에 E2E testid 부여. 셀렉터가 아닌 검증용 testid 정리 포함
+>
+> ### FE2-461 — 모두의 펀딩 자동 랜덤처리
+> - 메인 파인딩 배너의 "모두의 펀딩" 자동 랜덤 처리 및 GA label 정비, 스토어 스튜디오 검색 서비스 연동 (`packages/widgets/src/home/ui/MainFindingBanner/MainFindingBanner.tsx`, `studio/store/src/services/serviceApi/search.ts`)
+>
+> ### FE2-472 — 스토어/입고 스튜디오 E2E 보강
+> - 입고 진입 등 스토어 스튜디오 E2E 테스트 추가와 라이브 환경 실행 차단 가드·부재 시 스킵 가드 도입
+>
+> ### FE1-1110 — 국내 결제수단 뱃지 복원
+> - 국내 결제 화면 간편결제·토스 뱃지 복원. 결제 페이지 데이터·campaigns 서비스 응답 반영 (`apps/global/src/pages/funding/payment/_api/usePaymentPageData.ts`, `packages/api/src/web/funding/campaigns.service.ts`)
+>
+> ### FE1-1042 / FE1-978 — 메이커 기획전 쿠폰·정렬 개편
+> - 쿠폰 범위 min/max 개방 구간 입력 지원, 정렬 기준 enum화(최근 오픈순 추가)·정렬 위치 이동, 쿠폰 입력을 정렬과 무관하게 항상 노출/저장 (FE1-1042)
+> - dev 환경에서 `maker-projects` 쿼리 파라미터로 메이커 기획전 응답 오버라이드 (FE1-978)
+>
+> ### FE1-1012 — 기획전 Framer 카드 data-ec 수집
+> - 기획전 Framer 카드에 표준 `data-ec` 오버레이 수집 구현. 오버레이 렌더 전 iframe 클릭 차단으로 수집 오차 방지, `data-ec-list` 프레이머 구분값을 framer URL path 기준으로 변경
+>
+> ### FE1-1097 — 위시/로그인 EncUserId 수집·Sentry 관측
+> - static main 라우터 errorElement에 Sentry 관측 추가, 위시 목록 `encUserId` 미존재 대응 및 로그인 EncUserId 누락 수집(`useLoginStatus` 반환값 기준)
+>
+> ### FE1-1089 / CLIENT-177 — 메일 템플릿
+> - 개인정보 이용내역 메일 템플릿 개편 (FE1-1089)
+> - `mail-template` 워크플로에 cdev 환경 추가·`build:cdev` 스크립트 도입, `build:dev` 제거 (CLIENT-177)
+>
+> ### FE1-1032 — account 앱 검색/alias 정비
+> - account 앱에 `@wadiz/format`·`@wadiz/queries` alias 추가, `useSearchHelper`의 `@wadiz/queries` 의존을 `AccountSettings`로 교체, 최근 검색어 API `encUserId` 타입을 string 허용으로 확장
+>
+> ### FE1-973 — 리워드 보유기간/배송지
+> - 보유기간 경과·취소 건 배송지 미노출 처리 및 목록 보유기간 안내 문구 추가
+>
+> ---
+
 > **Phase 2 심층 분석 진행 중**. 도메인별 상세는 `api-details/` 하위 참조.
 >
 > | 영역 | 파일 |
@@ -125,7 +178,7 @@
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-18** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (최초: 2026-04-20 / 직전: 2026-06-18 — 최신 net-new는 문서 상단 2026-07-10 보강 블록 참조)
 
 ### 계정 / 로그인 (2026-06)
 | 변경 내용 | 날짜 | 관련 이슈 |

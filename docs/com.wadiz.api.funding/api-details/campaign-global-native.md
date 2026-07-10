@@ -721,3 +721,19 @@ WHERE C.WhenOpen <= NOW()       -- ⚠️ 변경: 기존 C.IsOpen = TRUE (RWD-55
 > `IsOpen` 플래그 대신 `WhenOpen <= NOW() AND WhenClose >= NOW()` 시간 기반 조건으로 변경 — 실시간 오픈 여부 판정.
 
 **접근 테이블**: `Campaign`, `CampaignShippingCountry`
+
+### 자동화 컬렉션 키워드 확장
+
+`CollectionKeyword` enum(`core/domain/.../collection/automation/CollectionKeyword.java`)에 키워드를 추가하고 그에 대응하는 `@Helper` 전략 클래스를 추가하면 `collectionAutomationJob`에 자동 편입된다. 2026-07 기준 키워드:
+
+| Keyword(enum) | 값 | 설명 | 이슈 |
+|---|---|---|---|
+| `GLOBAL_ONGOING` | `8globaldom` | 글로벌 진행 PJ | RWD-5585 |
+| `EVERY_NOOK_AND_CORNER` | `EveryNookandCorner` | 푸드 산지직송·로컬맛집 | RWD-5663 |
+| `ROOKIE_BOX` | `RookieBox` | 신규 메이커 | RWD-5665 |
+| `WHATS_NEXT_US`/`_JP`/`_CN` (+ `_COMING_SOON`) | `whatsnext*` 6종 | 글로벌 배송국가별(미/일/중화권) 본펀딩·오픈예정 | RWD-5705 |
+| `SUPPORT_FANDOM` | `supportfandom` | 후원·팬덤(SOCIAL 요금제) | **RWD-5763** |
+| `LOCAL_FUNDING` | `localfunding` | 로컬(LOCAL 요금제+사업자) | **RWD-5763** |
+| `BOOKMARKS` | `bookmarks` | 글로벌 전자책·클래스(비KR 배송 + `CategoryType.CLASS`) | **RWD-5790** |
+
+> RWD-5744: 왓츠넥스트코리아 컬렉션에서 전자책·클래스 카테고리를 제외하고, `AutomatedCollectionMapper.xml`의 하드코딩 카테고리 코드를 `CategoryType.PUBLISH/CLASS` 상수 참조 + foreach 파라미터로 정리.
