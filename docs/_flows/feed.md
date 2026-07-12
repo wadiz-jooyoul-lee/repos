@@ -18,7 +18,7 @@
 
 - **외부 경계**:
   - `wave.user` MySQL → `user.link` Neo4j 동기화 파이프라인: **`wa-infrastructure/cdc`** repo 의 Debezium `20.user`·`21.user` 커넥터로 실증 완료 (→ [`docs/cdc.md`](../cdc.md))
-  - `wave.searcher` ES 인덱스 (`user_follow-alias`) 적재 ETL 파이프라인 위치 — 여전히 미확인
+  - `wave.searcher` ES 인덱스 (`user_follow-alias`) 적재 ETL 파이프라인: **`wadiz-search` org 의 `com.wadiz.search.indexer-dokdo`·`indexer-geojedo`** 로 실증 완료 (Kafka Consumer + MyBatis 폴링, → [`docs/wadiz-search.md`](../wadiz-search.md))
   - `service.wadiz.kr/api/friends/*` 의 정확한 라우팅 (게이트웨이 path rewrite 추정)
   - `kr.wadiz.user.link` 가 구독하는 16개 Kafka 토픽 → 16개 MySQL 테이블 매핑 실증표는 `docs/cdc.md` § 3.3
 

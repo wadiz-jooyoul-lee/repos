@@ -1,6 +1,6 @@
 # Wadiz Repos — Clone URL 인벤토리
 
-부모 repo(`wadiz-jooyoul-lee/repos`) 하위 32개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
+부모 repo(`wadiz-jooyoul-lee/repos`) 하위 51개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
 
 각 repo 의 역할·스택·심층 분석 위치는 [`CLAUDE.md`](../CLAUDE.md) 및 [`docs/<repo>/`](./) 를 참조하세요.
 
@@ -107,6 +107,40 @@ grep "wadiz-service" docs/repos-inventory.md | grep -oE "git@github\.com:\S+\.gi
 |---|---|---|
 | MemberShip-Api-Server | `git@github.com:wadiz-membership/MemberShip-Api-Server.git` | [docs](./wadiz-membership.md#1-membership-api-server--멤버십-코어-api) |
 | User-Api-Gateway | `git@github.com:wadiz-membership/User-Api-Gateway.git` | [docs](./wadiz-membership.md#2-user-api-gateway--spring-cloud-gateway) |
+
+## 10. `wadiz-search` — ElasticSearch Indexer (3개)
+
+| Repo | Clone URL | 상세 문서 |
+|---|---|---|
+| com.wadiz.search.indexer-dokdo | `git@github.com:wadiz-search/com.wadiz.search.indexer-dokdo.git` | [docs](./wadiz-search.md#1-comwadizsearchindexer-dokdo--메인-통합-인덱서) |
+| com.wadiz.search.indexer-geojedo | `git@github.com:wadiz-search/com.wadiz.search.indexer-geojedo.git` | [docs](./wadiz-search.md#2-comwadizsearchindexer-geojedo--확장-인덱서) |
+| indexer-startup | `git@github.com:wadiz-search/indexer-startup.git` | [docs](./wadiz-search.md#3-indexer-startup--스타트업투자-전용) |
+
+## 11. `wadiz-settlement` — 정산 시스템 (4개)
+
+| Repo | Clone URL | 상세 문서 |
+|---|---|---|
+| co.wadiz.settlement-orchestrator | `git@github.com:wadiz-settlement/co.wadiz.settlement-orchestrator.git` | [docs](./wadiz-settlement.md#1-cowadizsettlement-orchestrator--신규-오케스트레이터) |
+| co.wadiz.settlement | `git@github.com:wadiz-settlement/co.wadiz.settlement.git` | [docs](./wadiz-settlement.md#2-cowadizsettlement--레거시-정산-monorepo) |
+| douzone-comet-service-tc-stsacr-x20191 | `git@github.com:wadiz-settlement/douzone-comet-service-tc-stsacr-x20191.git` | [docs](./wadiz-settlement.md#3-douzone-comet-service-tc-stsacr-x20191--개별-모듈-분리-저장소) |
+| policy-docs | `git@github.com:wadiz-settlement/policy-docs.git` | [docs](./wadiz-settlement.md#4-policy-docs--정산-정책-마이그레이션-문서) |
+
+## 12. `wadiz-tech` — 플랫폼팀 API·Agent 서버군 (12개)
+
+| Repo | Clone URL | 상세 문서 |
+|---|---|---|
+| user-activity-api | `git@github.com:wadiz-tech/user-activity-api.git` | [docs](./wadiz-tech.md#41-user-activity-api) |
+| mail-normal-api | `git@github.com:wadiz-tech/mail-normal-api.git` | [docs](./wadiz-tech.md#11-mail-normal-api) |
+| mail-toast-agent | `git@github.com:wadiz-tech/mail-toast-agent.git` | [docs](./wadiz-tech.md#12-mail-toast-agent) |
+| push-api | `git@github.com:wadiz-tech/push-api.git` | [docs](./wadiz-tech.md#13-push-api) |
+| notification-log-agent | `git@github.com:wadiz-tech/notification-log-agent.git` | [docs](./wadiz-tech.md#14-notification-log-agent) |
+| kr.wadiz.platform.api.friendtalk | `git@github.com:wadiz-tech/kr.wadiz.platform.api.friendtalk.git` | [docs](./wadiz-tech.md#15-krwadizplatformapifriendtalk) |
+| platform-admin | `git@github.com:wadiz-tech/platform-admin.git` | [docs](./wadiz-tech.md#21-platform-admin) |
+| main2-api | `git@github.com:wadiz-tech/main2-api.git` | [docs](./wadiz-tech.md#31-main2-api) |
+| main2-batch-api | `git@github.com:wadiz-tech/main2-batch-api.git` | [docs](./wadiz-tech.md#32-main2-batch-api) |
+| main2-stream-agent | `git@github.com:wadiz-tech/main2-stream-agent.git` | [docs](./wadiz-tech.md#33-main2-stream-agent) |
+| wish-api | `git@github.com:wadiz-tech/wish-api.git` | [docs](./wadiz-tech.md#42-wish-api) |
+| project-metric-api | `git@github.com:wadiz-tech/project-metric-api.git` | [docs](./wadiz-tech.md#43-project-metric-api) |
 
 ---
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Wadiz repos 부트스트랩 스크립트
-# ~/work/repos 하위 32개 repo 를 clone. 이미 있는 폴더는 skip.
+# ~/work/repos 하위 51개 repo 를 clone. 이미 있는 폴더는 skip.
 # 갱신은 별도로 `./execute_all git pull` 사용.
 #
 # 프로토콜 선택 (기본 ssh):
@@ -69,6 +69,28 @@ REPOS=(
   # wadiz-membership
   "git@github.com:wadiz-membership/MemberShip-Api-Server.git"
   "git@github.com:wadiz-membership/User-Api-Gateway.git"
+  # wadiz-search
+  "git@github.com:wadiz-search/com.wadiz.search.indexer-dokdo.git"
+  "git@github.com:wadiz-search/com.wadiz.search.indexer-geojedo.git"
+  "git@github.com:wadiz-search/indexer-startup.git"
+  # wadiz-settlement
+  "git@github.com:wadiz-settlement/co.wadiz.settlement-orchestrator.git"
+  "git@github.com:wadiz-settlement/co.wadiz.settlement.git"
+  "git@github.com:wadiz-settlement/douzone-comet-service-tc-stsacr-x20191.git"
+  "git@github.com:wadiz-settlement/policy-docs.git"
+  # wadiz-tech
+  "git@github.com:wadiz-tech/user-activity-api.git"
+  "git@github.com:wadiz-tech/mail-normal-api.git"
+  "git@github.com:wadiz-tech/mail-toast-agent.git"
+  "git@github.com:wadiz-tech/push-api.git"
+  "git@github.com:wadiz-tech/notification-log-agent.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.api.friendtalk.git"
+  "git@github.com:wadiz-tech/platform-admin.git"
+  "git@github.com:wadiz-tech/main2-api.git"
+  "git@github.com:wadiz-tech/main2-batch-api.git"
+  "git@github.com:wadiz-tech/main2-stream-agent.git"
+  "git@github.com:wadiz-tech/wish-api.git"
+  "git@github.com:wadiz-tech/project-metric-api.git"
 )
 
 skipped=0

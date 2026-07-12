@@ -17,6 +17,9 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 | `wadiz-ai` | AI 콘텐츠 검수 서비스 | FastAPI / Python 3.11 / OpenAI + GCV OCR + ES |
 | `wadiz-batch` | 배치·감사 서버군 | Spring Boot 2.1~2.7 / Java 8 / Batch·MyBatis·JPA·RabbitMQ |
 | `wadiz-membership` | 멤버십 API + Gateway | Spring Boot 2.5 / Java 8 / QueryDSL JPA + Spring Cloud Gateway |
+| `wadiz-search` | ElasticSearch Indexer (MySQL→ES 색인) | Spring Boot / Java 8 / MyBatis + Kafka Consumer |
+| `wadiz-settlement` | 정산 시스템 (레거시 + 신규) | Java 8 + JEUS 8 + Douzone / Boot 3.5 + Java 21 + Qdrant RAG |
+| `wadiz-tech` | 플랫폼 API·Agent 서버군 (알림·메인·위시 등) | Spring Boot 2.7~4.0 / Java 17 / 12 repo |
 
 ---
 
@@ -100,6 +103,38 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 |---|---|---|
 | `MemberShip-Api-Server` | 멤버십 상품·바우처·혜택·회원 API + 자동갱신 배치 (7 모듈) | 2.5.3 |
 | `User-Api-Gateway` | Spring Cloud Gateway (`/membership/**` → localhost:9150 사이드카) | 2.5.4 |
+
+## 10. `wadiz-search` — ElasticSearch Indexer
+
+[wadiz-search 통합 개요](./docs/wadiz-search.md) — **wave.searcher ES 인덱스의 실제 소스로 실증 완료**. 3 repo:
+
+| Repo | 색인 도메인 | Kafka |
+|---|---|---|
+| `com.wadiz.search.indexer-dokdo` | 카테고리·통합·팔로우·피드·스토어 | ✓ (UserSearchEventListener) |
+| `com.wadiz.search.indexer-geojedo` | 통합·팔로우·피드·유저·위시·메이커·리액션 (확장판) | ✓ (SignatureListener) |
+| `indexer-startup` | 스타트업(투자) 전용 | (배치성) |
+
+## 11. `wadiz-settlement` — 정산 시스템
+
+[wadiz-settlement 통합 개요](./docs/wadiz-settlement.md) — 레거시(Douzone/JEUS) + 신규(RAG) 병존, 4 repo:
+
+| Repo | 유형 | Boot |
+|---|---|---|
+| `co.wadiz.settlement-orchestrator` | 신규 RAG 정산 챗봇 + 준실시간 PG 대사 | 3.5.0 (Java 21) |
+| `co.wadiz.settlement` | 레거시 Douzone Comet monorepo (16 모듈, JEUS 8) | 2.3.8 (Java 8) |
+| `douzone-comet-service-tc-stsacr-x20191` | 위의 개별 모듈 분리 저장소 | (Maven, Java 8) |
+| `policy-docs` | 정산 정책·마이그레이션·챗봇 문서 (코드 아님) | — |
+
+## 12. `wadiz-tech` — 플랫폼팀 API·Agent 서버군
+
+[wadiz-tech 통합 개요](./docs/wadiz-tech.md) — 12 repo (Boot 2.7~4.0 · Java 17):
+
+| 카테고리 | Repo |
+|---|---|
+| 알림 (5) | `push-api` · `mail-normal-api` · `mail-toast-agent` · `notification-log-agent` · `kr.wadiz.platform.api.friendtalk` |
+| 플랫폼 어드민 (1) | `platform-admin` (17 controller) |
+| 메인 화면 (3) | `main2-api` (Ehcache) · `main2-batch-api` (MapStruct) · `main2-stream-agent` (Kafka Streams) |
+| 유저·위시·메트릭 (3) | `user-activity-api` (**Boot 4.0.2**) · `wish-api` · `project-metric-api` |
 
 ---
 
