@@ -388,3 +388,13 @@ com.wadiz.api.startup
 - **starter-security + OAuth2 Resource Server**: JWT (RS256, `iam.pub` / `iam-live.pub` 공개키 기반) 로 인증.
 - **Subproject publish** — `startup-client`/`startup-model` 은 `http://repo.wadizcorp.com/repository/libs` 에 별도 versioning 으로 publish → 다른 서비스에서 의존.
 - **Request timeout 600초**(`server.mvc.async.request-timeout: 600000`) — ES/indexer 호출/대용량 쿼리 대응.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 메이커 팔로우 OFF 시 메이커 알림 자동 OFF 처리 | 2026-05-06 | BE3-385 |

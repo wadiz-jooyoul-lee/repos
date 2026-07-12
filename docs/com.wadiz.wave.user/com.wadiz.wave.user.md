@@ -132,3 +132,17 @@
 - 사내 Maven (`repo.wadizcorp.com`) HTTP(non-https) 사용 — 사내 망 한정.
 - **이미 `com.wadiz.wave` 그룹의 다른 서비스(wave.payment 등)가 추가로 분리됐을 가능성** — 본 repo는 user 한정.
 - 마이그레이션 정책상 새 기능 추가는 community/account/link 신규 서비스에 우선, wave.user는 유지보수 중심.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 회원 정보 제공 bulk API 추가 | 2026-04-22 | BE3-353 |
+| detailBulk API — 탈퇴 회원 placeholder 응답 옵션 추가 (`includeDropOut`) | 2026-04-27 | BE3-353 |
+| 닉네임 변경 endpoint 신규 추가 + 검증 룰 이전 | 2026-04-30 | BE3-378 |
+| 닉네임 변경 시 Braze `first_name` 동기화 추가 | 2026-04-30 | BE3-378 |
+| 닉네임 예외 코드 다국어 시트 기준으로 정렬 (`FORBIDDEN_NICKNAME`, `INVALID_NICKNAME_PATTERN`) | 2026-05-12 | BE3-378 |

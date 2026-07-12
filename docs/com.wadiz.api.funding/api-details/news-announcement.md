@@ -112,6 +112,8 @@ WHERE CU.CampaignId = ? AND CU.UpdateId = ? AND CU.Del = false
 ### Request — `CreateNewsRequest`
 (title, body, newsType, tagType, isTemporary, isNotificationRequested, notificationTargets, restrictReasons 등)
 
+> ⚠️ **RWD-5569 (2026-05-19)**: `tagType` 말머리 유효성 체크 실패 시 **HTTP 400** 반환으로 변경 (이전: 500 또는 다른 에러). 새소식 생성·수정 시 유효하지 않은 말머리 값 입력 시 Bad Request 처리.
+
 ### Response — `CreateNewsResponse{newsId}`
 
 ### DB 호출 (`NewsGatewayImpl.createNews`)

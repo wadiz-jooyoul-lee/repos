@@ -3,6 +3,16 @@
 > 모노레포의 **모든 페이지(라우트)를 인덱스화**. 각 페이지마다 라우트 경로 + 1줄 용도 + 파일 위치.
 > 270+ 페이지 (apps + studio + static) 를 한 곳에서 조회.
 
+## 변경사항 (2026-03-26 ~ 2026-05-22)
+
+| 날짜 | 티켓 | 변경 내용 |
+|---|---|---|
+| 2026-03-26 | FE1-98 | `NativeDetailContext` + `NativeDetailProvider` 도입 — 국내/글로벌 Layout에 Provider 적용, `useNativeDetailPage` 를 OutletContext 대신 Context 우선으로 변경 (Outlet 바깥 컴포넌트에서도 `isNativeHeaderVisible` 접근 가능) |
+| 2026-05-21 | FE2-402 | **신규 페이지** — `/policies/terms/early-payout` (글로벌 선정산 서비스 이용약관) 추가 |
+| 2026-05-22 | FE2-402 | `PoliciesTermsEarlyPayoutPage`: 글로벌 전용 본문 파일(`early_payout_global`) 사용; `/:date` variant 는 `/policies/terms/early-payout` 로 `<Navigate replace>` 리다이렉트 (국내와 시행일 다름) |
+
+---
+
 ## 카탈로그 개요
 
 | 영역 | 페이지 수 (대략) | 비고 |
@@ -144,6 +154,7 @@
 | `/policies/report` | 신고 정책 |
 | `/policies/review` | 리뷰 정책 |
 | `/policies/shipping` | 배송 정책 |
+| `/policies/terms/early-payout` | 선정산 서비스 이용약관 — 글로벌 전용 본문(`early_payout_global`) 표시; `/:date` 는 기본 경로로 리다이렉트 (FE2-402, 2026-05-21 **신규**) |
 | `/policies/terms/maker` | 메이커 이용약관 |
 | `/policies/terms/signup` | 가입 약관 |
 | `/policies/terms/supporter` | 서포터 약관 |

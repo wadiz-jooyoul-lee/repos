@@ -460,3 +460,25 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 - **Play Policy Lint** — `play-policy-insights-lint` 0.1.4 로 Google Play 정책(Accessibility, Background Location 등) 위반 사전 감지 (`app/build.gradle.kts:66-81`).
 - **자체 Maven 미러** — `devrepo.kakao.com`, `jitpack`, `appboy.github.io` (Braze), `zendesk.jfrog.io` 설정 (`settings.gradle.kts:17-22`).
 - **LeakCanary** — debug/AndroidTest 에만 포함.
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+### 주요 릴리즈 (v26.20 ~ v26.21.2)
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 홈 기획전 스토어 금액 표시 오류 수정 | 2026-05-21 | FE1-729 |
+| 스토어 랭킹 금액 오노출 수정 | 2026-05-20 | FE1-725 |
+| analytics.wadiz.ai 연동 | 2026-05-20 | FE1-723 |
+| 상세 겹침 오류 수정 (webKit 안정화, NativeState 로딩 처리) | 2026-05-19~20 | QA-21908 |
+| 앱 런처 아이콘 변경 | 2026-05-11 | FE1-623 |
+| 메인 네비게이션 바 노출 애니메이션 수정 | 2026-05-12 | FE1-655 |
+| Clarity Compose 다운그레이드 | 2026-05-08 | FE1-582 |
+| 카테고리 클릭 시 검색결과 진입 race 수정 | 2026-05-08 | FE1-622 |
+| 메이커 모드 로그인/국가 변경 시 서포터 홈 노출 이슈 수정 | 2026-05-13 | FE1-660 |
+| WebView 앱모드 주입 개선 | 2026-04-20 | FE1-447 |
+| 딥링크 재진입 상세 유지 및 비로그인 AccountActivity 튕김 수정 | 2026-04-20 | FE1-443 |
+| Google Sign-In 수정 | 2026-04-22 | FE1-223 |

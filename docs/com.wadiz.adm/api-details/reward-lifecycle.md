@@ -1,5 +1,38 @@
 # 리워드 펀딩 프로젝트 라이프사이클 (com.wadiz.adm)
 
+## 변경사항 (2026-04-20 ~ 2026-04-27)
+
+| 날짜 | 티켓 | 변경 내용 |
+|---|---|---|
+| 2026-04-20 | RWD-5479 | 일시중지 만료 방식 변경: `pauseEndDate = now + 14일` → `LocalDateTime.of(9999,12,31,23,59,59)` (자동 해지 방지) |
+| 2026-04-23 | RWD-5379 | 배송/환불/결제 리워드 요약 문자열에 `[BadgeType]` prefix 추가 — `payment-mapper.xml`, `progress-mapper.xml`, `refund-shipping-mapper.xml`, `rewarditem-mapper.xml` 4개 파일의 `GROUP_CONCAT`/`Summary` 컬럼에 `LEFT JOIN RewardBadge RB ON R.RewardId = RB.RewardId AND RB.OrderNo = 1` 추가, `'[', IFNULL(RB.BadgeType,''), '] '` prefix 삽입 |
+| 2026-04-27 | RWD-5500 | `getRevivalHistory` SQL에 `RH.LanguageCode` 필드 추가 (비고 영역 언어 표시) |
+| 2026-04-27 | RWD-5500 | 사후심의 스토리 팝업(`popCampaignDetails.jsp`)을 `revivalHistoryId` 기준으로 조회하도록 수정 |
+
+### RWD-5479 — 일시중지 자동 해지 방지 상세
+`CampaignProgressService.registerProjectPause` 변경:
+```java
+// 이전: now + 14일 후 만료
+LocalDateTime pauseEndDate = now.plusDays(DEFAULT_EXPIRATION_DAY);  // 14
+// 변경: 사실상 무기한 (자동 해지 기능 차단)
+private static final LocalDateTime INDEFINITE_PAUSE_END_DATE = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+LocalDateTime pauseEndDate = INDEFINITE_PAUSE_END_DATE;
+```
+
+### RWD-5379 — RewardBadge 표시 상세
+4개 Mapper에서 동일 패턴 적용:
+```sql
+-- 변경 전
+GROUP_CONCAT(CT1.Summary, ' [', FORMAT(CT1.Amount,0), '원x', A.Qty, '] ' SEPARATOR '\n')
+-- 변경 후
+GROUP_CONCAT('[', IFNULL(RB.BadgeType,''), '] ', CT1.Summary, ' [', FORMAT(CT1.Amount,0), '원x', A.Qty, '] ' SEPARATOR '\n')
+-- JOIN 추가
+LEFT JOIN RewardBadge RB ON R.RewardId = RB.RewardId AND RB.OrderNo = 1
+```
+- 뱃지가 없는 리워드는 `[]` 없이 빈 문자열로 처리 (`IFNULL(RB.BadgeType,'')` + 별도 후처리, RWD-5379 follow-up 2026-04-24)
+
+---
+
 ## 1. 기록 범위
 
 - `com.wadiz.web.progress.controller` 9개 + `com.wadiz.web.reward.screening.controller` 7개 + `reward.comingsoon` 2개 + `reward.openreservation` 2개 = **총 20개** 컨트롤러를 직접 열람해 구성.

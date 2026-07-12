@@ -1,6 +1,6 @@
 # Dashboard API 상세 스펙
 
-스튜디오 대시보드(프로젝트 현황·유입·결제·서포터·오픈예정)와 메이커 대시보드 관련 **40개 엔드포인트**.
+스튜디오 대시보드(프로젝트 현황·유입·결제·서포터·오픈예정)와 메이커 대시보드 관련 **42개 엔드포인트** (2026-05-29 갱신).
 
 - **대상 컨트롤러**:
   - `StudioProjectDashBoardController` (`/api/studio/dashboard/projects/{projectNo}`) — 5개
@@ -9,6 +9,7 @@
   - `StudioProjectSupporterDashBoardController` (`.../supporters`) — 4개
   - `StudioComingSoonDashBoardController` (`/api/studio/dashboard/coming-soons/{projectNo}`) — 16개
   - `MakerDashboardController` (`/api/maker-dashboard`, `/api/v1/maker-dashboard`) — 6개
+  - `MakerHomeDashBoardController` (`/api/maker-home/dashboard`) — 2개 *(RWD-5497/5504/5506, 2026-04-29~05-04 신규)*
 
 - **공통 보안**: Studio 계열 전부 `@PreAuthorize("isMaker(#projectNo) or isAdmin()")`. MakerDashboard는 `@Impersonatable`(대리 접근) 지원.
 - **공통 설계 특징**:
@@ -505,3 +506,22 @@ ORDER BY C.WhenOpen
 ### 접근 테이블 합계 (이 문서 관찰 SQL 기준)
 
 `Campaign`, `CampaignScreening`, `CampaignAutoOpen`, `CampaignAskForEncore`, `CampaignContactUs`, `CampaignContractInfo`, `CampaignContractRepresentative`, `CampaignAgreeConclusion`, `CampaignMarker`, `CampaignCategoryMapping`, `CategoriesMappings`, `CampaignShippingCountry`, `PhotoCommon`, `RewardComingSoon`, `RewardComingSoonApplicant`, `RewardSettlementInfoModifyNeed`, `EventDay`, `UserWishProject`, `BackingPayment`, `StoreOpenNotification`, + (Signature/UserProfile 등 추가 도메인 Mapper 필요 시)
+
+---
+
+## 신규 — 메이커홈 대시보드 (`/api/maker-home/dashboard`) *(RWD-5497, 2026-04-29~05-04)*
+
+### GET `/api/maker-home/dashboard/projects` — 메이커홈 대시보드 프로젝트 리스트
+
+- **컨트롤러**: `MakerHomeDashBoardController.getProjects`
+- **역할**: 메이커홈에서 보여줄 프로젝트 목록 (단계·노출 조건 적용)
+- **처리**: `MakerHomeDashBoardProxy` → 내부 UseCase
+
+### GET `/api/maker-home/dashboard/projects/{projectNo}/metrics` — 메이커홈 통합 메트릭
+
+- **컨트롤러**: `MakerHomeDashBoardController`
+- **역할**: 특정 프로젝트의 메이커홈 통합 메트릭 조회
+  - 메이커 팔로워 수(`FOLLOWER_COUNT`) 포함 (RWD-5506)
+  - `topPercent` 응답 정수 직렬화
+- **처리**: `MakerHomeMetricResponseConverter` — DataPlus 비동기 호출 (`dataplusAsyncExecutor`, RWD-5589)
+- **주의**: DataPlus 호출 타임아웃 시 기본값 노출 (오픈예정 게시예정일 미래일 경우만 데이터 제공)

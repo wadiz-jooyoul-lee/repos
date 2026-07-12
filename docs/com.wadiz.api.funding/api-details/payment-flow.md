@@ -51,8 +51,8 @@ NICE PG에서 인증 완료 후 form-urlencoded로 callback.
      - KR: `redirect:/web/wpurchase/reward/result10/{backingPaymentId}`
      - 해외: `redirect:/funding/payment/completed/{backingPaymentId}`
 3. 실패 시 cancel redirect:
-   - KR: `redirect:/web/wpurchase/reward/step20?token={token}`
-   - 해외: `redirect:/funding/payment?token={token}`
+   - KR: `redirect:/web/wpurchase/reward/step20?token={token}&failureType={type}` *(PRODUCT-639, 2026-04-29 추가)*
+   - 해외: `redirect:/funding/payment?token={token}&failureType={type}` *(PRODUCT-639, 2026-04-29 추가)*
 
 ### Response
 HTTP 302 (redirect)
@@ -89,6 +89,7 @@ DEL  "com.wadiz.api.funding.redis.orderpayment:processing:{tid}"
 
 ### 예외 처리
 - `@ExceptionHandler(OrderPaymentException)` — Proxy의 `exceptionHandler.handle(e)` 호출 후 fail redirect
+- **nicepay 외부PG 오류 시 자동 결제취소** (RWD-5576, 2026-05-18): `OrderPaymentExceptionHandler` 신규 추가 — nicepay에서 외부 PG 모듈 오류 발생 시 이미 결제완료 처리된 건에 대해 자동 취소 처리
 
 ---
 

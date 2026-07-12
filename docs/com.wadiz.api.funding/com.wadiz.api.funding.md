@@ -422,3 +422,49 @@ com.wadiz.api.funding
 - [`core-domain.md`](./core-domain.md) — core/domain 모듈 (도메인 패키지 74개, Gateway 포트 167개, UseCase 241개, 인프로세스 이벤트 26종, 주요 상태 Enum)
 - [`bootstrap.md`](./bootstrap.md) — bootstrap 모듈 (application/batch 엔트리, YML 프로파일 14개, SecurityFilterChain, `@PreAuthorize` SpEL 6개)
 
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+### 신규 API
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 파트너 조회 API 추가 | 2026-05-14 | RWD-5566 |
+| 메이커 프로필 등록 API 추가 | 2026-05-04 | RWD-5469 |
+| 메이커홈 대시보드 프로젝트 리스트 API | 2026-04-29 | RWD-5497/5504 |
+| 메이커홈 통합 메트릭 API (팔로워 수 포함) | 2026-05-04 | RWD-5497/5506 |
+| 글로벌 리워드 API `shippingCountry` 파라미터 추가 (country 하위 호환) | 2026-04-22 | RWD-5492 |
+
+### API 변경
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| Category benchmark API `dayN` 파라미터 제거 | 2026-05-13 | RWD-5497 |
+| Category benchmark key 명 변경 | 2026-05-04 | RWD-5497 |
+| 리워드 단건 조회(Item) 응답에서 할인 정보 제외 | 2026-04-21 | RWD-5345 |
+| 새소식 말머리 유효성 체크 HTTP 400 반환 | 2026-05-19 | RWD-5569 |
+| 결제 실패 시 redirect URL에 `&failureType=` 파라미터 추가 | 2026-04-29 | PRODUCT-639 |
+
+### 결제·비즈니스 로직 변경
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| nicepay 외부PG 오류 시 결제완료된 건 자동 결제취소 처리 | 2026-05-18 | RWD-5576 |
+| 오픈 프로젝트 노출 조건 변경 + 글로벌 진행중 컬렉션 자동화 | 2026-05-21~22 | RWD-5585 |
+| 예약 결제 100원 검증 추가 | 2026-04-27 | PRODUCT-639 |
+| 리워드 뱃지(RewardBadge) 추가 — 결제·참여취소 화면 | 2026-04-23~24 | PRODUCT-781 |
+| 쿠폰+포인트 전액 결제 시 메일 문구 일시불 정보 제거 | 2026-04-24 | PRODUCT-781 |
+| 프로젝트 공개/비공개 알림톡 Template 변경 | 2026-04-20~21 | RWD-5479 |
+| 프로젝트 공개 처리 시 번역 요청 자동화 | 2026-04-20 | RWD-5479 |
+| batch AI 심사 설정 추가 | 2026-04-21 | RWD-5479 |
+
+### 인프라·설정
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| clive 환경 GitHub Actions workflow 추가 | 2026-05-28 | RWD-5606 |
+| Hazelcast Kubernetes 디스커버리 1.3.1 → 1.5.2 업그레이드 | 2026-05-13 | RWD-5554 |
+| SSM 라이브러리 제외 방식 변경 (`-PciBuild` → `-PlocalBuild`) | 2026-05-18 | - |
+| reward-models 0.4.11-SNAPSHOT 적용 | 2026-05-18 | - |
+| SQS 도메인 변경 | 2026-04-23 | RWD-5496 |
+| batch 컨텍스트에 dataplusAsyncExecutor 빈 추가 | 2026-05-21 | RWD-5589 |

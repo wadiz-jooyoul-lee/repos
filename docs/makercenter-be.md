@@ -403,3 +403,19 @@ DB: `wadiz_makercenter` (MySQL/MariaDB, Master/Slave). MyBatis 매퍼 XML에서 
   - prod: `real-wadiz-rds` + slave `read-wadiz-rds-read`, `gateway.wadiz.kr` (`CLAUDE.md:83-91`)
 - **env 파일 보안**: `/etc/makercenter/env` (chmod 600), systemd `EnvironmentFile`로 JVM에 주입 (`CLAUDE.md:72-76`)
 - **WAF/방화벽**: 사용자/어드민 FE는 `wadiz_office` 공인 IP만 접근 가능한 개발망, 백엔드는 VPC 보안그룹 + VPN(GlobalProject) 기반 (`CLAUDE.md:78-81`)
+
+---
+
+## 최근 변경사항
+
+**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+
+| 변경 내용 | 날짜 | 관련 이슈 |
+|---|---|---|
+| 기획전 신청폼 문항 진입 GTM 이벤트 수집 추가 | 2026-05-26 | CLIENT-119 |
+| 게시글 `is_raw_html` 컬럼 및 DTO 필드 추가 | 2026-05-22 | CLIENT-116 |
+| 클라우드 이전 — 메이커센터 서버에서 `wadiz.co` 도메인 허용 | 2026-05-22 | FE-11896 |
+| 기획전 이메일 쿠폰 권종 다건 입력 지원 | 2026-05-21 | CLIENT-96 |
+| V005 — sns_url 문항을 selling_experience > sales_info 그룹으로 이동 | 2026-05-14 | CLIENT-95 |
+| 사용자 게시물 목록 API 응답에 수정일(`upd_date`) 필드 추가 | 2026-05-08 | CLIENT-97 |
+| 어드민 기획전 대리 벌크 신청 기능 추가 | 2026-04-17 | CLIENT-58 |
