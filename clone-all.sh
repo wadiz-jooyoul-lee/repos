@@ -1,6 +1,6 @@
 #!/bin/bash
 # Wadiz repos 부트스트랩 스크립트
-# ~/work/repos 하위 51개 repo 를 clone. 이미 있는 폴더는 skip.
+# ~/work/repos 하위 81개 repo 를 clone. 이미 있는 폴더는 skip.
 # 갱신은 별도로 `./execute_all git pull` 사용.
 #
 # 프로토콜 선택 (기본 ssh):
@@ -78,17 +78,55 @@ REPOS=(
   "git@github.com:wadiz-settlement/co.wadiz.settlement.git"
   "git@github.com:wadiz-settlement/douzone-comet-service-tc-stsacr-x20191.git"
   "git@github.com:wadiz-settlement/policy-docs.git"
-  # wadiz-tech
-  "git@github.com:wadiz-tech/user-activity-api.git"
+  # wadiz-tech — 알림·메일 (7)
   "git@github.com:wadiz-tech/mail-normal-api.git"
+  "git@github.com:wadiz-tech/mail-fast-api.git"
+  "git@github.com:wadiz-tech/mail-common-api.git"
+  "git@github.com:wadiz-tech/mail-ses-agent.git"
   "git@github.com:wadiz-tech/mail-toast-agent.git"
+  "git@github.com:wadiz-tech/mail-log-agent.git"
+  "git@github.com:wadiz-tech/noti-channel.git"
+  # wadiz-tech — 알림·푸시 (4)
   "git@github.com:wadiz-tech/push-api.git"
-  "git@github.com:wadiz-tech/notification-log-agent.git"
+  "git@github.com:wadiz-tech/push-read-api.git"
+  "git@github.com:wadiz-tech/push-agent.git"
+  "git@github.com:wadiz-tech/push-postpone.git"
+  # wadiz-tech — 알림·SMS/알림톡/친구톡 (8)
+  "git@github.com:wadiz-tech/kr.wadiz.platform.api.sms.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.agent.sms.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.api.sms.ad.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.agent.sms.ad.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.api.alimtalk.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.agent.alimtalk.git"
   "git@github.com:wadiz-tech/kr.wadiz.platform.api.friendtalk.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.agent.friendtalk.git"
+  # wadiz-tech — 알림 인프라·인박스·CRM (6)
+  "git@github.com:wadiz-tech/notification-log-agent.git"
+  "git@github.com:wadiz-tech/inbox-agent.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.inbox.git"
+  "git@github.com:wadiz-tech/ses-event-subscriber.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.crm.git"
+  "git@github.com:wadiz-tech/kr.wadiz.platform.crm-agent.git"
+  # wadiz-tech — 플랫폼 코어 (4)
+  "git@github.com:wadiz-tech/kr.wadiz.platform.file.git"
+  "git@github.com:wadiz-tech/display-agent.git"
+  "git@github.com:wadiz-tech/collection-api.git"
+  "git@github.com:wadiz-tech/share-api.git"
+  # wadiz-tech — 검색·시맨틱 (4)
+  "git@github.com:wadiz-tech/keyword.git"
+  "git@github.com:wadiz-tech/keyword-agent.git"
+  "git@github.com:wadiz-tech/semantic-search-api.git"
+  "git@github.com:wadiz-tech/semantic-search-fe.git"
+  # wadiz-tech — 어드민·인프라 (2)
   "git@github.com:wadiz-tech/platform-admin.git"
+  "git@github.com:wadiz-tech/kafka-connect-admin.git"
+  # wadiz-tech — 메인 화면 (4)
   "git@github.com:wadiz-tech/main2-api.git"
   "git@github.com:wadiz-tech/main2-batch-api.git"
   "git@github.com:wadiz-tech/main2-stream-agent.git"
+  "git@github.com:wadiz-tech/main2-stream-scheduler.git"
+  # wadiz-tech — 유저·위시·메트릭 (3)
+  "git@github.com:wadiz-tech/user-activity-api.git"
   "git@github.com:wadiz-tech/wish-api.git"
   "git@github.com:wadiz-tech/project-metric-api.git"
 )

@@ -1,6 +1,6 @@
 # Wadiz Repos — Clone URL 인벤토리
 
-부모 repo(`wadiz-jooyoul-lee/repos`) 하위 51개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
+부모 repo(`wadiz-jooyoul-lee/repos`) 하위 81개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
 
 각 repo 의 역할·스택·심층 분석 위치는 [`CLAUDE.md`](../CLAUDE.md) 및 [`docs/<repo>/`](./) 를 참조하세요.
 
@@ -125,22 +125,87 @@ grep "wadiz-service" docs/repos-inventory.md | grep -oE "git@github\.com:\S+\.gi
 | douzone-comet-service-tc-stsacr-x20191 | `git@github.com:wadiz-settlement/douzone-comet-service-tc-stsacr-x20191.git` | [docs](./wadiz-settlement.md#3-douzone-comet-service-tc-stsacr-x20191--개별-모듈-분리-저장소) |
 | policy-docs | `git@github.com:wadiz-settlement/policy-docs.git` | [docs](./wadiz-settlement.md#4-policy-docs--정산-정책-마이그레이션-문서) |
 
-## 12. `wadiz-tech` — 플랫폼팀 API·Agent 서버군 (12개)
+## 12. `wadiz-tech` — 플랫폼팀 API·Agent 서버군 (42개)
 
-| Repo | Clone URL | 상세 문서 |
-|---|---|---|
-| user-activity-api | `git@github.com:wadiz-tech/user-activity-api.git` | [docs](./wadiz-tech.md#41-user-activity-api) |
-| mail-normal-api | `git@github.com:wadiz-tech/mail-normal-api.git` | [docs](./wadiz-tech.md#11-mail-normal-api) |
-| mail-toast-agent | `git@github.com:wadiz-tech/mail-toast-agent.git` | [docs](./wadiz-tech.md#12-mail-toast-agent) |
-| push-api | `git@github.com:wadiz-tech/push-api.git` | [docs](./wadiz-tech.md#13-push-api) |
-| notification-log-agent | `git@github.com:wadiz-tech/notification-log-agent.git` | [docs](./wadiz-tech.md#14-notification-log-agent) |
-| kr.wadiz.platform.api.friendtalk | `git@github.com:wadiz-tech/kr.wadiz.platform.api.friendtalk.git` | [docs](./wadiz-tech.md#15-krwadizplatformapifriendtalk) |
-| platform-admin | `git@github.com:wadiz-tech/platform-admin.git` | [docs](./wadiz-tech.md#21-platform-admin) |
-| main2-api | `git@github.com:wadiz-tech/main2-api.git` | [docs](./wadiz-tech.md#31-main2-api) |
-| main2-batch-api | `git@github.com:wadiz-tech/main2-batch-api.git` | [docs](./wadiz-tech.md#32-main2-batch-api) |
-| main2-stream-agent | `git@github.com:wadiz-tech/main2-stream-agent.git` | [docs](./wadiz-tech.md#33-main2-stream-agent) |
-| wish-api | `git@github.com:wadiz-tech/wish-api.git` | [docs](./wadiz-tech.md#42-wish-api) |
-| project-metric-api | `git@github.com:wadiz-tech/project-metric-api.git` | [docs](./wadiz-tech.md#43-project-metric-api) |
+상세 카테고리·역할·Boot 버전은 [`wadiz-tech.md`](./wadiz-tech.md) 참조.
+
+### 12.1 알림 — 메일 (7)
+| Repo | Clone URL |
+|---|---|
+| mail-normal-api | `git@github.com:wadiz-tech/mail-normal-api.git` |
+| mail-fast-api | `git@github.com:wadiz-tech/mail-fast-api.git` |
+| mail-common-api | `git@github.com:wadiz-tech/mail-common-api.git` |
+| mail-ses-agent | `git@github.com:wadiz-tech/mail-ses-agent.git` |
+| mail-toast-agent | `git@github.com:wadiz-tech/mail-toast-agent.git` |
+| mail-log-agent | `git@github.com:wadiz-tech/mail-log-agent.git` |
+| noti-channel | `git@github.com:wadiz-tech/noti-channel.git` |
+
+### 12.2 알림 — 푸시 (4)
+| Repo | Clone URL |
+|---|---|
+| push-api | `git@github.com:wadiz-tech/push-api.git` |
+| push-read-api | `git@github.com:wadiz-tech/push-read-api.git` |
+| push-agent | `git@github.com:wadiz-tech/push-agent.git` |
+| push-postpone (Go) | `git@github.com:wadiz-tech/push-postpone.git` |
+
+### 12.3 알림 — SMS·알림톡·친구톡 (8)
+| Repo | Clone URL |
+|---|---|
+| kr.wadiz.platform.api.sms | `git@github.com:wadiz-tech/kr.wadiz.platform.api.sms.git` |
+| kr.wadiz.platform.agent.sms | `git@github.com:wadiz-tech/kr.wadiz.platform.agent.sms.git` |
+| kr.wadiz.platform.api.sms.ad | `git@github.com:wadiz-tech/kr.wadiz.platform.api.sms.ad.git` |
+| kr.wadiz.platform.agent.sms.ad | `git@github.com:wadiz-tech/kr.wadiz.platform.agent.sms.ad.git` |
+| kr.wadiz.platform.api.alimtalk | `git@github.com:wadiz-tech/kr.wadiz.platform.api.alimtalk.git` |
+| kr.wadiz.platform.agent.alimtalk | `git@github.com:wadiz-tech/kr.wadiz.platform.agent.alimtalk.git` |
+| kr.wadiz.platform.api.friendtalk | `git@github.com:wadiz-tech/kr.wadiz.platform.api.friendtalk.git` |
+| kr.wadiz.platform.agent.friendtalk | `git@github.com:wadiz-tech/kr.wadiz.platform.agent.friendtalk.git` |
+
+### 12.4 알림 인프라·인박스·CRM (6)
+| Repo | Clone URL |
+|---|---|
+| notification-log-agent | `git@github.com:wadiz-tech/notification-log-agent.git` |
+| inbox-agent | `git@github.com:wadiz-tech/inbox-agent.git` |
+| kr.wadiz.platform.inbox | `git@github.com:wadiz-tech/kr.wadiz.platform.inbox.git` |
+| ses-event-subscriber (Python) | `git@github.com:wadiz-tech/ses-event-subscriber.git` |
+| kr.wadiz.platform.crm | `git@github.com:wadiz-tech/kr.wadiz.platform.crm.git` |
+| kr.wadiz.platform.crm-agent | `git@github.com:wadiz-tech/kr.wadiz.platform.crm-agent.git` |
+
+### 12.5 플랫폼 코어 (4)
+| Repo | Clone URL |
+|---|---|
+| kr.wadiz.platform.file | `git@github.com:wadiz-tech/kr.wadiz.platform.file.git` |
+| display-agent | `git@github.com:wadiz-tech/display-agent.git` |
+| collection-api | `git@github.com:wadiz-tech/collection-api.git` |
+| share-api | `git@github.com:wadiz-tech/share-api.git` |
+
+### 12.6 검색·시맨틱 (4)
+| Repo | Clone URL |
+|---|---|
+| keyword | `git@github.com:wadiz-tech/keyword.git` |
+| keyword-agent | `git@github.com:wadiz-tech/keyword-agent.git` |
+| semantic-search-api (Python) | `git@github.com:wadiz-tech/semantic-search-api.git` |
+| semantic-search-fe (Node/React) | `git@github.com:wadiz-tech/semantic-search-fe.git` |
+
+### 12.7 어드민·인프라 (2)
+| Repo | Clone URL |
+|---|---|
+| platform-admin | `git@github.com:wadiz-tech/platform-admin.git` |
+| kafka-connect-admin (Python) | `git@github.com:wadiz-tech/kafka-connect-admin.git` |
+
+### 12.8 메인 화면 (4)
+| Repo | Clone URL |
+|---|---|
+| main2-api | `git@github.com:wadiz-tech/main2-api.git` |
+| main2-batch-api | `git@github.com:wadiz-tech/main2-batch-api.git` |
+| main2-stream-agent | `git@github.com:wadiz-tech/main2-stream-agent.git` |
+| main2-stream-scheduler (Go) | `git@github.com:wadiz-tech/main2-stream-scheduler.git` |
+
+### 12.9 유저·위시·메트릭 (3)
+| Repo | Clone URL |
+|---|---|
+| user-activity-api (Boot 4) | `git@github.com:wadiz-tech/user-activity-api.git` |
+| wish-api | `git@github.com:wadiz-tech/wish-api.git` |
+| project-metric-api | `git@github.com:wadiz-tech/project-metric-api.git` |
 
 ---
 

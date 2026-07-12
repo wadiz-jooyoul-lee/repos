@@ -19,7 +19,7 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 | `wadiz-membership` | 멤버십 API + Gateway | Spring Boot 2.5 / Java 8 / QueryDSL JPA + Spring Cloud Gateway |
 | `wadiz-search` | ElasticSearch Indexer (MySQL→ES 색인) | Spring Boot / Java 8 / MyBatis + Kafka Consumer |
 | `wadiz-settlement` | 정산 시스템 (레거시 + 신규) | Java 8 + JEUS 8 + Douzone / Boot 3.5 + Java 21 + Qdrant RAG |
-| `wadiz-tech` | 플랫폼 API·Agent 서버군 (알림·메인·위시 등) | Spring Boot 2.7~4.0 / Java 17 / 12 repo |
+| `wadiz-tech` | 플랫폼 API·Agent 서버군 (알림·메인·위시·검색·파일·CRM 등) | Spring Boot 2.5~4.0 / Java 17 + Go + Python + Node / 42 repo |
 
 ---
 
@@ -127,14 +127,19 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 
 ## 12. `wadiz-tech` — 플랫폼팀 API·Agent 서버군
 
-[wadiz-tech 통합 개요](./docs/wadiz-tech.md) — 12 repo (Boot 2.7~4.0 · Java 17):
+[wadiz-tech 통합 개요](./docs/wadiz-tech.md) — **42 repo** (Boot 2.5~4.0 · Java 17 + Go + Python + Node):
 
-| 카테고리 | Repo |
-|---|---|
-| 알림 (5) | `push-api` · `mail-normal-api` · `mail-toast-agent` · `notification-log-agent` · `kr.wadiz.platform.api.friendtalk` |
-| 플랫폼 어드민 (1) | `platform-admin` (17 controller) |
-| 메인 화면 (3) | `main2-api` (Ehcache) · `main2-batch-api` (MapStruct) · `main2-stream-agent` (Kafka Streams) |
-| 유저·위시·메트릭 (3) | `user-activity-api` (**Boot 4.0.2**) · `wish-api` · `project-metric-api` |
+| 카테고리 | 개수 | 대표 |
+|---|---:|---|
+| 알림 — 메일 | 7 | mail-{normal,fast,common}-api · mail-{ses,toast,log}-agent · noti-channel |
+| 알림 — 푸시 | 4 | push-api · push-read-api · push-agent · push-postpone (**Go**) |
+| 알림 — SMS/알림톡/친구톡 | 8 | api.sms(+ad) · agent.sms(+ad) · api.alimtalk · agent.alimtalk · api.friendtalk · agent.friendtalk |
+| 알림 인프라·인박스·CRM | 6 | notification-log-agent · inbox-agent · platform.inbox · ses-event-subscriber (**Python**) · platform.crm(+agent) |
+| 플랫폼 코어 | 4 | platform.file · display-agent · collection-api · share-api |
+| 검색·시맨틱 | 4 | keyword(+agent) · semantic-search-api (**Python**) · semantic-search-fe (**Node/React**) |
+| 어드민·인프라 | 2 | platform-admin (17 controller) · kafka-connect-admin (**Python**) |
+| 메인 화면 | 4 | main2-api (Ehcache) · main2-batch-api (MapStruct) · main2-stream-agent (Kafka Streams) · main2-stream-scheduler (**Go**) |
+| 유저·위시·메트릭 | 3 | user-activity-api (**Boot 4.0.2**) · wish-api · project-metric-api |
 
 ---
 
