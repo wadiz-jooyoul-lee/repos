@@ -1,9 +1,31 @@
 #!/bin/bash
 # Wadiz repos 부트스트랩 스크립트
-# ~/work/repos 하위 23개 repo 를 병렬로 clone. 이미 있는 폴더는 skip.
+# ~/work/repos 하위 23개 repo 를 clone. 이미 있는 폴더는 skip.
 # 갱신은 별도로 `./execute_all git pull` 사용.
+#
+# 프로토콜 선택 (기본 ssh):
+#   ./clone-all.sh              # SSH (git@github.com:...)  ← 기본
+#   ./clone-all.sh --https      # HTTPS (https://github.com/...)
+#   PROTOCOL=https ./clone-all.sh
+#
+# SSH 사용 시 GitHub 에 SSH 키 등록 필수 (`ssh -T git@github.com` 로 확인).
+# HTTPS 사용 시 PAT 또는 credential helper 필요.
 
 set -u
+
+PROTOCOL="${PROTOCOL:-ssh}"
+if [ "${1:-}" = "--https" ]; then
+  PROTOCOL="https"
+elif [ "${1:-}" = "--ssh" ]; then
+  PROTOCOL="ssh"
+fi
+
+case "$PROTOCOL" in
+  ssh|https) ;;
+  *) echo "지원하지 않는 PROTOCOL: $PROTOCOL (ssh|https 만 가능)"; exit 1 ;;
+esac
+echo "프로토콜: $PROTOCOL"
+echo ""
 
 REPOS=(
   # wadiz-service
@@ -42,11 +64,14 @@ failed=0
 
 for url in "${REPOS[@]}"; do
   name=$(basename "$url" .git)
+  if [ "$PROTOCOL" = "https" ]; then
+    url="${url/git@github.com:/https://github.com/}"
+  fi
   if [ -d "$name/.git" ]; then
     echo "[SKIP]  $name (이미 존재)"
     skipped=$((skipped + 1))
   else
-    echo "[CLONE] $name"
+    echo "[CLONE] $name  ($url)"
     if git clone "$url" "$name"; then
       cloned=$((cloned + 1))
     else

@@ -10,8 +10,12 @@
 
 ```bash
 cd ~/work/repos
-./clone-all.sh          # 없는 폴더만 clone, 있으면 skip
+./clone-all.sh              # SSH 기본 (git@github.com:...)
+./clone-all.sh --https      # HTTPS (https://github.com/...)
+PROTOCOL=https ./clone-all.sh   # env var 방식
 ```
+
+이미 있는 폴더는 자동 skip. SSH 사용 시 GitHub 에 SSH 키 등록 필요, HTTPS 사용 시 PAT/credential helper 필요.
 
 특정 org 만 필요하면:
 
