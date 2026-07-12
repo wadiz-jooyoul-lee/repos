@@ -2,6 +2,8 @@
 
 이 디렉터리는 Wadiz(와디즈, 한국 크라우드펀딩) 개발 repo들을 모아둔 루트 폴더입니다. 각 repo의 소속 GitHub org과 역할은 아래와 같으며, 상세 분석은 [`docs/<repo>.md`](./docs/) 에 있습니다.
 
+Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md) — 부트스트랩은 [`clone-all.sh`](./clone-all.sh), 전체 pull 은 `./execute_all git pull`.
+
 ## Org 지도
 
 | Org | 성격 | 비고 |

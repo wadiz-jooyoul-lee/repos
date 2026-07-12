@@ -7,6 +7,7 @@
 !/.gitignore
 !/README.md
 !execute_all
+!clone-all.sh
 
 # OS / editor cruft
 .DS_Store
