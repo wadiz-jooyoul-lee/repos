@@ -126,6 +126,7 @@
 | GET | `/api/internal/campaigns/{campaignId}/base-info` |
 | GET | `/api/internal/campaigns/{campaignId}/makers/{userId}` |
 | GET | `/api/internal/campaigns/maker-business-info` |
+| GET | `/api/internal/campaigns/maker-user-ids` (캠페인별 메이커 회원 ID bulk 조회, RWD-5761) |
 
 ### Campaign Studio — `campaign/CampaignStudioController` (`/api/studio/campaigns/{campaignId}`)
 | Method | Path |
@@ -335,6 +336,11 @@
 | GET | `/api/studio/campaigns/{campaignId}/news/availability` |
 | GET | `/api/studio/campaigns/{campaignId}/news/isSendNotification` |
 | GET | `/api/studio/campaigns/{campaignId}/news/writes/check-status` |
+
+### News Internal — `news/NewsInternalController` (`/api/internal/news`)
+| Method | Path |
+|---|---|
+| GET | `/api/internal/news/maker-user-ids` (새소식별 campaignId·메이커 회원 ID bulk 조회, RWD-5761) |
 
 ### News Notification
 | Method | Path |
@@ -579,6 +585,7 @@
 | POST | `/api/attachments/friend-talk` | `AttachmentController` |
 | POST | `/api/v1/slack/campaigns/{projectNo}/hidden/send` | `SlackController` |
 | POST | `/api/v1/slack/campaigns/{projectNo}/story-modified/send` | `SlackController` |
+| POST | `/api/v1/slack/campaigns/{projectNo}/plan-change/send` | `SlackController` (요금제 변경 알림, RWD-5675) |
 | POST | `/api/internal/slack/campaigns/{campaignId}/hidden/send` | `SlackInternalController` |
 | POST | `/api/internal/slack/campaigns/{campaignId}/story-modified/send` | `SlackInternalController` |
 | POST | `/api/internal/users` | `UserInternalController` |
@@ -591,6 +598,40 @@
 | POST | `/api/global/samples/{pathVariable}/modelAttribute` |
 | POST | `/api/global/samples/{pathVariable}/requestBody` |
 | GET | `/api/global/samples/{pathVariable}/pageResult` |
+
+---
+
+## 13.5 2026-06 신규 도메인
+
+### AI Story — `aistory/AIStoryController` · `AIStoryInternalController` (RWD-5620)
+| Method | Path | 메서드 목적 |
+|---|---|---|
+| GET | `/api/v1/ai-story/quota` | 내 AI 스토리 생성 사용 현황 조회 |
+| POST | `/api/internal/ai-story/generation` | AI 스토리 생성 사용량 적재(내부) |
+| PUT | `/api/internal/ai-story/quota/{userId}` | 사용자 한도 조정(내부) |
+| GET | `/api/internal/ai-story/quota/{userId}` | 특정 사용자 사용 현황 조회(내부) |
+| GET | `/api/internal/ai-story/stats/daily` | 일별 사용자별 신청 통계(내부) |
+
+### Stripe Account — `stripe/account/StripeAccountController` (`/api/studio/stripe/accounts/{projectNo}`, RWD-5285/5618)
+메이커 권한(`isMaker(#projectNo) or isAdmin()`). Stripe Connect 정산 계정.
+| Method | Path | 메서드 목적 |
+|---|---|---|
+| GET | `/find` | Stripe Account ID 조회 |
+| POST | `(루트)` | Stripe Account 생성 |
+| POST | `/create` | Account 생성 (projectNo 기반, 계약정보 자동 조회) |
+| POST | `/{accountId}/link` | 온보딩 AccountLink 생성 |
+| GET | `/{accountId}/status` | 계정 상태 조회 |
+| GET | `/status` | 계정 상태 조회 (projectNo 기반) |
+| GET | `/{accountId}/status/realtime` | 계정 상태 실시간 조회 (FEP) |
+| GET | `/{accountId}/payout-info` | 정산(payout) 정보 조회 |
+| GET | `/{accountId}/persons` | 등록 인물(대표자 등) 목록 조회 |
+| GET | `/detail` | 계정 ID·상태·정산 정보 통합 조회 |
+
+### Stripe Account Internal — `stripe/account/StripeInternalAccountController` (`/api/internal/stripe/accounts`)
+| Method | Path | 메서드 목적 |
+|---|---|---|
+| GET | `/projects/{projectNo}/status` | 계정 심사 상태 조회 (projectNo 기반) |
+| GET | `/{accountId}/history` | 계정 상태 변경 이력 조회 |
 
 ---
 

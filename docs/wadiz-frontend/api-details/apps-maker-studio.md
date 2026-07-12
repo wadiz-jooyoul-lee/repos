@@ -481,8 +481,16 @@ axios baseURL prefix `/web/apip/store/studio` 가 모든 상대 경로에 자동
    - `web/apis/` — categories, maker, waccount, v1/countries, v3/account
 
 3. **`src/api/web/`** (NEW 권장 구조, `CLAUDE.md:v2.0`) — 2 depth 폴더 규칙
-   - `web/funding/` — studio-campaigns, studio-dashboard, studio-menus, studio-pricing
-   - `web/reward/` — maker-communications, package-plans, story, studio-makers, studios-ai-review, studios-story
+   - `web/funding/` — studio-campaigns, studio-dashboard, studio-menus, studio-pricing, **campaign-markers**(NEW), **studio-stripe-accounts**(NEW)
+   - `web/reward/` — maker-communications, package-plans, story, studio-makers, studios-ai-review, studios-story, **studio-campaigns**(NEW)
+
+   **2026-06 신규 service 파일** (CLIENT/FE2 작업으로 추가):
+   | 파일 | 주요 Endpoint | 비고 |
+   |---|---|---|
+   | `web/funding/campaign-markers.services.ts` | GET `/web/apip/funding/campaign-markers/{campaignId}/indemand-funding` | 인디맨드 펀딩 여부(`boolean`), `staleTime: Infinity` |
+   | `web/funding/studio-stripe-accounts.services.ts` | GET `/web/apip/funding/studio/stripe/accounts/{campaignId}/status` | Stripe Connect 계정 상태. `PayoutMethodType`(NICE/PINGPONG/STRIPE), `StripeKycStatus` 10종(CREATED~PAUSED). STRIPE 아님/미생성 시 `data=null` |
+   | `web/reward/maker-communications.services.ts` | GET `/web/reward/api/v2/maker-communications/campaigns/{id}/sections/{type}/{lang}/feedbacks/latest`·`/previous` | 언어별 메이커 피드백 최신/히스토리 + 추가 질문 조회 |
+   | `web/reward/studio-campaigns.services.ts` | POST `/web/reward/api/studios/campaigns/{id}/revival-re-submit` | 사후심사 재제출. `StudioCampaignsResponse`(상태·배너·메이커 국가/언어 등) |
 
 ### Fetch 래퍼 (`utils/fetch.ts`)
 
@@ -746,47 +754,59 @@ POST('/api/v2/links', targets, {
 
 ### 8-A. `apps/devtools/app-settings-console`
 
+> **2026-06 CLIENT-104 전면 개편**: CRA 스타일 평면 구조 → **FSD(Feature-Sliced Design)**, axios → **네이티브 fetch**, 인라인 스타일 → **CSS Modules(WDS 색상 토큰)**. 서버 진입 파일 `server/index.ts` → `server.ts`로 이동. `local` 환경·`platform` 선택·환경 워터마크·URL 쿼리 유지 추가.
+
 | 항목 | 값 |
 |---|---|
 | 패키지명 | `@wadiz-apps/app-settings-console` |
-| 빌드 도구 | Vite 5 + Express 프록시 서버 |
-| 실행 | `pnpm dev` → `concurrently("pnpm:dev:server", "pnpm:dev:client")` (`package.json:7`) |
-| 서버 | `tsx watch server/index.ts`, port 9999 (`server/index.ts:5`) |
+| 빌드 도구 | Vite + Express 프록시 서버 |
+| 실행 | `pnpm dev` (Express 프록시 + Vite dev 동시 실행) |
+| 서버 | `server.ts`, port 9999 (`server.ts:5`) |
 | 클라이언트 | Vite dev server, 기본 port 3001 (README 기준) |
-| HTTP | Axios 1.15 — `axios.create({ baseURL: '/api' })` (`src/services/api.ts:6-11`) |
+| HTTP | 네이티브 fetch (axios 제거) |
 | 에디터 | Monaco Editor (`@monaco-editor/react`) |
+| 스타일 | CSS Modules + WDS 색상 토큰 (`src/app/styles/tokens.css`) |
+| 아키텍처 | FSD — `app/`(셸·라우팅·전역 스타일), `pages/settings/`(`[settingId]` 상세), `entities/app-settings/`(api·ui), `shared/`(config·ui Button/Select) |
 
-**환경별 upstream (서버 측 ENV_CONFIG, `server/index.ts:12-33`)**
+**환경·플랫폼 선택**
+- 환경(`src/shared/config/environments.ts`): `local`, `dev`, `rc1`, `rc2`, `rc3`, `live`.
+- 플랫폼(`src/shared/config/platforms.ts`): `web`, `web-server`.
+- 헤더 드롭다운에서 선택, 선택값은 **URL 쿼리 파라미터로 유지**. 우측 상단에 **환경 워터마크** 표시.
+
+**환경별 upstream (서버 측 ENV_CONFIG, `server.ts:13~34`)**
 
 | env | host | token (Bearer, 하드코딩) |
 |---|---|---|
+| `local` | `https://local.wadiz.kr:3000` | (TLS 검증 비활성) |
 | `dev` | `https://api.dev.wadiz.co/app` | `E3F8C93FBC4F...` |
 | `rc1` | `https://app-rc.wadizcorp.net` | `B392E653945...` |
 | `rc2` | `https://app-rc2.wadizcorp.net` | `61638487...` |
 | `rc3` | `https://app-rc3.wadizcorp.net` | `DA59737D...` |
 | `live` | `https://app.wadiz.kr` | `FCB942B7...` |
 
-**프록시 엔드포인트** (`server/index.ts:51-83`):
+> `local` 환경에 한해 자체 서명 인증서 요청의 TLS 검증(`rejectUnauthorized`)을 비활성화.
+
+**프록시 엔드포인트** (`server.ts`):
 
 ```
 GET /                             → 안내 JSON
-*   /api/:env/*                   → {host}/api/{path}?{query}
+*   /api/:env/v1/*                → {host}/api/{path}?{query}
                                     + Authorization: Bearer {token}
 ```
 
-**클라이언트 API 호출** (`src/services/api.ts:13-59`):
+**클라이언트 API 호출** (`src/entities/app-settings/api/app-settings.service.ts`, 네임스페이스 방식):
 
-| 기능 | Method + Path | 라인 |
-|---|---|---|
-| 설정 목록 | GET `/{env}/v1/settings?platform=web` | `api.ts:16` |
-| 특정 설정 | (목록에서 find) | `api.ts:21-29` |
-| 설정 수정 | PATCH `/{env}/v1/settings/{id}` body `{ setting }` | `api.ts:39` |
-| 설정 생성 | POST `/{env}/v1/settings` body `{ platform: 'web', feature, setting }` | `api.ts:48` |
-| 설정 삭제 | DELETE `/{env}/v1/settings/{id}` | `api.ts:57` |
+| 기능 | Method + Path |
+|---|---|
+| 설정 목록 | GET `/api/{env}/v1/settings?platform={platform}` |
+| 특정 설정 | (목록에서 `settingId` find) |
+| 설정 수정 | PATCH `/api/{env}/v1/settings/{id}` body `{ setting }` |
+| 설정 생성 | POST `/api/{env}/v1/settings` body `{ platform, feature, setting }` |
+| 설정 삭제 | DELETE `/api/{env}/v1/settings/{id}` |
 
-**라우트** (`src/pages/`):
-- `SettingsList.tsx` — 목록 화면
-- `SettingDetail.tsx` — 상세/편집 (Monaco)
+**라우트** (`src/pages/settings/`):
+- `SettingsPage.tsx` — 목록 화면(AppSettingCard 카드 목록)
+- `[settingId]/SettingsDetailPage.tsx` — 상세/편집 (Monaco)
 
 ### 8-B. `apps/devtools/component-playground`
 
@@ -919,8 +939,8 @@ GET /                             → 안내 JSON
 | `public-api.wadiz.kr` | funding (`/main/info/RA1`) | `/main/*` | `VITE_PUBLIC_API_HOST` |
 | `service.wadiz.kr` | funding, store (search categories) | `/api/search/v2/categories`, `/api/search/categories` | `VITE_SERVICE_API_HOST` |
 | `app.wadiz.kr` (NestJS `app-api`) | walink-generator, devtools/app-settings-console (live), WAi (iframe 간접) | walink: `/api/v2/links`; devtools: `/api/v1/settings` | `VITE_APP_API_URL` / hardcoded `APP_API_DOMAIN.live` |
-| `api.dev.wadiz.co/app` | walink-generator (local), devtools (dev) | walink: `/api/v2/links`; devtools: `/api/v1/settings` | `APP_API_DOMAIN.dev` (하드코딩 in `links.service.ts:10`, `devtools/server/index.ts:14`) |
-| `app-rc.wadizcorp.net`, `app-rc2.wadizcorp.net`, `app-rc3.wadizcorp.net` | devtools(app-settings-console) RC 환경 | `/api/*/v1/settings` | `devtools/server/index.ts:17-27` 하드코딩 Bearer |
+| `api.dev.wadiz.co/app` | walink-generator (local), devtools (dev) | walink: `/api/v2/links`; devtools: `/api/dev/v1/settings` | `APP_API_DOMAIN.dev` (하드코딩 in `links.service.ts:10`, `devtools/app-settings-console/server.ts:17`) |
+| `app-rc.wadizcorp.net`, `app-rc2.wadizcorp.net`, `app-rc3.wadizcorp.net` | devtools(app-settings-console) RC 환경 | `/api/*/v1/settings` | `devtools/app-settings-console/server.ts:21~30` 하드코딩 Bearer |
 | `genai.wadiz.kr` (AI wadizdata) | funding (메이커 가이드 AI) | `/maker/guide` | `VITE_AI_WADIZDATA_HOST` → `REACT_APP_AI_WADIZDATA_HOST` |
 | `ws.ai.wadiz.kr` (WebSocket) | funding (정의되어 있음, 실제 사용 확인 필요) | ws:// | `VITE_AI_CHATDATA_HOST` |
 | `analytics.wadiz.kr` / `dev-analytics.wadiz.kr` | 3 스튜디오 (env 정의만 존재, 이벤트 트래킹 용) | (분석 트래킹) | `VITE_ANALYTICS_HOST` |
@@ -947,7 +967,7 @@ GET /                             → 안내 JSON
 5. **`studio/studio-services/src/api/web/`** (신규 NEW 구조): `CLAUDE.md v2.0` 기준 권장 구조이나, 실제 파일 내 경로 리터럴은 `studio-campaigns.services.ts` 등에 분산. 본 문서에서는 DEPRECATED `servers/` 경로 위주로 수집했습니다. 둘 모두 같은 `/web/*` 엔드포인트를 가리킵니다.
 6. **Storybook 스토리, 테스트 파일**: 기능↔API 매핑 목적에서는 제외.
 7. **`apps/devtools/component-playground/src/pages/index.tsx`** 내부 라우팅: 파일 탐색까지는 했으나 실제 라우트 정의는 읽지 않았습니다.
-8. **환경별 프록시 token**: `devtools/app-settings-console/server/index.ts:12-33` 은 **리포에 Bearer Token 이 평문 커밋**되어 있습니다. 본 문서는 관측 사실로만 기록 — 사용·유출 여부는 판단 범위 밖.
+8. **환경별 프록시 token**: `devtools/app-settings-console/server.ts:13~34` 은 **리포에 Bearer Token 이 평문 커밋**되어 있습니다. 본 문서는 관측 사실로만 기록 — 사용·유출 여부는 판단 범위 밖.
 
 ### 추정·미확인 항목
 

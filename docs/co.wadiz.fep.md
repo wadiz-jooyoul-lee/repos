@@ -1,5 +1,35 @@
 # co.wadiz.fep 분석
 
+> 📅 **2026-07-10 main pull 보강** (36 커밋, net-new)
+>
+> 이번 구간의 핵심은 **SCOUT-79** — FEP가 "Stripe Connect 정산 중계"에서 **PG 결제 실시간 대사(webhook 수신→중복판정→SNS 발행) 게이트웨이**로 확장되고, 저장소·재처리 인프라가 통째로 교체됨. 아래 서술 중 기존 본문(MongoDB / Batch 모듈 / API Key 인증 필터)과 충돌하는 부분은 **이 블록이 최신**이다.
+>
+> ### SCOUT-79 — PG 결제 실시간 대사 웹훅 도입 (net-new 핵심)
+> - **`adapter/in/web/NicePayWebhookController.java:54`** — `POST /api/v1/webhooks/nicepay/payment` 신규. NICEPAY v1 통보(form-urlencoded)를 `@RequestBody` 대신 `request.getInputStream()`로 원본 바이트를 직접 읽어 **EUC-KR 디코딩**(`NicePayWebhookController.java:61,92`, charset은 `nicepay.webhook.request-charset:EUC-KR`). `@RequestBody`가 form 파라미터를 UTF-8로 재인코딩해 한글이 깨지는 문제를 우회(클래스 주석 :21-33).
+> - **`adapter/in/web/StripeWebhookController.java:47`** — Stripe 웹훅이 `POST /api/v1/webhooks/stripe/account`(계정)와 `.../stripe/payment`(결제) 2갈래로 분리. 결제 웹훅은 `verifyPayment` 서명 검증 후 `StripeEventMapper.mapToEvent`로 매핑.
+> - **`domain/PgPaymentEvent.java:9` / `PgPaymentStatus.java` / `PgProvider.java`** — NICEPAY·Stripe 공통 정규화 도메인. status는 `PAID`/`CANCELLED`, provider는 `NICEPAY`/`STRIPE`. eventId는 `{tid|cancelTid}_{status}` 규칙(`PgPaymentEvent.java:25`).
+> - **`mapper/NicePayEventMapper.java:66`** — `StateCd`+`ResultCode`로 상태 도출(`0`&`3001`→PAID, `1`/`2`&`2001`→CANCELLED, 그 외 drop). `mapper/StripeEventMapper.java:31`은 이벤트 타입에 `refund` 포함 여부로 결제/환불 분기.
+> - **`application/service/PgPaymentUseCaseResolver.java:29`** — `PgProvider`별 `HandlePgPaymentUseCase`(`NicePayPaymentWebhookService`/`StripePaymentWebhookService`) 라우팅. 각 서비스는 **중복 판정 통과 시에만 발행**(`NicePayPaymentWebhookService.java:27`).
+> - **`adapter/out/cache/RedisDuplicatePgPaymentCheckAdapter.java:26`** — ElastiCache(Redis) `SETNX`+TTL 1h로 중복 이벤트 무시. 키 `{env}:fep-api:checkDuplicateTransaction:{provider}:{eventId}`. (api build.gradle에 `spring-boot-starter-data-redis` 추가)
+> - **`adapter/out/event/SnsPgPaymentEventPublisher.java:20`** — 신규 SNS 카테고리 `PG_PAYMENT_COMPLETED`, eventType `PG_PAYMENT`, messageGroupId `payment-{tid}`. 동시에 `category=LOG`로 이중 기록(:58).
+> - **`infra/localstack/init-aws.sh:33,87`** — 신규 큐 `pg-payment-completed-webhook.fifo`(+`-dlq`, maxReceiveCount=3)와 `wadiz-payment-requested`(+`-dlq`) 추가. SNS 필터폴리시 `PG_PAYMENT_COMPLETED` 구독 신설.
+>
+> ### SCOUT-79 — 저장소/재처리 인프라 대개편 (기존 본문과 충돌)
+> - **Batch 모듈 완전 삭제** — `settings.gradle`에서 `finance-fep-application-batch` 제거, `deploy-batch.yml` 삭제. 3-모듈(api/agent/batch) → **2-모듈(api/agent)**. 본문의 "예약결제 스케줄러·Batch one-shot Job" 서술은 폐기됨.
+> - **`agent/scheduler/DlqReprocessScheduler.java:49`** — Batch를 대체하는 Agent 내부 `@Scheduled`(cron `${scheduler.dlq-reprocess}`, KST) + **ShedLock**(`@SchedulerLock`, `ShedLockConfig.java:14` Redis LockProvider)로 DLQ 재처리. eventType 접두사로 재발행 큐 라우팅(PG_*→pg-payment, ACCOUNT_UPDATED→stripe-webhook, 그 외→wadiz-payment-requested, `:93`).
+> - **MongoDB → OpenSearch 전환** — Agent의 `FinanceLog`/`FailedEvent`가 Mongo `MongoRepository`에서 `FinanceLogOpenSearchRepository`/`FailedEventOpenSearchRepository`로 교체. `OpenSearchConfig.java:33`(opensearch-java 2.8.1 저수준 클라이언트, Spring Data OpenSearch 미사용), `MonthlyIndexResolver.java:19`로 **월별 인덱스**(`prefix-yyyy-MM`) 색인. docker-compose에서 MongoDB 제거, redis·opensearch·opensearch-dashboards 추가.
+> - **`agent/adapter/web/PgPaymentLogQueryController.java:16`** — `GET /api/internal/v1/pg-payments?tid=` / `.../pg-payments/period?from=&to=` 조회 API 신설(대사 조회용, Agent 모듈 최초의 REST 엔드포인트).
+> - **`agent/listener/FinanceEventDlqListener.java:15`** — DLQ 리스너가 stripe-account-updated-dlq 외에 **pg-payment-completed-dlq, wadiz-payment-requested-dlq** 3종 구독으로 확장.
+> - **API Key 인증 필터 제거** — `ApiAuthenticationFilter`·`ApiAuthProperties`·테스트 삭제(SCOUT-79 "fep-api 인증 중복으로 제거", beff4bf). 본문 "Ingress 인증: 고정 API Key Bearer" 서술 폐기 — 인증은 상위(게이트웨이) 위임.
+>
+> ### SCOUT-103 — Stripe 결제 웹훅 결제수단 CARD 고정
+> - **`mapper/StripeEventMapper.java:36`** — `payMethod = "CARD"` 하드코딩 고정(4ce7a81). 빌드 시 통합 테스트 스킵 설정도 함께(d572c38).
+>
+> ### (부가) NICEPAY 웹훅 디버그 로그
+> - **`NicePayWebhookController.java:63`** — 수신 시 StateCd/ResultCode/TID/MOID/Amt/PayMethod/ResultMsg INFO 로깅(65c3112).
+
+---
+
 ## 개요
 
 Wadiz Finance FEP(Front-End Processor = 결제 대외계)는 와디즈 내부 서비스와 해외 결제 파트너(Stripe Connect) 사이를 중계하는 결제 대외계 게이트웨이이다. 역할은 세 가지.
@@ -8,7 +38,7 @@ Wadiz Finance FEP(Front-End Processor = 결제 대외계)는 와디즈 내부 �
 2. Stripe 웹훅(account.updated)을 수신하여 내부 이벤트로 변환 후 SNS 발행.
 3. 모든 금융 이벤트를 MongoDB로 영속화, 실패 이벤트는 DLQ에서 수집해 Spring Batch가 재발행.
 
-FEP는 Stripe Connect 전용. 나이스페이/Alipay+ 연동 코드는 존재하지 않음(별도 nicepay-api 레포 담당). KR(한국) 국가는 명시적으로 거절(AccountService.java:21-23).
+FEP의 주력은 Stripe Connect(해외 정산)이며 KR(한국) 국가는 Stripe 계정 생성 시 명시적으로 거절(AccountService.java:21-23). 다만 Stripe 외에도 **NICE 정산(payout) 연동**(NICE submall 정산 요청·취소·조회, `adapter/out/nicepay`)과 **환율 조회**(한국은행 ECOS + OpenExchangeRate, `adapter/out/exchangeRate` + `application/service/exchangeRate`)가 내부 API로 함께 들어와 있다. PG 결제(승인/취소) 본체는 여전히 별도 nicepay-api 레포가 담당하고, FEP의 NICE 연동은 "정산(payout)"에 한정된다. (Alipay+ 연동 코드는 없음)
 
 멀티모듈:
 
@@ -48,9 +78,11 @@ application/
   service/   AccountService, TransferService, AccountQueryService, AccountWebhookService
 domain/      BusinessType 등 VO
 adapter/
-  in/web/    Controller, payload DTO, ApiAuthenticationFilter, GlobalExceptionHandler
-  out/stripe/ StripeGatewayImpl, StripeConfig, StripeWebhookVerifier
-  out/event/  Sns*Publisher
+  in/web/    Controller(Account/Transfer/Webhook + NicePayoutController, ExchangeRateController), payload DTO, ApiAuthenticationFilter, GlobalExceptionHandler
+  out/stripe/      StripeGatewayImpl, StripeConfig, StripeWebhookVerifier
+  out/nicepay/     NicepayGatewayImpl(정산 요청/취소/조회), NicepayEncKeyGenerator, NicepayConfig, message DTO
+  out/exchangeRate/ ExchangeRateGatewayImpl(한국은행·OpenExchangeRate 호출)
+  out/event/       Sns*Publisher
 ```
 
 의존 방향: adapter → application → domain (역방향 금지).
@@ -140,7 +172,7 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 
 - 컨트롤러: AccountController.java:50
 - 처리: stripeClient.v1().accounts().retrieve(accountId) (StripeGatewayImpl.java:144-171)
-- 응답: chargesEnabled, payoutsEnabled, detailsSubmitted와 requirements.currentlyDue/eventuallyDue/pastDue/disabledReason + **pendingVerification, errors** (ERP-1025 추가)
+- 응답: chargesEnabled, payoutsEnabled, detailsSubmitted와 requirements.currentlyDue/eventuallyDue/pastDue/disabledReason + **pendingVerification, errors** (ERP-1025 추가) + **capabilities** (Map<String,String>, 예: card_payments=active, transfers=active — StripeGatewayImpl.java:176-185에서 account.getCapabilities() raw JSON을 파싱, ERP-1025 추가)
 - DB: 없음, 로그 이벤트: 없음 (조회성 API)
 
 ### 6. GET /api/internal/v1/accounts/{accountId}/payout-info — 정산용 은행계좌 조회
@@ -157,7 +189,7 @@ API 서버(finance-fep-application-api) 전수 스캔. Agent/Batch 모듈에는 
 - 처리 로직:
   1. StripeWebhookVerifier.verifyAndParse (StripeWebhookVerifier.java:22-29) — Webhook.constructEvent(payload, sig, secret), 서명 불일치 시 400
   2. account.updated 이벤트만 분기 처리 → AccountWebhookService.handleAccountUpdated(rawJson) (AccountWebhookService.java:24-52) — Jackson JsonNode로 수동 파싱
-  3. AccountUpdatedCommand 생성 → SnsAccountEventPublisher.publishAccountUpdated (SnsAccountEventPublisher.java:30-36)
+  3. AccountUpdatedCommand 생성 → SnsAccountEventPublisher.publishAccountUpdated (SnsAccountEventPublisher.java:30-36). 발행 이벤트(AccountUpdatedEvent)에는 chargesEnabled/payoutsEnabled/detailsSubmitted/requirements 외에 **capabilities** 맵도 포함 — 웹훅 JSON의 `capabilities` 오브젝트를 String 값만 추려 파싱(AccountWebhookService.toStringMap, ERP-1025 추가).
   4. SNS에 category=STRIPE_ACCOUNT_UPDATED, messageGroupId=account-{accountId} (FIFO 키)로 publish + 동시에 category=LOG로 이중 기록
 - 외부 연동: Stripe → FEP 수신 / FEP → SNS 발행 / Agent가 SQS stripe-account-updated-webhook.fifo에서 구독
 
@@ -199,8 +231,10 @@ Agent와 Batch는 동일한 failed_event 컬렉션을 각자 Document 클래스�
 |--------|-----------|--------|
 | Stripe Connect | https://api.stripe.com/v1/accounts, /v1/account_links, /v1/transfers, /v1/transfers/{id}/reversals | StripeGatewayImpl.java (stripe-java:31.3.0 SDK 동기 호출) |
 | Stripe Webhook | FEP 수신: POST /api/internal/v1/webhooks/stripe → Webhook.constructEvent 서명 검증 | StripeWebhookVerifier.java:28 |
+| NICE 정산(payout) | POST /api/internal/v1/nice/payouts/inquiry (정산 조회). Gateway는 정산 요청/취소/조회 지원, NicepayEncKeyGenerator로 거래 암호화키 생성(SID 정산 0102001/취소 0103001/조회 0101002) | NicePayoutController.java, NicepayGatewayImpl.java |
+| 환율 | GET /api/internal/v1/exchange-rate/korea-bank (한국은행 ECOS), GET /api/internal/v1/exchange-rate/open-exchange-rate (OpenExchangeRate) | ExchangeRateController.java, ExchangeRateService.java |
 
-나이스페이/Alipay+는 FEP에 없음 — nicepay-api 레포 담당.
+PG 결제(승인/취소) 본체는 nicepay-api 레포 담당. FEP의 NICE 연동은 정산(payout)에 한정. Alipay+는 FEP에 없음.
 
 ### 이벤트 브로커 (AWS SNS/SQS only)
 
@@ -233,6 +267,7 @@ SQS Queues (infra/localstack/init-aws.sh):
 ### 인프라/설정
 
 - spring-cloud-starter-kubernetes-client-config + bootstrap.yml / bootstrap-kubernetes.yml → ConfigMap에서 환경별 설정 로드(live/rc/dev).
+- 배포 환경 프로파일: odev / cdev / dev / rc / rc2 / rc4 / clive / live (api·agent·batch별 application-{env}.yml). GitHub Actions deploy-api/agent/batch 워크플로우가 브랜치(dev/rc/rc2/rc4/cloud_dev/cloud_live/main)별로 gitops 경로(core/{rc1,rc2,rc4,cdev,clive}/fep-*.yaml)에 매핑(deploy-api.yml). API 문서 도메인 표(index.adoc)에 odev=dev-platform.wadizcorp.net/fep, rc/rc2/rc4=rc{,2,4}-platform.wadizcorp.net/fep, cdev=api.dev.wadiz.co/fep 등록.
 - Jib 이미지 빌드: ECR 843734097580.dkr.ecr.ap-northeast-2.amazonaws.com/core/fep-{api,agent,batch} 태그 주입(-Dimage.tag).
 - LocalStack(docker-compose.yml + infra/localstack/init-aws.sh)으로 개발환경에서 SNS/SQS/토픽/구독 자동 생성.
 
@@ -255,6 +290,12 @@ SQS Queues (infra/localstack/init-aws.sh):
 
 - StripeWebhookController.java:34에서 오직 account.updated만 분기 처리. 그 외 Stripe 이벤트(charge.*, payout.*, transfer.* 등)는 200 OK로 무시됨.
 
+### NICE 연동 RestClient 설정 (NicepayConfig)
+
+- `nicepayRestClient` 빈(NicepayConfig.java:18): baseUrl=NicepayProperties.apiUrl, 기본 헤더 `Content-Type: application/json` + `Charset: utf-8`.
+- 요청/응답 로깅 interceptor 추가 — 요청 URI/헤더/body(UTF-8 문자열), 응답 상태/헤더를 INFO 로그로 기록(NicepayConfig.java:25-35).
+- **인코딩 최종 상태(ERP-1025)**: NICE 요청 본문은 **원본 UTF-8 그대로 전송**한다. 작업 중 `Content-Type: charset=EUC-KR` 및 본문 EUC-KR 인코딩을 시도한 커밋(2aa4866 등)이 있었으나, Jackson 호환성 문제로 모두 되돌려졌고(9c524d7 revert) 최종적으로는 `application/json` Content-Type에 `Charset: utf-8` 헤더만 남았다. 즉 EUC-KR 변환은 적용되지 않은 net 결과.
+
 ### Ingress 인증
 
 - 고정 API Key Bearer 방식 (api.auth.api-key 프로퍼티, 기본값 하드코딩 — 운영에서는 ENV 오버라이드 전제). JWT/OAuth 등은 사용하지 않음.
@@ -274,10 +315,23 @@ SQS Queues (infra/localstack/init-aws.sh):
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| Stripe 결제 웹훅 결제수단 `CARD` 고정 + 빌드 시 통합테스트 스킵 | 2026-07-08 | SCOUT-103 |
+| NICEPAY 웹훅 수신 디버그 로그 추가 | 2026-07-06 | - |
+| PG 결제 실시간 대사 웹훅 도입 (nicepay/payment·stripe/payment 엔드포인트, PgPaymentEvent 도메인·매퍼·resolver, Redis 중복판정, SNS `PG_PAYMENT_COMPLETED`, pg-payment/wadiz-payment 큐) | 2026-06-25 ~ 2026-07-02 | SCOUT-79 |
+| Batch 모듈 삭제 → Agent DlqReprocessScheduler + ShedLock(Redis) 로 DLQ 재처리 이관 | 2026-06-25 | SCOUT-79 |
+| Agent 저장소 MongoDB → OpenSearch 전환 (월별 인덱스, PgPaymentLogQuery 조회 API) | 2026-06-25 ~ 2026-07-01 | SCOUT-79 |
+| API Key 인증 필터(ApiAuthenticationFilter) 제거 — 인증 중복 정리 | 2026-07-02 | SCOUT-79 |
+| NICEPAY 웹훅 EUC-KR 원본 스트림 디코딩 처리 | 2026-06-30 ~ 2026-07-01 | SCOUT-79 |
+| NicepayConfig에 NICE API 요청/응답 로깅 interceptor 추가 | 2026-06-04 | ERP-1025 |
+| NICE 요청 인코딩 최종 정리 — EUC-KR 변환 시도 후 모두 revert, `application/json` + `Charset: utf-8` 헤더로 원본 UTF-8 전송 유지 | 2026-06-04 | ERP-1025 |
+| account.updated 웹훅 발행 이벤트에 `capabilities`(Map) 필드 추가 | 2026-06-01 | ERP-1025 |
+| 계정 상태 조회 응답에 `capabilities`(Map) 필드 추가 | 2026-06-01 | ERP-1025 |
+| 배포 환경 odev / cdev / rc4 추가 및 환경별 application yml·CI/CD 분기 정리 | 2026-06-01 ~ 2026-06-02 | ERP-1025 |
+| rc/rc2/clive/live에 nicepay api-url 추가, 미사용 stripe.accounts 설정 제거 | 2026-05-28 ~ 2026-05-29 | ERP-1025 |
 | 내부 API URL `/api/v1/` → `/api/internal/v1/` 일괄 변경 | 2026-05-20 | ERP-1025 |
 | 계정 상태 조회 응답에 `pendingVerification`, `errors` 필드 추가 | 2026-04-24 | ERP-1025 |
 | 정산 계좌 조회 응답 Stripe BankAccount 전체 필드 확장 | 2026-04-24 | ERP-1025 |

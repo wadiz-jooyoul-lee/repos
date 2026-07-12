@@ -6,6 +6,44 @@
 
 ---
 
+> 📅 **2026-07-10 develop pull 보강** (90 커밋, 26.23.2 → 26.27.0)
+>
+> ### FE1-1001 — 와디즈 에디션 탭 신설 (하단 탭바 "친구" 대체)
+> - 하단 탭바(BNB)의 `친구(feed)` 탭을 **와디즈 에디션(edition)** 탭으로 교체. `TabBarIndex.feed → .edition`, 라벨 "에디션", waditag action "와디즈에디션". 친구 지면은 push 네비바로 복구 (`Projects/App/Sources/NativeBase/Controller/TabBarIndex.swift`, `TabBarEvent.swift`, `LocalTabBarController.swift`).
+> - 신규 `EditionWebViewController` (기본 진입 `/web/wevent/513`, 네비바 "와디즈 에디션"). 에디션 페이지 내 상세 URL 은 `ProjectDetailURLMatcher` 로 판별해 **별도 웹뷰로 분리** 로드, `sessionStorage.SWIPE_EVENT_PAGE` 컨텍스트 주입. `BaseWebViewController` 에 `additionalUserScripts()` hook 추가 (`Projects/App/Sources/WebView/Edition/EditionWebViewController.swift`, `WebView/BaseWebViewController.swift`).
+> - 에디션 탭 N뱃지: `EditionTabBadgeStateUseCase` + 앱-스코프 싱글턴 Assembly (cold start 기준 노출/진입 시 제거). 친구 카운트 뱃지 로직은 App→Home 으로 이전 (`Projects/App/Sources/.../EditionActivity/`).
+>
+> ### FE1-961 — PIPKit SPM 의존성 제거, Core/UI `FloatingViewKit` 자체 구현
+> - 외부 `PIPKit`(SPM) 패키지를 제거하고 라이브커머스 PIP 를 `Projects/Core/Sources/UI/FloatingViewKit` 로 완전 재작성. `@MainActor` caseless enum 네임스페이스 + `FloatingViewEventDispatcher`(드래그·스냅) + `FloatingViewLayout`(6영역 판정 순수함수, 단위테스트 대상). `Tuist/Package.swift`·`TargetDependency+Templates.swift`(`.pipKit`)·`App/Project.swift` 에서 PIPKit 선언 제거. → 기술스택의 "PIPKit 1.1.0" 은 더 이상 유효하지 않음.
+>
+> ### FE1-1047 / FE1-1093 — Navigator 모듈을 Features → Service 계층으로 이주
+> - cross-feature 직접 참조 규칙 위반 해소를 위해 `Navigator` 를 Features 레이어에서 **Service 계층 단일 framework** 로 이주. Search/MyActivity 의 dead `.navigator` 의존·import 정리. 이주 직후 import 누락 빌드 실패는 FE1-1093 으로 후속 수정.
+>
+> ### FE1-984 — ProjectDetailURLMatcher App → Shared 이동, /ko/funding 서브패스 대응
+> - `ProjectDetailURLMatcher` 를 App→`Projects/Shared`(public) 로 이동. globalDetail 정규식에 서브패스(`supporters/community/news/refund-policy/reward-details`) + 로케일 프리픽스(`/en/funding`, `/ko/funding`) 조합 추가. 스크린샷 공유 스낵바(`isEnableWadizSnackbar`)·`FirebasePerformanceTraceManager` 의 하드코딩 path 판별을 Matcher 기반으로 교체.
+>
+> ### FE1-1001(웹뷰) / FE1-985 — 상세 웹뷰 표시 버그 수정
+> - 상세→상세 뒤로가기 시 `WKWebView` opacity 미복원으로 흰 화면 되던 문제 수정(FE1-985). GIF 썸네일/배너 CDN 최적화 제외 가드 추가(FE1-970).
+>
+> ### FE1-1009 — 스타트업 메뉴 `startupMenuEnabled` 플래그 기반 비노출
+> - `FeatureFlagsResponse.startupMenuEnabled`(fail-open default=true) 추가. 플래그 false 시 More 단축 아이콘·알림 설정의 스타트업 섹션을 로케일 무관 숨김. `MoreRepository`/`MoreRepositoryImpl` 신설로 `AppSettingAPI` 의존성을 Repository 계층에 격리.
+>
+> ### FE1-968 — 대체 앱 아이콘 교체 (blackbird 2025 → 펀딩 페스티벌 2026)
+> - `AppIcon` 대체 아이콘셋 `icon_blackbird_2025` 제거, `icon_fundingfestival_2026` 추가. Dev/QA/Release xcconfig `ALTERNATE_APPICON_NAMES` 갱신. 교체 자동화 스킬 `.claude/skills/replace-alternate-appicon` 추가.
+>
+> ### FE1-1015 / FE1-1064 — 최근 검색어 API 식별자 헤더 보완
+> - `RecentSearchAPI` 의 register/delete/deleteAll 에 `deviceId`(`_waid` 쿠키, 항상)·`encUserId`(로그인 시) 헤더 주입 — 공통 헤더의 uuid/userId 와 헤더명이 달라 단건 삭제에서 500 나던 문제 수정. 재클릭/동일 키워드 재검색 시 서버 전송 보완(FE1-1064).
+>
+> ### FE1-1025 — 비 iOS 플랫폼 리소스 제거 (App Store 심사 Guideline 2.3.10 대응)
+> - Android/Google Play/Galaxy/Windows 로고 에셋 8종을 xcassets 에서 제거(코드 미사용이나 번들 포함으로 심사 감지). `deeplink_test.html`·`i18n.json`(`android_description_markdown`) 의 Android 참조도 제거.
+>
+> ### 개발 하네스 / CI (FE1-891 · FE1-1095 · FE1-1138 · FE1-1049 · FE1-1177)
+> - 정제→계획→구현→검증 **하네스 파이프라인** 구축(FE1-891) + 결정 로직 python 스크립트 추출·단위테스트(FE1-1095).
+> - `.claude/hooks/` + `.claude/settings.json` 배선(FE1-1138 R1~R9): 보호 브랜치 커밋 차단, 강제 언랩·신규 storyboard/xib·생성파일 편집·시크릿 접근·SwiftLint 위반 차단, ARCHITECTURE 동반 경고(Stop 훅). `make hooks-test` 102 green.
+> - GitHub Actions 배포 워크플로우에 `environment`(adhoc/release) 부여해 **GitHub Deployments** 이력 추적(FE1-1049). Ad Hoc 프로비저닝 4종에 iPhone 17 기기 추가·재생성(FE1-1177). `make verify` lint 회귀 복구(FE1-1051).
+
+---
+
 ## 개요
 
 | 항목 | 값 | 참조 |
@@ -13,7 +51,7 @@
 | Bundle ID | `com.markmount.wadiz` | `Projects/App/Project.swift:94`, `Projects/App/SupportingFiles/Configuration/Base.xcconfig:9` |
 | Extension Bundle IDs | `.WadizWidget`, `.MakerStoreProjectIntents`, `.notificationservice` | `Projects/App/Project.swift:300,325,349` |
 | 지원 OS 최소 | **iOS 16.1** | `Tuist/ProjectDescriptionHelpers/Environment.swift:5` |
-| MARKETING_VERSION / BUILD | `26.14.1` / `26.14.1.2` | `Projects/App/Project.swift:7-8` |
+| MARKETING_VERSION / BUILD | `26.27.0` / `26.27.0.9` | `Projects/App/Project.swift:7-8` |
 | 배포 채널 | **App Store (Release)** / **TestFlight (QA)** / Fastlane develop / Adhoc | `fastlane/Fastfile:27-55`, `.github/workflows/` |
 | Schemes | `wadiz-dev` (Debug), `wadiz-qa` (QA), `wadiz-release` (Release) | `Projects/App/Project.swift:393-441` |
 | Development Team | `PN5T77486L` | `Projects/App/SupportingFiles/Configuration/Release.xcconfig:12`, `Environment.swift:8` |
@@ -83,19 +121,21 @@
 | `Setting` | 설정 홈 / 닉네임 / 전화번호 / 알림 설정 |
 
 ### `Projects/Service`
-비즈니스 로직 서비스. `Sources/{Activity, Analytics, AppSecurity, Braze, ContactSync, DeviceSetting, FloatingButtons, FriendActivity, KeywordAlarm, Locale, MyWadizMode, Notification, RecentCategory, RecentKeyword, RecentProject, RefererURL, RemoteConfig, ScreenKeyParser, SearchBarDayMarketing, Share, SmsAuth, SocialLogin, Spotlight, User, Zendesk}` — 각 폴더에 Feature/Interface 분리. 주요: `Activity` (찜 API), `SmsAuth` (SMS 인증), `Analytics` (Waditag), `KeywordAlarm`, `SocialLogin`.
+비즈니스 로직 서비스. `Sources/{Activity, Analytics, AppSecurity, Braze, ContactSync, DeviceSetting, FloatingButtons, FriendActivity, KeywordAlarm, LiveCommerce, Locale, MyWadizMode, Notification, RecentCategory, RecentKeyword, RecentProject, RefererURL, RemoteConfig, ScreenKeyParser, SearchBarDayMarketing, Share, SmsAuth, SocialLogin, Spotlight, User, Zendesk}` — 각 폴더에 Feature/Interface 분리. 주요: `Activity` (찜 API), `SmsAuth` (SMS 인증), `Analytics` (Waditag), `KeywordAlarm`, `SocialLogin`. **`LiveCommerce`(FE1-809, 2026-06-02)** 는 App 내부에 있던 라이브커머스 모델/유스케이스를 Service 모듈로 분리한 것으로, Remote Config(`liveCommercePip`)의 노출 ON/URL 을 읽어 JSON 이벤트 목록(`LiveCommerceServiceImpl.currentEvent(isLocal:)`)을 받아 UTC 기간·우선순위로 현재 노출 이벤트를 고른다.
 
 ### `Projects/API` (REST Client)
-하나의 Project 에 7 개 Framework 타겟.
+하나의 Project 에 다수의 Framework 타겟 (현재 26개: `AccountAPI, ActivityAPI, AnalyticsAPI, AppAPI, AppSettingAPI, CatchUpAPI, CommonAPI, FriendsAPI, FundingAPI, GlobalAPI, InboxAPI, KeywordAPI, LoginAPI, Main1API, Main2API, SearchAIAPI, SearchAPI, SignUpAPI, SmsAuthAPI, SocialAPI, StartupAPI, StoreAPI, TermsAPI, UserAPI, WebAPI, WishAPI`). 엔드포인트는 `RequestBuilder(apiURLSource: APIURLSource(domain:path:), method:)` 형태로 구성. 주요 타겟:
 | 타겟 | 역할 |
 | --- | --- |
 | `AccountAPI` | 계정 조회/갱신/SNS 링크 |
 | `AppSettingAPI` | 앱 설정 (Server-Driven Settings Tab, `/api/v1/settings`) |
 | `LoginAPI` | 로그인/로그아웃 |
-| `MainAPI` | Platform main2 (홈 메인/퀵메뉴/랭킹/추천/키비주얼) |
+| `Main1API` / `Main2API` | Platform main2 (홈 메인/퀵메뉴/랭킹/추천/키비주얼; 구 `MainAPI` 가 v1/v2 로 분리) |
 | `SearchAPI` | 검색/카테고리/펀딩소프트/스토어검색/프리오더 |
 | `SignUpAPI` | 회원가입/이메일 코드 |
 | `SocialAPI` | 카카오 친구/다중 팔로우 |
+
+> 참고: 위 26개 타겟 구조는 본 분석 범위(2026-06-19) 이전 리팩토링으로 이미 정착돼 있었다. 구 `MainAPI`는 `Main1API`(`.publicApi(.main1)` 도메인) + `Main2API`(`.platform(.main2)` 도메인, base path `/main2`)로 분리됐고, 본 문서의 "기능별 API 호출 매핑" 표 경로도 신규 타겟명으로 갱신 완료했다.
 
 ### `Projects/Core`
 하나의 Project 에 4 개 Framework 타겟 (`CLAUDE.md:109`): **`Networking`** (HTTPClient, RequestBuilder, APIDomain, Interceptor, WadizSession), **`Persistence`** (Macro 의존), **`Preference`** (AppPreference, ServerMode), **`UI`** (공통 UI + i18n.json).
@@ -111,7 +151,7 @@
 | `Projects/Core/Preference` (+ ServerMode) | `core/legacy/wadiz-common/util/ServerMode.kt` + `core/datastore` (HiddenPrefs) | 동일 8개 환경 모델 |
 | `Projects/Core/Persistence` | `core/database` (Room) | iOS 는 Core Data 대신 자체 Persistence + Macro |
 | `Projects/Core/UI` + `i18n.json` | `core:design-system` + `core:i18n` | 동일한 i18n.json 포맷 공유 |
-| `Projects/API/*` (7 타겟) | `core/network/service/**` (17 ApiService) | Android 는 `ServerMode.xxxUrl` 속성을 baseUrl 분기 키로 쓰는 반면 iOS 는 `APIDomain` enum |
+| `Projects/API/*` (26 타겟) | `core/network/service/**` (17 ApiService) | Android 는 `ServerMode.xxxUrl` 속성을 baseUrl 분기 키로 쓰는 반면 iOS 는 `APIDomain` enum |
 | `Projects/Service/*` | `core/data/repository/**` (+일부 feature 내부) | iOS 는 Service 레이어가 Android Repository + UseCase 일부 역할 |
 | `Features/Home` | `feature:main-tab` | 1:1 |
 | `Features/CreditCardOCR` | `feature:ocr` | 1:1, 둘 다 온디바이스 |
@@ -127,7 +167,7 @@
 
 iOS 는 Android 와 달리 **xcconfig / Info.plist 에 URL 을 심지 않는다.** 대신:
 
-1. **`Projects/Core/Sources/Preference/Interface/ServerMode.swift`** 의 `enum ServerMode` (`local/dev/cdev/rc/rc2/rc3/stage/live`) 가 런타임에 `AppPreference` 로부터 설정됨. (`ServerMode.swift:8-17`)
+1. **`Projects/Core/Sources/Preference/Interface/ServerMode.swift`** 의 `enum ServerMode` (`local/cdev/rc/rc2/rc3/stage/live`) 가 런타임에 `AppPreference` 로부터 설정됨. (`ServerMode.swift:8-17`) — **FE1-854(2026-06-05)** 로 `dev = "DEV"` 케이스를 제거하고 DEV 전용 URL 을 CDEV URL 로 통합했다. Widget/UITests/ExampleEnvironment 기본값도 `.cdev` 로 일원화.
 2. **`Projects/Core/Sources/Networking/Interface/APIDomain.swift`** 의 `enum APIDomain` (`publicApi / api / startupCommon / ad / analytics / service / platform(PlatformAPI) / searchAI / webOrigin / app`) 가 `preference.serverMode` 를 switch 해서 URL 을 반환한다 (`APIDomain.swift:48-191`).
 3. `RequestBuilder(domain: .api, path: ..., method: ...)` 가 `APIDomain.urlString` 으로 baseURL 을 결정하고 `HTTPClient` 가 Alamofire `Session.request` 를 호출한다.
 
@@ -144,7 +184,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `.ad` | `https://service.wadiz.kr/api/v1/ad/host` | 동일 | `https://rc2-service.wadiz.kr/api/v1/ad/host` | `https://dev-service.wadiz.kr/api/v1/ad/host` | 홈 KeyVisual/Wad Sections |
 | `.analytics` | `https://analytics.wadiz.kr` (KR) / `https://analytics.wadiz.ai` (글로벌) | 동일 | `https://rc-analytics.{domain}` | `https://dev-analytics.{domain}` | **와디태그(Waditag) V1/V2** |
 | `.service` | `https://service.wadiz.kr` | 동일 | `https://rc2-service.wadiz.kr` | `https://dev-service.wadiz.kr` | 검색/펀딩소프트/프리오더/카테고리/스토어 검색 |
-| `.platform(.main)` | `https://platform.wadiz.kr` | `https://stage-platform.wadiz.kr` (**main만**) | `https://rc2-platform.wadizcorp.net` | `https://dev-platform.wadizcorp.net` | `/main2/…` 홈/퀵메뉴/랭킹/추천 |
+| `.platform(.main2)` | `https://platform.wadiz.kr` | `https://stage-platform.wadiz.kr` (**main만**) | `https://rc2-platform.wadizcorp.net` | `https://dev-platform.wadizcorp.net` | `/main2/…` 홈/퀵메뉴/랭킹/추천 |
 | `.platform(.inbox)` / `.keyword` / `.notiChannel` / `.push` / `.wish` / `.activities` / `.global` | 동일 (stage 에서도 `platform.wadiz.kr`) | 동일 | RC 계열 `wadizcorp.net` | Dev 계열 | 각 플랫폼 MSA |
 | `.searchAI` | `https://searchai.wadiz.kr` | 동일 | `https://rc-api.dev-searchai.wadizdata.team` | `https://api.dev-searchai.wadizdata.team` | 연관 키워드 AI |
 | `.webOrigin` | `https://www.wadiz.kr` / `.ai` | `https://stage.wadiz.kr` | `https://rc2.wadiz.kr` | `https://dev.wadiz.kr` | 분석 이벤트 `Origin` 헤더용 |
@@ -229,16 +269,16 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `App/Account/SetMarketingAlarm` + `Features/Setting/NotificationSetting` | `POST noti-channel/v2/marketingconsents`, `GET noti-channel/v2/marketingconsents` | `.platform(.notiChannel)` | 채널별 마케팅 동의 | 동일. `SetAlarmAPI.swift:66,119`, `NotificationAPI.swift:58,87` |
 | `App/Account/TermsAPI` | `GET api/v2/terms/accepter` | `.api` | 약관 동의자 조회 | 설정 > 약관. `TermsAPI.swift:63` |
 
-### 홈 / 서비스홈 (`Features/Home`, `API/MainAPI`, `Features/ServiceHome`, `App/Sources/Banner`, `App/Sources/AD`, `App/Sources/Exhibition`)
+### 홈 / 서비스홈 (`Features/Home`, `API/Main2API`, `Features/ServiceHome`, `App/Sources/Banner`, `App/Sources/AD`, `App/Sources/Exhibition`)
 
 | 모듈 | 엔드포인트 | APIDomain | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| `MainAPI` | `GET /main2/api/v9/main` | `.platform(.main)` | 홈 메인 큐레이션 | 홈 탭 로드/Pull-to-refresh. `MainAPIImpl.swift:16,24` |
-| `MainAPI` | `GET /main2/api/v3/my-wadiz` (+v? 버전 파라미터) | `.platform(.main)` | 홈 하단 마이와디즈 요약 | 홈 스크롤. `MainAPIImpl.swift:38-43` |
-| `MainAPI` | `GET /main2/api/v1/recommendation/item` | `.platform(.main)` | 연관 추천 | 상세 진입 후 추천. `MainAPIImpl.swift:47-53` |
-| `MainAPI` | `GET /main2/api/v1/quickmenu?id={id}` | `.platform(.main)` | 퀵메뉴 | 홈 진입. `MainAPIImpl.swift:57-66` |
-| `MainAPI` | `GET /main2/api/v1/pc/ranking/store` | `.platform(.main)` | 스토어 랭킹 | 서비스홈/홈. `MainAPIImpl.swift:69-73` |
-| `MainAPI` | `GET /main2/api/v1/banner/key-visual/{type}` | `.platform(.main)` | 홈 키비주얼 배너 | 홈 상단. `MainAPIImpl.swift:76-80` |
+| `Main2API` | `GET /main2/api/v9/main` 또는 `/main2/api/v10/main` | `.platform(.main2)` | 홈 메인 큐레이션 (추천 A/B) | 홈 탭 로드/Pull-to-refresh. **FE1-698(2026-05~29)** 로 추천 A/B 실험군이 내려오면 `v10`, 아니면 기존 `v9` 폴백. 실험 참여 시 `X-Device-Type: IOS_APP` + `X-Experiment: {experimentName}_{experimentGroup}` 헤더 동봉. `Main2APIImpl.swift:15` |
+| `Main2API` | `GET /main2/api/v{version}/my-wadiz` | `.platform(.main2)` | 홈 하단 마이와디즈 요약 | 홈 스크롤. `Main2APIImpl.swift:40-45` |
+| `Main2API` | `GET /main2/api/v1/recommendation/item` | `.platform(.main2)` | 연관 추천 | 상세 진입 후 추천. `Main2APIImpl.swift:49-53` |
+| `Main2API` | `GET /main2/api/v1/quickmenu?id={id}` | `.platform(.main2)` | 퀵메뉴 | 홈 진입. `Main2APIImpl.swift:59-66` |
+| `Main2API` | `GET /main2/api/v1/pc/ranking/store` | `.platform(.main2)` | 스토어 랭킹 | 서비스홈/홈. `Main2APIImpl.swift:70-73` |
+| `Main2API` | `GET /main2/api/v1/banner/key-visual/{type}` | `.platform(.main2)` | 홈 키비주얼 배너 | 홈 상단. `Main2APIImpl.swift:77-80` |
 | `App/Banner` | `GET /main/display-ads/event`, `GET /main/display-ads/marketing` | `.publicApi` | 디스플레이 배너 | 홈/이벤트 섹션. `BannerAPI.swift:50,63` |
 | `App/Exhibition` | `GET /main/featured/reward` | `.publicApi` | 리워드 기획전 | 기획전 탭. `ExhibitionAPI.swift:25,28` |
 | `App/AD/AdService` | `GET /keyvisual`, `GET /wad/sections/{code}`, `GET /event` | `.ad` / `.service` / `.ad` | 광고 키비주얼 / 섹션 / 이벤트 | 홈/서비스홈. `AdService.swift:89,101,113` |
@@ -362,7 +402,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **파일**: `Projects/Features/Home/Sources/Presentation/HomeViewController.swift`, `HomeViewModel.swift`, `Data/HomeRepositoryImpl.swift`, `Data/HomeMapper.swift`.
 - 트리거: 루트 `AppCoordinator` 가 `TabCoordinator` → `HomeCoordinator` → `HomeViewController` 생성. 최초 `viewDidLoad` → `viewModel.fetch()`.
 - `HomeViewModel` (MVVM, Combine/`AnyPublisher` 또는 async) → `HomeRepositoryImpl.fetchMain(...)`
-- Repository → `MainAPI.fetchMain(MainRequest(header: encUserId, variant), query: …)` → `RequestBuilder(domain: .platform(.main), path: "/main2/api/v9/main", method: .get)` + `set(queryName:)` chain → `HTTPClient.request` (`Interceptor adapt/retry`) → `MainResponse`
+- Repository → `Main2API.fetchMain(MainRequest(header: encUserId, variant), query: …)` → `RequestBuilder(domain: .platform(.main2), path: "/main2/api/v9/main", method: .get)` + `set(queryName:)` chain → `HTTPClient.request` (`Interceptor adapt/retry`) → `MainResponse`
 - `HomeMapper` 가 `MainResponse` → `HomeSectionModel[]` 변환 → `HomeViewController` 의 `UICollectionView` (IGListKit) 섹션 렌더
 - 병렬 호출: `fetchMainQuickMenu`, `fetchMainStoreRanking`, `fetchKeyVisualBanner`, `AdService.fetchKeyVisual`, `MainRepositoryImpl.fetchMainMyWadiz`
 
@@ -370,12 +410,14 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - iOS 도 **상세/결제 페이지는 네이티브가 아닌 WKWebView**. 진입 시 `AccountAPI.requestToken()` (`POST /api/waccount/auth/request/token`) → 쿠키 동기화 → `webOrigin + /web/campaign/detail/{id}` 로 `WKWebView` 로드.
 - JS ↔ Native 브릿지: 결제 완료, 찜 토글, 카드 OCR 요청 등. 네이티브 복귀 시 `WishesAPI.add/delete`, `Service/Activity.fetchWishList()` 로 동기화.
 - Remote Config 로 URL 패턴 가드 (`Projects/App/SupportingFiles/remote_config_defaults.plist` 에 `wadiz.kr/web/campaign/detail/{arg_0}` 등 정의).
+- **공통 웹뷰 → 네이티브 상세 랜딩 (FE1-735, 2026-05-27)**: 일반 웹뷰(`BaseWebViewController`) 내에서 펀딩/오픈예정 상세 URL 로 이동하면, 웹으로 띄우지 않고 `ProjectDetailViewController`(펀딩/오픈예정) 또는 `ProjectWebViewController`(스토어) 네이티브 화면으로 랜딩. URL 판별은 `ProjectDetailURLMatcher` + `tryRouteDetailURLToNative` 헬퍼, `WebViewDependency` 에 `navigator` 주입.
+- **스토어 → 펀딩 진입 일관성 (FE1-781, 2026-05-29)**: 스토어 통합 `projectId` Matcher 를 `ProjectDetailURLMatcher` 에 추가하고, 스토어 상세 URL 진입도 `ProjectDetailViewController` 로 게이트(`NavigationMap+WebView`)해 펀딩/스토어 양쪽이 동일한 네이티브 헤더 상태·검증 경로를 타도록 통일.
 
 ### 3) 로그인 (`Features/Login`)
 - 트리거: `LoginHomeViewController` → 이메일 로그인 or 소셜 버튼
 - `LoginHomeViewModel` (`Projects/Features/Login/Sources/LoginHome/Presentation/LoginHomeViewModel.swift`) → `LoginAPI.loginEmail(path: "/api/v4/login/email", body)`
 - 응답 후 `UserService` (`Projects/Service/Sources/User`) 가 `UserCredential` (KeychainSwift) + `UserDefaults sessionId` 저장 → Swinject 에서 credentialProvider 갱신 → 다음 요청부터 `WadizRequestInterceptor.adapt` 가 `authKey/userId/sessionId` 헤더 자동 추가
-- 후속: `AccountAPI.userRefresh` (`/api/v3/account/info/refresh`), `AccountAPI.requestToken`, `MainAPI.fetchMain` (홈 진입)
+- 후속: `AccountAPI.userRefresh` (`/api/v3/account/info/refresh`), `AccountAPI.requestToken`, `Main2API.fetchMain` (홈 진입)
 - 실패 시 `NetworkError.unauthorized` → `logoutCallback()` → AppCoordinator 가 `LoginCoordinator` 로 루트 복귀
 
 ### 4) 서포팅 (결제)
@@ -397,7 +439,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **버전**: Tuist `4.113.1` (`.tuist-version`)
 - Workspace `wadiz.xcworkspace` + `Projects/App/wadiz.xcodeproj` 생성은 `tuist generate` 로만. Xcode 프로젝트 파일은 레포에 커밋 X.
 - `Tuist.swift:5` 로 Xcode 26.0 까지 호환 지정.
-- `Tuist/ProjectDescriptionHelpers/Project+Templates.swift` 에 `.shared`, `.model`, `.networking`, `.preference`, `.home`, `.login`, `.mainAPI` 등 공통 의존 매크로 정의.
+- `Tuist/ProjectDescriptionHelpers/TargetDependency+Templates.swift` 에 `.shared`, `.model`, `.networking`, `.preference`, `.home`, `.login`, `.main1API`, `.main2API` 등 공통 의존 매크로 정의.
 
 ### Configurations & xcconfig
 - `Debug` (Dev scheme), `QA` (QA scheme), `Release` (Release scheme).
@@ -423,12 +465,17 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 ### SwiftLint
 - Main target post-build script 로 SwiftLint 실행. SwiftPM binary artifact `swiftlint-*-macos/bin/swiftlint`. `.swiftlint.yml` 레포 루트에 존재.
 
+### 검증 게이트 / 개발 하네스 (2026-06 도입)
+- **`make verify` 단일 진입점 (FE1-898, 2026-06-16)** — 루트 `Makefile` 이 `build`(swiftlint 자동 포함) + `lint` (+ `TEST_SCHEME` 지정 시 모듈 단위테스트) 를 묶은 단일 검증 게이트. 사람·CI·하네스 모두 동일하게 사용하며 `xcodebuild` 를 직접 추측 호출하지 않는다. 빌드 스킴은 `wadiz-dev`(release 전용 `wadiz` 는 직접 빌드 불가). App 게이트(`WadizTests`)는 실네트워크 API 통합테스트를 제외 → `make verify` green ≠ 전체 테스트 통과.
+- **CLAUDE.md 분리 → `.claude/rules/` (FE1-896, 2026-06-16)** — 단일 `CLAUDE.md` 를 always-load(`harness.md`, `branching-pr.md`) + path-scoped(`swift-conventions.md`=`**/*.swift`, `architecture.md`=`Projects/**`, `di-assembly.md`, `testing.md`, `localization.md`, `deployment.md`) 규칙 파일로 쪼갬. Claude Code 가 작업 파일 경로에 매칭되는 규칙만 자동 로드.
+- **하네스 산출물 규약 (FE1-899, 2026-06-18)** — 정제→계획→구현→검증 단계 간 상태를 대화 요약이 아니라 `.claude/harness/<JIRA-KEY>/{spec.md, task_list.json, progress.md}` 파일 + git 으로만 인계. 템플릿은 `.claude/harness/templates/`. "생성 ≠ 평가" 분리(정제는 독립 비평기, 구현은 독립 리뷰어가 검증).
+
 ---
 
 ## 특이사항
 
 ### iOS 고유
-- **Tuist 멀티 프로젝트** — `docs/TUIST_PHASE1_PLAN.md` ~ `TUIST_PHASE8_PLAN.md` 로 Tuist 마이그레이션을 8단계로 쪼개 진행 중. Features 모듈 중 일부(`Benefit`, `Contacts`, `Wish`, `Startup`, `AD`, `Banner`, `Exhibition`)는 **아직 `Projects/App/Sources/` 내부 디렉터리에 남아있음** — 향후 Feature Project 로 분리 예정.
+- **Tuist 멀티 프로젝트** — Tuist 마이그레이션은 단계 계획(구 `TUIST_PHASE*_PLAN.md`)을 완료·정리하고, **FE1-790(2026-05-29)** 로 멀티모듈 프로젝트를 **Xcode 16 Folder(synchronized group) 형식**으로 전환했다(`Project.swift` 들의 그룹 구조 단순화, Onboarding `Resources` 가 `Sources/Resources` → `Resources` 로 이동, 신규 가이드 `docs/app-target-folder-plan.md`). Features 모듈 중 일부(`Benefit`, `Contacts`, `Wish`, `Startup`, `AD`, `Banner`, `Exhibition`)는 **아직 `Projects/App/Sources/` 내부 디렉터리에 남아있음** — 향후 Feature Project 로 분리 예정.
 - **Swift Macro Packages** — `/Packages/Macro` 가 로컬 SPM 패키지 (Macros/Macro/MacroClient 타겟). `Core/Persistence` 가 Macro 의존하여 컴파일 타임 매크로 활용. Swift 5.9 필수.
 - **Strict Concurrency** — Swift 6 strict concurrency 대응 진행. 각 Project 루트에 `STRICT_CONCURRENCY_GUIDE.md`. `WadizRequestInterceptorImpl.swift:19,20,23,24` 처럼 `nonisolated(unsafe)` 로 임시 대응. `Projects/Service/Sources/USERSERVICE_ACTOR_MIGRATION_GUIDE.md` 는 UserService actor 마이그레이션 가이드.
 - **App Extensions 3개** — `WadizWidget` (홈스크린 위젯, 스토어 프로젝트 요약), `MakerStoreProjectIntents` (Siri/Spotlight intent), `NotificationService` (Braze rich notification service extension). 모두 별도 entitlement/xcconfig.
@@ -443,16 +490,24 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **Crashlytics DSYM 업로드** — post-build script `Tuist/.build/checkouts/firebase-ios-sdk/Crashlytics/run` 자동 실행 (`Projects/App/Project.swift:130-136`).
 - **OSS License** — `Tuist/Package.resolved` 를 빌드 전 `Projects/App/Resources` 로 복사 → `AcknowList` 가 런타임에 표시 (`Projects/App/Project.swift:107-113`).
 - **중복 구현 주의** — `/api/funding/wishes` 찜 추가는 `Service/Activity/ActivityAPI.swift:29` 와 `App/Wish/WishesAPI.swift:33` 두 곳에 존재 (Service 레이어로 이주 중). `/api/ftaccountConfirm/*` 역시 `Service/SmsAuth` 와 `App/Protocol/ProtocolFTAccountConfirm.swift` 중복. 마이그레이션 잔재.
+- **라이브커머스 PIP (FE1-809, 2026-06-02)** — 메이커 모드 웹뷰(`MakerWebViewController`)에서 Picture-in-Picture 라이브커머스 영상을 띄운다. (**FE1-961, 2026-06-19 이후**: 외부 `PIPKit` SPM 을 제거하고 `Core/UI` 자체 구현 `FloatingViewKit` 으로 교체 — 아래 최상단 보강 블록 참조.) 노출 여부·URL 은 `Service/LiveCommerce` 가 Remote Config `liveCommercePip` 로 게이트. **FE1-865(2026-06-11)** 로 SceneDelegate 환경에서 PIP 최초 노출 시 `safeAreaInsets` 가 0 인 채 프레임이 계산돼 `UITabBar` 를 가리던 버그를 다음 runloop 의 `setNeedsUpdatePIPFrame()` 재계산으로 보정 (`PIPKit+Extension.swift`).
+- **HWP/HWPX 웹뷰 첨부 (QA-22250, 2026-06-15)** — iOS 가 hwp/hwpx 를 기본 인식하지 못해 웹 `accept` 에 내려도 파일 선택기에서 비활성화되던 문제를, `Info.plist`/`Info_Dev.plist` 에 `UTImportedTypeDeclarations` 로 확장자(hwp/hwpx) ↔ MIME(`application/x-hwp`, `application/haansofthwpx`) 매핑을 선언해 해결.
+- **WADIZChannelIO 스킴 제거 (FE1-796, 2026-05-29)** — `More` 모듈의 `WADIZChannelIO` 커스텀 스킴 핸들러 제거.
 
 ---
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-10** (이전: 2026-06-19, 2026-05-29, 최초: 2026-04-20)
 
 ### 모듈화 / 아키텍처
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| Tuist 멀티모듈 프로젝트를 Xcode 16 Folder 형식으로 전환 | 2026-05-29 | FE1-790 |
+| 라이브커머스 모델/유스케이스 App→Service 모듈(`LiveCommerce`) 분리 | 2026-06-02 | FE1-809 |
+| ServerMode DEV 케이스 제거, CDEV 로 통합 | 2026-06-05 | FE1-854 |
+| Navigator 를 Swinject register/resolve 로 변경 | 2026-05-26 | FE1-741 |
+| 미사용 WAiWebViewController/WAiErrorView 제거 | 2026-05-21 | FE1-739 |
 | AppRouterService Service Module 분리 | 2026-05-27 | FE1-636 |
 | 프로젝트 오픈 Feature Module 분리 | 2026-05-27 | FE1-634 |
 | 프리오더 SwiftUI 전환 및 ServiceHome 모듈 이동 | 2026-04-23 | FE1-325 |
@@ -461,6 +516,17 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 ### 기능 추가 / 변경
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 메인홈 추천 A/B — main2 v10 분기 + X-Device-Type/X-Experiment 헤더, 성과 측정 전자상거래 데이터로 일원화 | 2026-05~29 | FE1-698 |
+| 메이커 모드 라이브커머스 PIP 지원 | 2026-06-02 | FE1-809 |
+| 공통 웹뷰 내 펀딩/오픈예정 상세 이동 시 네이티브 화면 랜딩 | 2026-05-27 | FE1-735 |
+| 스토어→펀딩 이동 시 네이티브 헤더/검증 경로 일관성 | 2026-05-29 | FE1-781 |
+| WADIZChannelIO 스킴 핸들러 제거 | 2026-05-29 | FE1-796 |
+| MessageBox 색상 green → mint 변경 | 2026-05-28 | FE1-719 |
+| 웹뷰 첨부 HWP/HWPX UTI 선언 추가 | 2026-06-15 | QA-22250 |
+| 검색 쿠폰 추천 글로벌 통화 소수값 디코딩 실패 수정 | 2026-06-01 | QA-22165 |
+| PIP 최초 노출 시 UITabBar 가림 현상 수정 | 2026-06-11 | FE1-865 |
+| KeyVisualBanner 초기 진입 배너 깜빡임 수정 / 최근 프로젝트 카드 하단 잘림·여백 수정 | 2026-05-26~27 | FE1-768, FE1-760, FE1-769 |
+| wadiz:// 스킴 URL needLogin 버그 수정 | 2026-05-26 | FE1-740 |
 | wadiz.ai 도메인 제거 대응 | 2026-05-20 | FE1-724 |
 | 검색 결과 쿠폰 국가별 통화 표시 적용 | 2026-05-20 | FE1-673 |
 | 유저 활동 데이터 작업 | 2026-05-18 | FE1-543 |
@@ -468,9 +534,12 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | 딥링크 cold start 시 광고 스킵 처리 | 2026-04-20 | FE1-416 |
 | 웹뷰 인라인 미디어 자동재생 정책 복구 | 2026-04-22 | FE1-472 |
 
-### 인프라 / 보안
+### 인프라 / 개발 하네스
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| `make verify` 단일 검증 게이트(build·lint·단위테스트) 도입 | 2026-06-16 | FE1-898 |
+| CLAUDE.md 분리 → `.claude/rules/`(always·path-scoped) | 2026-06-16 | FE1-896 |
+| 하네스 산출물 규약 정립(`.claude/harness/`) | 2026-06-18 | FE1-899 |
 | fastlane 2.235.0 업데이트 (jwt 보안 취약점 해결) | 2026-05-27 | FE1-717 |
 | Claude 관련 GitHub Actions 워크플로우 제거 | 2026-05-13 | FE1-662 |
 | review-loop 프로젝트 스킬 추가 | 2026-05-28 | FE1-785 |

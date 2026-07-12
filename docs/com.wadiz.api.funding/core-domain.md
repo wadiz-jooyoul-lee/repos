@@ -127,7 +127,7 @@ core/domain/src/main/java/com/wadiz/api/funding/
 | 패키지 | 파일 수 | 주요 Gateway 수 | UseCase 수 | 한줄 설명 |
 |---|---|---|---|---|
 | `wish` | 26 | 2 (`WishGateway`, `WishQueryGateway`) | 2 (create/delete) + `EventDispatcher` 발행 | 찜 생성·삭제 이벤트 포함 |
-| `signature` | 5 | 2 (`SignatureGateway`, `SignatureQueryGateway`) | 1 (`SignatureQtyUseCase`) | 지지서명 수 조회 |
+| `signature` | 5 | 2 (`SignatureGateway`, `SignatureQueryGateway`) | 1 (`SignatureQtyUseCase`) | 지지서명 수 조회 (`SignatureGateway`에 `deleteSignatureByIssue` 추가 — 스팸가드 Community API 삭제) |
 | `encore` | 13 | 3 (`AskForEncoreGateway`, `CampaignAskForEncoreQueryGateway`, `EncoreOpenNotificationGateway`) | 3 (ask/cancel/whether) | 앵콜 신청·취소·여부 조회 |
 | `follow` | 5 | 2 (`FollowGateway`, `FollowQueryGateway`) | 0 | 팔로우 Gateway 포트 (`FollowActivityEvent` 수신용) |
 
@@ -170,6 +170,19 @@ core/domain/src/main/java/com/wadiz/api/funding/
 | `user` | 10 | 2 (`UserGateway`, `UserQueryGateway`) | 0 | 유저 조회·상태 확인 |
 | `pingpongpaymentreminder` | 1 | 0 | 0 | 핑퐁 결제 리마인더 VO |
 | `common` | 1 | 0 | 0 | 공통 VO |
+
+### 2.12 스팸가드·AI 스토리·Stripe 계정 (2026-06 신규)
+
+| 패키지 | 주요 Gateway/UseCase | 한줄 설명 |
+|---|---|---|
+| `spamguard` | `PhishingDetection`(공용 순수 함수 탐지기), `PhishingVerdict`(판정 결과 VO) | 게시판 텍스트 피싱/스팸 판정 공용 로직. 알려진 피싱 템플릿과의 n-gram(3-shingle) Jaccard 유사도 + userinfo(`@`) 도메인 스푸핑 링크·wadiz 사칭 링크·피싱 키워드 결합. Signature/PersonalMessage/MiniBoard 공유 |
+| `signature.spamguard` | `SignatureSpamGuardUseCase`, `SignatureSpamGuardGateway` | 지지서명 피싱 봇 감지·삭제(Community API `DELETED_BY_ISSUE`) + Slack 리포트 (RWD-5694/5697) |
+| `personalmessage.spamguard` | `PersonalMessageSpamGuardUseCase`, `PersonalMessageSpamGuardGateway` | 1:1 메신저(PersonalMessageBoard) 피싱 봇 감지·삭제 |
+| `miniboard.spamguard` | `MiniBoardSpamGuardUseCase`, `MiniBoardSpamGuardGateway` | 미니 게시판 댓글(MiniBoardCommon) 피싱/스팸 봇 감지·삭제 |
+| `aistory` | `AIStoryUseCase`, `AIStoryGateway` | AI 스토리 생성 일별 사용량·한도 관리 (RWD-5620). 한도 초과 Slack 알림 |
+| `stripe.account` | `StripeAccountUseCase`, `StripeAccountUpdatedUseCase`, `StripeAccountApiGateway`/`StripeAccountGateway`/`StripeAccountHistoryGateway` | 글로벌 메이커 Stripe Connect 계정 생성·온보딩·심사 상태·정산(payout) (RWD-5285/5618). 상태 변경 이력 Mongo, 변경 이벤트 SQS 수신 |
+| `stripe.notification` | `StripeMakerNotificationGateway` | Stripe 메이커 알림 메일(인증 진행/추가서류 리마인드) |
+| `stripe.payout` | `CampaignPayoutMethodGateway` | 캠페인 정산 수단(`PayoutMethodType`) 조회 |
 
 ---
 

@@ -1,13 +1,13 @@
 # com.wadiz.api.reward — API 엔드포인트 전수 목록
 
-> 소스 기준: 16개 `*Controller.java` (`reward-api/src/main/java/com/wadiz/api/reward/rest/`) × ≈ **72 엔드포인트**.
+> 소스 기준: 17개 `*Controller.java` (`reward-api/src/main/java/com/wadiz/api/reward/rest/`) × ≈ **73 엔드포인트**.
 > 도메인별 상세 (입력 DTO / Service / SQL) 는 `api-details/*.md` 참조.
 
 모든 컨트롤러는 base path가 `/api/v1/rewards/*` 로 일관.
 
 ---
 
-## 1. Coupon (11 컨트롤러, ≈48 endpoints)
+## 1. Coupon (12 컨트롤러, ≈49 endpoints)
 
 ### Coupon Core (9 컨트롤러)
 **상세**: [`api-details/coupon-core.md`](./api-details/coupon-core.md)
@@ -116,8 +116,17 @@ base: `/api/v1/rewards/coupons/makers/{makerUserId}/templates`
 
 | Method | Path | 용도 |
 |---|---|---|
-| PUT | `/{templateNo}` | 템플릿 수정 |
+| PUT | `/{templateNo}` | 템플릿 수정 (RWD-5486: `couponCurrencies[]` 통화별 금액 지원) |
 | GET | `/{templateNo}` | 템플릿 조회 |
+
+> RWD-5486: `CreateCouponTemplateRequest`/`ModifyCouponTemplateRequest` 에 `couponCurrencies`(KRW/USD/JPY 등 통화별 금액·우선순위) 추가, `CouponCurrencyRequest` DTO 신설.
+
+#### UserCouponController (`rest/coupon/external/UserCouponController.java`) — RWD-5591/5670
+base: `/api/v1/rewards/coupons/braze`
+
+| Method | Path | 용도 |
+|---|---|---|
+| GET | `/user-status` | Braze 유저별 미사용·유효 쿠폰 조회 (만료 임박 리마인드용) |
 
 ---
 
@@ -214,9 +223,9 @@ REST 엔드포인트 없음 (Spring Batch Job). 3개 Job:
 | 도메인 | 컨트롤러 | 엔드포인트 (약) | 상세 파일 |
 |---|---|---|---|
 | Coupon Core | 9 | 48 | coupon-core.md |
-| Coupon External Maker | 2 | 3 | coupon-external-maker.md |
+| Coupon External Maker | 3 | 4 | coupon-external-maker.md |
 | Collection | 2 | 13 | collection-satisfaction-memo.md |
 | Satisfaction | 2 | 17 | collection-satisfaction-memo.md |
 | Memo | 1 | 3 | collection-satisfaction-memo.md |
 | Batch | — (0 REST) | (3 Job) | batch.md |
-| **합계** | **16** | **≈84** | — |
+| **합계** | **17** | **≈85** | — |
