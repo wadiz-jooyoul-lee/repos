@@ -14,6 +14,7 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 | `wadiz-web` | 레거시 코어 웹 + 어드민 | Spring 3.2 + JSP |
 | `wadiz-app` | 공식 모바일 앱 | Kotlin / Swift |
 | `wa-infrastructure` | CDC·인프라 관리 | Debezium 커넥터·Jenkins 파이프라인·Kafka Connect 유틸 |
+| `wadiz-ai` | AI 콘텐츠 검수 서비스 | FastAPI / Python 3.11 / OpenAI + GCV OCR + ES |
 
 ---
 
@@ -70,6 +71,12 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 | Repo | 역할 | 스택 |
 |---|---|---|
 | [cdc](./docs/cdc.md) | Debezium 커넥터 관리 (MySQL→Kafka CDC) — 5개 platform × 다환경, user-platform 20/21 커넥터가 `kr.wadiz.user.link` 소스 — **실증 매핑 완료** | Debezium MySqlConnector / Kafka Connect / Jenkins |
+
+## 7. `wadiz-ai` — AI 서비스
+
+| Repo | 역할 | 스택 |
+|---|---|---|
+| [ai-project-audit](./docs/ai-project-audit.md) | AI 콘텐츠 검수 (텍스트·이미지). 키워드(ES) + 문맥(OpenAI) + OCR(GCV) + bbox 마킹. funding 도메인의 story-review 콜백 대상 | FastAPI / Python 3.11 / Poetry / DDD / dependency-injector |
 
 ---
 
