@@ -182,7 +182,7 @@
 
 ### 8.1 사용자·인증
 - `account/` — `account-mapper.xml`, `userageverification-mapper.xml`, `userprofile-mapper.xml`
-- `waccount/` (12 XML) — `waccount-mapper.xml`, `waccountCommon-mapper.xml`, `waccountEquity-mapper.xml`, `waccountSocial-mapper.xml`, `waccountHistory-mapper.xml`
+- `waccount/` (12 XML) — `waccount-mapper.xml`, `waccountCommon-mapper.xml`, `waccountEquity-mapper.xml`, `waccountSocial-mapper.xml`, `waccountAuth-mapper.xml`, `waccountCompensation-mapper.xml`, `waccountDropOut-mapper.xml`, `waccountEquityPremium-mapper.xml`, `waccountMarketing-mapper.xml`, `waccountMembershipEvent-mapper.xml`, `waccountPromotion-mapper.xml`, `wexternalAccount-mapper.xml`
 
 ### 8.2 캠페인 도메인
 - `campaign/` — `campaign-mapper.xml` (9 resultMap), `campaignInfo-mapper.xml`, `campaignCongratulation-mapper.xml`, `maker-studio-mapper.xml`, `campaign-marker-mapper.xml`

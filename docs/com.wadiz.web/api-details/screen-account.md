@@ -59,7 +59,14 @@
 | `sqls/waccount/waccountCommon-mapper.xml` | `waccountCommon` | 공통 |
 | `sqls/waccount/waccountEquity-mapper.xml` | `waccountEquity` | 투자 계정 |
 | `sqls/waccount/waccountSocial-mapper.xml` | `waccountSocial` | 소셜 연동 |
-| `sqls/waccount/waccountHistory-mapper.xml` | `waccountHistory` | 히스토리 |
+| `sqls/waccount/waccountAuth-mapper.xml` | `waccountAuth` | 본인인증 |
+| `sqls/waccount/waccountDropOut-mapper.xml` | `waccountDropOut` | 탈퇴/휴면 |
+| `sqls/waccount/waccountCompensation-mapper.xml` | `waccountCompensation` | 보상 |
+| `sqls/waccount/waccountEquityPremium-mapper.xml` | `waccountEquityPremium` | 투자 프리미엄 |
+| `sqls/waccount/waccountMarketing-mapper.xml` | `waccountMarketing` | 마케팅 수신 |
+| `sqls/waccount/waccountMembershipEvent-mapper.xml` | `waccountMembershipEvent` | 멤버십 이벤트 |
+| `sqls/waccount/waccountPromotion-mapper.xml` | `waccountPromotion` | 프로모션 |
+| `sqls/waccount/wexternalAccount-mapper.xml` | `wexternalAccount` | 외부 계정 |
 
 총 12 XML / 176 statement / 13 `<if>`.
 

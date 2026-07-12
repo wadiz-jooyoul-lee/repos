@@ -172,7 +172,7 @@
 
 - 포트: 9070 / 이미지: `userplatform/link` (User Platform 팀)
 - Spring Boot 3.0.2 / Java 17 / Neo4j Community Edition
-- 데이터 입력: Kafka 13 토픽 컨슈머 (외부 발행자가 채움)
+- 데이터 입력: Kafka 16 토픽 컨슈머 (외부 발행자가 채움; 16개 `Kafka*Consumer` 클래스 × Master/Slave 각 `@KafkaListener` → 총 32 listener)
 - 노드: `User`, `UserActionStats`, `Project{Funding,Store,Preorder}`, 10종 `UserAction*` (Signature/Experience/Satisfaction/Wish/OpenNotice/Payment/Order)
 - 관계: `Follow`, `Block`, `Blocked`
 - HA: Master/Slave 동시 쓰기, 5회 실패 시 Slave fallback, 10회 시 failover (`WadizNeo4jClientManager.java:65-113`)
@@ -498,7 +498,7 @@ Neo4j UserActionCampaignPayment 노드 + PARTICIPATE_WITH_CONTENTS 관계 생성
 
 - **CDC 파이프라인 실증**
   - wave.user MySQL → Debezium → Kafka 토픽 스키마 → user.link 컨슈머 매핑
-  - user.link 의 13 Kafka 토픽 이름과 wave.user 테이블의 1:1 대응표
+  - user.link 의 16 Kafka 토픽 이름과 wave.user 테이블의 1:1 대응표 (backing-payment, block, blocked-campaign, campaign, follow, miniboard, reward-coming-soon-applicant, reward-satisfaction, signature, store-order, store-project, store-project-setting, store-satisfaction, user, user-recommendation-rejection, user-wish-project)
   - 검증 방법: 인프라팀 Kafka 카탈로그 또는 Debezium connector 설정
 
 - **wave.searcher 색인 파이프라인**

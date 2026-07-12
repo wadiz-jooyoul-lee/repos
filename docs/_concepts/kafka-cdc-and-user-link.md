@@ -190,10 +190,10 @@ Debezium 은 **"나 복제본이에요"** 라고 DB 에 등록해서 그 로그�
 |---|---|
 | Kafka 의존성 있는 repo | **`kr.wadiz.user.link` 1개** |
 | Kafka Producer 코드 (`KafkaTemplate.send`) | 모든 repo 에서 **0건** |
-| Kafka Consumer | user.link 의 **17개** |
+| Kafka Consumer | user.link 의 **16개 `Kafka*Consumer` 클래스** (Master/Slave 이중 리스너 총 32 `@KafkaListener`) |
 | CDC 도구 명시 | user.link 코드 주석에 "Debezium kafka를 Consume" |
 
-### 5.2 컨슘 토픽 17개
+### 5.2 컨슘 토픽 16개
 ```
 backing-payment, block, blocked-campaign,
 store-order, store-project, store-project-setting,
@@ -202,6 +202,7 @@ follow,
 user, user-wish-project, user-recommendation-rejection,
 campaign, miniboard, signature
 ```
+(각 토픽은 `Kafka*Consumer` 클래스 1개에 대응, Master/Slave 이중 리스너 구조)
 
 ### 5.3 데이터 흐름
 ```
@@ -216,7 +217,7 @@ campaign, miniboard, signature
         ↓
    [Debezium] ← 별도 인프라 (Wadiz repo 에 코드 없음)
         ↓
-   [Kafka 17 토픽]
+   [Kafka 16 토픽]
         ↓ @KafkaListener (0.5초 폴링)
    [kr.wadiz.user.link]
         ↓ 가공
@@ -252,19 +253,19 @@ max-poll-records: 100
 
 | 조건 | user.link | 다른 서비스 |
 |---|---|---|
-| **다대다 fan-out** (N 도메인 → 1 시스템) | ✅ 17 → 1 | ❌ 대부분 1:1 |
+| **다대다 fan-out** (N 도메인 → 1 시스템) | ✅ 16 → 1 | ❌ 대부분 1:1 |
 | **결과적 일관성 OK** (수초 지연 허용) | ✅ 그래프는 추천용 | ❌ 결제는 즉시 |
 | **백필·재구축 빈번** (ML 알고리즘 변경) | ✅ Kafka 보관 기간 내 재소비 가능 | ❌ 거의 없음 |
 | **누락 무관용** (1건 빠지면 그래프 왜곡) | ✅ Kafka at-least-once | 🟡 결제는 트랜잭션으로 보장 |
 | **DB 본질이 이벤트 친화적** | ✅ Neo4j = 관계 그래프 = 이벤트 자연 입력 | ❌ MySQL 은 그냥 CRUD |
 
 ### 만약 REST 였다면 (반례)
-- 17개 도메인 코드에 **각각 user.link 호출 코드 추가**
-- user.link URL/스키마 변경 시 **17곳 동시 수정**
+- 16개 도메인 코드에 **각각 user.link 호출 코드 추가**
+- user.link URL/스키마 변경 시 **16곳 동시 수정**
 - user.link 다운 시 funding 트랜잭션을 실패시킬지(❌ 결합도) 무시할지(❌ 누락) 딜레마
 
 ### Kafka 로 한 결과
-- 17개 도메인은 **user.link 존재를 모름**
+- 16개 도메인은 **user.link 존재를 모름**
 - 자기 DB 만 잘 쓰면 됨 — Debezium 이 자동 발행
 - user.link 가 알아서 토픽 폴링해서 그래프 갱신
 - **결합도 0**
@@ -284,8 +285,8 @@ max-poll-records: 100
 ### 8.2 Neo4j 가 잘하는 쿼리 예시
 ```cypher
 // 추천: 내 친구의 친구가 펀딩한 캠페인
-MATCH (me:User {id:7})-[:FOLLOWS]->(:User)-[:FOLLOWS]->(friend2:User)
-       -[:BACKED]->(c:Campaign)
+MATCH (me:User {id:7})-[:FOLLOW]->(:User)-[:FOLLOW]->(friend2:User)
+       -[:PAY]->(c:Campaign)
 RETURN c, count(*) AS score
 ORDER BY score DESC LIMIT 10
 ```
@@ -302,7 +303,7 @@ ORDER BY score DESC LIMIT 10
 
 ## 9. 최종 결론
 
-> **"Wadiz 는 대부분 REST 동기 호출로 통신한다. 단 17개 도메인의 변경을 종합해 유저 관계 그래프(Neo4j)를 실시간 유지해야 하는 `kr.wadiz.user.link` 만, 결합도 0 + 누락 0 + 재처리 가능 + 결과적 일관성이라는 4가지 조건을 동시에 충족하는 Debezium + Kafka 를 채택. user.link 컨슈머 17개가 0.5초 주기로 폴링하며 거의 실시간으로 그래프를 갱신한다."**
+> **"Wadiz 는 대부분 REST 동기 호출로 통신한다. 단 16개 도메인의 변경을 종합해 유저 관계 그래프(Neo4j)를 실시간 유지해야 하는 `kr.wadiz.user.link` 만, 결합도 0 + 누락 0 + 재처리 가능 + 결과적 일관성이라는 4가지 조건을 동시에 충족하는 Debezium + Kafka 를 채택. user.link 컨슈머 16개가 Master/Slave 이중 리스너로 0.5초 주기로 폴링하며 거의 실시간으로 그래프를 갱신한다."**
 
 ### 핵심 인사이트
 - **Kafka 는 만능이 아니라 특정 문제 해결 도구** — Wadiz 도 그 원칙대로 사용

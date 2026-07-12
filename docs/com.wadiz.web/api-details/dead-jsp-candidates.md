@@ -8,6 +8,9 @@
 > 3. **3차** Android RemoteConfig (116 URL) + iOS plist+constants (137 URL) 대조
 > 4. **4차** wadiz-frontend (1518 URL) 대조 + WAccountJoinEquityController 본문 검증
 >
+> **⚠️ 5차 스팟체크 (2026-07-12) 결과**: 15개 무작위 샘플 중 3개(20%)가 alive 로 판명됨. `wpage/*` 하위는 `WPageController` 의 동적 디스패처(`mv.setViewName("wpage/" + pageName)`) 로 외부 URL 진입 가능. **122개 목록에 약 15~20% false positive 존재** 추정. 삭제 전 production access log 로 최종 확인 필요.
+> 확인된 alive 오분류 예: `wpage/wadiztrend/2022.jsp`, `wpage/bestMaker2017.jsp`, `wpage/w9professional.jsp`. `winclude/froalaEditor.jsp` 는 JS 라이브러리 로드용이라 정적 include 0건이어도 삭제 시 다른 페이지 파괴 가능.
+>
 > **신뢰도 분류**:
 > - 🟢 **VERIFIED DEAD** — 직접 검증 완료 (grep + 컨트롤러 본문 + 앱 URL 대조)
 > - 🟡 **정적 reference 0건 + 앱 미사용** — 외부 마케팅/SEO 진입 가능성만 (production access log 검증 필요)

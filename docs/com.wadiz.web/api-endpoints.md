@@ -1,6 +1,7 @@
 # com.wadiz.web — 컨트롤러·엔드포인트 전수
 
-> **303 controller / @RequestMapping 1,987회 / Java 43,335줄 / Jersey @Path 14 패키지 / 2 ProxyServlet**
+> **309 controller / @RequestMapping 1,987회 / Java 43,335줄 / Jersey @Path 14 패키지 / 2 ProxyServlet**
+> (실측 재검증: `grep -rE "^\s*@(Rest)?Controller\b" src/main/java` = 309 annotation, 310 파일. 표 합계 303은 표 커버리지 밖 소패키지 포함 시 309에 근접.)
 > Spring 3.2 + Jersey JAX-RS 혼용. JSP 페이지 렌더 + AJAX/JSON + REST API + Proxy.
 
 ## 1. 패키지 구조 — TOP 30

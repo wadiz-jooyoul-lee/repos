@@ -1,9 +1,9 @@
 # com.wadiz.web — URL Rewrite + JSP Layout 시스템
 
 > 외부 호환성·이관 redirect · 서블릿 필터 체인 · ViewResolver · jsp-template-inheritance 레이아웃 트리.
-> 핵심 파일: `web/WEB-INF/urlrewrite.xml`(459줄), `web/WEB-INF/web.xml`(315줄), `src/main/resources/spring/dispatcher/servlet.xml`(121줄).
+> 핵심 파일: `web/WEB-INF/urlrewrite.xml`(473줄), `web/WEB-INF/web.xml`(329줄), `src/main/resources/spring/dispatcher/servlet.xml`(121줄).
 
-## 1. urlrewrite.xml — 459줄 카테고리 정리
+## 1. urlrewrite.xml — 473줄 카테고리 정리
 
 `tuckey UrlRewriteFilter` 가 모든 요청에 대해 가장 먼저 수행하는 URL 변환 단계.
 
@@ -88,7 +88,7 @@
 |---|---|
 | `/funding/([\w\d-]+)/community/pledge-support` | `/funding/$1/community/support-share` |
 
-## 2. web.xml — 서블릿/필터 체인 (315줄)
+## 2. web.xml — 서블릿/필터 체인 (329줄)
 
 ### 2.1 Listener (lines 11-25)
 | 리스너 | 역할 |
