@@ -1,6 +1,6 @@
 # Wadiz Repos — Clone URL 인벤토리
 
-부모 repo(`wadiz-jooyoul-lee/repos`) 하위 23개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
+부모 repo(`wadiz-jooyoul-lee/repos`) 하위 24개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
 
 각 repo 의 역할·스택·심층 분석 위치는 [`CLAUDE.md`](../CLAUDE.md) 및 [`docs/<repo>/`](./) 를 참조하세요.
 
@@ -78,6 +78,12 @@ grep "wadiz-service" docs/repos-inventory.md | grep -oE "git@github\.com:\S+\.gi
 |---|---|---|
 | wadiz-android | `git@github.com:wadiz-app/wadiz-android.git` | [docs](./wadiz-android.md) |
 | wadiz-ios | `git@github.com:wadiz-app/wadiz-ios.git` | [docs](./wadiz-ios.md) |
+
+## 6. `wa-infrastructure` — CDC / 인프라 (1개)
+
+| Repo | Clone URL | 상세 문서 |
+|---|---|---|
+| cdc | `git@github.com:wa-infrastructure/cdc.git` | [docs](./cdc.md) |
 
 ---
 

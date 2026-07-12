@@ -183,15 +183,14 @@ Debezium 은 **"나 복제본이에요"** 라고 DB 에 등록해서 그 로그�
 
 ---
 
-## 5. Wadiz repos 실측 — 22 repo 中 단 1개만 사용
+## 5. Wadiz repos 실측 — 24 repo 中 producer 는 별도 인프라, consumer 는 1개
 
 ### 5.1 결과
 | 항목 | 값 |
 |---|---|
-| Kafka 의존성 있는 repo | **`kr.wadiz.user.link` 1개** |
-| Kafka Producer 코드 (`KafkaTemplate.send`) | 모든 repo 에서 **0건** |
-| Kafka Consumer | user.link 의 **16개 `Kafka*Consumer` 클래스** (Master/Slave 이중 리스너 총 32 `@KafkaListener`) |
-| CDC 도구 명시 | user.link 코드 주석에 "Debezium kafka를 Consume" |
+| Kafka Consumer 있는 repo | **`kr.wadiz.user.link` 1개** (16 `Kafka*Consumer` 클래스, Master/Slave 이중 리스너 총 32 `@KafkaListener`) |
+| Kafka Producer 코드 (`KafkaTemplate.send`) | 애플리케이션 repo 에서 **0건** |
+| CDC 도구 실증 | **`wa-infrastructure/cdc`** repo 의 Debezium 커넥터 설정 (`debezium/user-platform/live/{20-user,21-user}-connector.json`) — 자세한 매핑은 [`docs/cdc.md`](../cdc.md) |
 
 ### 5.2 컨슘 토픽 16개
 ```
@@ -206,22 +205,29 @@ campaign, miniboard, signature
 
 ### 5.3 데이터 흐름
 ```
-[다른 서비스 DB (MySQL binlog 등)]
-   ├ funding DB
-   ├ reward DB
-   ├ user DB
-   ├ store DB
-   ├ campaign DB
-   └ ...
-        │ CDC
+[MySQL master 172.31.1.230:8450 (Wadiz 통합 DB)]
+   ├ wadiz_db.{UserProfile, Campaign, Signature, MiniBoardCommon,
+   │           BackingPayment, RewardComingSoonApplicant, UserWishProject}
+   ├ wadiz_wave_follow.{Follow, UserBlocking, UserRecommendationRejection}
+   ├ wadiz_reward.Satisfaction
+   ├ wadiz_store.{project, satisfaction, order, project_setting}
+   └ wadiz_data_db.DPCampaignBlacklist
+        │ binlog (schema_only_recovery)
         ↓
-   [Debezium] ← 별도 인프라 (Wadiz repo 에 코드 없음)
+   [Debezium: `20.user` + `21.user` 커넥터]
+        (wa-infrastructure/cdc repo, cdc/debezium/user-platform/live/)
         ↓
-   [Kafka 16 토픽]
+   [Kafka Cluster kafka-01/02/03:9092]
+        16 토픽 (backing-payment, block, blocked-campaign, campaign,
+                follow, miniboard, reward-coming-soon-applicant,
+                reward-satisfaction, signature, store-order, store-project,
+                store-project-setting, store-satisfaction, user,
+                user-recommendation-rejection, user-wish-project)
         ↓ @KafkaListener (0.5초 폴링)
    [kr.wadiz.user.link]
+        16 `Kafka*Consumer` 클래스 × 2 (Master/Slave) = 32 리스너
         ↓ 가공
-   [Neo4j 유저 관계 그래프]
+   [Neo4j 유저 관계 그래프 (Master/Slave)]
 ```
 
 ### 5.4 user.link 의 실제 폴링 설정

@@ -13,6 +13,7 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 | `wadiz-fe` | 신규 프론트엔드 모노레포 | Next.js + pnpm/turbo |
 | `wadiz-web` | 레거시 코어 웹 + 어드민 | Spring 3.2 + JSP |
 | `wadiz-app` | 공식 모바일 앱 | Kotlin / Swift |
+| `wa-infrastructure` | CDC·인프라 관리 | Debezium 커넥터·Jenkins 파이프라인·Kafka Connect 유틸 |
 
 ---
 
@@ -63,6 +64,12 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 |---|---|---|
 | [wadiz-android](./docs/wadiz-android.md) | 공식 Android 앱 | Kotlin / Compose / 멀티모듈 |
 | [wadiz-ios](./docs/wadiz-ios.md) | 공식 iOS 앱 (Android와 feature 1:1 매핑) | Swift / Tuist / iOS 16.1+ |
+
+## 6. `wa-infrastructure` — CDC / 인프라
+
+| Repo | 역할 | 스택 |
+|---|---|---|
+| [cdc](./docs/cdc.md) | Debezium 커넥터 관리 (MySQL→Kafka CDC) — 5개 platform × 다환경, user-platform 20/21 커넥터가 `kr.wadiz.user.link` 소스 — **실증 매핑 완료** | Debezium MySqlConnector / Kafka Connect / Jenkins |
 
 ---
 

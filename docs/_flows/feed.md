@@ -16,11 +16,11 @@
   - `wadiz-ios/Projects/{Features/KakaoMultiFollow, Service/Sources/{FriendActivity,ContactSync}, API/Sources/SocialAPI, App/Sources/WebView/Feed}/**`
   - 기존 분석: `docs/com.wadiz.wave.user/api-details/social.md`, `docs/kr.wadiz.user.link.md`, `docs/com.wadiz.wave.searcher.md`
 
-- **외부 경계 (코드 근거 미존재, 인프라/플랫폼팀 검증 필요)**:
-  - `wave.user` MySQL → `user.link` Neo4j 동기화 파이프라인 (Debezium → Kafka 추정)
-  - `wave.searcher` ES 인덱스 (`user_follow-alias`) 적재 ETL 파이프라인 위치
+- **외부 경계**:
+  - `wave.user` MySQL → `user.link` Neo4j 동기화 파이프라인: **`wa-infrastructure/cdc`** repo 의 Debezium `20.user`·`21.user` 커넥터로 실증 완료 (→ [`docs/cdc.md`](../cdc.md))
+  - `wave.searcher` ES 인덱스 (`user_follow-alias`) 적재 ETL 파이프라인 위치 — 여전히 미확인
   - `service.wadiz.kr/api/friends/*` 의 정확한 라우팅 (게이트웨이 path rewrite 추정)
-  - `kr.wadiz.user.link` 가 구독하는 13개 Kafka 토픽 발행자 (User Platform 외부 팀)
+  - `kr.wadiz.user.link` 가 구독하는 16개 Kafka 토픽 → 16개 MySQL 테이블 매핑 실증표는 `docs/cdc.md` § 3.3
 
 ---
 
