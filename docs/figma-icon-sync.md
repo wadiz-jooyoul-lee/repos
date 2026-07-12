@@ -1,3 +1,13 @@
+> 📅 **2026-07-10 main pull 보강** (FE1-1026 1건 + Automated 동기화 다수)
+>
+> ### iOS artwork 동기화 대상을 ArtworkManifest 카탈로그로 변경 (FE1-1026)
+> - artwork imageset 배포 경로를 `Assets.xcassets/Images/artwork` → **`Projects/Core/Resource/ArtworkManifest.xcassets/Images/artwork`** 로 repoint. 매니페스트는 접근자 생성 전용이라 컴파일/적재되지 않음 — 기존처럼 `Assets.xcassets/Images/artwork` 에 쓰면 artwork 전량이 `Assets.car` 에 적재돼 App Store 리젝이 재발하므로 금지 (`.github/workflows/ios-icon-update.yml:184-203`).
+> - system 아이콘 경로/로직은 그대로 유지 (`Assets.xcassets/Images/system`, 런타임 동적 로딩, 스코프 밖) (`.github/workflows/ios-icon-update.yml:186,201`).
+> - rsync는 additive 유지 (`--delete` 금지) — 매니페스트에 수작업으로 추가한 artwork 보존 (`.github/workflows/ios-icon-update.yml:196`).
+> - 자동 커밋/PR 문구를 "시스템 아이콘 추가" → **"시스템/artwork 아이콘 갱신"** 으로 보정 (`.github/workflows/ios-icon-update.yml:217,227`).
+
+---
+
 # figma-icon-sync
 
 ## 개요
@@ -45,7 +55,7 @@ fetch_figma_icons.py  (Python aiohttp + requests)
 | Consumer Repo | 경로 | 브랜치 |
 |---|---|---|
 | `wadiz-app/wadiz-android` | `core/design-system/src/main/res/drawable/` | base: `develop`, head: `icon/add-system-icon` |
-| `wadiz-app/wadiz-ios` | `Projects/Core/Sources/UI/Resources/Assets.xcassets/Images/{system,artwork}.imageset` | PR로 변경 적용 |
+| `wadiz-app/wadiz-ios` | system: `Projects/Core/Sources/UI/Resources/Assets.xcassets/Images/system.imageset` (적재) / artwork: `Projects/Core/Resource/ArtworkManifest.xcassets/Images/artwork` (비적재 매니페스트, FE1-1026) | PR로 변경 적용 |
 
 ## 스크립트 상세 — `fetch_figma_icons.py`
 

@@ -1,25 +1,27 @@
 # makercenter-fe
 
 ## 개요
-**메이커(프로젝트 개설자)용 사용자 포털** SPA. `makercenter.wadiz.kr` (live) / `dev.makercenter.wadiz.kr` (dev) 에 배포되어 메이커가 자신의 프로젝트를 등록·운영하는 화면을 제공합니다. Org: `wadiz-client`. 패키지명 `wadiz-makercenter`.
+**메이커(프로젝트 개설자)용 사용자 포털** (Next.js 앱). `makercenter.wadiz.kr` (live) / `dev.makercenter.wadiz.kr` (dev) 에 배포되어 메이커가 자신의 프로젝트를 등록·운영하는 화면을 제공합니다. Org: `wadiz-client`. 패키지명 `wadiz-makercenter`.
 
 ## 기술 스택
-- React + **Vite 6** (CRA → Vite 마이그레이션 완료, dev 포트 4020).
-- Material-UI **v4 + v5 공존** (점진 이관).
-- 상태: Recoil + React Query v3.
-- HTTP: Axios `0.21.1`.
-- 테스트: Playwright (E2E), Vitest.
+- **Next.js 16** (App Router) + React 19, dev 포트 4020 (`next dev`). (구 CRA/Vite SPA에서 Next.js로 마이그레이션 완료.)
+- **TypeScript** 전면 적용 (src 하위 `.tsx`/`.ts`만, `.js`/`.jsx` 없음).
+- 스타일: **SCSS Modules**(`*.module.scss`, sass) — MUI는 더 이상 사용하지 않음.
+- 상태: **Redux Toolkit**(`@reduxjs/toolkit`). (Recoil/React Query 미사용.)
+- HTTP: Axios `1.15`.
+- 테스트: Playwright (E2E).
 - Sentry 연동.
 
 ## 앱 구성
-- 단일 SPA. 주요 폴더:
-  - `src/api/` — API 모듈 (`home.js`, `board.js`, `exhibition.js`, `main.js`, `data.js`)
-  - `src/pages/`, `src/components/`, `src/hooks/`, `src/recoil/`, `src/utils/`
+- Next.js App Router + FSD(Feature-Sliced Design) 구조. 주요 폴더(`src/`):
+  - `app/` — App Router 엔트리 (`layout.tsx`, `page.tsx`, `[lang]`, `oauth`, `robots.ts`, `sitemap.ts`, `providers/`)
+  - `entities/` — 도메인 API/모델 (`home`, `board`, `exhibition`, `data`, `menu`)
+  - `features/`, `widgets/`, `views/`, `shared/`(`api`, `config`, `lib`, `providers`, `types`, `ui`), `hooks/`
 
 ## 서버 연결 설정 (핵심)
 
-### Axios 인스턴스 (`src/api/axiosInstance.js:3-13`)
-- `baseURL = ${VITE_BASE_URL}/api`
+### Axios 인스턴스 (`src/shared/api/axiosInstance.ts`)
+- `baseURL = ${process.env.NEXT_PUBLIC_BASE_URL}/api`
 - `withCredentials: true` (쿠키 세션 기반)
 - `validateStatus: status === 200` (단순 검증, 그 외는 에러)
 - 응답 인터셉터: 코드 `4010` / `4012` 감지 시 `auth:expired` CustomEvent 디스패치 → 글로벌 핸들러가 OAuth 재로그인 트리거.
@@ -70,10 +72,51 @@
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+> 📅 **2026-07-10 main pull 보강** (31 커밋)
+>
+> 이 기간 변경은 대부분 **i18n(다국어)/SSR 정합**과 **REST 계약 표준화**에 집중되어 있음. (i18n 인프라 자체는 CLIENT-122/123으로 2026-05말 선반영됨.)
+>
+> ### CLIENT-169 — axios 응답 정책 완화 + 기획전 API REST 표준 전환
+> - `axiosInstance` `validateStatus` 를 `200` 단독 → **2xx 전체 수용**(`isSuccessStatus`)으로 완화. 201(생성)·204(내용 없음) 정상 처리 (`src/shared/api/axiosInstance.ts:17`).
+> - 세션 만료 판정을 `isSessionExpired` 순수함수로 분리 — **봉투 없는 HTTP 401** 과 레거시 봉투 코드 `4010/4012` 를 함께 만료로 보고 `auth:expired` 디스패치 (`src/shared/api/axiosInstance.ts:30`).
+> - 기획전 계약 레이어를 REST 표준 URI로 교체: 신청폼 `GET exhibitions/{no}/application-form`, 신청 `POST exhibitions/user/applications`, 참여 프로젝트 `GET exhibitions/user/projects`, 철회폼 `GET exhibitions/user/withdrawal-form`, 철회 `PATCH exhibitions/user/applications/{applicationId}/withdraw`. `ApiEnvelope` 봉투 의존 제거, 철회 시 `applicationId` 누락이면 호출 전 차단 (`src/entities/exhibition/api/exhibition.ts`).
+>
+> ### CLIENT-175 — 헤더·배너·메뉴 SSR 첫 페인트 정합 (상단부 CLS 제거)
+> - 헤더 툴바 분기를 `useIsMobile() ?? useDeviceHint()` 로 전환해 mobile→desktop 스왑 제거.
+> - 상단 배너를 `homeServer.fetchTopBanner` 로 RSC에서 SSR 주입, Viewer(ssr:false)→`fr-view` 인라인으로 교체. 헤더 네비도 `fetchMenuTree()` 로 SSR 시드, `AppShell` 은 시드 성공 시 CSR fetch skip (`src/entities/home/api/homeServer.ts`).
+>
+> ### CLIENT-121 — 홈 화면 SSR 대응 + 하이드레이션 미스매치 정정
+> - 홈 뷰를 SSR 대응으로 전환, 언어 판정을 `window` 직접 접근 → `react-i18next` 훅화하여 SSR/CSR 하이드레이션 미스매치 제거 (`src/views/home/ui/HomeView.tsx`, `src/entities/home/api/homeServer.ts`).
+> - 공통 `Link` prefetch 기본 off — dynamic 라우트 RSC prefetch 노이즈 제거. 모바일 UA 판정 유틸 신설(`src/shared/lib/isMobileUA.ts`).
+>
+> ### CLIENT-176 — 언어 전환 시 헤더 네비 메뉴가 이전 언어로 고정되던 문제 수정
+> - `MenuProvider` 가 `[lang]` 세그먼트 경계 위(root layout)에 있어 언어 전환 시 리마운트되지 않던 문제. `router.refresh()` 로 새로 내려오는 `initialMenu` 를 렌더 중 감지해 채택.
+>
+> ### FE2-719 — 정적 CDN URL 하드코딩을 env 기반 상수로 분리
+> - `NEXT_PUBLIC_STATIC_URL` 의미를 "항상 live CDN" → **배포 환경별 CDN**(dev: `static-dev.wadiz.kr` / live: `static.wadiz.kr`)으로 재정의.
+> - live 고정이 필요한 곳(푸터 주의 아이콘)을 위해 `NEXT_PUBLIC_STATIC_LIVE_URL` 신설. AI 에이전트 런처 스크립트 URL의 dev/live 하드코딩 분기 제거.
+>
+> ### FE2-590 — 와디즈 Organization JSON-LD 전역 노드 추가
+> - 매 Article마다 인라인하던 `publisher` 를 단일 Organization 노드(SSOT)로 두고 `@id` 참조로 전환, 직렬화 함수 `safeJsonForScript` 를 `jsonLd` 모듈로 공용화 (`src/shared/lib/jsonLd.ts`).
+>
+> ### CLIENT-190 — WAI AI 상담 런처에 현재 언어값 전달
+> - 푸터 채팅 상담 버튼으로 WAI 대화창을 열 때 현재 설정 언어를 전달 (`src/widgets/footer/ui/WadizFooter.tsx`).
+>
+> ### CLIENT-127 — Weglot 잔재(`data-wg-notranslate`) 제거
+> - WAI 런처·캘린더·홈 배너 등에 남아있던 구 Weglot 번역 예외 속성 정리.
+>
+> ### CLIENT-164 — 캘린더/게시판 다국어 대응 + 공지글 제목 UI
+> - 캘린더 영역 다국어 추가, "이벤트·혜택" 게시판명 하드코딩 제거, 공지글 제목이 길 때 작성 날짜가 찌그러지지 않도록 수정 (`src/widgets/calendar/ui/McCalendar.tsx`).
+>
+> ---
+
+**분석 갱신일: 2026-07-10** (직전: 2026-06-19, 최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 전역 서체 Pretendard 적용 + 전역 스타일 통합 (`global.scss` 신설, `mui-css-baseline.scss`·`main.scss` 통합), 에디터 본문(`.fr-view`) 서체 Pretendard 상속, 불필요 서체 NotoSansKR 제거, 모바일 인풋 포커스 시 페이지 자동확대 방지 | 2026-06-05~09 | FE2-465 |
+| 앱 웹뷰 첨부파일 다운로드 시 blob 대신 https 원본 URL 처리 (blob 스킴 크래시 회피, PC는 파일명 지정 다운로드 유지) | 2026-06-01 | FE2-447 |
+| 채널톡(Channel.io) 제거 + 구 Footer dead asset(`Footer.tsx`/`.module.scss`·`wadizCopy.svg`·`chatCircle.svg`) 제거 | 2026-06-01 | FE2-425 |
 | 기획전 신청폼 문항 진입 GTM 이벤트 수집 추가 | 2026-05-26 | CLIENT-119 |
 | 게시글 본문 렌더 시 `fr-view` 래퍼 조건부 부착 | 2026-05-22 | CLIENT-116 |
 | 로그인 완료 이벤트 수집 추가 | 2026-05-20 | CLIENT-110 |

@@ -36,7 +36,7 @@
 |---|---|---|
 | [app-api](./docs/app-api.md) | 앱용 BFF (와링크·프로젝트 스토리 캐시·프록시) | NestJS 11 / TS / TypeORM |
 | [makercenter-be](./docs/makercenter-be.md) | 메이커센터 백엔드 (프로젝트 관리·정산·엑셀) | Boot 2.7 / Java 8 / MyBatis |
-| [makercenter-fe](./docs/makercenter-fe.md) | 메이커(프로젝트 개설자) 포털 | React + Vite / MUI / RTK |
+| [makercenter-fe](./docs/makercenter-fe.md) | 메이커(프로젝트 개설자) 포털 | Next.js 16 / React 19 / TS / SCSS Modules / RTK |
 | [makercenter-fe-admin](./docs/makercenter-fe-admin.md) | 메이커센터 어드민 (admin.makercenter) | React + CRA / MUI / RTK |
 | [client-document](./docs/client-document.md) | 클라이언트팀 기술/분석 문서 저장소 | Markdown |
 | [wadiz-claude-plugins](./docs/wadiz-claude-plugins.md) | 사내 Claude Code 플러그인 마켓 (shared/fe1/fe2/client) | CC plugin spec |

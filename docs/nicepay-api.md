@@ -1,3 +1,25 @@
+> 📅 **2026-07-10 main pull 보강** (10 커밋)
+>
+> ### RWD-5755 실시간 대사(reconciliation)용 SQS FIFO 직접 발행 신설
+> - 결제/취소 성공 시 대사 이벤트를 **nicepay-api 본체가 직접 SQS FIFO 큐로 SendMessage**. 기존 문서(구 "외부 의존성"장 하단)의 "본체에서 SQS를 직접 send/receive하는 흐름은 확인되지 않음"은 **더 이상 사실이 아님** — 이제 직접 발행한다.
+> - 신규 발행기 `PaymentReconciliationPublisher.publish(...)` (`publisher/PaymentReconciliationPublisher.java:38-67`): `SqsAsyncClient`로 풀 큐 URL에 직접 SendMessage(크로스계정 대응, GetQueueUrl 없음). FIFO 특성상 `MessageGroupId=oid`(없으면 tid 폴백, 주문 단위 순서 보장), `MessageDeduplicationId={keyTid}_{PAYMENT|CANCEL}`(멱등성, `PaymentReconciliationPublisher.java:70-76`). 3회 backoff(200ms, jitter 0.5) 재시도 후 실패는 로깅만 하고 결제 응답엔 전파 안 함(eventual consistency). `aws.sqs.payment-requested.queue-url` 미설정이면 skip.
+> - 이벤트 DTO `PaymentReconciliationEvent` (`model/PaymentReconciliationEvent.java:24-64`): tid/cancelTid/oid/campaignId/billingAmount/cancelAmount/balanceAmt/isPartialCancel/status/currency/payBy/pgService/processedAt. `@JsonInclude(NON_NULL)`. `eventType/eventId/matchId`는 orchestrator가 status(`PAID`/`CANCELLED`)로 파생하므로 producer는 보내지 않음.
+> - 변환기 `ReconEventFactory` (`publisher/ReconEventFactory.java`): Stripe 예약결제(`fromStripeApproval` status=succeeded일 때만 PAID / `fromStripeCancel` refund succeeded·pending·void canceled 통합)와 Nicepay 간편결제(`fromAuthApproval` / `fromAuthCancel`, KRW·NICEL 고정) 4종 지원. payBy는 승인 시 `clickpayCl`(16 kakaopay/20 naverpay/22 applepay/25 tosspay) 기준(`ReconEventFactory.java:151-162`), pgService는 STRIPE 또는 NICEL.
+> - 발행 연결점:
+>   - Stripe 예약결제: `ReserveResponseHandler.publishReconciliation(...)` — `/reserve/approval`·`/reserve/cancel`·`/reserve/cancel-intent`만 대상(`/reserve/setup`은 결제 아니므로 제외), `Schedulers.boundedElastic()`에서 fire-and-forget (`controller/ReserveResponseHandler.java:122-149`).
+>   - Nicepay 간편결제: `AuthService.publishApprovalRecon/publishCancelRecon` — 승인/취소 성공 코드 확인 후 fire-and-forget (`service/AuthService.java:549-570`).
+>
+> ### SQS 의존성 전환 (RWD-5755)
+> - `build.gradle`: 기존 `software.amazon.awssdk:sqs:2.31.78` 직접 의존을 **`io.awspring.cloud:spring-cloud-aws-starter-sqs`(BOM 3.0.4 관리)로 교체**하고, EKS IRSA(web identity) 자격증명용 `software.amazon.awssdk:sts` 추가(없으면 노드 인스턴스 롤 폴백 → SendMessage 403) (`build.gradle:65-67, 107`).
+> - `application.yml`: `spring.cloud.aws.region.static=${AWS_REGION:ap-northeast-2}`, credentials 미설정 → `DefaultCredentialsProvider` 체인(IRSA). `application-local.yml`: 로컬은 dev/rc와 동일 대사 큐 `rc1-wadiz-payment-requested.fifo`(계정 843734097580) 사용.
+>
+> ### 클라우드 배포 워크플로우 추가
+> - `.github/workflows/aws_deploy_ecr_cloud_dev.yml`, `aws_deploy_ecr_cloud_live.yml` 신규(ECR 배포, `클라우드 세팅` c3b4909).
+>
+> (참고: 이번 범위의 Gradle wrapper 7.6.1, RWD-5622 refund `setCurrency` 주석 비활성, RWD-5375은 기존 문서에 이미 반영됨 — net-new 아님.)
+
+---
+
 # nicepay-api 분석
 
 ## 개요
@@ -23,7 +45,7 @@ nicepay-api는 와디즈의 **결제 대외계 API 게이트웨이**로, 국내/
 |------|------|
 | 언어/런타임 | Java 17 (sourceCompatibility=17), JDK 17 |
 | 프레임워크 | Spring Boot 3.0.2 |
-| 빌드 | Gradle + jib 3.3.1 (Docker 이미지) |
+| 빌드 | Gradle (wrapper 7.6.1) + jib 3.3.1 (Docker 이미지) |
 | HTTP 서버 | Spring WebFlux (Reactor Netty) |
 | PG SDK | com.stripe:stripe-java:28.4.0 (Stripe용, 동기 SDK를 Mono.fromCallable로 감쌈) |
 | DB | **R2DBC** (MySQL via dev.miku:r2dbc-mysql:0.8.2.RELEASE) + **Reactive Mongo** (spring-boot-starter-data-mongodb-reactive) |
@@ -206,22 +228,25 @@ webflux.base-path는 dev/local: `/nicepay-api`. 아래 Path는 controller annota
 ### 8. POST /api/v2/reserve/approval — Stripe PaymentIntent (예약결제 청구)
 
 - 컨트롤러 path:line: ReserveController.java:38
-- 입력 DTO ReserveApprovalDto.Request: serviceType, userId, amount, billKey(= SetupIntent ID), moid, signature
+- 입력 DTO ReserveApprovalDto.Request: serviceType, userId, amount(= KRW 또는 USD cents), **currency(ISO 4217 소문자, 미지정 시 usd)**, billKey(= SetupIntent ID), moid, signature
+  - @2026.06 RWD-5375/결제통화구분: amount 검증이 `@Min(100)` → `@Min(1)`로 완화(USD cents 등 소액 허용), `currency` 필드 신규 추가.
 - 처리 로직 (StripeService.java:92-121):
-  1. `stripeClient.retrieveSetupIntent(setupIntentId, secretKey)` — SetupIntent.paymentMethod 획득
-  2. `stripeClient.createPaymentIntent(paymentMethodId, amount, moid, signature, secretKey)` (StripeClient.java:123-169):
+  1. `resolveCurrency(request.currency)` — null/blank면 기본 `usd`, 아니면 trim+소문자 정규화 (StripeService.java:46-52)
+  2. `stripeClient.retrieveSetupIntent(setupIntentId, secretKey)` — SetupIntent.paymentMethod 획득
+  3. `stripeClient.createPaymentIntent(paymentMethodId, amount, currency, moid, signature, secretKey)` (StripeClient.java:123-169):
      - idempotencyKey = `paymentMethodId-moid-(signature || yyyyMMddHHmm10분단위)`
-     - PaymentMethod.retrieve로 customerId 확인 후 PaymentIntentCreateParams currency=krw, setOffSession(true), setConfirm(true)
-  3. 응답: resultCode=paymentIntent.status, tid=paymentIntent.id, amount
+     - PaymentMethod.retrieve로 customerId 확인 후 PaymentIntentCreateParams `setCurrency(currency)`(기존 하드코딩 `krw` 제거), setOffSession(true), setConfirm(true)
+  4. 응답: resultCode=paymentIntent.status, tid=paymentIntent.id, amount
 - 외부 연동: Stripe `/v1/setup_intents/{id}`, `/v1/payment_intents`
 - DB: 없음 (customer/card는 이미 저장됨)
 
 ### 9. POST /api/v2/reserve/cancel — Stripe Refund (환불)
 
 - 컨트롤러 path:line: ReserveController.java:48
-- 입력 DTO ReserveCancelDto.Request: serviceType, tid(PaymentIntent ID), amount, moid
+- 입력 DTO ReserveCancelDto.Request: serviceType, tid(PaymentIntent ID), amount, **currency(ISO 4217 소문자, 미지정 시 usd)**, moid
 - 처리 로직 (StripeService.java:123-146):
-  1. `stripeClient.createRefund(paymentIntentId, amount, moid, secretKey)` — RefundCreateParams(paymentIntent, amount)
+  1. `resolveCurrency(request.currency)`로 통화 정규화 후 `stripeClient.createRefund(paymentIntentId, amount, currency, moid, secretKey)` 호출
+  - @2026.06 RWD-5622 취소 currency 수정: createRefund 시그니처에 currency 파라미터를 추가했으나, **RefundCreateParams.setCurrency 적용 코드는 현재 주석 처리되어 비활성** 상태(Stripe Refund에 currency가 unknown parameter로 거부되는 이슈 회피). 즉 currency는 로깅까지만 흐르고 실제 Refund 요청에는 amount만 전달됨 (StripeClient.java:180-188).
   - 주의: 부분취소에 대비해 idempotencyKey를 설정하지 않음(주석 명시)
 - 외부 연동: Stripe `/v1/refunds`
 
@@ -238,14 +263,15 @@ webflux.base-path는 dev/local: `/nicepay-api`. 아래 Path는 controller annota
   1. `stripeService.verifyStripeSignature(payload, sigHeader, accountName)` (StripeService.java:174-204) — `Webhook.constructEvent(payload, sigHeader, stripeAccount.webhookKey)` — stripe.skip-signature-verification=true면 검증 생략하고 GSON으로 파싱
   2. `stripeService.processStripeEvent(event, accountName)` — `setup_intent.succeeded`만 처리, 그 외는 "Webhook received but not processed"
   3. setup_intent.succeeded 처리(StripeService.java:222-277):
-     - SetupIntent.customerId로 `cardRepository.findByCustomerIdAndServiceType` 조회
+     - SetupIntent.customerId로 `cardRepository.findByCustomerId` 조회 — @2026.06 RWD-5375 stripe 계정 통합: 기존 `findByCustomerIdAndServiceType`에서 **serviceType 조건을 제거**, customerId만으로 조회(통합 stripe 계정 대응의 최종 반영 상태)
      - `stripeClient.getCardDetails(paymentMethodId)` — Stripe PaymentMethod 카드 정보
      - 와디즈 funding-api `/api/internal/payments/card-registration`에 카드 등록 요청(wadizApiWebClient, 404/커넥션 에러 재시도 3회 backoff 3s + jitter 0.5)
-     - 응답 isCardValid=true면 비동기로 `verifyCardWithManualCapture` — $0.5 PaymentIntent 생성 → `/billkey-verifications`에 APPROVAL 통지 → 즉시 cancel → APPROVAL_CANCEL 통지 (Schedulers.boundedElastic에서 별도 실행)
+     - 응답 isCardValid=true면 비동기로 `verifyCardWithManualCapture` — **50 cents** PaymentIntent 생성 → `/billkey-verifications`에 APPROVAL 통지 → 즉시 cancel → APPROVAL_CANCEL 통지 (Schedulers.boundedElastic에서 별도 실행)
+       - @2026.06 RWD-5375: 검증 금액을 기존 `0.5달러`(BigDecimal) 계산에서 상수 `VERIFICATION_AMOUNT = 50L`(cents 정수)로 단순화. `/billkey-verifications` 통지 DTO도 `billingAmount(BigDecimal 0.5/USD)` → `verificationAmount(Long 50)` + `currencyCode = CENT`로 변경.
      - 모든 결과를 ReactiveMongoTemplate.insert로 `stripeWebhookLogs` Mongo 컬렉션에 로그(5s 타임아웃 + Mongo 예외 재시도)
 - 외부 연동:
   - Stripe: PaymentMethod.retrieve, PaymentIntent.create/retrieve/cancel
-  - 와디즈 funding-api: `/api/internal/payments/card-registration`, `/api/internal/payments/billkey-verifications`, `/api/internal/payments/extra-info`
+  - 와디즈 funding-api: `/api/internal/payments/card-registration`, `/api/internal/payments/billkey-verifications` (`/extra-info`는 @2026.06 RWD-5375에서 미사용 제거)
 - DB: R2DBC `user_cards` SELECT + Reactive Mongo `stripeWebhookLogs` INSERT
 
 ### 12. POST /api/v2/auth/transactions/{tid}/status — 거래 상태 조회
@@ -267,7 +293,7 @@ webflux.base-path는 dev/local: `/nicepay-api`. 아래 Path는 controller annota
 
 R2DBC 쿼리 메서드:
 - BillkeyRepository: `findByUserIdAndCardNo(Integer userId, String cardNo)` + 기본 CRUD (`ReactiveCrudRepository`)
-- CardRepository: `findByUserIdAndServiceType`, `findByCustomerIdAndServiceType` (`R2dbcRepository`)
+- CardRepository: `findByUserIdAndServiceType`, `findByCustomerIdAndServiceType`, `findByCustomerId`(@2026.06 RWD-5375 stripe 계정 통합 — serviceType 무관 customerId 단독 조회) (`R2dbcRepository`)
 
 ### MongoDB (payment_nicepay_dev 등) via Reactive Mongo
 
@@ -291,7 +317,7 @@ R2DBC 쿼리 메서드:
 | **Stripe** | /v1/customers, /v1/setup_intents, /v1/payment_intents, /v1/payment_methods, /v1/refunds | stripe-java 28.4.0 **동기 SDK**를 Mono.fromCallable(...).subscribeOn(stripe-pool bounded elastic 10..100) (StripeClient.java:36-84) |
 | **Stripe Webhook** | 수신 `/api/v2/webhook/stripe/{accountName}` → Webhook.constructEvent | WebhookController |
 | **Alipay+** | 나이스페이 Alipay+ 채널로 경유(별도 AWS Lambda가 웹훅 처리 후 SNS/SQS/Mongo로 집계) | aws/lambda/lambda_msg2sns.py, lambda_sqs2db.py |
-| **와디즈 funding-api** | http://dev-gateway.wadiz.kr/funding/ (local), `/api/internal/payments/card-registration`, `/billkey-verifications`, `/extra-info` | wadizApiWebClient (pool 50, read 30s, response 60s, keep-alive) |
+| **와디즈 funding-api** | http://dev-gateway.wadiz.kr/funding/ (local), `/api/internal/payments/card-registration`, `/billkey-verifications` (`/extra-info`는 RWD-5375에서 제거) | wadizApiWebClient (pool 50, read 30s, response 60s, keep-alive) |
 
 ### 이벤트 브로커
 
@@ -344,6 +370,7 @@ nicepay-api 자체 코드에는 SQS SDK 의존성은 포함되지만(software.am
 
 - `ServiceType` enum(ServiceType.java:6-31)이 서비스별 MID/MerchantKey 매핑 키. WadizConfig.service 맵에서 runtime 조회.
 - Stripe 계정도 동일 ServiceType 단위로 구분(StripeConfig.accounts 리스트). `GLOBAL_STRIPE_FUNDING`, `GLOBAL_STRIPE_PREORDER` 두 개가 각자 secretKey/publicKey/webhookKey 보유.
+  - @2026.06 RWD-5375 stripe 계정 통합: 통합 계정용 `GLOBAL_STRIPE("global_stripe")` enum 상수가 신규 추가됨. 다만 현재 코드에서는 enum 선언만 있고 서비스 로직에서 직접 소비하는 곳은 아직 없음(웹훅 고객 조회는 serviceType 조건 자체를 제거하는 `findByCustomerId`로 우회).
 - 한 프로세스가 여러 가맹점(funding, store_auth, funding_global_auth 등 12+개)을 동시 서비스.
 
 ### 암호화/서명 유틸 (AuthDataFormatter)

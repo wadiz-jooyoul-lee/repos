@@ -18,8 +18,9 @@
 | `InviteEventRewardController` (`event/controller/InviteEventRewardController.java:17`) | `/api/v1/users/event/invite/reward` | 2 | MyBatis master |
 | `InviteEventV2Controller` (`event/v2/controller/InviteEventV2Controller.java:24`) | `/api/v2/users/event/invite` | 1 | `InviteEventUserService` 재사용 |
 | `CatchUpController` (`catchup/adapter/in/CatchUpController.java:30`) | `/api` (헥사고날 adapter/in) | 12 | JPA (`wadiz_user` 스키마) + Redis + 외부 Point/Product/CRM |
+| `CatchUpV2Controller` (`catchup/adapter/in/CatchUpV2Controller.java:48`) — **BE3-464 신규** | `/api` (v2 네임스페이스) | 7 | JPA + Redis + 외부 Point/Product(main2) |
 
-**총 28 endpoints** (task 명세와 일치).
+**총 35 endpoints** (기존 28 + v2 컨트롤러 7). CatchUp v2 상세는 §3.5.
 
 ---
 
@@ -539,6 +540,74 @@ catchup/
 
 ---
 
+### 3.5. v2 API (`CatchUpV2Controller`) — BE3-464 보너스 스테이지
+
+> BE3-464 로 추가된 `/api/v2/users/{userId}/catchup/*` 신규 네임스페이스(`CatchUpV2Controller.java:48`). v3 web 전용 흐름이며 **v1(`CatchUpController`)은 미변경**. 기존 v1 의 status/bonus 는 여기로 이관되고 `CatchUpBonusController` 는 삭제됨(`CatchUpV2Controller.java:41` 주석). 컨트롤러는 usecase 포트를 우회하여 `CatchUpService`·`CatchUpBonusService`·`NotificationService` 를 직접 주입.
+
+#### 엔드포인트 인벤토리 (7개)
+
+| # | Method Path | 설명 | Service |
+|---|---|---|---|
+| 1 | `GET /v2/users/{userId}/catchup/status` | 데일리+보너스 통합 status | `catchUpBonusService.getStatus(userId, today)` (`:57`) |
+| 2 | `GET /v2/users/{userId}/catchup/daily` | 데일리 products 현황(firstTime 포함) | `catchUpService.getCatchUpProductsV2WithLock(...)` (`:65`) |
+| 3 | `POST /v2/users/{userId}/catchup/daily` | 데일리 카드 완료 — **strict, 재액션 409** | `catchUpService.completeProductV2(...)` (`:76`) |
+| 4 | `GET /v2/users/{userId}/catchup/bonus` | 보너스 카드 풀 조회(Eager 생성) | `catchUpBonusService.getBonusProductsWithLock(...)` (`:84`) |
+| 5 | `POST /v2/users/{userId}/catchup/bonus` | 보너스 카드 액션(WISH/NOTIFICATION/PASS) | `catchUpBonusService.completeProduct(...)` (`:95`) |
+| 6 | `PUT /v2/users/{userId}/catchup/notification` | 알림 등록 | `notificationService.registerNotification(...)` (`:106`) |
+| 7 | `GET /v2/users/{userId}/catchup/notification` | 알림 조회 | `notificationService.getNotification(...)` (`:114`) |
+
+#### 단일 예외 핸들러 (v2)
+
+- `@ExceptionHandler(CatchUpException.class)` (`CatchUpV2Controller.java:126`): 예외가 들고 있는 `getV2Code()`(HTTP status 동봉)로 응답. v2Code 미보유 예외(예: `ProductPortException` 외부연동 실패)는 `INTERNAL_SERVER_ERROR`(500)로 fallback. 컨트롤러가 예외 타입별 분기를 하드코딩하지 않음.
+- `@ExceptionHandler(Exception.class)` (`:141`): 미포착 예외 500 + `ErrorResponse {message, code}`.
+- (TODO 주석 `:130`) 5-2 마이그레이션 후 funding 에러 코드 pass-through / PASS-fallback 을 별도 enum 으로 분리 검토.
+
+#### `POST /v2/users/{userId}/catchup/daily` — strict 409 (v1 대비 차이)
+
+`CatchUpService.completeProductV2` (`CatchUpService.java:57`):
+- v1 `completeProduct`(멱등-silent, PASS 를 다른 액션으로 overwrite 가능)와 달리 **이미 완료된 카드(PASS 완료 포함)를 다시 액션하면 `DailyAlreadyProcessedException`(409)** — 리소스 미변경(`product.isCompleted()` 가드 `:70`).
+- 응답 `CompleteProductResponse.setAppliedAction(request.getAction())` (`:74`): 서버가 실제 기록한 액션. web orchestrator 가 funding 강등(알림중지·성인인증 등) 시 WISH/NOTIFICATION → PASS 로 치환해 전달.
+- 데일리 GET v2 (`getCatchUpProductsV2WithLock` `:227`)는 `firstTime` 플래그(사용자 첫 진입, `!existsUser` `:243`)를 응답에 세팅 — v1 호환.
+
+#### 보너스 스테이지 — `CatchUpBonusService`
+
+보너스는 데일리 완료 후 1회성 추가 지급 스테이지. **연속일(streak)·배수(multiplier) 개념 없음** (`CatchUpStatusResponse.BonusStatusInfo` 주석 `:80`).
+
+- **통합 status** (`getStatus` `CatchUpBonusService.java:63`): 데일리 entity 없거나 미완료면 보너스 조회 안 함(default). daily 완료 시에만 `bonusRepository.findWithProductsByCatchUpId(...)`. 응답 `CatchUpStatusResponse {date, remainingTimeInSecond, firstTime, daily{completed,point,totalCount,completedCount,wishCount,notificationCount,streak,multiplier}, bonus{동일 - streak/multiplier 제외}}`.
+- **GET bonus (Eager 생성)** (`getBonusProductsWithLock` → `getOrCreateBonus` `:78`):
+  - Redis 락 키 `bonus:fetch:{userId}:{date}` (`:79`).
+  - **데일리 미완료면 `DailyNotCompletedException`(422)** (`:93`).
+  - bonus entity 없으면 `createBonusEntity` — main2-api `getBonusProducts` 로 풀 생성·저장(빈 풀이면 즉시 completed). `total_product_count` 는 받아온 전체 수로 보존(파티션 DROP 후 분모 유지 `:126`).
+  - 재진입이면 저장된 productId 로 main2 상세만 재조회하여 `@Transient productInfo` 채움(`:102`, DB 로드 시 비어 있으므로 매 GET 채움). 풀에서 빠진 미완료 카드는 `blocked` 처리(`CatchUpBonusEntity.refreshProductInfo:154`).
+  - 응답 `GetBonusProductsResponse {date, completed, point(누적), wishCount, notificationCount, remainingTimeInSecond, products[]}`; 항목 `BonusProductItemResponse {id, productType, completed, action, blocked, point, productInfo}`.
+- **POST bonus 액션** (`completeProduct` → `doCompleteProduct` `:142`):
+  - Redis 락 키 `bonus:action:{userId}:{productType}:{productId}` (`:143`).
+  - 데일리 미완료·bonus 풀 미초기화 → `BonusProductNotFoundException`(404) (`:163,169`). **bonus entity 는 POST 에서 생성하지 않음 — GET 선행 필수**.
+  - 멱등 가드는 엔티티에 캡슐화(`CatchUpBonusEntity.prepareAction:88`): 보너스 전체 완료 후 재액션·차단·이미 완료(PASS 포함) 카드 재액션 → `BonusAlreadyProcessedException`(409), 풀에 없는 productId → `BonusProductNotFoundException`(404). **overwrite 없음**(v1 데일리와 다름).
+  - `executeExternalAction`(`:229`): funding 찜/알림 실제 등록은 **현재 미구현** — `performExternalAction=true` 여도 호출 안 하고 경고 로그만(TODO 5-2). 요청 필드 `performExternalAction`(기본 true)은 클라 호환 위해 유지.
+  - 응답 `CompleteBonusProductResponse {date, completed, appliedAction, point(단건), highReward, budgetExhausted, wishCount, notificationCount, remainingTimeInSecond}`. `highReward` = 단건 point ≥ `wadiz.catchup.bonus.high-reward-threshold`(기본 500, `:54`).
+
+#### 보너스 랜덤 포인트 — point-api 연동 (`PointAdapter.saveBonusPoint`)
+
+- 요청 `SavePointRequest.forBonusCatchUp(userId, requestId)` (`SavePointRequest.java:43`): 템플릿 별칭 `CATCHUP_BONUS_POINT`(고정 상수). **RANDOM 타입이라 `amount` 미전송**(0 도 보내면 안 됨 — 400 유발, `SavePointRequest.java:20`). 데일리는 `CATCHUP_POINT` + `amount` 전송.
+- 멱등키 `requestId` = `CATCHUP_BONUS_{userId}_{yyyyMMdd}_{productType}_{productId}` (카드 단위, `CatchUpBonusService.buildBonusRequestId:218`) → point-api dedupe 로 재요청/재시도 시 동일 결과(re-roll·중복지급 방지).
+- 응답 status 매핑 (`PointAdapter.java:56`, `BonusPointSaveResult`):
+  - **200**: 지급 — `issued(issueKey, transactionKey, amount)`. `catch_up_point` INSERT 후 `point_id` 반환(`issuePointIfAny:193`).
+  - **204(꽝)**: 추첨 0 — `blank()` (amount=0, key 없음, catch_up_point 미생성).
+  - **422(예산 소진)**: `budgetExhausted()` (amount=0, `budgetExhausted=true` — 꽝과 구분해 클라 안내 분기). **액션 자체는 그대로 반영**.
+  - **500**: 최대 2회 재시도(500ms delay), 초과 시 `PointNotSavedException`. 기타 4xx 는 호출자에 전달(`postWithRetry:98`).
+- 액션 확정 시 `catch_up_action_history` 에 append-only 1건 적재(`recordActionHistory:206`, 꽝/예산소진이면 point=0). snapshot(`catch_up_bonus_product`) 갱신과 원자적으로 묶임.
+
+### 3.6. v1/v2 ReturnCode 분리 (BE3-464)
+
+예외가 스스로 응답 code 를 보유(`CatchUpException.java:13`) — 컨트롤러 하드코딩 제거. 공유 예외는 v1/v2 code 를 모두 보유.
+
+- **`CatchUpV1ReturnCode`** (`:10`, `@Deprecated`): 레거시 **Dot.Case** 계약 — `CatchUp.Not.Exists`, `Point.Not.Saved`, `Product.Not.Exists`, `Product.Port.Error`, `Internal.Server.Error`. 값은 기존 클라 계약이라 변경 불가, v1 폐기 시 함께 제거. `CatchUpController` 는 `getCode()` 로 이 값을 응답.
+- **`CatchUpV2ReturnCode`** (`:11`, 표준 **SCREAMING_SNAKE** + HTTP status 한 쌍): `DAILY_NOT_COMPLETE`(422), `NOT_FOUND`(404), `ALREADY_PROCESSED`(409), `INTERNAL_SERVER_ERROR`(500). `code()` = enum name.
+- 예외별 v2 매핑: `DailyNotCompletedException`→422, `BonusProductNotFoundException`→404, `BonusAlreadyProcessedException`·`DailyAlreadyProcessedException`→409.
+
+---
+
 ## 4. DB 스키마
 
 ### 4.1. Event Invite (MyBatis 기반, 기존 wadiz 레거시 DB)
@@ -567,6 +636,18 @@ DDL: `ddl/create-catchup.sql`.
 | `catch_up_event` (DDL 없음, JPA 엔티티만 관측) | `catch_up_event_id` (PK, AI), `event_name`, `event_start_time` (TIMESTAMP), `event_end_time` (TIMESTAMP), `event_multiplier`, `is_active` | idx `IDX_catch_up_event__is_active_event_date(is_active, event_start_time, event_end_time)` |
 
 > `catch_up_point`/`catch_up_event` 테이블은 `ddl/create-catchup.sql`엔 없지만 JPA 엔티티 (`CatchUpPointEntity.java`, `CatchUpEventEntity.java`) 의 `@Table`/`@Index` 애너테이션에서 관측 가능. `ddl/streak-update.sql` / `change_20250110.sql`에 추가 ALTER가 있을 것으로 추정되나 본 문서에서는 다루지 않음.
+
+### 4.3. CatchUp 보너스 (BE3-464, `wadiz_user` 스키마)
+
+DDL: `ddl/create-catchup-bonus.sql` (본문은 DB-2869 DBA 확정 기준). 날짜 컬럼은 데일리와 동일하게 `varchar(8)` 'yyyyMMdd'(JPA `LocalDate` + `LocalDateToYyyyMMddConverter`).
+
+| 테이블 | 컬럼 (관측) | 인덱스/파티션 |
+|---|---|---|
+| `catch_up_bonus` | `catch_up_bonus_id` (PK, AI), `catch_up_id`, `is_completed`, `total_product_count`, `total_point`, `registered_at`, `updated_at` | unique `UK_catch_up_bonus__catch_up_id (catch_up_id)`. 유저×날짜 풀 메타 1 row, **파티션 없음**(소량). 파티션 DROP 으로 상세가 사라져도 요약은 여기 보존 |
+| `catch_up_bonus_product` | `catch_up_bonus_product_id` (PK), `catch_up_bonus_id`(nullable — 단방향 `@OneToMany @JoinColumn` INSERT 후 UPDATE 주입), `catch_up_date`(PK·파티션 키), `action_type`, `is_blocked`, `is_completed`, `product_id`, `product_type`, `order_no`(nullable — `@OrderColumn` 동일 이유), `point`(0=꽝/NULL=액션전), `point_id`, `registered_at`, `updated_at` | PK `(catch_up_bonus_product_id, catch_up_date)`. **월 RANGE 파티션**(`P_YYYYMM` + `pmax`), 이번달·지난달만 유지·정리 배치가 DROP. **FK·UK 없음**(파티션 제약; 멱등은 Redis 락+`prepareAction` 으로 보장) |
+| `catch_up_action_history` | `catch_up_action_history_id` (PK, BIGINT), `user_id`, `source`(DAILY/BONUS), `source_id`(원본 PK — BONUS면 catch_up_bonus_id), `product_id`, `product_type`, `action_type`, `point`, `point_id`, `catch_up_date`, `registered_at` | key `(user_id, catch_up_date)`, `(catch_up_date, user_id)`. **append-only 보관(DW/분석), 파티션 없이 영구 보존**. 실제 액션마다 1건 INSERT(UPDATE 없음), PASS→다른 액션 overwrite 도 새 row 누적 |
+
+> 참고: 엔티티(`CatchUpActionHistoryEntity.java:33`)는 `IDX_..._source (source, source_id)` 인덱스도 선언하나 DDL(`create-catchup-bonus.sql:82-83`)에는 user_id/catch_up_date 계열 2개만 존재 — 인덱스명·구성이 엔티티와 DDL 간 불일치(관측).
 
 ---
 
@@ -615,7 +696,8 @@ DDL: `ddl/create-catchup.sql`.
 | Session | 1 | 2 |
 | Event Invite (v1) | 4 | 3 + 5 + 3 + 2 = 13 |
 | Event Invite (v2) | 1 | 1 |
-| CatchUp | 1 | 12 |
-| **합계** | **7** | **28** |
+| CatchUp (v1) | 1 | 12 |
+| CatchUp v2 (`CatchUpV2Controller`, BE3-464) | 1 | 7 |
+| **합계** | **8** | **35** |
 
-태스크 명세와 일치.
+기존 태스크 명세(28) + BE3-464 v2 컨트롤러 7 = 35.

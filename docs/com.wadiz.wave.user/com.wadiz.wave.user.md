@@ -1,3 +1,18 @@
+> 📅 **2026-07-10 master pull 보강** (14 커밋 · 전부 BE3-464 단일 피처)
+>
+> ### BE3-464 — 따라잡기(catchup) 보너스 + v2 API 신설
+> - **`catchup/adapter/in/CatchUpV2Controller.java:48`** — 신규 v2 네임스페이스 `/api/v2/users/{userId}/catchup/*` 컨트롤러. status(통합), daily(GET/POST), bonus(GET/POST), notification(PUT/GET) 7개 매핑. 예외는 단일 `@ExceptionHandler(CatchUpException.class)`(`:126`)로 처리하고 예외가 들고 있는 `v2Code`+HTTP status 로 응답(컨트롤러 하드코딩 없음). 기존 v1 의 status/bonus 는 여기로 이관(`CatchUpBonusController` 삭제).
+> - **`catchup/adapter/in/CatchUpController.java:139`** — v1 에 활성 이벤트 조회 `GET /v1/catchup/event/active`, 관리자용 캐시 강제 갱신 `POST /v1/catchup/event/cache/evict` 2개 추가(v1 나머지는 미변경).
+> - **`catchup/adapter/outbound/persistence/JPACatchUpEventRepository.java:18`** — 이벤트를 Redis 에 **TTL 1시간**(`CACHE_TTL_SECONDS=3600`, key `catchup:events:all`) 캐싱. 이벤트 겹침 시 **최근 등록 이벤트 우선(registeredAt DESC)**. `evictCache()`(`:128`)로 서버 3대 동시 반영.
+> - **`catchup/application/service/CatchUpService.java:57`** — `completeProductV2`: 데일리 v2 액션은 v1(멱등-silent)과 달리 **strict** — 이미 완료(PASS 완료 포함)된 카드 재액션 시 `DailyAlreadyProcessedException`(409), 리소스 미변경. `appliedAction`(web orchestrator 가 funding 강등 시 PASS 치환) 반환. `getCatchUpProductsV2WithLock`(`:227`)에 `firstTime` 플래그 부활.
+> - **`catchup/application/service/CatchUpBonusService.java:187`** — 보너스 카드 액션(WISH/NOTIFICATION/PASS) + 랜덤 포인트. **예산 소진 시 amount=0 + `budgetExhausted=true`** 로 액션은 그대로 반영, 꽝도 point=0.
+> - **`catchup/adapter/outbound/external/point/PointAdapter.java:62`** — point-api RANDOM 포인트 연동. **422=예산소진**(`budgetExhausted()`), **204=꽝**(미발행, catch_up_point 미생성), 4xx 는 상태/바디/요청컨텍스트 로깅 후 호출자에 전달. 요청에서 amount 제거(400 수정).
+> - **`catchup/adapter/outbound/external/product/BonusProductAdapter.java:32`** — 보너스 상품 풀은 main2-api `GET /api/v1/catchup/{userId}/coming-soon-today`(응답모델 데일리와 동일, `code==2000` 검증)에서 조회. base-url property 키 `catchup.platform.base-url` 로 정리.
+> - **`catchup/adapter/outbound/persistence/entity/CatchUpBonusEntity.java:23`** — 신규 테이블 3종: `catch_up_bonus`(catch_up_id UNIQUE), `catch_up_bonus_product`(월 파티션 스냅샷), `catch_up_action_history`(`source_id`로 액션 이력 영구 보존, `CatchUpActionHistoryEntity.java:27`). DDL 은 `ddl/create-catchup-bonus.sql`, DB-2869 기준. `@OrderColumn(order_no)` 단방향 이슈로 catch_up_bonus_id·order_no nullable.
+> - **`catchup/domain/exception/CatchUpV2ReturnCode.java:11`** — v2 표준 코드(SCREAMING_SNAKE, code+HTTP status 한 쌍): DAILY_NOT_COMPLETE(422)/NOT_FOUND(404)/ALREADY_PROCESSED(409)/INTERNAL_SERVER_ERROR(500). v1 은 `CatchUpV1ReturnCode`(@Deprecated dot.case)로 분리해 v1 클라 호환 유지.
+>
+> ---
+
 # com.wadiz.wave.user
 
 > **Phase 2 심층 분석 진행 중**. 전체 엔드포인트는 [`api-endpoints.md`](./api-endpoints.md), 도메인별 상세는 `api-details/` 하위 참조.

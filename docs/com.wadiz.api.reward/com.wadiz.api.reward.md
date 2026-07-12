@@ -1,5 +1,15 @@
 # com.wadiz.api.reward 분석 문서
 
+> 📅 **2026-07-10 master pull 보강** (net-new 1건 + 반영/취소 이력)
+>
+> ### (issue key 없음) — 쿠폰 다통화 Repository 실행 시 IllegalAccessError 해결
+> - **`src/main/java/com/wadiz/api/reward/coupon/infra/repository/JpaCouponTemplateCurrencyEntityRepository.java:11`** — 기존 `JpaCouponTemplateCurrencyRepository.java` 안에 **package-private inner interface** 로 있던 `JpaCouponTemplateCurrencyEntityRepository`(Spring Data JPA repository)를 **별도 파일의 top-level `public interface`** 로 분리. 실행 시 발생하던 `IllegalAccessError`(접근 제한자 문제) 회피가 목적. 메서드(`findByIdTemplateNo`, `deleteByIdTemplateNo`)·엔티티(`CouponTemplateCurrency`, RWD-5486 다통화 쿠폰 표시금액용)는 그대로. 커밋 `27bc477e`/`6302a1d7`(2026-06-08, joona.choi).
+>
+> ### 클라우드 이전(CM2-102) 반영 후 전량 Revert — 현 master는 기존 인프라 유지
+> - PR #475 "Cloud live into master"(2026-06-30)로 GitHub Actions/Kubernetes/jib·GPR·`hazelcast-kubernetes.yaml` 기반 클라우드 이전(CM2-102)이 master 에 병합되었으나, PR #478 `Revert "Cloud live into master"`(2026-07-03)로 **전량 되돌려짐**. 따라서 현 master HEAD 는 배포는 여전히 **`Jenkinsfile-API`/`Jenkinsfile-BATCH`**, 클러스터/디스커버리는 **Consul + Hazelcast(비 k8s)** 로 유지된다(`.github/workflows/` 비어 있음, `application-odev.yml`·`hazelcast-kubernetes.yaml` 부재). 위 IllegalAccessError 수정만 revert 를 넘어 잔존.
+
+---
+
 > **Phase 2 심층 분석 진행 중**. 전체 엔드포인트는 [`api-endpoints.md`](./api-endpoints.md), 도메인별 상세는 `api-details/` 하위 참조.
 >
 > | 도메인 | 파일 | 컨트롤러 수 |
@@ -22,7 +32,7 @@
 - 캐시/클러스터: **Hazelcast** (`hazelcast-spring`, classpath:hazelcast/hazelcast-default.yaml), Redis Cluster(`spring-boot-starter-data-redis`, 192.168.1.240-242:6001-3).
 - 메시징: **RabbitMQ** (`spring-boot-starter-amqp`) — `RabbitMqConfig`에서 Jackson2Json 컨버터·ConnectionFactory·RabbitTemplate·ListenerFactory 구성. 실제 Producer/Consumer 호출은 본 레포에선 미탐지(단순 인프라만 준비).
 - 기타: modelmapper 2.4.5, joda-time, kryo, commons-collections4, Lombok. API 문서 **springdoc-openapi 1.6.8**, Micrometer+Prometheus.
-- 내부 API 토큰 기반 호출 클라이언트: **funding / backoffice / alim-talk / normal-mail / push** (`support/client/**`, `InternalAuthorizationInterceptor` 적용).
+- 내부 API 토큰 기반 호출 클라이언트: **funding / backoffice / alim-talk / normal-mail / push / currency-exchange** (`support/client/**`, `InternalAuthorizationInterceptor` 또는 Bearer 토큰 적용). `currency-exchange` 는 다국가/다통화 쿠폰의 표시 금액 환전용(RWD-5486, 후술).
 - 배포: Jenkinsfile-API (API), Jenkinsfile-BATCH (배치). ExecutableJar + `/etc/init.d` 심볼릭 링크 방식.
 
 ## 아키텍처
@@ -106,6 +116,7 @@ com.wadiz.api.reward
 | GET | /api/v1/rewards/coupons/makers/{makerUserId}/templates | MakerCouponTemplateController.getAll | 메이커 부담 템플릿 목록 + 집계 |
 | GET | /api/v1/rewards/coupons/makers/{makerUserId}/templates/{templateNo} | MakerCouponTemplateController.get | 메이커 부담 템플릿 상세 |
 | GET | /api/v1/rewards/coupons/makers/braze/project | MakerCouponController.getBoostCouponByProjectId | 프로젝트 부스팅 쿠폰(Braze) |
+| GET | /api/v1/rewards/coupons/braze/user-status | UserCouponController.getUserStatus | Braze 유저별 미사용·유효 쿠폰 조회 (RWD-5591/5670) |
 | POST | /api/v1/rewards/satisfactions | SatisfactionController.create | 만족도 등록 |
 | PUT | /api/v1/rewards/satisfactions/{satisfactionNo} | SatisfactionController.modify | 만족도 수정 |
 | PUT | /api/v1/rewards/satisfactions/{satisfactionNo}/is-hidden | SatisfactionController.modifyHidden | 숨김 상태 변경 |
@@ -189,6 +200,25 @@ com.wadiz.api.reward
 - 입력: `CreateCouponTemplateRequest` → `MakerCouponTemplateDtoConverter.convert(makerUserId, dto)` 로 `CouponTemplateDto.Create` 변환 (메이커 식별자/targetConditionType 주입).
 - 처리: 기존 `CouponTemplateService.create` 경로 재사용. 조회(`getAll`)는 `getAllMakerCouponTemplate` + `CouponTransactionSummationService.getSummationQuery` 를 병합하여 집계와 함께 응답.
 
+### 6-1) 다국가/다통화 쿠폰 (RWD-5486)
+- **목적**: 글로벌 결제(USD/EUR 등) 대응. 쿠폰 템플릿에 통화별 금액(`CouponTemplateCurrency`)과 노출 국가(`CouponTemplateCountry`)를 부여하고, 조회 시 요청 국가의 통화로 환산한 표시 금액(`displayDiscountAmount`)을 응답한다.
+- **금액 단위 변환** (`coupon/converter/CouponCurrencyUnitConverter`): 메이커 쿠폰 생성·수정(`MakerCouponTemplateController`) 시 `couponCurrencies[]` 의 각 금액을 MINOR unit(예: USD→CENT)으로 변환해 저장. KRW/JPY 등은 그대로. KRW entry 는 템플릿 본문 `discountAmount`/`maxDiscountAmount` 와 항상 동기화(`CouponTemplateBuilder.syncKrwCurrencyWithTemplate`).
+- **표시 금액 환전** (`coupon/converter/DisplayDiscountAmountResolver`):
+  - 요청 `countryCode` → target currency 매핑(KR=KRW, US=USD, JP=JPY, EU 20개국=EUR, … **미매핑 국가는 USD 폴백**).
+  - 쿠폰 base currency == target currency → 환전 없이 원본 노출. 다르면 `currency-exchange` 서버에 **bulk 1회 호출**(`/api/v1/internal/conversion/bulk`)로 일괄 환전.
+  - `decimalAmount=true`(`/owners/{userId}` 전용)는 MINOR unit 으로 환전 후 scale 만큼 자릿수를 복원해 소수점 dust 제거. 그 외 endpoint 는 정수 호환.
+  - `baseDate` 지정 시 해당 시점 환율(결제 주문 시점 등) 적용.
+- **조회 필터** (`CouponSpecification`/`CouponTemplateSpecification`): `hasCountry`(KR 유저는 `KR`/`ALL`만, GLOBAL_ALL 제외 / 해외 유저는 자국·`ALL`·`GLOBAL_ALL`), `hasCurrency`(ACTIVE entry + currency 매칭). `CouponService.getAllByUser` 가 countryCode → currency 자동 해석(KR=KRW, 그 외=USD) 후 조회.
+- **프로젝트 쿠폰 응답 enrich** (`ProjectCouponSummaryService.enrichWithTemplate`): `/coupons/projects[/{projectNo}]` 응답에 `couponCurrencies`/`availableCountries`/`displayDiscountAmount` 추가. 요청 국가에서 못 쓰는 쿠폰은 응답에서 제거.
+- 신규 예외: `UnsupportedCurrencyException`, `CouponCountryNotEligibleException` (`GlobalExceptionHandler` 처리).
+
+### 6-2) GET /api/v1/rewards/coupons/braze/user-status (Braze 유저 쿠폰, RWD-5591/5670)
+- `reward-api/.../rest/coupon/external/UserCouponController.java`, `@RequestMapping("/api/v1/rewards/coupons/braze")`.
+- 입력: `userId`(=Braze external_id=ownerUserId), `couponMasterId`(옵션, 특정 템플릿), 헤더 `country`(ISO alpha-2, 미전달 시 `KR`).
+- 처리: `CouponService.getAllByUser(usable=true, templateNo, countryCode)` → `UserCouponConverter.toUserStatus`.
+- 응답 `UserCouponStatusResponse`: `totalUnusedCount`, `couponList[]`(`couponName`, `expiredAt`(ISO8601 KST), `daysLeft`, `serviceType`, `discountType`, `discountAmount`, `discountRate`, `minFundingAmount`, `maxDiscountAmount`, `currency`).
+- 통화 entry 선택: ACTIVE + 요청 통화 매칭 → 없으면 ACTIVE + KRW(레거시/KR전용 폴백) → 없으면 null. 만료 임박 리마인드(CRM)용.
+
 ### 7) POST /api/v1/rewards/satisfactions
 - `reward-api/src/main/java/com/wadiz/api/reward/rest/satisfaction/SatisfactionController.java:35`
 - 입력 DTO `SatisfactionDto.Create`: `campaignId`, `userId`, `comment(<=5000)`, `scores[]`(Item→Score), `images[]`.
@@ -237,6 +267,8 @@ JPA Entity + MyBatis 테이블을 종합.
 | `CouponTransactionSummation` | 거래 집계 (템플릿별 REDEEM/USE/REFUND 수·금액) |
 | `ProjectCouponSummary`(+`ProjectCouponSummary_new`) | 프로젝트(campaign)별 적용 가능 쿠폰 요약 (배치 재생성: `CREATE TABLE _new LIKE ... INSERT ... RENAME`) |
 | `CouponTargetConditionMapping` | 템플릿 적용 대상 매핑 (PROJECT/COLLECTION) |
+| `CouponTemplateCurrency` | (RWD-5486) 템플릿 통화별 금액. PK=(TemplateNo, CurrencyCode). AdjustedDiscountAmount/AdjustedMaxDiscountAmount/MinFundingAmount(MINOR unit 저장), Priority(1=KRW,2=USD,3=JPY), Status(ACTIVE/DEPRECATED/DISABLED). KRW row 는 항상 템플릿 본문 금액과 동기화 |
+| `CouponTemplateCountry` | (RWD-5486) 템플릿 노출 국가. PK=(TemplateNo, CountryCode). 값 `KR`/`US`/`JP`/`ALL`/`GLOBAL_ALL`. 매핑 없으면 KR 전용 레거시로 간주 |
 | `RewardCollection` | 리워드 컬렉션/기획전 (keyword unique) |
 | `RewardCollectionMapping` | 컬렉션 ↔ 캠페인 매핑 |
 | `Satisfaction` (+_Aud via AbstractRegisteredAuditingEntity) | 만족도 평가. (CampaignId, UserId) unique |
@@ -255,6 +287,7 @@ JPA Entity + MyBatis 테이블을 종합.
   - **alim-talk** — `application.alim-talk-client.url` (dev `https://dev-platform.wadizcorp.net/alimtalk`) — 알림톡 발송(만료 안내 등).
   - **normal-mail** — `application.normal-mail-client.url` (dev `https://dev-platform.wadizcorp.net/mail-normal`) — 메일 발송.
   - **push** — `application.push-client.url` (dev `https://dev-platform.wadizcorp.net/push`) — 앱 푸시/Inbox.
+  - **currency-exchange** (RWD-5486) — `application.currency-exchange-client.{base-url,api-token}` (dev `https://dev-platform.wadizcorp.net/currency-exchange`) — `POST /api/v1/internal/conversion/bulk` 로 쿠폰 표시 금액을 요청 국가 통화로 일괄 환전. `CurrencyExchangeClient`(RestTemplate, connect 5s/read 10s, Bearer)·`ExchangeRateConvertRequest/Response` payload. 배치(`reward-batch`)에도 동일 설정 추가(ProjectCouponSummary KR쿠폰 마이그레이션용, RWD-5610).
 - MQ (`src/main/java/com/wadiz/api/reward/config/RabbitMqConfig.java`): RabbitMQ ConnectionFactory/Template/ListenerFactory bean 구성. Host: `spring.rabbitmq.host` (dev `192.168.0.103:5672`). 기본 bean만 있으며 현재 코드에서 `convertAndSend`/`@RabbitListener` 사용처는 확인되지 않음(미래 확장용 또는 배치에서 사용).
 - Redis Cluster: `spring.redis.cluster.nodes` (192.168.1.240-242).
 - Hazelcast: `classpath:hazelcast/hazelcast-default.yaml` 분산 캐시/락.
@@ -277,10 +310,16 @@ JPA Entity + MyBatis 테이블을 종합.
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-06-19** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 메이커 쿠폰 수정 API 오류 수정 | 2026-06-10 | RWD-5688 |
+| Braze 유저별 쿠폰 조회 API(`/coupons/braze/user-status`) 신설 — 응답필드 추가·만료일시 ISO8601 KST·요청값 컨벤션 정리 | 2026-06-02~09 | RWD-5591 / RWD-5670 |
+| 스토어 쿠폰 원화(KRW) 전용 적용 + 조회 이슈 수정 (hasCountry/hasCurrency 필터 재작성, LEFT JOIN quirk 회피) | 2026-06-04 | RWD-5667 |
+| `ProjectCouponSummary` 생성 시 KR쿠폰 자동 마이그레이션 배치 (환전설정·resilience4j) — `CouponTemplateCountry` 누락 템플릿에 `KR` 적재 | 2026-06-01 | RWD-5610 |
+| **다국가/다통화 쿠폰(USD/EUR 등) 대응** — `CouponTemplateCurrency`/`CouponTemplateCountry` 테이블, `currency-exchange` 클라이언트, `displayDiscountAmount` 환전·소수점, 국가코드별 통화 매핑(미매핑 USD 폴백), USD entry 우선 환전 | 2026-05-07~29 | RWD-5486 |
+| 모든 결제 건 `BackingPaymentFx` 기록 (CouponDisplaySources) | 2026-05-20 | RWD-5375 |
 | `redeemByIssue` 장애 차단 — Bulkhead + Circuit Breaker 적용 | 2026-05-11~14 | RWD-5549 |
 | 쿠폰 만료일 시간 양식 변경 (24시 표현) | 2026-04-28 | RWD-5510 |
 | 부스터 쿠폰 유효기간·카톡 푸시 발송 유효기간 오류 수정 | 2026-04-27 | RWD-5510 |

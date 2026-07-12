@@ -1,3 +1,13 @@
+> 📅 **2026-07-10 main pull 보강** (3 커밋)
+>
+> ### 펀딩 스토리 HTML 후처리에 Vimeo iframe 지연 로딩 추가 (FE1-1178)
+> - 스토리 HTML 처리 파이프라인의 1-1단계로 `replaceVimeoIframes()`가 새로 삽입됨. YouTube placeholder 변환(1단계) 직후, img `src→data-src` 변환(2단계) 직전에 실행 (`src/api/funding/projects/project.service.ts:67-68`).
+> - `player.vimeo.com` iframe의 `src`를 `data-vimeo-src`로 보관하고 `src=""`로 비워 초기 동시 로딩·자동재생을 차단, 기존 `style`은 보존하면서 `opacity:0`을 덧붙임 (`project.service.ts:131-146`). background 제거·autopause 및 뷰포트 진입 시 복원은 클라이언트 `useStoryOptimize`가 담당(주석 명시).
+> - `replaceGifImagesToVideoTags()` JSDoc이 `Vimeo→lazy`를 포함하도록 갱신됨 (`project.service.ts:24`). 단일/다중 Vimeo iframe 처리 테스트 2건 추가 (`project.service.spec.ts`).
+> - 나머지 2커밋은 릴리스/버그픽스 머지(#470·#471)로 net-new 코드 없음.
+>
+> ---
+
 # app-api 분석 문서
 
 ## 개요
@@ -100,7 +110,7 @@
 
 - 위치: `src/api/links/links.controller.ts:18-50`, `links.service.ts:46-98`
 - 입력 DTO `LinksRequestDto` / `LinksV2RequestDto` — targetPath 검증기:
-  - `http://` 금지, `https://`는 화이트리스트 도메인(`wadiz.kr`, `wadiz.ai` 서브도메인 포함) 허용
+  - `http://` 금지, `https://`는 화이트리스트 도메인(`wadiz.kr`, `wadiz.co` 서브도메인 포함) 허용 — `WHITELISTED_DOMAINS = ['wadiz.kr', 'wadiz.co']` (`domain.constants.ts`, FE1-856에서 `wadiz.ai` 제거·`wadiz.co` 추가)
   - 절대 경로는 `..` 상대표기와 `<>"'\\:!` 특수문자 금지 (`links.dto.ts:14-107`)
 - 로직
   - `walinkid` 쿼리 제거 후 MD5 해시 생성 → 기존 레코드 존재하면 재사용
@@ -134,10 +144,11 @@
 
 - 위치: `src/api/settings/settings.controller.ts`, `settings.service.ts`
 - 인증: 쓰기 API는 `AuthGuard`로 `.env.BEARER_TOKEN` 정적 비교(내부용)
-- 데이터 모델: `app_setting (platform_name ENUM(android/ios/web/common), feature_name, setting_value TEXT JSON)` (`entities/app-setting.entity.ts`)
+- 데이터 모델: `app_setting (platform_name ENUM, feature_name, setting_value TEXT JSON)` (`entities/app-setting.entity.ts`)
+- 플랫폼 enum 분리 (CLIENT-104): `Platform`이 클라이언트용 `ClientPlatform`(`common/android/ios/web`)과 서버용 `ServerPlatform`(`web-server`)의 합집합으로 분리됨. `isServerPlatform()` 헬퍼로 서버 플랫폼 여부 판별
 - 조회 로직 `find()` (`settings.service.ts:53-111`)
   - 플랫폼별 캐시 키 = `${platform}` (TTL 5분, `settings.module.ts:13`)
-  - 요청 플랫폼 캐시 + `COMMON` 캐시를 병합 후 (플랫폼 우선) 반환
+  - 병합 규칙 `getMergedCache()`: 서버 플랫폼(`web-server`)과 `COMMON`은 자체 설정만 반환, 그 외 클라이언트 플랫폼은 요청 플랫폼 캐시 + `COMMON` 캐시를 병합 후 (플랫폼 우선) 반환
   - `feature` 쿼리가 있으면 키 단위 필터
 - 쓰기는 DB 저장 후 캐시 객체 선택적 갱신 (기존 키 존재 시만)
 
@@ -146,11 +157,17 @@
 - 위치: `src/api/support/support.controller.ts`, `support.service.ts`
 - 인증: 대부분 `AccountGuard` — OIDC access token으로 사용자 식별
 - 특이 로직
-  - `getZendeskUserInfo(email)`로 와디즈 사용자 email을 Zendesk `/users/search`로 매핑
+  - 사용자 해석 `resolveZendeskUser(userInfo)` — 모든 티켓 API의 단일 진입점 (FE1-731)
+    - `IS_EXTERNAL_ID_ENABLED=true`(dev/rc/live)이면 와디즈 `userId` 기준 `external_id:{userId}` 검색을 우선(`getZendeskUserInfoByExternalId`)하고, 미스 시 이메일 검색(`getZendeskUserInfo(email)`)으로 fallback. 이메일은 변경될 수 있으나 `userId`는 불변이므로 이메일 변경에도 매칭이 끊기지 않음
+    - 이메일로 찾은 사용자의 `external_id`가 다른 `userId`면 이메일 재사용 충돌로 보고 매칭 거부(`null` 반환) + `logger.warn`으로 PII 없는 식별자만 관측 로그 기록. `external_id`가 비어 있는 레거시 사용자는 충돌이 아니므로 통과
+    - 플래그가 꺼져 있으면 기존대로 이메일 기준 조회만 수행
   - `postTicket`
     - `locale_id` 캐시 미스 시 `/locales`에서 언어코드(`ko`, `en` 등) 선두 일치로 탐색
-    - live 환경에선 `external_id` 불일치 시 `/users/create_or_update` 호출로 정보 동기화
+    - `IS_EXTERNAL_ID_ENABLED` 활성 시 `external_id` 불일치 **또는 이메일 불일치**면 `/users/create_or_update` 호출로 정보 동기화(이메일 변경 시 Zendesk 이메일도 갱신) + `external_id`에 `userId` 기록 (기존 `ENVIRONMENT === 'live'` 분기를 플래그 기반으로 대체)
     - 기본 커스텀 필드(응답 채널, 와디즈 계정 이메일, WAI session id) + 태그(`문의등록유입경로_*`) 자동 부여
+  - `getTickets` (문의 목록)
+    - Zendesk Search API를 `page`/`per_page`로 페이지네이션(이전 `offset`/`limit`는 미지원이라 수정 — QA-22336)
+    - 정렬은 `sort_by=created_at&sort_order=desc`(등록 시간순). `created_at`은 Zendesk 정렬 키라 페이지네이션과 양립. 이전의 애플리케이션단 status 기준 정렬은 페이지 내에서만 적용돼 20건 초과 시 깨지므로 제거 (QA-22341)
   - `getTicket`
     - 본인 여부(`requester_id`) 및 `is_public` 확인 후 403
     - `ticket_form`, `ticket_fields`, dynamic content(언어별 `{{dc.*}}`) 병합하여 반환
@@ -180,7 +197,7 @@
 | 테이블 | 엔티티 | 용도 |
 | --- | --- | --- |
 | walink | `WalinkEntity` (`src/api/links/entities/walink.entity.ts`) | 단축 URL: walink_no PK, target_path_hash(md5, 인덱스), target_path(varchar 2000), short_id(uniq 15자), is_app_store_fallback_enabled, created_at/updated_at |
-| app_setting | `AppSettingEntity` (`src/api/settings/entities/app-setting.entity.ts`) | 앱 런타임 설정: setting_id PK, platform_name ENUM(android/ios/web/common), feature_name(30), setting_value(text JSON), UNIQUE(platform_name, feature_name) |
+| app_setting | `AppSettingEntity` (`src/api/settings/entities/app-setting.entity.ts`) | 앱 런타임 설정: setting_id PK, platform_name(클라이언트 common/android/ios/web + 서버 web-server), feature_name(30), setting_value(text JSON), UNIQUE(platform_name, feature_name) |
 
 > Support/Help-Center/Proxy는 외부 Zendesk·와디즈 API를 직접 호출하므로 DB 테이블을 사용하지 않습니다.
 
@@ -194,9 +211,10 @@
 - 외부 CDN: 펀딩 스토리 내 이미지의 `.mp4` 존재 여부 확인을 위해 `HEAD` 요청(`wadiz.kr` 이하)
 - 인프라
   - RDS MySQL 8 (AWS) — `DATABASE_*` 환경변수, AWS Secrets Manager `eks/secrets/client`에서 패스워드 주입
+  - cloud 환경(`cdev`/`rc4`/`clive`) DB 인증 분기 (FE1-858): `ENVIRONMENT`가 cloud 환경이면 `APP_API_CLOUD_DATABASE_USER_NAME`과 cloud용 패스워드 시크릿을 사용. cloud 패스워드는 `clive`이면 `mysql_wadiz_app_password`, 그 외(cdev/rc4)는 `mysql_wadiz_app_dev_password`로 분기 (`typeorm.config.ts`의 `getCloudPassword`). 기존 `rc3` 환경은 제거됨
   - AWS EKS + ArgoCD 배포, AWS ECR 컨테이너 레지스트리
   - Datadog APM (`tracing.ts`, `DatadogTraceModule`, `DatadogErrorInterceptor`)
-- 주요 환경 변수: `BASE_URL`, `DOMAIN`, `ENVIRONMENT`(live/dev/local), `BEARER_TOKEN`, `APP_API_ZENDESK_SIGNING_SECRET`, `ZENDESK_API_TOKEN`, `ACCOUNT_API_OPENID_CONFIGURATION_URL`, `PLATFORM_GLOBAL_API_URL`, `PLATFORM_GLOBAL_API_TOKEN`, `DATABASE_*`, `APP_API_DATABASE_USER_NAME`, `APP_API_DATABASE_PASSWORD`
+- 주요 환경 변수: `BASE_URL`, `DOMAIN`, `ENVIRONMENT`(live/dev/local + cloud: cdev/rc4/clive), `BEARER_TOKEN`, `APP_API_ZENDESK_SIGNING_SECRET`, `ZENDESK_API_TOKEN`, `IS_EXTERNAL_ID_ENABLED`(Zendesk external_id 우선 조회 토글), `ACCOUNT_API_OPENID_CONFIGURATION_URL`, `PLATFORM_GLOBAL_API_URL`, `PLATFORM_GLOBAL_API_TOKEN`, `DATABASE_*`, `APP_API_DATABASE_USER_NAME`, `APP_API_DATABASE_PASSWORD`, cloud 환경용 `APP_API_CLOUD_DATABASE_USER_NAME`, `mysql_wadiz_app_password`, `mysql_wadiz_app_dev_password`
 
 ## 특이사항
 

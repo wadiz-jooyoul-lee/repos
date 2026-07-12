@@ -1,5 +1,20 @@
 # kr.wadiz.account 분석 문서
 
+> 📅 **2026-07-10 master pull 보강** (2 커밋)
+>
+> ### BE3-483 — 로그인/가입/find OIDC `ui_locales` 표시 언어 지원 + 비번재설정 메일 언어 통일
+> - **`application/UiLocalesResolver.java:18,23,41`** — 신규 정적 유틸. OIDC `ui_locales`(공백 구분 BCP47 태그 목록)를 해석해 표시 언어를 결정. 지원 언어는 `SUPPORTED = {ko, en, ja, zh}`(23행), `isSupportedLanguage()`(41행)로 판별. 현재 요청 파라미터 우선, 없으면 SavedRequest 폴백(`resolve`, 81행)하되 find(아이디/비번 찾기) 경로는 파라미터만 읽는 `resolveFromParamOnly`(95행)를 사용.
+> - **`adapters/inbound/MainController.java:96,175,198,214,226`** — login/signup/social/find 각 핸들러에서 `applyUiLocale(...)`로 해석한 태그를 모델의 `uiLocale` 속성에 주입(119행). find는 `resolveFromParamOnly`(226행).
+> - **`application/CustomLocaleResolver.java:30`** — 캐시 속성명을 공용 상수 `CACHED_LOCALE_ATTR = "cachedLocale"`로 상수화(47·65행에서 재사용).
+> - **`templates/login.html`** — `window.wadiz.uiLocale` 주입(FE가 태그 원본 사용).
+> - **`domain/email/EmailService.java:124,128,142`** — `sendResetPasswordMail`에서 재설정 링크에 `?ui_locales=` 태그를 부착(다른 기기에서 열어도 메일과 같은 언어로 표시). `buildUiLocaleTag`(142행)는 지원 언어일 때만 태그 생성, 아니면 null 반환해 미부착.
+> - **`domain/applicationservice/PasswordService.kt:48`** — 재설정 메일 발송 locale을 기존 회원 DB 언어(`Locale(user.language, user.country)`)에서 요청 컨텍스트 locale(`CustomLocaleResolver`: 헤더>쿠키>IP)로 변경. 화면에서 보던 언어와 메일 언어를 일치(인증코드 메일과 동일 경로). 미지원 언어는 템플릿이 영문 폴백. `user`는 토큰/userId 생성엔 계속 사용.
+>
+> ### BE3-496 — 메일 템플릿 푸터 로고 링크 도메인 정정
+> - **`resources/mailtemplates/accountResetPassword_{ko,en,ja,zh}.html`, `accountSignupVerificationCode_{ko,en,ja,zh}.html`** — 푸터 로고 링크를 `https://www.wadiz.ai/` → `https://www.wadiz.kr/`로 수정(8개 파일 각 1줄).
+
+---
+
 > **Phase 2 심층 분석 진행 중**. 전체 엔드포인트는 [`api-endpoints.md`](./api-endpoints.md), 도메인별 상세는 `api-details/` 하위 참조.
 >
 > | 영역 | 파일 |
