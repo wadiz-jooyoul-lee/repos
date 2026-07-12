@@ -1,6 +1,6 @@
 #!/bin/bash
 # Wadiz repos 부트스트랩 스크립트
-# ~/work/repos 하위 25개 repo 를 clone. 이미 있는 폴더는 skip.
+# ~/work/repos 하위 32개 repo 를 clone. 이미 있는 폴더는 skip.
 # 갱신은 별도로 `./execute_all git pull` 사용.
 #
 # 프로토콜 선택 (기본 ssh):
@@ -60,6 +60,15 @@ REPOS=(
   "git@github.com:wa-infrastructure/cdc.git"
   # wadiz-ai
   "git@github.com:wadiz-ai/ai-project-audit.git"
+  # wadiz-batch
+  "git@github.com:wadiz-batch/com.wadiz.batch.payment.git"
+  "git@github.com:wadiz-batch/com.wadiz.startup.batch.git"
+  "git@github.com:wadiz-batch/com.wadiz.wave.statistics.git"
+  "git@github.com:wadiz-batch/main2-batch.git"
+  "git@github.com:wadiz-batch/com.wadiz.wave.audit.git"
+  # wadiz-membership
+  "git@github.com:wadiz-membership/MemberShip-Api-Server.git"
+  "git@github.com:wadiz-membership/User-Api-Gateway.git"
 )
 
 skipped=0

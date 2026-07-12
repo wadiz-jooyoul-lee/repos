@@ -1,6 +1,6 @@
 # Wadiz Repos — Clone URL 인벤토리
 
-부모 repo(`wadiz-jooyoul-lee/repos`) 하위 25개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
+부모 repo(`wadiz-jooyoul-lee/repos`) 하위 32개 Wadiz repo 의 clone URL 목록입니다. 새 팀원 온보딩·환경 재구축·조직 이동 시 참조하십시오.
 
 각 repo 의 역할·스택·심층 분석 위치는 [`CLAUDE.md`](../CLAUDE.md) 및 [`docs/<repo>/`](./) 를 참조하세요.
 
@@ -90,6 +90,23 @@ grep "wadiz-service" docs/repos-inventory.md | grep -oE "git@github\.com:\S+\.gi
 | Repo | Clone URL | 상세 문서 |
 |---|---|---|
 | ai-project-audit | `git@github.com:wadiz-ai/ai-project-audit.git` | [docs](./ai-project-audit.md) |
+
+## 8. `wadiz-batch` — 배치·감사 서버군 (5개)
+
+| Repo | Clone URL | 상세 문서 |
+|---|---|---|
+| com.wadiz.batch.payment | `git@github.com:wadiz-batch/com.wadiz.batch.payment.git` | [docs](./wadiz-batch.md#1-comwadizbatchpayment--결제-배치) |
+| com.wadiz.startup.batch | `git@github.com:wadiz-batch/com.wadiz.startup.batch.git` | [docs](./wadiz-batch.md#2-comwadizstartupbatch--스타트업투자-배치) |
+| com.wadiz.wave.statistics | `git@github.com:wadiz-batch/com.wadiz.wave.statistics.git` | [docs](./wadiz-batch.md#3-comwadizwavestatistics--통계-집계-멀티모듈) |
+| main2-batch | `git@github.com:wadiz-batch/main2-batch.git` | [docs](./wadiz-batch.md#4-main2-batch--메인-화면-배치-quartz) |
+| com.wadiz.wave.audit | `git@github.com:wadiz-batch/com.wadiz.wave.audit.git` | [docs](./wadiz-batch.md#5-comwadizwaveaudit--앱별-감사-로그-수집기) |
+
+## 9. `wadiz-membership` — 멤버십 API + Gateway (2개)
+
+| Repo | Clone URL | 상세 문서 |
+|---|---|---|
+| MemberShip-Api-Server | `git@github.com:wadiz-membership/MemberShip-Api-Server.git` | [docs](./wadiz-membership.md#1-membership-api-server--멤버십-코어-api) |
+| User-Api-Gateway | `git@github.com:wadiz-membership/User-Api-Gateway.git` | [docs](./wadiz-membership.md#2-user-api-gateway--spring-cloud-gateway) |
 
 ---
 

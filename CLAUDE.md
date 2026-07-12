@@ -15,6 +15,8 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 | `wadiz-app` | 공식 모바일 앱 | Kotlin / Swift |
 | `wa-infrastructure` | CDC·인프라 관리 | Debezium 커넥터·Jenkins 파이프라인·Kafka Connect 유틸 |
 | `wadiz-ai` | AI 콘텐츠 검수 서비스 | FastAPI / Python 3.11 / OpenAI + GCV OCR + ES |
+| `wadiz-batch` | 배치·감사 서버군 | Spring Boot 2.1~2.7 / Java 8 / Batch·MyBatis·JPA·RabbitMQ |
+| `wadiz-membership` | 멤버십 API + Gateway | Spring Boot 2.5 / Java 8 / QueryDSL JPA + Spring Cloud Gateway |
 
 ---
 
@@ -77,6 +79,27 @@ Clone URL 전체 목록은 [`docs/repos-inventory.md`](./docs/repos-inventory.md
 | Repo | 역할 | 스택 |
 |---|---|---|
 | [ai-project-audit](./docs/ai-project-audit.md) | AI 콘텐츠 검수 (텍스트·이미지). 키워드(ES) + 문맥(OpenAI) + OCR(GCV) + bbox 마킹. funding 도메인의 story-review 콜백 대상 | FastAPI / Python 3.11 / Poetry / DDD / dependency-injector |
+
+## 8. `wadiz-batch` — 배치·감사 서버군
+
+[wadiz-batch 통합 개요](./docs/wadiz-batch.md) — 5 repo:
+
+| Repo | 역할 | Boot |
+|---|---|---|
+| `com.wadiz.batch.payment` | 결제 배치 (14 Job) — 환불·취소·재시도 | 2.4.3 |
+| `com.wadiz.startup.batch` | 투자형 스타트업 정산 배치 (dual DS) | 2.1.1 |
+| `com.wadiz.wave.statistics` | 통계·랭킹 집계 (17 Job, 3 모듈) | (ext) |
+| `main2-batch` | 메인 화면 배치 (Quartz, WebFlux) | 2.7.2 |
+| `com.wadiz.wave.audit` | 8개 앱 audit 로그 수집 (RabbitMQ Receiver → 파일) | 2.7.10 |
+
+## 9. `wadiz-membership` — 멤버십 API + Gateway
+
+[wadiz-membership 통합 개요](./docs/wadiz-membership.md) — 2 repo:
+
+| Repo | 역할 | Boot |
+|---|---|---|
+| `MemberShip-Api-Server` | 멤버십 상품·바우처·혜택·회원 API + 자동갱신 배치 (7 모듈) | 2.5.3 |
+| `User-Api-Gateway` | Spring Cloud Gateway (`/membership/**` → localhost:9150 사이드카) | 2.5.4 |
 
 ---
 
