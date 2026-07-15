@@ -63,6 +63,7 @@
 > | static/services/admin (와디즈 어드민 SPA) | [`api-details/admin-spa.md`](./api-details/admin-spa.md) |
 > | packages/ (공유 패키지 20+) | [`api-details/packages.md`](./api-details/packages.md) |
 > | **모든 페이지 전수 카탈로그** (270+ 페이지) | [`api-details/pages-catalog.md`](./api-details/pages-catalog.md) |
+> | **기능 이정표** (기능·문구 → 소스 역탐색, apps/global + packages) | [`api-details/feature-signpost.md`](./api-details/feature-signpost.md) |
 
 ## 개요
 와디즈의 **신규 프론트엔드 모노레포**. "모든 FE 서비스를 단일 저장소에서 운영"이라는 목표로 다수의 앱(account, global, partners, ir, partnerzone, help-center, mail-template, wai-ai-agent-launcher, walink-generator)을 한 곳에 묶었습니다. `com.wadiz.web` (Spring 3.2 + JSP) 의 점진적 후계. Org: `wadiz-fe`.
