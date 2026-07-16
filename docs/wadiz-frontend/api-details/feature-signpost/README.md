@@ -15,17 +15,15 @@
 
 | 영역 | 파일 | 대상 소스 | 상태 |
 |---|---|---|---|
-| 사용자 서비스 도메인 (글로벌 앱 9개 도메인 + 공유 features/ui/widgets) | [`apps-global.md`](./apps-global.md) | `apps/global` · `packages/features·ui·widgets` | 완료 |
+| 사용자 서비스 도메인 (글로벌 앱, **도메인별 파일**) | [`apps-global/`](./apps-global/README.md) | `apps/global` · `packages/features·ui·widgets` | 완료 |
 | global 외 앱 (계정·고객센터·IR·파트너스·파트너존·메일·와링크·WAi런처·devtools) | [`apps-others.md`](./apps-others.md) | `apps/{account,help-center,ir,partners,partnerzone,mail-template,walink-generator,wai-ai-agent-launcher,devtools}` | 완료 |
 | 인프라 · 디자인시스템 패키지 (UI 문구 없음, 위치·역할 참조) | [`packages-infra.md`](./packages-infra.md) | `packages/{api,core,queries,i18n,tokens,waffle,waffle-icons,artworks,…}` | 완료 |
 | 레거시 국내 서비스 (static) | [`static.md`](./static.md) | `static/entries/*` · `static/services/admin` | 완료 |
 | 메이커 스튜디오 (funding·store·startup·studio-services) | `studio.md` | `studio/*` | 미작성(예정) |
 
-## 도메인 빠른 이동 (apps-global.md 내부)
+## 도메인 빠른 이동 (apps-global/)
 
-`apps-global.md` 파일 안의 앵커입니다.
-
-- [펀딩 상세](./apps-global.md#펀딩-상세-funding-detail) · [결제](./apps-global.md#결제-funding-payment) · [홈/서비스홈](./apps-global.md#홈--서비스홈-home--service-home) · [마이와디즈/위시](./apps-global.md#마이와디즈--위시-my-wadiz--wish) · [메이커/프로젝트 만들기](./apps-global.md#메이커--프로젝트-만들기-maker--create-project) · [소셜/친구추천](./apps-global.md#소셜--친구추천-social--refer-a-friend) · [검색/스토어/소싱클럽](./apps-global.md#검색--스토어--소싱클럽-search--store--sourcing-club) · [정책/WAi/기타](./apps-global.md#정책--wai--알림--이벤트--쿠폰--기타) · [packages 공통](./apps-global.md#packages-공통-ui--widgets--features)
+- [펀딩 상세](./apps-global/funding-detail.md) · [결제](./apps-global/payment.md) · [홈/서비스홈](./apps-global/home.md) · [마이와디즈/위시](./apps-global/my-wadiz.md) · [메이커/프로젝트 만들기](./apps-global/maker.md) · [소셜/친구추천](./apps-global/social.md) · [검색/스토어/소싱클럽](./apps-global/search-store.md) · [정책/WAi/기타](./apps-global/misc.md) · [packages 공통](./apps-global/packages-shared.md) · [global 내부 features](./apps-global/internal-features.md)
 
 ## 이슈키 → 영역 힌트
 
