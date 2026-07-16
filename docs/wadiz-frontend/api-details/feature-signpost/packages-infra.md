@@ -1,6 +1,6 @@
 # 기능 이정표 — 인프라 · 디자인시스템 패키지
 
-> 전체 인덱스는 [`README.md`](./README.md) 참조. 이 파일은 **화면 문구가 없는 공통 인프라/디자인시스템 패키지**의 역할·위치 참조입니다. UI 기능 패키지(`features`·`ui`·`widgets`)는 [`apps-global.md`](./apps-global.md)에 있습니다.
+> 전체 인덱스는 [`README.md`](./README.md) 참조. 이 파일은 **화면 문구가 없는 공통 인프라/디자인시스템 패키지**의 역할·위치 참조입니다. UI 기능 패키지(`features`·`ui`·`widgets`)는 [`apps-global/`](./apps-global/README.md)에 있습니다.
 > 깊이 있는 내부 구조는 기존 [`../packages.md`](../packages.md) 참조. 여기서는 "무엇을 고칠 때 어디를 보는가"만 빠르게 짚습니다.
 > 레이어(상위→하위): `features` → (`i18n`·`queries`·`ui`) → `api` → (`core`·`format`·`settings`). 하위는 상위를 import하지 않습니다.
 
