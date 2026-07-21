@@ -6,6 +6,24 @@
 
 ---
 
+> 📅 **2026-07-21 master pull 보강** (약 25 커밋)
+>
+> 약관·정책 2026.07.21 개정, 도메인 `wadiz.co → wadiz.io` 로컬 프로퍼티 전환, 미사용 SEO JSP 정리가 핵심입니다.
+>
+> ### FE2-796 / CLIENT-172 — 약관·정책 개정 및 현행 페이지 문구 정비
+> - **약관·정책 2026.07.21 개정 반영**(`web/resources/terms/` 다수 HTML). 리워드 심의정책·리워드 서비스 약관 신규 개정본 추가(`reward_screening_policy_20260630.html`, `service_reward_20260630.html`). `update-terms` 스킬에 취소선 삭제 처리·오탐 방지 규칙 보강.
+> - CLIENT-172: 약관 현행 페이지의 오탈자·띄어쓰기·조사·문법·중복·개정 이력 중복 등 문구 교정 다수(내용 변경 아닌 표기 정정).
+>
+> ### FE1-1282 — 도메인 전환 및 앱 세션 keep-alive
+> - 로컬 프로퍼티 `wadiz.co` 도메인을 **`wadiz.io`로 변경**. 앱 세션 keep-alive fetch 실패는 무시 처리.
+>
+> ### RWD-5808 / RWD-5813 / FE1-1112 — 기타
+> - RWD-5808: 재제출 약정 처리를 funding agreement API 위임으로 변경하고 미사용 약정 코드 제거(funding 측 RWD-5808 도메인 분리와 연동).
+> - RWD-5813: 자격요건 저장 시 수정 불가 예외를 `BadRequestException` 상속으로 400 응답.
+> - FE1-1112: 국내/해외 통합 후 미사용 펀딩·스토어 상세 SEO JSP 8개 제거.
+>
+> ---
+>
 > 📅 **2026-04-26 master pull 보강** (23 커밋 fast-forward)
 >
 > ### 신규 추가 영역 (32 새 파일, +2,697 / −78)

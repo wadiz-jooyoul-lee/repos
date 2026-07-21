@@ -1,5 +1,12 @@
 # co.wadiz.fep 분석
 
+> 📅 **2026-07-21 main pull 보강** (1 커밋)
+>
+> ### SCOUT-111 — DLQ 재처리 payload 형식 정합 (버그수정)
+> - **`agent/scheduler/DlqReprocessScheduler.java`** — DLQ 실패 메시지를 원본 큐에 재투입할 때 **동일한 형식의 payload**를 넣도록 수정. (아래 SCOUT-79 블록의 `DlqReprocessScheduler` DLQ 재처리 흐름의 후속 버그픽스.) 로컬 검증 테스트 `DlqReprocessSchedulerLocalTest` 추가.
+>
+> ---
+>
 > 📅 **2026-07-10 main pull 보강** (36 커밋, net-new)
 >
 > 이번 구간의 핵심은 **SCOUT-79** — FEP가 "Stripe Connect 정산 중계"에서 **PG 결제 실시간 대사(webhook 수신→중복판정→SNS 발행) 게이트웨이**로 확장되고, 저장소·재처리 인프라가 통째로 교체됨. 아래 서술 중 기존 본문(MongoDB / Batch 모듈 / API Key 인증 필터)과 충돌하는 부분은 **이 블록이 최신**이다.
