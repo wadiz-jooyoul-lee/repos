@@ -6,6 +6,28 @@
 
 ---
 
+> 📅 **2026-07-21 develop pull 보강** (26.27.0 → 26.29.1)
+>
+> 검색홈 리뉴얼(FE1-699), 앱 재시작 파이프라인(FE1-1227), 세션·네비게이션 안정화가 핵심입니다. (Bump up 커밋 다수 생략)
+>
+> ### FE1-699 — 검색홈 카드·피드 리뉴얼
+> - VIDEO 카드 썸네일→재생 전환 깜빡임 제거, 비디오 카드 최초 로딩 플레이스홀더 크기 이탈 수정, 프로젝트 카드 메이커 클럽 아이콘 제거, 섹션 여백 조정(최근↔인기 16, 인기↔피드 24). 피드 페이징 offset을 `offset+size` 전진으로 변경, masonry 재분배 stale 캡처 수정(무한스크롤 중단 근본원인, QA-22645). 최근검색어 API 식별자 부재 시 요청 스킵.
+>
+> ### FE1-1227 — 앱 재시작(AppReset) 파이프라인
+> - 리셋 파이프라인 및 DI 등록(`AppCoordinator`+`AppReset`), context 산출(cold 흡수 vs running 재시작) 단위테스트, 재시작 성공/실패 Crashlytics 로깅(`Service/*/AppReset/`).
+>
+> ### FE1-1229 / FE1-1231 / FE1-1119 — 세션·네비게이션·뱃지 안정화
+> - FE1-1229: 세션 에러 중복 얼럿 처리(versionCheck in-flight 가드).
+> - FE1-1231: back-forward 복원 시 본문 스켈레톤 잔존·빈 화면 방지(opacity 0 유지), stale 플래그 정리.
+> - FE1-1119: 뱃지 읽음 처리를 로그인 무관 **디바이스 단위**로 통일, 국가 전환 로딩 중 에디션 팝퍼 노출 방지.
+>
+> ### FE1-1142 / FE1-1170 / FE1-1209 / FE1-1082 — 기타
+> - FE1-1142: `NavigationMap` DETAIL ScreenKey을 `FUNDING_DETAIL`/`STORE_DETAIL`로 분리(`ScreenKeyMatcher`).
+> - FE1-1170: CDN config 5종을 앱 설정 API로 이관. FE1-1209: `URLConstant` 미사용 제거 및 하드코딩 도메인 전환 대응.
+> - FE1-1082: 로그인 유도 모달 데이터 수집(웹 category 사용·한글 라벨). FE1-1261: provisioning profiles 변경.
+>
+> ---
+>
 > 📅 **2026-07-10 develop pull 보강** (90 커밋, 26.23.2 → 26.27.0)
 >
 > ### FE1-1001 — 와디즈 에디션 탭 신설 (하단 탭바 "친구" 대체)

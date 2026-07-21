@@ -1,5 +1,25 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-07-21 master pull 보강** (약 29 커밋)
+>
+> 급상승 프로젝트 컬렉션 자동화(DP ES 연동), 주민등록번호 파기 배치, 약정 도메인 분리가 핵심입니다.
+>
+> ### RWD-5785 — 급상승 프로젝트 컬렉션(crowdedproject) 자동화 + DP Elasticsearch 연동
+> - 신규 자동화 컬렉션 전략 `CrowdedProjectAutomatedCollection`(+`CrowdedProjectScore`/`CrowdedProjectSource`). 신규방문자·공유유입 지표를 DP(Display Platform) ES에서 조회(`ProjectAcquisitionMetricsGateway` + `dpsearch/*` 쿼리 JSON)해 점수화. **low-level RestClient 채택**(ADR `docs/adr/RWD-5785-dp-es-low-level-client.md`, OS 전환 대비). 급상승 도메인 식별자를 `campaignId → projectNo`로 통일, rc3 환경 폐기 정리. rc 배포 health check 실패 해소를 위해 ES RestClient 자동설정 제외.
+>
+> ### RWD-5725 — 메이커 주민등록번호 파기 배치 + compliance 감사로그
+> - 보관기간 경과 파기 배치 `rrnDestructionJob`(`RrnDestructionGatewayImpl`) 추가. 파기+감사로그를 wadizdb 트랜잭션으로 사실상 원자화(`PersonalDataDestructionLog`). compliance 감사 로그용 Mongo 스택을 batch 전용 조건부 빈으로 분리하고 `@Qualifier` 고정(@Primary 오배선으로 감사 로그가 기본 DB로 저장되던 버그 수정), rc/rc2/live Mongo URI에 `authSource=admin` 추가.
+>
+> ### RWD-5808 — 약정 등록을 agreement 도메인으로 분리
+> - 약정 등록을 `CampaignSubmit` 도메인에서 별도 `agreement` 도메인(`CampaignAgreementUseCase`/`CampaignAgreementCommandGateway`)으로 분리. 약정 최초/N차 판정 시 현재 캠페인 제외하도록 수정(`CampaignAgreementMapper`).
+>
+> ### RWD-5807 / RWD-5795 / RWD-5796 — 기타
+> - RWD-5807: 서포터클럽 배송비 할인 대상 상태 추가(`CampaignScreeningMapper`).
+> - RWD-5795: 후원 프로젝트인 경우 결제동선 내 천만원 결제 제한 해제(`CalculateBillingUsecase`/`CreateOrderSheetUsecase`).
+> - RWD-5796: AI 심의 알림 `languageCode` 전달 및 `alarmData` null 방어.
+>
+> ---
+>
 > 📅 **2026-07-10 master pull 보강** (2026-06-18 이후 master, net-new 9테마)
 >
 > 컬렉션 자동화 3종 추가, 글로벌 서포터 목록 서포터클럽 뱃지, 정산내역서 다운로드 보안 강화, ISMS 5년 조회 제한이 핵심입니다.

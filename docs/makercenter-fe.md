@@ -1,5 +1,13 @@
 # makercenter-fe
 
+> 📅 **2026-07-21 main pull 보강** (4 커밋)
+>
+> ### FE2-719 — 외부 서비스 URL을 env 기반 상수로 분리
+> - 와디즈 외부 서비스 URL을 하드코딩 대신 **환경 변수 기반 상수**로 분리(`src/shared/config/urls.ts`, `src/shared/types/env.d.ts`, `.env*`). 헤더/푸터/사이드바/숏컷 등 UI 위젯이 이 상수를 참조하도록 교체.
+>
+> ### FE2-746 — E2E를 원격 배포 환경 실데이터 검증으로 전환
+> - Playwright E2E를 로컬이 아닌 **원격 배포 환경 대상 실데이터 검증**으로 전환하고 인수조건 테스트 추가. GitHub Actions 워크플로우 `app-makercenter-e2e.yml` 신규, `e2e/helpers/base-url.ts`·`utils.ts` 도입, home/search/menu SSR·SEO i18n·언어 스위처 등 테스트 보강.
+
 ## 개요
 **메이커(프로젝트 개설자)용 사용자 포털** (Next.js 앱). `makercenter.wadiz.kr` (live) / `dev.makercenter.wadiz.kr` (dev) 에 배포되어 메이커가 자신의 프로젝트를 등록·운영하는 화면을 제공합니다. Org: `wadiz-client`. 패키지명 `wadiz-makercenter`.
 

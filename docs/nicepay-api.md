@@ -1,3 +1,13 @@
+> 📅 **2026-07-21 main pull 보강** (3 커밋)
+>
+> ### RWD-5755 — n원(예약) 결제/취소 대사 이벤트 확장
+> - Stripe **n원 결제/취소 시 SQS 호출** 연결(`service/StripeService.java`). n원 결제 취소 이벤트에 `tid` 추가(`publisher/ReconEventFactory.java`). (아래 2026-07-10 블록의 실시간 대사 발행 파이프라인 후속 보강.)
+>
+> ### RWD-5816 — clive 람다·SNS 토픽 추가
+> - clive(cloud live) 환경용 `aws/lambda/lambda_msg2sns.py` 람다와 SNS 토픽 추가.
+>
+> ---
+>
 > 📅 **2026-07-10 main pull 보강** (10 커밋)
 >
 > ### RWD-5755 실시간 대사(reconciliation)용 SQS FIFO 직접 발행 신설

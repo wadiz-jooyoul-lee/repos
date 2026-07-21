@@ -1,5 +1,13 @@
 # com.wadiz.api.reward 분석 문서
 
+> 📅 **2026-07-21 master pull 보강** (1 커밋)
+>
+> ### RWD-5794 — issueKey로 쿠폰 템플릿 상세 조회 기능 추가
+> - **`rest/coupon/CouponTemplateController.java`** — issueKey(쿠폰 발급 키)로 쿠폰 템플릿 상세를 단건 조회하는 엔드포인트 추가. 조회 로직은 `coupon/application/CouponTemplateService.java`에 추가. 통합 테스트(`CouponTemplateControllerIntegTest`) 동반.
+> - 소비처: `com.wadiz.wave.user`의 회원가입 쿠폰 조회(BE3-592)가 이 by-issue-key API를 호출한다.
+>
+> ---
+>
 > 📅 **2026-07-10 master pull 보강** (net-new 1건 + 반영/취소 이력)
 >
 > ### (issue key 없음) — 쿠폰 다통화 Repository 실행 시 IllegalAccessError 해결

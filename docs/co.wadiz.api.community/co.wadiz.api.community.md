@@ -1,5 +1,26 @@
 # co.wadiz.api.community
 
+> 📅 **2026-07-21 master pull 보강** (47 커밋)
+>
+> 직전 갱신(2026-07-10) 이후 **content-profiler 2차 대개편**, **모니터링 MCP 서버 신설**, **메이커 의견 알림(RWD-5754) 발송 파이프라인 정합화**가 핵심이다.
+>
+> ### RWD-5761 — content-profiler 2차 (CDC 파이프라인 대개편)
+> - produce/result 파이프라인 정비 + `PERSONAL_MESSAGE` split, CDC consumer 상속→조합(composition) 전환(`38fec0f`), URL 평판 이원화(계약 §5.2), `meta_prompt_version`·MiniBoard 타입 세분화. dedup 옵션 D로 **중앙 `profile_content_hash` 폐지**(`b069437`), 빈글 메타 전 타입 미저장(계약 §5). 결과 DLT Slack 알림 + 고심각(PHISHING/DELETE_SUGGEST) Slack 알림. Kafka 토픽 설정 외부화, 요청 토픽 개명 `content-profiler-requested-v1`.
+> - 신규 매퍼/저장소: `mapper/content_profiler/ContentProfileMapper.xml`, `ContentThreatUrlMapper.xml`, `shared/contentrule/normalize/TextHasher.java`, `shared/lock/RedisDistributedLock.java`. H2 통합테스트·프로파일러 IT(`profiler-it/`) 대거 추가.
+> - MiniBoard CommentType bulk 전환 + 소스값(SUPPORT/SUGGESTION) 버그수정(`79391a4`).
+>
+> ### RWD-5761 / RWD-5814 / RWD-5815 — 임시 모니터링 MCP 서버 (T&S read-only)
+> - 프로필 메타·원문 조회용 read-only MCP 서버 신설(`mcp/ProfileMonitoringTools`). 인증 헤더를 `X-Mcp-Token`으로 분리해 게이트웨이 `Authorization` 충돌 회피(`McpBearerTokenFilter`), `listActionTargets`(조치 권고 통합 조회) 도구 추가, 세션 방식 → **STATELESS 전송 전환**(세션·리스닝 스트림 제거), `sinceHours` 필터 TZ 정합(DB NOW() 기준).
+>
+> ### RWD-5754 — 메이커 의견 알림 발송 파이프라인 정합화
+> - 발송 윈도우 판정을 status 기반(오픈예정 포함)·`batchDate` KST 날짜 기준으로 전환, 중단(일시중지) 프로젝트 제외, 코호트 분리·keyset·chunk batch·언어기준 정교화, 이력 적재 제거. `OpinionPostMapper.xml` 추가.
+> - 메이커 판별 bulk API 전환으로 `getCampaignMakerInfo` N+1 제거, external-api base-url을 서비스 라우팅으로 통일 + internal-token을 cloud secret env 참조로 이관, **`wadiz.domain.kr`를 host-only로 통일**(알림 URL 이중 scheme 수정). push 실패 로그 상세화(HTTP status·PushResponse), 앱푸시 ja/zh 영문화. 랜딩 URL을 funding 커뮤니티 댓글 경로로 변경. 답글 유도 알림 배치 추가.
+>
+> ### RWD-5806 — 의견 알림 배치 조회 튜닝
+> - 배치 조회 쿼리 statement timeout을 환경별 설정으로 분리, 메일 `domainCode` 반영 + cron base default 일원화.
+>
+> ---
+>
 > 📅 **2026-07-10 master pull 보강** (24 커밋)
 >
 > 직전 갱신(2026-06-17, endpoint 44) 이후 **콘텐츠 룰 차단(Content Rule)** 신규 도메인이 추가됐다. 생성 시점 결정론적 룰(ML/외부DB/LLM 0)로 피싱·홍보를 동기 평가·차단하는 1차 게이트 + CDC(Kafka) 기반 URL 평판 후처리 차단. 2개 신규 모듈(`module/content_rule`, `module/content_profiler`) + 무의존 코어(`shared/contentrule`). **신규 컨트롤러 1개 · endpoint 3개 추가 → 총 13 컨트롤러 · 47 endpoint**.

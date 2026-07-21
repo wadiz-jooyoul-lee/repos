@@ -1,3 +1,11 @@
+> 📅 **2026-07-21 master pull 보강** (3 커밋 · 전부 BE3-592 단일 피처)
+>
+> ### BE3-592 — 회원가입 쿠폰 정보 조회 API 추가 (user-api)
+> - **`coupon/controller/CouponInquiryController.java`** — 회원가입 쿠폰 조회 컨트롤러 신규(user-api). `coupon/service/SignupCouponInquiryService.java`가 조회 로직 담당.
+> - 가입 쿠폰 조회를 reward의 **by-issue-key 단건 API**로 대체(`f8124a6` 계열). 신규 게이트웨이 `coupons/RewardCouponGateway.java` + 설정 `config/RewardCouponApiConfig.java`로 reward-api(RWD-5794로 추가된 issueKey 상세 조회)를 호출. 단위 테스트 3종 추가.
+>
+> ---
+>
 > 📅 **2026-07-10 master pull 보강** (14 커밋 · 전부 BE3-464 단일 피처)
 >
 > ### BE3-464 — 따라잡기(catchup) 보너스 + v2 API 신설

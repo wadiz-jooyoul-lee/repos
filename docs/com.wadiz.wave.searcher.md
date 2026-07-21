@@ -6,6 +6,16 @@
 
 ---
 
+> 📅 **2026-07-21 master pull 보강** (4 커밋)
+>
+> ### 검색 홈 피드 배너 정렬 기준 변경 (DISPLAY-1634)
+> - 검색 홈 피드 배너 정렬을 `RAND()` → **`BannerSeq ASC`** → 최종 **어드민 출력 순서(`OrderNo`)** 기준으로 변경(`banner/repository/BannerQueryRepository.java`, `banner/service/BannerQueryService.java`, `home/SearchHomeFeedService.java`). 코드 주석의 일감 번호 표기 제거.
+>
+> ### 그룹 통계 문서 미존재 시 APM 에러 방지 (DISPLAY-1610)
+> - 그룹 통계 문서가 없을 때 예외가 APM 에러로 잡히지 않도록 조회 방식 변경(`stat/ProjectCountByGroupSearchServiceImpl.java`). `config/CacheConfig.java`·`application-localrc2.yml` 소량 변경.
+>
+> ---
+>
 > 📅 **2026-07-10 master pull 보강** (16 커밋)
 >
 > ### 신규 엔드포인트: 검색 홈 추천 피드 `GET /api/search/home-feed` (DISPLAY-1594)
