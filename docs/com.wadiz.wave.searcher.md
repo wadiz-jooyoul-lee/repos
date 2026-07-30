@@ -6,6 +6,28 @@
 
 ---
 
+> 📅 **2026-07-31 master pull 보강** (11 커밋)
+>
+> ### 신규 엔드포인트: 막펀잡기(마감임박 따라잡기) `GET /api/search/v1/catchup/ending-soon` (DISPLAY-1637, DISPLAY-1660)
+> - `CatchupController.getEndingSoon` 신규. 헤더 `encUserId`(암호화 회원 식별값, **필수** — 없거나 복호화 실패 시 400)·`wadiz-country`(기본 KR). 로그인 필수 서비스 (`web/rest/catchup/CatchupController.java`).
+> - 노출 대상이 `MIN_DISPLAY_COUNT`(5) 미만이면 영역 미노출 정책에 따라 `200 + data null + "no data"` 반환. 조건 충족 시 `serverTime`·`refreshTime`(익일 00:00:05 KST, 자정 경계 레이스 방지)·`projects[]` 로 응답 (`web/payload/CatchupEndingSoonResponse.java`).
+> - 신규 계층: `core/catchup/service/CatchupEndingSoonService`, `core/catchup/query/CatchupEndingSoonQuery`, `core/catchup/repository/CatchupEndingSoonQueryRepository`, `core/catchup/result/EndingSoonProject`.
+> - 쿼리를 날짜(`LocalDate`) 기반으로 단순화, 마감 하한을 요청시각(now)으로 두어 종료 즉시 제외, 일시정지 프로젝트 제외 (DISPLAY-1637). 응답 DTO 를 epoch 기반 `EndingSoonProject` 로 통합(중간 매핑 제거), 미사용 `wadiz-language` 헤더 제거.
+> - 정렬: **찜 우선·결제 제외를 오늘 마감(D-0)에만 적용** (DISPLAY-1660).
+>
+> ### 검색 홈 추천 피드 v2 교체 (DISPLAY-1661)
+> - `GET /api/search/home-feed` 구현을 **v2 로 교체**. 기존 v1 핸들러(`getHomeFeed`)는 주석 처리하고 같은 경로에 `getHomeFeedV2` 를 두어 `SearchHomeFeedV2Service` 사용(응답 스펙 동일, 롤백 시 주석 복원) (`web/rest/home/SearchHomeFeedController.java`). ※ 커밋 메시지의 `/search/home-feed/v2` 신규 표기는 최종 코드와 다름 — 실제로는 v1 경로를 인플레이스 교체.
+> - ES 인덱스 **`search_home_feed_v2-alias`** 사용. key(=_id) 단위로 **펀딩/스토어/랭킹 3개 그룹**을 보관(그룹 간 중복 제거·그룹별 개수 상한은 색인 단계에서 완료). key 포맷은 v1 과 동일(`USER:{userId}`/`DEVICE:{deviceId}`/`-1`) (`model/home/SearchHomeFeedV2.java`, `service/home/SearchHomeFeedV2Service.java`).
+> - 카드 조합: **펀딩 → 스토어 → 랭킹 그룹 순서로 소진**, 셔플은 그룹 경계 안에서만. **비KR 은 스토어 후보를 카드 조합 전에 제외.**
+> - `wadiz-country` 를 이 엔드포인트에서 `CountryCode` enum → **`String`** 으로 변경. enum 은 KR/US/CN/JP 외 값을 US 로 접어(`CountryCode#fromCode`) DE·NG 등이 미국 기준으로 배송 필터되므로, **배송 국가 판정에 요청 원문 국가코드**를 그대로 사용.
+>   - `IntegrateCampaignQueryService.findProjectsByCampaignIds` 에 `String countryCode` 오버로드 추가. `shippingCountryCodes`(대문자 색인) 비교와 STORE 글로벌 제외 판정을 원문 국가코드(대문자화) 기준으로 수행 (`core/campaign/service/IntegrateCampaignQueryService.java:218-278`).
+>   - `IntegrateCampaignResultConverter.convertByRawCountry` 신규 — `isDeliveryAvailable`/`isGlobalShippingAvailable` 를 원문 국가코드로 판정(`mapDeliveryAvailableByRawCountry`/`mapGlobalShippingAvailableByRawCountry`), `hasCoupon` 등 배송 무관 매핑은 기존 `CountryCode` enum 유지 (`core/campaign/converter/IntegrateCampaignResultConverter.java`).
+>
+> ### `/api/search/v2/products` 빈 검색 결과 500 → 200 (DISPLAY-1638)
+> - 프로젝트 번호 없는(검색 결과 없는) 요청에서 500 이 나던 문제를, 결과가 비면 빈 `ResultOfList` 로 `200` 응답하도록 수정 (`web/rest/campaign/SearchController.java:150-152`).
+>
+> ---
+>
 > 📅 **2026-07-21 master pull 보강** (4 커밋)
 >
 > ### 검색 홈 피드 배너 정렬 기준 변경 (DISPLAY-1634)

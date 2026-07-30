@@ -1,5 +1,19 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-07-31 main pull 보강** (4 커밋)
+>
+> ### [Shared] `create-store-project` 스킬 신설
+> - 라이브(`www.wadiz.kr`) **스토어 프로젝트**를 공개 API로 수집해 대상 환경(dev/rc1/rc2)의 `wadiz_store` DB에 직접 INSERT하여 **판매중(ON_SALE) 스토어 프로젝트**를 만드는 테스트 데이터 스킬. 기존 펀딩 스킬 `create-project`의 "API 수집 → DB 적재(FK 순서·LAST_INSERT_ID·트랜잭션)" 패턴을 스토어로 이식했다. RC2 정상 프로젝트 852(MARKETPLACE, ON_SALE)를 역설계한 시그니처와 1:1 동일 생성을 목표로 한다 (`plugins/shared/skills/create-store-project/SKILL.md` 341줄 + `references/config.json` 46줄).
+> - **이전 펀딩 연결/미연결** 선택(미연결=MARKETPLACE·`campaign_id` NULL / 연결=대상 환경 캠페인 존재 확인 후 `project_base_funding` 채움). 상세는 URL 직접 진입 시 정상이나 목록/검색/기획전은 ES 색인 기반이라 직접 INSERT는 미노출될 수 있음을 결과에 안내. 이미지는 상대 key만 저장(환경별 CDN 상이)하고 presign 업로드에 메이커 로그인 세션 필요. DB 접속정보는 글로벌 `~/.claude/CLAUDE.md` 참조(파일 미저장).
+>
+> ### [Shared] `create-project` 라이브 복제 누락 데이터 보완
+> - 리워드 조회 엔드포인트 파라미터 정정: `country` → **`shippingCountry`** + `isPreview=false` 필수, host 는 `www`(=`stage` 는 400). `RewardImage`(리워드 대표 이미지 `featuredImageUrl`)·`CampaignAutoOpen`(coming-soon 오픈 예정일 소스 `Scheduled`) INSERT 블록과 `categoryCode` 매핑 추가. `imageUrls` 는 모든 state 에서 `liveThumbnailUrl` 을 0번 인덱스로 통일해 카드 썸네일이 인트로 첫 장(GIF 등)으로 잘못 노출되는 문제 방지.
+>
+> ### [Client·Shared] 버전 bump 및 매니페스트 경로 정리
+> - `wadiz-client` 플러그인 버전 0.5.8 → **0.5.9**, 존재하지 않는 `"commands": "./commands/"` 경로 제거(`plugins/client/.claude-plugin/plugin.json`). `wadiz-shared` 매니페스트 0.4.2 → **0.4.4**, marketplace 의 shared 항목 0.2.0 → **0.2.2**.
+>
+> ---
+
 > 📅 **2026-07-10 pull 보강** (2 커밋, feature/supporter-e2e-testid-skill)
 >
 > ### [FE1] `supporter-e2e-testid` 스킬 신설
@@ -40,6 +54,8 @@ templates/
 | 종류 | 이름 | 목적 |
 |---|---|---|
 | skill | `dev-db-query` | 개발 DB 직접 조회 (사내 DB 접속 헬퍼) |
+| skill | `create-project` | 펀딩 프로젝트 생성 — 라이브 캠페인을 API로 수집해 대상 환경 DB에 직접 INSERT (진행중/오픈예정/종료 테스트 데이터) |
+| skill | `create-store-project` | 스토어 프로젝트 생성 — 라이브 스토어 프로젝트를 API로 수집해 대상 환경 `wadiz_store` 에 직접 INSERT (판매중 ON_SALE, 이전 펀딩 연결/미연결 선택) |
 | skill | `example` | 템플릿 예제 |
 
 ### `wadiz-fe1` (FE개발1팀)
@@ -110,7 +126,7 @@ templates/
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-19** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-31** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
@@ -126,3 +142,6 @@ templates/
 | [FE2] `jira-markdown-format` 스킬 + Jira 포맷 가드 훅(`jira-format-guard.py`) 추가 | 2026-06-11 | FE2-506 |
 | [FE2] 플러그인 경로·MCP 도구·훅·문구 정합성 보정 + `incremental-lint.sh` 훅 / marketplace fe2 버전 라벨 0.3.0 동기화 | 2026-06-15 | FE2-534 |
 | [Client] regular-release **인계/인수(take-over)** 기능 추가 | 2026-06-16 | - |
+| [Shared] `create-store-project` 스킬 신설 (라이브 스토어 프로젝트 API 수집 → `wadiz_store` 직접 INSERT, ON_SALE) | 2026-07-31 | - |
+| [Shared] `create-project` 라이브 복제 누락 데이터 보완 (RewardImage·CampaignAutoOpen·categoryCode·rewards 엔드포인트 파라미터 정정) | 2026-07-31 | - |
+| [Client] wadiz-client 0.5.8 → 0.5.9 + 매니페스트 미존재 `commands` 경로 제거 | 2026-07-31 | - |

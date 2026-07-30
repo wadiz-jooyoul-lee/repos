@@ -5,6 +5,43 @@
 
 ---
 
+> 📅 **2026-07-31 main pull 보강** (직전 갱신 2026-07-21 이후 187커밋, ~ v26.30.0 build 587)
+>
+> **마감임박(막펀잡기, Final Call) 피드 신규 모듈**이 이번 릴리즈의 핵심입니다. 그 외 위시 지면 노출 구좌, 리워드 선택 모달 공용화, OkHttp 커넥션 풀 공유, SNS 로그인 실패 계측, 검증 자동화 하네스 재도입이 포함됩니다. (버전 자동 업데이트 커밋 다수 생략)
+>
+> ### PRODUCT-859 / FE1-1237·1240·1241·1246·1248 — 마감임박(막펀잡기) 피드 신규 feature 모듈
+> - `feature:ending-soon` 모듈 신설(`settings.gradle.kts:60`). GNB "위시" 탭 자리를 마감임박 피드로 대체(A-1). `CatchUpFragment` 미러링 구조의 풀 컴포즈 화면 — `feature/ending-soon/.../endingsoon/EndingSoonFragment.kt`, `EndingSoonScreen.kt`, `EndingSoonViewModel.kt`, `compose/EndingSoonCardView.kt`·`EndingSoonFeedPager.kt`·`EndingSoonProgressBar.kt`
+> - 신규 API 2종(`serviceUrl`): 마감임박 리스트 `GET /api/search/v1/catchup/ending-soon`, ID 목록 상품 조회 `GET /api/search/v2/products` (`core/network/.../service/service/WadizServiceAPIService.kt:64,73`). DTO `EndingSoonListResponse`/`EndingSoonProductsResponse`, 리포지토리 `core/data/.../repository/endingsoon/RealEndingSoonRepository.kt`, 모델 `core/model/.../model/endingsoon/EndingSoonItemModel.kt`
+> - 자동넘김 5초 롤링, 카드 전체 1콜 조회(청크 페이징 폐기), 마지막 카드 이어보기 DataStore 영속, 서버시각 앵커 기반 모노토닉 시계(`core/common/.../time/MonotonicClock.kt`, `core/model/.../endingsoon/ServerTimeAnchor.kt`) 도입
+> - FE1-1248: "막펀잡기" 리네임 + waditag 수집 배선(지면명 정정). FE1-1259: 하드코딩 문자열 i18n 키 전환. FE1-1296: 환기형 카드 width 통일
+>
+> ### 막펀잡기 후속 (FE1-1327·1328·1332·1337·1339·1340·1343·1351)
+> - FE1-1327: GNB 막펀잡기 등장 애니메이션(세션당 1회, `feature/.../view/main/AppSessionTracker.kt`). FE1-1339: 자동넘김 5초·타이틀 폰트 16. FE1-1351: 드래그 중 롤링 정지·넘김 취소·재무장
+> - FE1-1328: Braze `finalcall_pv`(마감 5초 유예 게이트)·`finalcall_complete`(마지막 카드 첫 도달 1회) 이벤트. FE1-1332: 쿠폰 뱃지 정액/정률 max 노출
+> - FE1-1337: 딥링크 네이티브 진입 — `ScreenKey.ENDING_SOON`→`ENDING_SOON_CATCHUP` 리네임, `remote_config_defaults.json` navigationMap 라우트 추가. FE1-1343: 국가 변경 시 이어보기 초기화. FE1-1340: BNB 위시 팝퍼 미사용 코드 제거
+> - 관련 QA: QA-22764(막펀잡기 상태바 다크·시스템바 역할별 리네임·더보기 버튼명 잘림), QA-22798(프로그래스바 정지 상태 상세 이동 후 유지), QA-22705(찜 토스트 탭 랜딩)
+>
+> ### FE1-1256 / FE1-1321 / FE1-1325 — 마이와디즈 찜한 펀딩 환기영역(위시 지면 노출 구좌)
+> - 마이와디즈 대시보드 타입에 `WISH` 추가(데이터 수집, `MyWadizSupporterDTO.kt`). 환기영역 노출 개수 제한, `sectionId` 참조 제거. QA-22767: 찜 영역 스크롤 시 하단 서포터클럽 영역이 함께 움직이던 현상 수정
+>
+> ### FE1-1275 — 리워드 선택 웹 모달 공용 런처 + toast.show 웹뷰 브릿지
+> - 프로젝트 번호만 넘기면 표준 스펙으로 여는 전역 런처 `feature/.../navigation/RewardSelectionModalLauncher.kt`(80% 고정 바텀시트, 중복 가드), `core/ui/.../webview/modal/ModalWebViewConfig.kt`
+> - `toast.show` 웹뷰 브릿지를 공통 처리로 승격 — 레거시 웹뷰 포함 전 호스트 지원, 상단 커스텀 토스트 렌더(warning 타입 = 빨간 에러 토스트)
+>
+> ### FE1-1109 — OkHttp 커넥션 풀·디스패처 공유 (API 첫 요청 지연 개선)
+> - 모든 API Provider가 커넥션 풀·디스패처를 공유하는 `SharedOkHttpClient` 도입(`core/network/.../service/SharedOkHttpClient.kt`). `maxIdleConnections=10`, `maxRequestsPerHost=64`, `maxRequests=128`. Provider별로 흩어진 host당 상한(각 25)을 통합
+>
+> ### FE1-1323 — SNS 로그인 SDK 인증 단계 실패 계측
+> - 서버 도달 전(SDK 초기화·인증) 실패를 진단할 수 없던 공백 해소. `core/analytics/.../analytics/SnsSignInLogger.kt` 가 provider/errorCode를 **이벤트 스코프 커스텀 키**로 부착해 non-fatal 기록(세션 전역 키 오염 방지). 취소 경로 계측 유실 수정. Kakao/Naver/Line/Facebook 예외 타입 추가
+>
+> ### 쿠폰·개발 인프라
+> - FE1-1332 쿠폰: 국가별 게이트를 `hasCoupon` 권위값 신뢰로 변경(금액 파생 제거). `DownloadBoosterCouponsUseCase`, `WishBadgeUseCase` 신규
+> - FE1-1290: 다국어 동기화 워크플로 통합(고정 `i18n-sync` 브랜치, PR 방식 전환, 셸 인젝션 회피). FE1-1262/1246: PR 변경 모듈 단위 유닛 테스트 CI(`.github/workflows/pr-changed-module-test.yml`)
+> - FE1-1180~1183 검증 자동화 하네스 **재도입**(직전 릴리즈의 전량 Revert를 다시 Revert). 신호 프로토콜(레지스트리 JSON + 드리프트 검사기)·`scripts/tc/` 재편, `/write-tc`·`i18n-key-extract`·`android-intent-security` 스킬 추가
+> - FE1-1237 gradle wrapper 공식 9.4.1 재생성, FE1-1286 qa 빌드 소스셋에 개발 환경 주소 포함, FE1-1120 누락 `consumer-rules.pro` 추가. 의존성 bump(google-services 4.5.0, firebase-bom, rootbeer-lib, libphonenumber)
+>
+> ---
+>
 > 📅 **2026-07-21 main pull 보강** (직전 갱신 2026-07-10 이후, v26.27.2 ~ v26.29.2)
 >
 > 앱 세션 재시작, 구글 로그인 가드, GNB 재사용 웹뷰 예외 수정, 데이터 수집 정합이 핵심입니다. (버전 자동 업데이트 커밋 다수 생략)

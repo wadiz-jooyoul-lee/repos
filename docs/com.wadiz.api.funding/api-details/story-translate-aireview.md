@@ -1,10 +1,10 @@
 # Story / Translate / AI Review API 상세 스펙
 
-프로젝트 스토리 조회·번역·AI 심사 관련 **16개 엔드포인트**.
+프로젝트 스토리 조회·번역·AI 심사 관련 **17개 엔드포인트**.
 
 - **대상 컨트롤러**:
   - `StoryController` (`/api/story`) — 2개 (Public 조회)
-  - `StoryCopyInternalController` (`/api/internal/story-copy`) — 1개 (Admin, 스토리 복사)
+  - `StoryCopyInternalController` (`/api/internal/story-copy`) — 2개 (Admin, 스토리 복사·버전 복구)
   - `StoryTranslationRequestController` (`/api/v1/translate/request`) — 1개 (메이커/관리자)
   - `StoryTranslationInternalController` (`/api/internal/story-translation`) — 1개 (Admin)
   - `StoryTranslationController` (`/api/internal/translation`) — 3개 (외부 번역 서비스 콜백)
@@ -61,6 +61,24 @@
 
 ### DB 호출
 `storyCopyProxy.copyStoryToOngoing(projectNo, adminUserId)` — funding-core. `Campaign.IntroDetails` UPDATE + 관련 언어/이미지 복사.
+
+---
+
+## 3-1. POST `/api/internal/story-copy/{projectNo}/restore` — 스토리 버전 복구 (Admin) (RWD-5792)
+
+사후심사 히스토리의 특정 버전(스냅샷)으로 스토리를 복구. 스냅샷 언어를 기준으로 작성언어/옵션언어를 분기 처리.
+
+- **Method**: `StoryCopyInternalController.restoreStoryByVersion`
+
+### Request Body — `StoryRestoreRequest{revivalHistoryId, adminUserId}`
+
+### Response — `ServiceOperationResponse`
+- 성공: `"스토리 복구가 완료되었습니다."`
+- `StoryCopyFailedException` → errorCode `STORY_RESTORE_FAILED`
+- 기타 Exception → `INTERNAL_ERROR`
+
+### DB 호출
+`storyCopyProxy.restoreStoryByVersion(projectNo, revivalHistoryId, adminUserId)` → `StoryCopyUseCase`/`StoryCopyGatewayImpl`/`StoryCopyMapper`. 스냅샷(RevivalHistory) JSON을 역직렬화해 스토리를 복원하며, 미지 필드(`encPhotoId`)는 `@JsonIgnoreProperties(ignoreUnknown = true)`로 무시.
 
 ---
 

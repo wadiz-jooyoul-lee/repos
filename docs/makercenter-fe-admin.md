@@ -1,5 +1,23 @@
 # makercenter-fe-admin
 
+> 📅 **2026-07-31 main pull 보강** (47 커밋)
+>
+> ### CLIENT-192 — 기획전 CRM 탭 전면 개편 (회차 발송현황·D-N 라인업·광고 패키지)
+> - 기획전 관리에 CRM 탭을 재구조화하고 조회 화면(발송현황)과 편집 폼(하위 탭 2단)을 분리. 회차별(FAQ/BENEFIT/TEASING/OPEN 등) 발송현황 섹션을 신설해 회차 테이블·상태 칩·caveat 안내·에러 토스트를 표시하고, tid별 발송 이력을 Collapse 카드형 하위행으로 펼쳐 실패 카운트까지 노출 (`src/components/exhibitionManage/CrmRoundsSection.jsx` 신규, `src/pages/ExhibitionManagement.jsx`, `src/components/common/TabPanel.jsx`).
+> - `crm_auto_send`(자동발송) 토글을 CRM 탭으로 이동. 생성 시 기본 ON, 수정 시 기존 값 유지, payload에 포함. 자동발송 OFF이면 미발송 회차(TODAY·WAITING) 라벨을 '발송 안함(자동발송 꺼짐)'으로 오버라이드하고 SENT·EXPIRED는 유지 (`src/components/exhibitionManage/ExhibitionForm.jsx`, `ExhibitionEmailTab.jsx`).
+> - 수동 FAILED 재시도 버튼 추가: 조건부 노출 → confirm → POST → 토스트 → 재조회, 409 처리 (`src/api/exhibition.js` `retryCrmFailed`).
+> - D-N 라인업 표 도입: 회차 행 오른쪽 입력 열에서 티징/기획전 링크를 인라인 입력(입력 회차만 노출, 미입력 회차 '—'), 채널·발송예정일 열 줄바꿈 방지 (`src/components/exhibitionManage/CrmLineupTable.jsx`·`CrmDnSettingsTab.jsx`·`crmLineup.js` 신규).
+> - 광고 패키지 입력을 D-N 탭에 추가(`ad_package_url`·`ad_package_list`), 이후 템플릿 고정 이미지 사용으로 전환해 항목을 `{name, contents}`만 저장하도록 정리(이미지 업로드 핸들러 제거). FAQ 변수 미러 반영.
+> - 신청완료 자동발송 설정의 실시간 미리보기를 토글 높이 기준 상단 배치, 신청완료 메일 배너를 상단으로 이동하고 미리보기 스크롤(`scrollPreviewTo`) 복원. 대상 미리보기 다이얼로그는 도입 후 제거(`AudiencePreviewDialog`·`crmAudience` API 죽은 코드 정리).
+>
+> ### CLIENT-181 — CRM 발송 이력에 메일 열람 통계 표시
+> - 메일 회차(FAQ/BENEFIT/TEASING/OPEN) 발송 이력에 mail-statistics를 lazy 연동해 열람 통계를 표시(알림톡 회차는 BE 400). 청크 공유 tid에서 하위행 React key 중복을 해소 (`src/api/exhibition.js` `crmMailStatistics`).
+>
+> ### CLIENT-193 — CRM 링크 변수 URL 스킴 저장 검증·쿠폰 치환변수 정리
+> - 티징·기획전·광고 패키지 링크 변수의 URL 스킴을 저장 시점에 검증. 쿠폰 치환변수를 고정 6키 대신 `coupons` 배열 미러로 동기화 (`src/components/exhibitionManage/ExhibitionEmailTab.jsx`).
+>
+> ---
+>
 > 📅 **2026-07-10 main pull 보강** (19 커밋)
 >
 > ### CLIENT-169 — 기획전/신청자 API REST 표준 계약 적용
@@ -82,6 +100,9 @@
 | 기획전 신청자 목록 | GET `/api/exhibition/applicants` | 신청자 조회 |
 | 기획전 신청자 Excel | GET `/api/exhibition/applicants/excel` | 엑셀 다운로드 |
 | 기획전 등록 | POST `/api/exhibition` | 기획전 생성 |
+| CRM 회차 발송현황 | GET `/api/exhibitions/{id}/crm-rounds` | 회차별 발송 상태·이력 (CLIENT-192) |
+| CRM 실패 재시도 | POST `/api/exhibitions/{id}/crm-rounds/{roundType}/retry-failed` | 수동 FAILED 재시도 (CLIENT-192) |
+| CRM 메일 열람 통계 | GET `/api/exhibitions/{id}/crm-rounds/{roundType}/mail-statistics` | 메일 회차 열람 통계 (CLIENT-181) |
 | 인기 키워드 | GET/POST `/api/popular` | 인기 검색어 관리 |
 | 뉴스레터 | GET/POST `/api/newsletter` | 뉴스레터 발송 관리 |
 | 파일 업로드 | POST `/api/file/upload` | S3 업로드 (BE 경유) |
@@ -106,10 +127,13 @@
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-06-16** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-31** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 기획전 CRM 탭 전면 개편 (회차 발송현황·D-N 라인업 표·광고 패키지 입력·자동발송 토글·수동 재시도) | 2026-07-31 | CLIENT-192 |
+| CRM 발송 이력 메일 열람 통계 표시 (mail-statistics 연동) | 2026-07-31 | CLIENT-181 |
+| CRM 링크 변수 URL 스킴 저장 검증·쿠폰 치환변수 배열 미러 | 2026-07-31 | CLIENT-193 |
 | ISMS 대응 — 어드민 계정 발급 절차 변경 (가입 화면 권한·업무 셀프 선택 폐지, 권한 수정은 운영자 화면으로 일원화) | 2026-06-09 | FE2-421 |
 | 게시글 작성 시 Froala 스타일 적용 안 함 토글 추가 | 2026-05-22 | CLIENT-116 |
 | 기획전 이메일 쿠폰 권종 다건 입력 지원 | 2026-05-21 | CLIENT-96 |

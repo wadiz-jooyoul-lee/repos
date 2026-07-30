@@ -9,6 +9,12 @@
 
 ---
 
+## 최근 변경사항 (2026-07-31 pull 기준)
+
+- **SCOUT-123 — 배송 추적 level 0 유효 처리**: `store-service/misc/.../tracker/TrackerService.java`가 리워드브리지(`rewardBridgeApiClient.getTrackingInfo`) 응답의 tracking `level`이 0이면서 `result="Y"`(송장 등록/집하 전 상태)인 경우를 오류 대신 정상으로 판정해 `TRACKING_LEVEL_MIN`을 반환하도록 변경했습니다. 함께 `store-shared/external/.../rewardbridge/payload/TrackingInfoResponse.java`에 `result` 필드를 추가했고, 기존 level 0 예외 메시지는 `String.format`으로 치환했습니다. 엔드포인트 시그니처 변경은 없습니다.
+
+---
+
 ## 1. 기술 스택
 
 | 항목 | 내용 | 근거 |

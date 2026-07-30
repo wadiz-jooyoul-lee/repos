@@ -1,5 +1,25 @@
 # co.wadiz.api.community
 
+> 📅 **2026-07-31 pull 보강** (9 커밋)
+>
+> 직전 갱신(2026-07-21) 이후 변경은 전부 **content-profiler(RWD-5818) 내부 보강**과 **모니터링 MCP 확장(RWD-5841)** 이다. 신규 `@RestController`·REST endpoint 는 없다(총 13 컨트롤러 · 47 endpoint 유지). MCP 도구는 Spring AI `@Tool` 이라 REST 목록과 무관.
+>
+> ### RWD-5818 — content-profiler 위협탐지·재사용·크로스DB 정합
+> - **maker corpNo 강화**: 전 CDC startup 통합 + startup 게이트웨이 신설(`integration/startup/StartupApiGateway` + `StartupApiProperties` + DTO `StartupApiResponse`/`StartupMember`/`StartupProjectType`) + Redis 멤버 캐시(`a20ecf2`).
+> - **위협탐지 Slack 알림 신설**(`module/content_profiler/integration/notification/ProfileThreatAlertNotifier`): 최고 심각 조합(`PHISHING ∧ DELETE_SUGGEST`) 시 위협탐지 전용 채널(`SlackWebhookClient#sendThreatAlert`)로 분리 발송, 고심각 메시지 개편, dedup reuse 재등장 알림 추가(`bc9af91`).
+> - **위협탐지 후속**: reuse self-guard + reuse 재등장 알림 스로틀을 Redis `SETNX`(`CacheService#setIfAbsent`)로 — 원본 contentId 단위 fleet-wide 1회 수렴, Redis 오류 시 skip(폭주 억제 우선)(`e185268`).
+> - **크로스DB 매퍼 원자화 + `ContentBodyResolver` 디스패치 일원화** + `NEWS_COMMENT` campaignId 2-hop 해석. 신규 `CampaignContentResolver`/`crossdb/CampaignContentMapper`(+XML)/`ParentCampaignId`(`835b3aa`).
+> - **reuse 평가 보완**: 동일 `contentId`·동일 `sha`(본문 무변경)면 재평가·발행 skip(`07f8ccb`).
+> - **라이브 파싱 오류 수정**: `SatisfactionData` 의 미사용 `AverageScore` 필드 제거(`6defcc9`).
+> - `ContentType` enum 에 사용자 노출 한글 `label`(알림·로그 표기) 부여 — 정의 시점 강제로 파생 map 드리프트 방지.
+>
+> ### RWD-5841 — 임시 모니터링 MCP 확장 (T&S read-only)
+> - **campaignId 필터 + 캠페인 단위 판정 요약 도구**(`campaignProfileSummary`) 신규(원 테이블 역조회 `CampaignContentResolver`), **sentiment 집계 보강**, **'판정 완료(DONE)만 제공' 원칙**(`a94a9bc`).
+> - **기간(`from`/`to`, KST) 조회 모드** 추가(기존 `sinceHours` 최근 모드와 2모드 운용) + 분포 도구에서 **0건·미판정 제외**(`7ec13ad`).
+> - STATELESS 전송 전환 완료 후 **keep-alive 설정 제거** 정리(`8c0b587`).
+>
+> ---
+>
 > 📅 **2026-07-21 master pull 보강** (47 커밋)
 >
 > 직전 갱신(2026-07-10) 이후 **content-profiler 2차 대개편**, **모니터링 MCP 서버 신설**, **메이커 의견 알림(RWD-5754) 발송 파이프라인 정합화**가 핵심이다.

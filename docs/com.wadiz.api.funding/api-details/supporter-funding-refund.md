@@ -221,7 +221,8 @@ WHERE C.CampaignId IN (?, ?, ...)
 | `recipient.*` | `{name, contactNumber, requestMessage, customsCode, address{addressLine1, addressLine2, zipCode, countryCode}}` | — |
 | `refundSummation.*` | `RefundSummation{ times, totalRefundAmount, rewardItemRefundAmount, shippingRefundAmount, donationRefundAmount, paymentCancelAmount, pointRefundAmount, couponRefundAmount, ... }` | 환불 집계 |
 | `isWritableSatisfaction / isWrittenSatisfaction / isDeletedSatisfaction` | `Boolean` | 만족도 |
-| `isPaymentCancelable` | `Boolean` | `whenHoldTo + 2일` 이전이면 true (계산식은 응답 DTO에서 처리) |
+| `isPaymentCancelable` | `Boolean` | 배송 미시작 & `whenHoldTo + 2일` 이전이면 true (계산식은 응답 DTO에서 처리). 단, 단순 변심 환불 제한 프로젝트(`isRestrictedForRevised`)는 결제 예약 배치 이전(PayStatus A10/B10)이 아니고 종료일(`whenHoldTo`)이 지나면 false — RWD-5844 |
+| `isRestrictedForRevised` | `Boolean` | 단순 변심 환불 제한 프로젝트 여부 (`RewardRefundPolicy.IsRestrictedForRevised`) — RWD-5844 |
 
 ### MySQL 쿼리 (`BackingPaymentMapper.findMyFundingDetailById` + 하위 resultMap 조인)
 
