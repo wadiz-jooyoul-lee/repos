@@ -1,5 +1,48 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-07-31 master pull 보강** (108 커밋)
+>
+> 이번 pull은 대부분 **기획전 CRM 자동 발송(회차별 알림톡·메일) + Braze 동기화** 신규 기능 한 덩어리입니다(에픽 CLIENT-181, 하위 CLIENT-183~193). 회차 정의는 DB 테이블 없이 코드 enum(`CrmRoundType`)으로 고정하고, 발송 예정 시각은 저장하지 않고 오픈일에서 파생 계산하며, 매일 15:00 KST 스케줄러가 발송 대상을 판정해 플랫폼 발송 API로 전달합니다.
+>
+> ### CLIENT-183 — 기획전 CRM 스키마·회차 라인업·발송 일정 조회 API
+> - **`migration/V010__exhibition_crm.sql`** — 발송 이력 2테이블 신설. `exhibition_crm_dispatch`(벌크 발송 요청 1건 = 불변 트랜잭션 1행, `round_type`·`tid`(UUID, 회차 실행 단위 채번, 청크 공유)·`status`(PENDING/ACCEPTED/FAILED)·`retried_date_time`), `exhibition_crm_dispatch_recipient`(수신자 로스터, append-only, 수신처 스냅샷). per-recipient UNIQUE는 두지 않고 실행 위상으로 "회차·신청 건당 성공 1회"를 보장.
+> - **`constant/CrmRoundType.java`** — 회차 라인업 enum 7종 고정(FAQ/REMIND_D3/REMIND_DDAY/BENEFIT/TEASING/DEADLINE/OPEN). 각 회차에 D-n 오프셋·채널(EMAIL/ALIMTALK)·대상(ALL_APPLICANTS/NOT_SUBMITTED/OPEN_DATE_NOT_SET)·사용 치환변수 집합을 정의. 발송 시각 전 회차 15:00, 타임존 Asia/Seoul 고정.
+> - **`controller/exhibition/ExhibitionCrmAdminController.java`** — `/api/exhibitions/{exhibId}/crm-rounds`(JWT). `GET`(발송 일정 조회 — 저장값 아닌 조회 시점 파생 계산). 회차 일정은 스케줄러 판정과 같은 재료(오픈일·발송 이력)로 계산해 화면과 실동작 불일치 방지.
+> - **`service/ExhibitionCrmAdminService.java`** — 발송 일정 파생 조회 서비스. 회차별 템플릿 지정 PUT은 CLIENT-189에서 개념 자체가 제거됨(아래 참조).
+>
+> ### CLIENT-184 — 발송 대상 확정·치환변수 사전·회차별 대상 미리보기 API
+> - **`service/CrmAudienceService.java`** — CRM 발송 대상 확정 서비스. 회차 Target 조건으로 신청 건 판정 후 수신처(EAV) 결정, 조건 회차 조회 실패는 fail-closed(502). 펀딩 프로젝트 맵 조회 헬퍼(1,000건 청킹·projectNo 키잉), 펀딩 응답 방어 파싱(이형 바디가 실패 계약을 우회하지 못하게), 펀딩 호출 구간 트랜잭션 제거(커넥션 점유 방지).
+> - 치환 변수 표준 사전 조립(공통·건별 변수, 미정의 키 빈 문자열 폴백).
+> - **`controller/exhibition/ExhibitionCrmAdminController.java`** — `GET /crm-rounds/{roundType}/audience`. 회차별 대상 미리보기(카운트·제외 분해·마스킹 표본 5건, 풀 목록 미노출).
+>
+> ### CLIENT-185 — 멱등 회차 발송 엔진·15:00 스케줄러·Slack 경보·수동 재시도
+> - **`service/CrmDispatchService.java` / `port/CrmDispatchPort.java`** — 멱등 회차 발송(`dispatchRound`) 엔진과 배치 발송 포트 계약. 포트 예외 시 dispatch를 FAILED로 수렴, 배치 루프는 회차 단위로 예외 격리하고 실패 회차는 경보.
+> - **`scheduler/CrmDispatchScheduler.java`** — 매일 15:00 KST(`SEND_CRON` 단일 원천, zone Asia/Seoul) 발송. ShedLock(`lockAtMostFor=PT5M`)으로 단일 인스턴스 실행 보장(멱등이 스케줄러 단독 실행 전제). 하트비트·미해결 경보를 Slack 웹훅(`SlackWebhookClient`)으로 발송, 미해결 경보의 FAILED 집계는 당일 스코프 한정.
+> - **`controller/exhibition/ExhibitionCrmAdminController.java`** — `POST /crm-rounds/{roundType}/retry-failed`. 수동 FAILED 재시도 — 발송 당일 한정, 옛 FAILED는 계보 보존(`retried_date_time`)하고 새 dispatch를 append.
+>
+> ### CLIENT-189 — 치환 변수 18종·환경별 템플릿 번호 설정·회차 템플릿 지정 개념 제거
+> - **`constant/CrmVariableKeys.java`** — `email_template_data`(JSON) 기반 치환 변수 18종 조립과 회차별 사용 변수 맵.
+> - **`config/CrmTemplateProperties.java`** — 환경별 CRM 템플릿 번호를 `wadiz.crm.templates.{회차}` yml 키로 관리(회차별 플랫폼 발송 템플릿 번호, 라인업 공통 1벌 고정).
+> - 회차별 NHN/플랫폼 템플릿을 DB에 지정하던 개념(V010 초기의 `crm_templates`)을 코드에서 일괄 제거. 최종 V010에는 해당 컬럼이 없고 `record.tid`만 포함. 티징 회차 경고는 `teasing_url` 입력 여부로 파생.
+>
+> ### CLIENT-191 — 플랫폼 메일 V3·알림톡 V2 발송 어댑터
+> - **`api/client/PlatformCrmDispatchClient.java`** — 플랫폼 메일 V3·알림톡 V2 발송 어댑터(페이로드 정규화·보수적 성공/실패 판정·DUPLICATE 수렴). 설정 4키(`wadiz.crm.mail-api-url`·`mail-api-token`·`alimtalk-api-url`·`alimtalk-api-token`) 추가.
+>
+> ### CLIENT-186 — Braze 실시간 동기화·백필 API
+> - **`api/client/PlatformBrazeSyncClient.java`** — CRM2.0 `PUT /braze/users`(75건 청크·실패 무예외 수렴, `wadiz.crm.braze-sync-url`).
+> - **`event/BrazeSyncEventListener.java` / `service/BrazeSyncService.java`** — 신청·철회 등 4경로에서 `AFTER_COMMIT` 리스너로 활성 유저의 `applied_exhibition_nos`를 마스터 재계산해 실시간 발행. 비숫자 external_id는 스킵(로그 PII 마스킹).
+> - **`controller/exhibition/ExhibitionBrazeAdminController.java`** — `POST /api/exhibitions/braze-backfill`(JWT). 활성 신청 유저 전량 재동기화(full-array 재계산이라 멱등, 단일 스캔 배치화). 기획전 무관 전역 연산이라 crm-rounds 스코프와 분리.
+>
+> ### CLIENT-181 — crm_auto_send 자동발송 게이트·발송 이력·메일 통계
+> - **`migration/V011__exhibition_crm_auto_send.sql`** — `exhibition.crm_auto_send TINYINT(1) NOT NULL DEFAULT 0`. DEFAULT 0으로 도입 이전 기획전 소급 차단(fail-closed), 신규 기본 ON은 등록 INSERT의 `COALESCE(#{crm_auto_send}, 1)`가 보장. 발송 후보 스캔이 이 플래그로 게이트.
+> - **`controller/exhibition/ExhibitionCrmAdminController.java`** — `GET /crm-rounds/{roundType}/mail-statistics`. 메일 발송/열람 통계(platform-admin 실시간 집계 연동, `PlatformMailStatisticsClient`, 메일 회차 한정 lazy 조회). `crm-rounds` 응답에 tid별 발송 이력(`dispatches`) 포함. 수신처 사전 검증·정규화, 발송 타임존 KST 고정.
+>
+> ### CLIENT-193 — CRM 치환변수 정제·자동발송 플래그 일원화
+> - 치환 변수 다듬기: 링크 변수 환경 대응(`wadiz.site-url` 기반 조립, 알림톡 `webLink1` 스킴 제거), 날짜 표시 포맷(DB `yyyy-MM-dd` → `yyyy.MM.dd`), `extraBenefits` 평문(개행 조인) 후 쉼표+공백 구분, 쿠폰 치환변수 배열(`coupons`) 전환, FAQ 광고 패키지 배열(`adPackages`·`adPackageUrl`), 섹션 노출 플래그(`hasCoupons`·`hasAdPackages`) 파생, 알림톡 3회차 누락 치환자 보강.
+> - 전역 `dispatch-enabled` 플래그를 제거하고 기획전 단위 `crm_auto_send`로 갈음. prod 템플릿 번호 기입 및 라이브 전환.
+>
+> ---
+>
 > 📅 **2026-07-10 master pull 보강** (103 커밋)
 >
 > ### CLIENT-167 / CLIENT-168 / CLIENT-170 / CLIENT-165 — 기획전 API REST 대이관
@@ -471,10 +514,14 @@ DB: `wadiz_makercenter` (MySQL/MariaDB, Master/Slave). MyBatis 매퍼 XML에서 
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-07-10** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-31** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 기획전 CRM 자동 발송(회차별 알림톡·메일) 신규 — 회차 라인업 enum·발송 이력 2테이블(V010)·15:00 KST 스케줄러·발송 대상 확정·수동 재시도 | 2026-07 | CLIENT-181/183/184/185/189/191/193 |
+| Braze 실시간 동기화·백필 API(`POST /api/exhibitions/braze-backfill`, CRM2.0 PUT /braze/users) | 2026-07 | CLIENT-186 |
+| 기획전 자동발송 게이트 `crm_auto_send`(V011, DEFAULT 0 소급 차단) — 전역 dispatch-enabled 플래그 대체 | 2026-07 | CLIENT-181/193 |
+| CRM 어드민 조회 API — 발송 일정·회차별 대상 미리보기·메일 발송/열람 통계(`/api/exhibitions/{id}/crm-rounds*`) | 2026-07 | CLIENT-183/184/181 |
 | OAuth authorize에 언어 힌트(`ui_locales` 대표 로케일) 조건부 부착 | 2026-07-03 | CLIENT-182 |
 | CORS 허용 오리진에 `*.wadiz.io` 추가 | 2026-07-01 | FE2-666 |
 | 그룹 멤버 변경 감사 로그(변경 전/후 스냅샷) 적재 | 2026-06-26 | FE2-646 |

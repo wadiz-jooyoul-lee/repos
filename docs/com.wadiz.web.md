@@ -6,6 +6,42 @@
 
 ---
 
+> 📅 **2026-07-31 master pull 보강** (28 커밋)
+>
+> 파일 업로드 저장소를 S3 전략으로 전환, 지지서명 레거시 v2 API 정리·community 전환, 글로벌 배송대행 서비스 종료(배너·약관·모델) 후속 정리가 핵심입니다.
+>
+> ### 파일 업로드 저장소 S3 전환 (RWD-5805, 16 커밋)
+> - **신규 패키지 `com.wadiz.web.storage.upload`** — 저장 매체 분기를 `if`문에서 전략 인터페이스 `UploadStorage`(구현 `DiskUploadStorage`/`S3UploadStorage`)로 분리. `StoredFile`·`EncryptedStoredFile`·`EncryptedUploadStore`·`S3ObjectLocation`·`StoredPathParser`(+`UnknownStoredPathException`)·`UploadStorageConfig` 추가.
+> - 공개 이미지·비공개 파일의 쓰기·읽기를 `s3` 모드에서 S3 저장소 경유로 전환(`FileService`, `FinanceFileService`, `CommunityFileService`, `MakerFileAdapter`, `FTFileService`). S3 자격증명은 설정 키로 받아 `StaticCredentialsProvider` 인증, 업로드 시 Content-Type 지정.
+> - 다운로드 ZIP 생성 위치를 GlusterFS에서 OS 임시 디렉터리로 전환(`ZipDownloadView`), 정산 PDF 다운로드 S3 스트림 재읽기 오류를 `ByteArrayResource`로 수정. 호출처 없는 파일 쓰기 메서드·미주입 설정 키 삭제, 미사용 `FileDownload` 제거.
+> - `file-*.properties` 7개 환경 일괄 갱신 — `serverName` 기본값 `wdz`, dev 레거시 업로드 저장소 s3 모드 전환, dev 공개 파일 URL을 CDN 도메인으로 변경.
+>
+> ### 지지서명 레거시 v2 API 정리·community 전환 (RWD-5834)
+> - Live APM 실측에서 유입이 확인된 조회 API(count/list/keywords/user-images/comments)만 남기고 community(v3) 서비스로 전환. v2 응답은 신규 `SupporterSignatureV3Converter`로 기존 v1 계약을 유지하고, SSR은 community 서비스를 직접 호출. 잔존 `SupporterSignatureController`는 `@Deprecated` 표기.
+> - 미사용 v2 핸들러·share 컨트롤러/서비스·v1 게이트웨이(`SupporterSignatureGateway` 855줄)·미사용 DTO 대량 삭제로 wave-user 지지서명 연결점 제거(총 −3,000여 줄). `CommentUIController`의 지지서명 관련 메서드도 정리.
+>
+> ### 콘텐츠 룰·1:1 문의 (RWD-5850)
+> - content-rule 1:1 문의 콘텐츠 타입을 `PERSONAL_MESSAGE` → **`PERSONAL_MESSAGE_CLIENT`**로 변경(`ContentRuleContentType`, `PersonalMessageBoardService`). 2026-07-10 보강의 RWD-5731 항목에서 소개한 타입명이 이 커밋으로 바뀌었습니다.
+>
+> ### 글로벌 배송대행 서비스 종료 (RWD-5833 / FE2-848)
+> - RWD-5833: 메이커 스튜디오 `GLOBAL_DELIVERY_AGENCY` 배너 제거(`RewardMakerStudio`, `RewardMakerStudioService`).
+> - FE2-848: 글로벌 배송대행 서비스 이용약관 폐지 — `wterms.jsp` 목록에서 링크 제거, `global_shipping_forwarding.html`에 2026.07.01 폐지 노트 추가. `update-terms` 스킬에 약관/정책 폐지 모드 추가.
+>
+> ### 리워드·일정·발송
+> - **리워드 제한수량 단위 유형별 상한 검증 추가** (RWD-5842) — 신규 `RewardItemValidator`(+테스트), `RewardRequest` 연동. 미사용 클래스 정리.
+> - **일정 조회 응답에 일정 변경 마감 시각(`openScheduleModifyDeadline`) 필드 추가** (RWD-5860, `ScheduleInfo`, `CampaignScheduleServiceV2`, `CampaignScheduleSaveValidator`).
+> - **펀딩 발송 단건 등록 시 집하 전 유효 송장(level 0 + result Y) 등록 허용** (SCOUT-123) — 스윗트래커 스펙 변경(집하 전 level 1→0) 대응. `TrackingInfoResponse`에 `result` 필드·`isRegisteredNotScanned()` 추가, `ShipmentController`가 배송준비중(`STAND_BY_TRANSIT`)으로 저장.
+>
+> ### 마이페이지·웹뷰 모달
+> - **배송지 변경 노출 조건에 펀딩 진행상태(`endYn`) 게이트 복원** (FE1-1384, `myfundingPurchaseDetail.jsp`).
+> - **`present=modal` 웹뷰 모달(`/modal`) 글로벌 번들 서빙 매핑 추가** + 로케일 리다이렉트 스킵 목록(`noRedirectList`)에 `/modal/**` 추가 (FE1-1239, `GlobalUIController`, `GlobalKoreaUIController`, `GlobalUrlMappingConfig`).
+>
+> ### 분석 영향
+> - **파일 업로드 흐름**: 저장 매체 분기가 `UploadStorage` 전략으로 일원화되고 s3 모드가 도입됨. 파일 업로드/다운로드 관련 흐름 문서에 저장소 추상화 반영 후보.
+> - **지지서명 흐름**: 레거시 v2 컨트롤러가 community(v3) 직접 호출로 축소되고 wave-user 연결점이 제거됨. 지지서명 관련 흐름 문서 보강 후보.
+
+---
+
 > 📅 **2026-07-21 master pull 보강** (약 25 커밋)
 >
 > 약관·정책 2026.07.21 개정, 도메인 `wadiz.co → wadiz.io` 로컬 프로퍼티 전환, 미사용 SEO JSP 정리가 핵심입니다.

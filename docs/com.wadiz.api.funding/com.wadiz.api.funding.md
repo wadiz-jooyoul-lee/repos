@@ -485,7 +485,25 @@ com.wadiz.api.funding
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-07-10** (직전: 2026-06-18, 최초: 2026-04-20)
+**분석 갱신일: 2026-07-31** (직전: 2026-07-10, 최초: 2026-04-20)
+
+### 신규 기능 (2026-07-31 갱신분)
+
+#### 사후심사 스토리 버전 복구 다국어 대응 (RWD-5792)
+- `StoryCopyInternalController`에 신규 엔드포인트 `POST /api/internal/story-copy/{projectNo}/restore` 추가. 관리자가 사후심사 히스토리의 특정 버전(스냅샷)으로 스토리를 복구하며, 스냅샷 언어를 기준으로 작성언어/옵션언어를 분기 처리한다.
+- 요청 DTO `StoryRestoreRequest{revivalHistoryId, adminUserId}` 신규. `StoryCopyUseCase.restoreStoryByVersion`·`StoryCopyGateway.restoreStoryByVersion`(구현 `StoryCopyGatewayImpl`)·`StoryCopyMapper` 추가. 응답은 기존 스토리 복사와 동일한 `ServiceOperationResponse`(실패 시 errorCode `STORY_RESTORE_FAILED`, 내부 오류 `INTERNAL_ERROR`).
+- 버전 스냅샷 역직렬화 시 미지 필드(`encPhotoId`)로 인한 실패를 막기 위해 `CampaignImage`/`CampaignRepresentativeImage`/`CampaignStory`/`CampaignTag` 모델에 `@JsonIgnoreProperties(ignoreUnknown = true)` 적용.
+
+#### 단순 변심 환불 제한 프로젝트 결제 취소 버튼 비활성화 (RWD-5844)
+- 단순 변심 환불이 제한된 프로젝트(`RewardRefundPolicy.IsRestrictedForRevised = TRUE`)는 결제 예약 배치 이전(`PayStatus` A10/B10) 상태가 아니고 프로젝트 종료일(`whenHoldTo`)이 지났으면 결제 취소 불가로 처리한다. `FundingResponse.getIsPaymentCancelable` 로직에 해당 분기를 추가하고 `isRestrictedForRevised` 필드를 노출.
+- 서버 측 취소 검증(`BackingPaymentSummationCancelInfo.valid`)에도 동일 조건을 추가해 종료 이후 취소 시도 시 `"단순 변심에 의한 결제 취소가 제한된 프로젝트입니다."` 예외 반환. DTO에 `whenClose`·`isRestrictedForRevised` 필드, `FundingDetailResult`에 `isRestrictedForRevised` 필드 추가.
+- `BackingPaymentMapper.xml`에서 `RewardRefundPolicy` 서브쿼리로 `IsRestrictedForRevised`·`WhenClose`를 함께 조회.
+
+#### 정산 fee-version 조회 시 BizModel null 방어 (SCOUT-125)
+- 캠페인 `BizModel`이 null(미생성/비정상 캠페인)일 때 `ProjectType.fromName(null)`이 `IllegalArgumentException`을 던져 500이 발생하던 문제를, name이 null이면 `EntityNotFoundException`(404)으로 전환. `fromName` 중앙 수정으로 정산 관련 UseCase 전체에 방어 적용. (SCOUT-83의 후속 방어)
+
+#### 인프라·설정
+- `rc4` 브랜치용 AWS ECR 배포 GitHub Actions 워크플로(`aws_deploy_ecr_rc4.yml`) 추가 및 배포 `value_file_path` 갱신.
 
 ### 신규 기능 (2026-06-18 갱신분)
 

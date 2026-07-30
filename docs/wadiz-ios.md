@@ -6,6 +6,34 @@
 
 ---
 
+> 📅 **2026-07-31 develop pull 보강** (97 커밋, 26.29.1 → 26.30.2)
+>
+> 신규 **막펀잡기(마감임박, EndingSoon)** 피드 모듈과 위시 Top Nav 전환이 핵심입니다. (Bump up 커밋 다수 생략)
+>
+> ### FE1-1236 / PRODUCT-859 — 막펀잡기(마감임박) 피드 모듈 신규
+> - `Projects/Features/EndingSoon` 신규 모듈. 마감임박 프로젝트를 전체화면 카드 페이저로 넘기는 피드입니다. API: `GET /api/search/v1/catchup/ending-soon`(`.service`, 정렬된 {id, endTime} 리스트 + serverTime/refreshTime), 쿠폰 발급 `POST /web/reward/api/coupons/templates/redemptions`(`.api`). (`Projects/Features/EndingSoon/Sources/Data/EndingSoonAPIRepository.swift`)
+> - GNB 탭·네비게이션 통합으로 기존 **위시 탭을 막펀잡기 탭이 대체**하고, BNB 아이콘 등장 모션 + N 뱃지를 추가했습니다. 리워드 선택은 웹 모달(`ModalWebViewController`)로 띄우고 `toast.show` 웹 메시지를 수신합니다. (`Projects/App/Sources/NativeBase/Controller/*`, `WebView/URLNavigation/ModalWebViewController.swift`)
+> - 자동 진행 주기 8초→5초, 마감 시 카운트다운 0 표시(오늘마감 라벨 폐지), 쿠폰 뱃지는 정액·정률한도 중 큰 값 노출, 조기 마감 프로젝트 CTA 비활성·쿠폰 뱃지 숨김. Braze 커스텀 이벤트(`finalcall_pv`/`complete`) 추가, 분석 서비스명을 "마감임박"→"막펀잡기"로 통일.
+> - 크래시 수정: 페이저를 `UIPageViewController`→`UICollectionView`로 전환하고 스크롤 중 크래시·전환 겹침을 가드. QA 수정 다수(QA-22770 첫 카드 위 스크롤 차단, QA-22776 +0P 당첨 토스트 오노출, QA-22788 쿠폰 다운로드 후 CTA 반영, QA-22811·22813 로그인 모달·타이머 다국어, QA-22817 타이머 0초 즉시 비활성, QA-22818 정지 상태 이탈·복귀 유지).
+>
+> ### FE1-1378 — 막펀잡기 딥링크·트래킹
+> - `/endingsoon/main` 딥링크를 막펀잡기 탭 라우팅으로 연결(`AppCoordinator+EndingSoon.swift`, `NavigationMap+EndingSoon.swift`). 막펀잡기 PV(GA4/Waditag)·GNB 클릭 트래킹 수집을 수정하고, `TabBarIndex`의 미사용 `.wish` 케이스를 제거했습니다.
+>
+> ### FE1-1255 — 위시 Top Nav 전환 + my-wadiz v5
+> - 마이와디즈 Top Nav의 최근본 버튼을 **위시 버튼(카운트 뱃지 포함)** 으로 교체(`WishNavigationButton.swift`), 미사용 `RecentProjectButton` 삭제. 최근본은 플로팅 틸트 카드(`RecentProjectFloatingButton.swift`)로 이동. 위시 뱃지 클리어를 탭 진입뿐 아니라 Top Nav 진입에도 적용.
+> - my-wadiz 조회를 v4→**v5**(`/api/v5/my-wadiz`)로 go-live 전환, `CURATION_PROJECT` 실데이터로 위시 환기영역 렌더. DEBUG 상시 스텁 등록 제거, `Main2API`의 무버전 오버로드 정리. (`Projects/Features/MyWadiz/Sources/Data/MyWadizRepositoryImpl.swift`)
+>
+> ### FE1-1376 / FE1-1361 — 따라잡기(CatchUp)
+> - FE1-1376: 보너스 스테이지 Braze 이벤트 추가(`CatchUpBrazeEvent.swift`). FE1-1361: 완료 페이지 위시 유도 팝퍼의 말꼬리표 제거(`CatchUpWishPopperView.swift`).
+>
+> ### FE1-1307 / FE1-1335 — 마이와디즈·홈
+> - FE1-1307: 메인 홈 유저 활동 배너 미노출 수정(`ActivityBannerProvider.swift`). FE1-1335: 마이와디즈 `CARD_ACTIVITY`의 `ActivityType` enum 제거·String 전환(서버 신규 값 유입 시 탭 dead 방지).
+>
+> ### FE1-1234 / FE1-1391 — 빌드·동시성
+> - FE1-1234: **Fastlane 2.237.0** 업데이트 및 **cocoapods 의존성 삭제**(`Gemfile`/`Gemfile.lock`). FE1-1391: `AlarmChannel`에 `Sendable` 채택(Xcode 26.6 대응). WSR-3423: 환기형 프로젝트 카드 width 160→168 통일.
+>
+> ---
+>
 > 📅 **2026-07-21 develop pull 보강** (26.27.0 → 26.29.1)
 >
 > 검색홈 리뉴얼(FE1-699), 앱 재시작 파이프라인(FE1-1227), 세션·네비게이션 안정화가 핵심입니다. (Bump up 커밋 다수 생략)
@@ -73,7 +101,7 @@
 | Bundle ID | `com.markmount.wadiz` | `Projects/App/Project.swift:94`, `Projects/App/SupportingFiles/Configuration/Base.xcconfig:9` |
 | Extension Bundle IDs | `.WadizWidget`, `.MakerStoreProjectIntents`, `.notificationservice` | `Projects/App/Project.swift:300,325,349` |
 | 지원 OS 최소 | **iOS 16.1** | `Tuist/ProjectDescriptionHelpers/Environment.swift:5` |
-| MARKETING_VERSION / BUILD | `26.27.0` / `26.27.0.9` | `Projects/App/Project.swift:7-8` |
+| MARKETING_VERSION / BUILD | `26.30.2` / `26.30.2.0` | `Projects/App/Project.swift:7-8` |
 | 배포 채널 | **App Store (Release)** / **TestFlight (QA)** / Fastlane develop / Adhoc | `fastlane/Fastfile:27-55`, `.github/workflows/` |
 | Schemes | `wadiz-dev` (Debug), `wadiz-qa` (QA), `wadiz-release` (Release) | `Projects/App/Project.swift:393-441` |
 | Development Team | `PN5T77486L` | `Projects/App/SupportingFiles/Configuration/Release.xcconfig:12`, `Environment.swift:8` |
@@ -124,6 +152,7 @@
 | `ConfirmPassword` | 비밀번호 재확인 모달 |
 | `CreditCardOCR` | **신용카드 OCR** (`CameraManager.swift` + Vision/CoreML) |
 | `Email` | 이메일 수정 |
+| `EndingSoon` | 막펀잡기(마감임박) 전체화면 카드 피드 (FE1-1236 신규, 위시 탭 대체) |
 | `Home` | 홈 탭 |
 | `Intro` | 스플래시/인트로 (Lottie) |
 | `KakaoMultiFollow` | 카카오 친구 일괄 팔로우 |

@@ -11,13 +11,14 @@
 
 ---
 
-## 변경사항 (2026-04-27 ~ 2026-05-14)
+## 변경사항 (2026-04-27 ~ 2026-07-31)
 
 | 날짜 | 티켓 | 변경 내용 |
 |---|---|---|
 | 2026-04-27~28 | RWD-5510 | 쿠폰 만료 알림톡 시간 양식 변경: `hh시` (12시제) → `HH시` (24시제); `SimpleDateFormat` → `DateTimeFormatter`; 만료 시각을 `LocalDateTime.now().withHour(23).withMinute(59)` 로 고정 표현 |
 | 2026-05-11 | RWD-5549 | `CouponRedeemService.redeemByIssue` 에 `@Bulkhead + @CircuitBreaker(name="couponRedeemByIssue")` + `@Transactional(timeout=5)` 적용 (Resilience4j) |
 | 2026-05-13~14 | RWD-5549 | bulkhead/circuitbreaker 설정값 완화 — 최종: bulkhead `max-concurrent-calls=100`, `max-wait-duration=0ms`; CB `failure-rate-threshold=80`, `slow-call-duration-threshold=5000ms`, `wait-duration-in-open-state=1s` |
+| 2026-07-24 | RWD-5843 | `CouponConverter` 에서 정률(`FIXED_RATE`) 쿠폰의 표시 할인 금액(`DisplayDiscountAmount.amount`) 보정 추가. 정률 쿠폰은 템플릿에 고정 금액이 없어 표시 금액이 비므로, 이미 `fundingAmount` 기준으로 계산된 `discountAmount` 를 `amount` 로 채운다 (`discountAmount != null` 인 경우). 결제 화면에서 할인율 높은 쿠폰을 자동 적용하기 위한 표시값 보정 |
 
 ### `redeemByIssue` Bulkhead + CircuitBreaker 상세 (RWD-5549)
 

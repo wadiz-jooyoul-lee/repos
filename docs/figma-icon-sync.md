@@ -94,9 +94,10 @@ fetch_figma_icons.py  (Python aiohttp + requests)
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-05-29** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-31** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| Automated 아이콘 동기화 — `wadizedition` 로고타입(가로/블랙) 신규 에셋 추가(svg/xml/pdf), speech-bubble·Sponsorship&Fandom 파일명 정정(Figma 레이어명 반영) | 2026-07-31 | - |
 | iOS 아이콘 동기화 시 파일명 공백 제거 처리 | 2026-05-06 | FE1-604 |
 | Automated 아이콘 동기화 (Android/iOS) 정기 실행 | 2026-04-20 ~ 2026-05-07 | - |

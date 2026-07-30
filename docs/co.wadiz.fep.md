@@ -1,5 +1,21 @@
 # co.wadiz.fep 분석
 
+> 📅 **2026-07-31 main pull 보강** (3 커밋, 모두 SCOUT-112)
+>
+> ### SCOUT-112 — Stripe Transfer 조회 API 신설 (지급 대사용, read-only)
+> - **`adapter/in/web/StripeTransferController.java:23`** — 기존 이체 생성/취소 컨트롤러(base `@RequestMapping("/api/internal/v1/stripe/transfers")`)에 조회 2건 추가.
+>   - **`GET /api/internal/v1/stripe/transfers/{transferId}`**(`:85`) — Transfer 단건 조회. 응답 `GetTransferResponse`(transferId, amount, currency, destination, description, created, reversed, amountReversed, sourceType, transferGroup).
+>   - **`GET /api/internal/v1/stripe/transfers`**(`:102`) — 목록 조회. 필터 `destination`·`transferGroup`·`createdGte`·`createdLte`, **커서 페이지네이션** `limit`·`startingAfter`·`endingBefore`. 응답 `ListTransfersResponse`(transfers 배열 + `hasMore`).
+> - **`application/port/in/GetTransferUseCase.java` / `ListTransfersUseCase.java`** — read-only UseCase 신규. `ListTransfersCommand`로 필터·커서 전달.
+> - **`application/port/out/StripeGateway.java:18,20`** — `retrieveTransfer(transferId)` / `listTransfers(TransferListQuery)` 및 `TransferListQuery`·`TransferList(transfers, hasMore)` 레코드 추가. 구현은 `StripeGatewayImpl`.
+> - RestDocs 스니펫·index.adoc 문서화, 컨트롤러 테스트 추가. **RestDocs host를 `api.dev.wadiz.io`(https)로 전 테스트 일괄 변경**(AccountControllerTest 등 기존 테스트 다수 함께 수정).
+>
+> ### SCOUT-112 — 나이스 지급결과조회 응답에 표준 `statusCode` 추가
+> - **`domain/NiceSettlementStatusCode.java`** — 나이스 원본 `statusNm`(한글, passthrough)을 소비자마다 재해석하는 부담을 없애기 위해 FEP가 표준 코드로 정규화하는 enum 신규. 지급대행 규격 v1.1.3 기준 값집합: `요청→REQUESTED / 성공→SUCCESS / 실패→FAILED / 재요청 진행중→PROCESSING / 삭제→CANCELLED`, 미매핑·공백은 `UNKNOWN`(`from(statusNm)`).
+> - **`adapter/in/web/payload/InquireSettlementResponse.java:19-20`** — `SettlementDetail`에 `statusCode` 필드 추가. 기존 `status`(원본 한글) 유지, **non-breaking**. `NicePayoutController.java:37`에서 `NiceSettlementStatusCode.from(d.status()).name()`으로 채움. 정산 대사(settlement-orchestrator)가 이 코드를 그대로 사용.
+>
+> ---
+>
 > 📅 **2026-07-21 main pull 보강** (1 커밋)
 >
 > ### SCOUT-111 — DLQ 재처리 payload 형식 정합 (버그수정)
@@ -322,10 +338,13 @@ SQS Queues (infra/localstack/init-aws.sh):
 
 ## 최근 변경사항
 
-**분석 갱신일: 2026-07-10** (최초: 2026-04-20)
+**분석 갱신일: 2026-07-31** (최초: 2026-04-20)
 
 | 변경 내용 | 날짜 | 관련 이슈 |
 |---|---|---|
+| 나이스 지급결과조회 응답 `statusCode`(표준 코드) 값집합을 지급대행 규격 v1.1.3에 맞춤 (요청/성공/실패/재요청 진행중/삭제) | 2026-07-29 | SCOUT-112 |
+| 나이스 지급결과조회 응답 `SettlementDetail`에 표준 `statusCode` 추가 (`NiceSettlementStatusCode`, 원본 `status` 유지·non-breaking) | 2026-07-29 | SCOUT-112 |
+| Stripe Transfer 조회 API 신설 — `GET /stripe/transfers/{transferId}`(단건), `GET /stripe/transfers`(목록: 기간·destination·transferGroup 필터, 커서 페이지네이션), read-only 지급 대사용. RestDocs host `api.dev.wadiz.io`(https)로 변경 | 2026-07-23 | SCOUT-112 |
 | Stripe 결제 웹훅 결제수단 `CARD` 고정 + 빌드 시 통합테스트 스킵 | 2026-07-08 | SCOUT-103 |
 | NICEPAY 웹훅 수신 디버그 로그 추가 | 2026-07-06 | - |
 | PG 결제 실시간 대사 웹훅 도입 (nicepay/payment·stripe/payment 엔드포인트, PgPaymentEvent 도메인·매퍼·resolver, Redis 중복판정, SNS `PG_PAYMENT_COMPLETED`, pg-payment/wadiz-payment 큐) | 2026-06-25 ~ 2026-07-02 | SCOUT-79 |

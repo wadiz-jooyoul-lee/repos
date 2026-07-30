@@ -501,6 +501,7 @@
 | GET | `/api/story/{campaignId}/funding` | `StoryController` |
 | GET | `/api/story/{campaignId}/comingsoon` | `StoryController` |
 | POST | `/api/internal/story-copy/{projectNo}` | `StoryCopyInternalController` |
+| POST | `/api/internal/story-copy/{projectNo}/restore` | `StoryCopyInternalController` |
 | POST | `/api/v1/translate/request/{projectNo}` | `StoryTranslationRequestController` |
 | POST | `/api/internal/story-translation/{projectNo}/final-review` | `StoryTranslationInternalController` |
 | POST | `/api/internal/translation/{campaignId}/{languageCode}/{translationTaskType}` | `StoryTranslationController` |

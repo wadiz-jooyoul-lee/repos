@@ -1,5 +1,34 @@
 # wadiz-frontend
 
+> 📅 **2026-07-31 master pull 보강** (직전 갱신 2026-07-21 이후 197 커밋, 이슈키 20여 종)
+>
+> WAi(와디즈 AI 에이전트) 채팅 위젯을 A2UI 프로토콜 기반으로 대개편한 CLIENT-* 계열이 최대 테마입니다. 메이커홈 WAi 첫 진입 경험 재설계(FE2-669/709~712), 정적 리소스 CDN 도메인 전환(FE1-1302/1303), 헤더·기획전 정비가 뒤를 잇습니다. i18n 동기화 커밋 다수는 생략합니다.
+>
+> ### CLIENT-55 / CLIENT-160 / CLIENT-144 / CLIENT-196 / CLIENT-200 / CLIENT-202 / CLIENT-1 — WAi 채팅 위젯 A2UI 대개편
+> - `apps/global/src/features/wai/` 아래 WAi 채팅을 **A2UI(Agent-to-UI) 프로토콜** 기반으로 전면 재구성. A2UI PoC 모듈 도입(v0.8→v0.9 정리) 후 서버 스트림을 카탈로그 스키마로 렌더링. 카탈로그 컴포넌트 basic(Button·Text·Chip·Icon·Row·Column)·custom(NextActionBlock)과 차트 3종(A2uiBarChart·A2uiLineChart·A2uiPieChart, visx 의존성 추가)을 등록하고 `catalogs/`에 추출 스크립트·`catalog.json`을 둡니다 (`apps/global/src/features/wai/ui/A2ui/`).
+> - 소켓 수명주기·타임아웃·자동 재연결을 관리하는 `WAiWebSocket` 클래스와 턴 상태 관리 `TurnStore`를 신설하고, `useWAiWebSocket`을 1레벨 messages·turnStatus 기반으로 전환. 채팅 메시지 모델을 type 기반 판별 union(`chatMessage.types.ts`)으로 정리하고 A2UI 답변을 별도 메시지(`ChatA2uiStreamMessage`)로 분리, 히스토리 변환·`fallbackText` 처리 추가 (`apps/global/src/features/wai/lib/`, `packages/api/src/wai/chatHistory.service.ts`).
+> - A2UI capabilities 핸드셰이크, 인라인 카탈로그 협상, 사용자 말풍선 `UserMessage`·상태 메시지 `StatusMessage`·`AnimatedDotGroup` 추가. A2UI 작업용 개발 지침(`CLAUDE.md`·`NAMING_CONVENTIONS.md`)도 함께 정비.
+>
+> ### PD-1874 / PO-1207 / PO-1208 / PO-1211 / PO-1212 — WAi 채팅 렌더링·스크롤 개선
+> - A2UI를 별도 메시지로 분리해 실시간/히스토리 표시 위치를 통일하고, 도착 순서대로 렌더링·중복 답변 생성 문제 수정. 질문칩 타이틀·줄바꿈·입력창 활성 조건, 새 사용자 메시지 상단 정렬 스크롤 보정, 세션 재연결 시 인트로 질문칩 중복 노출·소켓 끊김 시 무반응 문제 수정.
+>
+> ### FE2-669 / FE2-709 / FE2-710 / FE2-711 / FE2-712 — 메이커홈 WAi 첫 진입 경험 재설계
+> - WAi 지침 개선(P1) — `PromptInput` 컴포넌트 적용·인풋 케이스 추가, 스크롤 버튼, WAi 배경 제거, 메뉴 순서 변경, A2UI 넥스트액션 컴포넌트 도입·디자인 QA (`packages/waffle/src/WAi/PromptInput/`).
+>
+> ### FE1-1302 / FE1-1303 — 정적 리소스 CDN 도메인 전환
+> - account·global 앱에 `VITE_CDN_STATIC_URL` 환경변수를 도입하고 정적 리소스 도메인 하드코딩(`static.wadiz.kr`)을 `STATIC_URL`/`CDN_STATIC_URL` 참조로 전환. apps/global SCSS 배경 이미지를 TSX 인라인 스타일로 이전하며 도메인을 `cdn-static.wadiz.io` 계열로 교체 (`apps/account/.env-cmdrc`, `apps/global/.env-cmdrc`, `apps/global/vite.config.ts`).
+>
+> ### FE1-1367 / FE1-1389 / FE1-1379 — 헤더·기획전 정비
+> - FE1-1367: 데스크탑 헤더 서비스 홈 메뉴에서 **프리오더 제거·와디즈에디션 추가**, 통합기획전 에디션 랜딩의 기획전 이동 동선 제거·PC GNB 클릭 수집 (`packages/ui/src/Header/Header.constants.ts`, `packages/ui/src/Header/lib/useKoreaDesktopMenu.ts`).
+> - FE1-1389: 메이커 기획전 불러오기 시 "진행 중·오픈 프로젝트만 노출" on/off 옵션 추가 (`static/services/admin/pages/event/pages/BigUniqueBrand/`).
+> - FE1-1379: indemand 여부 조회를 제거하고 안내문구 비노출 조건을 발송예정일 기반으로 일원화.
+>
+> ### FE2-812 / FE2-863 / FE2-472 / QA-22892 — 메일템플릿·스튜디오·광고
+> - FE2-812: 기획전 관련 CRM 발송용 메일템플릿 신규(`makerExhibitionBenefit/Faq/Open/Teaser.hbs`, `makerExhibitionCoupon/Marketing` partial) 및 치환자 변경 (`apps/mail-template/`).
+> - FE2-863: 일정 변경 마감일을 서버 신규 필드 기준으로 수정. FE2-472: 메이커소식 목록 검증 재시도 대기 보강. QA-22892: 광고 상품 소개서 PDF 호스트를 환경변수로 분리.
+>
+> ---
+>
 > 📅 **2026-07-21 master pull 보강** (직전 갱신 2026-07-10 이후 약 80 커밋, 이슈키 30여 종)
 >
 > 메이커 스튜디오 스토리/인트로 가이드 고도화(FE2-734), 스튜디오 클라우드 이전(FE2-763), 통합기획전·리워드 상세 정비가 핵심입니다. QA-22xxx 버그픽스·i18n 동기화 커밋 다수는 생략합니다.
