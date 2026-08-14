@@ -265,6 +265,9 @@ base: `/api/studio/projects/{projectNo}` (`store-api/.../rest/project/studio/Stu
 | POST | `/api/studio/projects/{projectNo}/submit` | submit | 제출(메이커) | isMakerByProjectNo |
 | POST | `/api/studio/projects/{projectNo}/submit-by-admin` | submitByAdmin | 제출(관리자) | isAdmin |
 
+> `save`/`submit` 는 **프로젝트 전체를 덮어씁니다.** 일부만 보내면 나머지가 지워지므로, 기존 프로젝트 수정 시 `GET /api/studio/projects/{no}` + `.../products` 로 현재 상태를 읽어 그대로 다시 실어야 합니다. `submit` 계열은 본문이 필수이며 `save` 와 같은 본문을 받습니다.
+> 판매중(`ON_SALE`)에는 `save` 가 400 으로 막히고, 대체 경로인 `save-restricted` 에는 **사업자·정산 정보 항목이 없습니다.** 대표자 휴대폰은 그 프로젝트의 본인인증을 통과한 번호만 저장됩니다 — 상세는 [`com.wadiz.store.md` §3.1](./com.wadiz.store.md#31-스토어-프로젝트-생명주기-개설--오픈) 참조.
+
 ### `AdminProjectController` — 관리자 프로젝트 목록/상세·레이블·입점타입
 base: `/api/admin/projects` (`store-api/.../rest/project/admin/AdminProjectController.java:40`, `@RestController`, 클래스 `isAdmin()`)
 
