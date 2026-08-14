@@ -64,6 +64,64 @@ service 내부 의존: `order` → `misc`·`project`; `satisfaction` → `misc`�
 
 경로 접두 규약: 공개 `/api/...`, 스튜디오(메이커) `/api/studio/...`, 어드민 `/api/admin/...`, 내부 `/api/internal/...`, 외부 `/api/external/...`.
 
+> 웹 게이트웨이는 `/web/apip/store/**` 를 store-api 의 `/api/**` 로 프록시합니다. 예: `GET /web/apip/store/studio/projects/213` → `GET /api/studio/projects/213` (cdev 실측).
+
+### 3.1 스토어 프로젝트 생명주기 (개설 → 오픈)
+
+상태 기계는 `store-service/project/.../domain/project/ProjectStatus.java` 에 정의되며, 각 상태가 허용하는 `StatusEvent` 만 받습니다.
+
+```
+WRITING ─SUBMIT→ WAITING_FOR_SCREENING ─BEGINNING_SCREENING→ SCREENING ─APPROVE→ APPROVED
+        ─READY_FOR_SALE→ WAITING_FOR_SALE ─OPEN→ ON_SALE ─END_OF_SALE→ END_OF_SALE
+```
+
+| 전이 | 주체 | 엔드포인트 / 위치 |
+|---|---|---|
+| 개설(펀딩 기반) | 메이커·어드민 | `POST /api/studio/projects/set-up?campaignId={본펀딩}` — **본펀딩 campaignId 가 입구** |
+| 개설(비펀딩) | 어드민 | `POST /api/admin/projects/set-up-without-funding` |
+| 개설(복사) | 어드민 | `POST /api/admin/projects/set-up-via-copy` — 같은 환경 내 프로젝트만, 최대 10건 |
+| 저장 | 메이커·어드민 | `PUT /api/studio/projects/{no}/save[-temporary][-by-admin]` |
+| `SUBMIT` | 메이커·어드민 | `POST /api/studio/projects/{no}/submit[-by-admin]` — 본문이 `save` 와 동일한 전체 검증(`SaveGroup`) |
+| `BEGINNING_SCREENING`·`APPROVE` | 어드민 | `PUT /api/admin/project-managements/{no}/events/{eventType}` (`ProgressEventType`) |
+| `READY_FOR_SALE` | **배치** | `projectApprovedStatusCheckJob` — API 없음 |
+| `OPEN` | 메이커·어드민 | `POST /api/studio/projects/{no}/open` |
+
+`ProgressEventType` 은 `BEGINNING_SCREENING`, `APPROVE`, `CANCEL_APPROVAL`, `END_OF_SALE`, `APPROVE_REOPEN`, `CANCEL_REOPEN_APPROVAL` 6개뿐입니다. **`SUBMIT`·`READY_FOR_SALE`·`OPEN` 은 이 경로로 못 바꿉니다.**
+
+**대표 상품(signature)은 표시용이 아니라 오픈 게이트입니다.** `APPROVED → WAITING_FOR_SALE` 배치가 대표 상품의 판매가능 재고를 조건으로 겁니다 (`store-batch/.../projectapprovedstatuscheck/ProjectApprovedStatusCheckJobConfig.java:137-150`).
+
+```java
+productRepository.findAllSalesUnitProductWithInventoryItem(... .isSignature(true).build());
+final boolean isReadyForSale = results.stream()
+    .anyMatch(e -> e.isOversellable() || (e.getValidStockQty() != null && e.getValidStockQty() > 0));
+```
+
+대표 상품이 없으면 가격 집계도 0이 됩니다 (`ProductAggregation.java:66` — `Optional.ofNullable(signature).map(Product::getPrice).orElse(0L)`). 증상은 상세 상단 가격 `0원`, `product_aggregation.lowest_price` 는 정상인데 `price_of_signature` 만 0.
+
+### 3.2 스토어 메이커 프로필은 ES 색인에 의존합니다
+
+스토어 상세의 메이커 프로필 링크는 DB가 아니라 **Elasticsearch 색인 `fn-store-active`** 를 거쳐 해석됩니다. 조회 주체는 `com.wadiz.api.startup` 입니다.
+
+```
+스토어 상세 → GET /web/maker/STORE/{projectNo}          (com.wadiz.web StartupMakerApiController)
+            → startup: MakerServiceImpl.findCompanyByStoreProjectNo(projectNo)
+            → ES fn-store-active 문서의 searchCorpNo → Company 조회 → corpNo 반환
+```
+
+- 색인 문서 모델: `com.wadiz.api.startup/.../domain/maker/model/Store.java` — `@Document(indexName = "fn-store-active")`, 필드 `corpNo`/`searchCorpNo`/`businessRegNumber`(= `original_maker.business_registration_number`).
+- **`searchCorpNo` 는 원메이커 사업자등록번호로 `wadiz_db.Corporation` 을 찾아 채워집니다.** 실존하지 않는 번호면 비어 있는 채로 색인됩니다.
+- 프론트는 `corpNo` 가 없으면 **빈 `href`** 를 그려, 클릭 시 현재 페이지(스토어 상세)로 되돌아옵니다 (`wadiz-frontend/.../DetailInfoFooter/MakerInfo/MakerInfo.tsx:54,91`). 콘솔 오류가 없어 발견이 늦습니다.
+
+**응답 형태로 원인을 가릅니다** (`MakerApiController.java:79-81` 에 try/catch 가 없어 예외가 그대로 전파되기 때문).
+
+| `GET /web/maker/STORE/{no}` 응답 | 의미 |
+|---|---|
+| `data` 에 `corpNo` 있음 | 정상 |
+| `data: null` | 색인 문서는 **있고**, 회사 매칭만 실패 (`MakerServiceImpl.java:502-505` 의 `return null`) |
+| `data: {}` 빈 객체 | 색인 문서 **없음** (`NotFoundException` → 웹 계층 catch) |
+
+색인기는 별도 저장소(외부 indexer)에 있지만 **DB 변경을 감지합니다.** 2026-08-14 cdev 실측: `original_maker.business_registration_number` 한 컬럼만 바꾸고(09:39:44) `project` 는 건드리지 않았는데 **약 2분 뒤(09:41:41) 재색인**되어 `corpNo` 가 채워졌습니다. 색인 대상은 판매중(active) 프로젝트이므로 `WRITING` 상태에서는 문서가 없습니다.
+
 ## 4. 영속 계층
 
 - **JPA**: `@Entity` 약 96개, `JpaRepository` 계열 약 191개. QueryDSL 병행. 예: `store-service/order/.../domain/order/Order.java`.

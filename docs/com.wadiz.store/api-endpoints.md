@@ -233,6 +233,8 @@ base: `/api` (`store-api/.../rest/project/MyProjectController.java:31`, `@RestCo
 ### `StudioProjectController` — 스튜디오 프로젝트 개설·조회·오픈
 base: `/api/studio/projects` (`store-api/.../rest/project/studio/StudioProjectController.java:27`, `@RestController`, `@ForceMasterDataSource`)
 
+> 개설~오픈 전체 흐름(상태 기계, 어느 전이가 API이고 어느 전이가 배치인지)은 [`com.wadiz.store.md` §3.1](./com.wadiz.store.md#31-스토어-프로젝트-생명주기-개설--오픈) 참조. `set-up` 의 `campaignId` 는 **본펀딩 campaignId** 이며, 스토어 개설의 입구입니다.
+
 | HTTP | Path | 메서드 | 용도 | 인증 |
 |---|---|---|---|---|
 | POST | `/api/studio/projects/set-up?campaignId=` | setUp | 프로젝트 시작하기 | isMakerByCampaignId or isAdmin |
@@ -715,6 +717,9 @@ base: `/api/admin/projects` (`store-api/.../rest/project/admin/AdminSetUpControl
 |---|---|---|---|---|
 | POST | `/api/admin/projects/set-up-without-funding` | setUpWithoutFunding | 비펀딩 프로젝트 개설 | isAdmin |
 | POST | `/api/admin/projects/set-up-via-copy` | setUpViaCopy | 스토어 프로젝트 복사 | isAdmin |
+
+> `set-up-via-copy` 는 `projectNo` 로 **같은 환경 안의** 프로젝트를 복사합니다(`qty` 1~10, `isCopyProductRequired` 로 상품 포함). 다른 환경(예: 라이브 → dev) 복제는 이 API로 안 됩니다.
+> 개설 이후 오픈까지의 흐름은 [`com.wadiz.store.md` §3.1](./com.wadiz.store.md#31-스토어-프로젝트-생명주기-개설--오픈) 참조.
 
 ### `AttachmentController` — 첨부파일 업로드/다운로드/프리사인
 base: `/api/attachments` (`store-api/.../rest/attachment/AttachmentController.java:30`, `@RestController`)
