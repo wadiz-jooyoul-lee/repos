@@ -1,5 +1,25 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-08-21 main pull 보강** (10 커밋)
+>
+> ### [Shared] `cloud-db-query` 스킬 신설 — 클라우드 DB 접속 정보 단일 원천
+> - 클라우드 환경(cdev / rc4)의 MySQL RDS 에 쿼리를 실행하는 스킬을 새로 만들고, **클라우드 DB 접속 정보의 단일 원천**으로 삼았습니다 (`plugins/shared/skills/cloud-db-query/SKILL.md` 210줄). 참고 문서로 AWS SSO 설정(`references/aws_sso_setup.md` 121줄), 클라우드 스키마 차이(`references/cloud_schema_delta.md` 49줄), 접속 정보(`references/connections.json` 84줄)를 동봉했습니다.
+> - `create-project-v2` 가 이 스킬에 DB 접속을 위임하도록 정리했습니다 (`plugins/shared/skills/create-project-v2/SKILL.md`).
+>
+> ### [FE2] `commit` + `review-to-pr` → `commit-pr` 통합 (FE2-851)
+> - 기존 `commit`(250줄)·`review-to-pr`(253줄 + `references/review-process.md` 104줄) 두 스킬을 삭제하고 **`commit-pr`(499줄) 하나로 통합**했습니다. `references/pr-creation.md` 는 새 스킬 아래로 이동·정리. fe2 플러그인 매니페스트 버전과 `hooks/hooks.json` 도 함께 갱신.
+>
+> ### [Client] `regular-release` 문서 정비 (0.5.11 → 0.5.12)
+> - 배포 담당자 cc 정책과 인수 시 `deployer` 갱신 규칙을 정리하고, CI/CD 트리거에 `environment` 인자를 명시하는 규칙을 강조했습니다. 배포 시작 메시지 문구를 개선하고 강조 표현을 중립 톤으로 정리했습니다 (`plugins/client/skills/regular-release/SKILL.md` 대폭 개정, `README.md`, `release-branch-check/SKILL.md`).
+>
+> ### [FE1] `figma-node-index` 에 Dev Mode 주석·숨김 노드 처리 추가 (0.1.2)
+> - Figma Dev Mode 주석과 숨김 노드를 다루는 절차를 스킬에 추가했습니다 (`plugins/fe1/skills/figma-node-index/SKILL.md`).
+>
+> ### 저장소 공통
+> - `WRITING_CONVENTIONS.md`·`CLAUDE.md` 작성 컨벤션을 정비하고 client 플러그인 문서에 적용했습니다. `marketplace.json` 항목도 함께 갱신.
+>
+> ---
+>
 > 📅 **2026-07-31 main pull 보강** (4 커밋)
 >
 > ### [Shared] `create-store-project` 스킬 신설

@@ -1,5 +1,19 @@
 # makercenter-fe
 
+> 📅 **2026-08-21 main pull 보강** (5 커밋)
+>
+> ### FE2-905 — 와디즈 도메인 `wadiz.io` 전환 및 고객센터 origin 분리
+> - dev·local 환경의 와디즈 도메인을 **`wadiz.io`** 로 전환하고, clive 환경의 자산·링크 origin 도 `wadiz.io` 로 교정했습니다 (`.env`, `.env.local.sample`, `.env.production.dev`, `.env.production.clive`, `.env.production.live`).
+> - 고객센터 origin 을 하드코딩 대신 환경 변수로 분리하고, `io` 정적 origin 을 화이트리스트에 추가했습니다 (`src/shared/config/urls.ts`, `src/shared/lib/url.ts`, `src/shared/types/env.d.ts`, `src/widgets/inner-html/api/fetchPageHtml.ts`, `src/widgets/inner-html/ui/InnerHtml.tsx`, `src/widgets/footer/ui/WadizFooter.tsx`, `src/shared/lib/pageMetadata.ts`). 검증 테스트 `url.test.ts`·`fetchPageHtml.test.ts` 보강.
+>
+> ### FE2-718 — cloud_live(clive) 배포 환경 추가
+> - `.env.production.clive` 신규 및 `Dockerfile`·CI 워크플로(`app-makercenter-ci.yml`, `event-makercenter-ci.yml`)에 clive 환경을 추가했습니다.
+>
+> ### FE2-862 — robots.txt 에서 AI 크롤러 Bytespider 제거
+> - `src/app/robots.ts` 차단 목록에서 `Bytespider` 를 제거했습니다. (`com.wadiz.web` 도 같은 이슈로 동일 변경.)
+>
+> ---
+>
 > 📅 **2026-07-21 main pull 보강** (4 커밋)
 >
 > ### FE2-719 — 외부 서비스 URL을 env 기반 상수로 분리

@@ -1,5 +1,20 @@
 # com.wadiz.api.reward 분석 문서
 
+> 📅 **2026-08-21 master pull 보강** (10 커밋)
+>
+> 전부 **RWD-5856 — 프로젝트 번호 다건(bulk) 부스터 쿠폰 조회** 한 덩어리입니다. 신규 endpoint 1개(`GET /api/v1/rewards/coupons/projects/bulk`).
+>
+> ### RWD-5856 — projectNos 다건 쿠폰 조회 엔드포인트 추가
+> - **`reward-api/.../rest/coupon/ProjectCouponSummaryController.java:42`** — `GET /api/v1/rewards/coupons/projects/bulk` 신규. 프로젝트 번호 목록을 받아 프로젝트별로 그룹핑한 `ProjectCouponSummaryDto.ProjectCoupons` 목록을 반환합니다. 기존 단건(`/{projectNo}`)·조건 조회(`""`)와 같은 컨트롤러에 붙습니다.
+> - **`ProjectCouponSummaryDao`·`project-coupon-summary-mapper.xml`** — `selectProjectCouponList` 를 단일 `projectNo` 조회에서 **`projectNos` IN 조회**로 일반화.
+> - **`coupon/application/ProjectCouponSummaryService.java`** — bulk 조회·그룹핑 메서드 추가. 기존 `enrichWithTemplate`(부수효과 방식)을 반환값 기반 `enrichAndFilterByCountry` 로 전환하고, 언어코드 해석 중복을 제거했습니다.
+> - **`exception/GlobalExceptionHandler.java:162`** — `BindException` 핸들러 추가. `@RequestBody` 는 하위 클래스인 `MethodArgumentNotValidException` 을 던지지만 `@ModelAttribute` 는 상위인 `BindException` 을 던져 기존에는 `handleException(Exception)` 으로 떨어져 **500** 이 나던 것을, 필드/글로벌 오류 목록과 함께 **400** 으로 응답하도록 했습니다.
+> - 안전망으로 현재 동작을 고정하는 characterization 테스트를 먼저 깔았습니다 — `ProjectCouponSummaryServiceTest`(526줄), `ProjectCouponSummaryDaoTest`(149줄, `reward-test` 에 H2 스키마 `ProjectCouponSummary` 추가), `ProjectCouponSummaryControllerTest`(108줄), `BulkSearchValidationTest`(105줄).
+> - `reward-models` 의존성 0.4.21-SNAPSHOT 로 버전 점프 검증(`gradle.properties`).
+> - 소비처: `com.wadiz.web` 이 같은 이슈에서 `GET /web/reward/api/coupons/projects/bulk` 프록시 엔드포인트를 추가해 이 API 를 호출합니다.
+>
+> ---
+>
 > 📅 **2026-07-21 master pull 보강** (1 커밋)
 >
 > ### RWD-5794 — issueKey로 쿠폰 템플릿 상세 조회 기능 추가

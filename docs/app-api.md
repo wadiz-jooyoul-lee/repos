@@ -1,3 +1,13 @@
+> 📅 **2026-08-21 main pull 보강** (2 커밋)
+>
+> ### OIDC 프로바이더 초기화 실패 시 요청 시점 재초기화 (FE1-1469)
+> - `AccountOidcProvider`는 기동 시점(`onModuleInit`)에 한 번만 초기화되던 구조라, 그때 OpenID 구성(`ACCOUNT_API_OPENID_CONFIGURATION_URL`) 조회가 실패하면 파드를 다시 띄울 때까지 모든 인증 요청이 401로 고착됐습니다. `ensureInitialized()`를 새로 두어 `getPublicKey()`·`getUserInfo()` 진입 시 미초기화 상태면 그 자리에서 다시 초기화합니다 (`src/common/providers/oidc.provider.ts:29,93,106`).
+> - 동시 요청이 몰려도 초기화가 중복 실행되지 않도록 진행 중인 Promise(`initializing`)를 공유하고 완료 후 해제합니다. 재초기화 뒤에도 `client`/`userInfoEndpoint`가 비어 있으면 마지막 초기화 오류(`lastInitializationError`)를 `cause`로 연결한 `OIDC provider is not initialized` 오류를 던집니다 — 빌드 타깃 ES2021에 `Error`의 `cause` 옵션 타입이 없어 `Object.assign`으로 붙입니다 (`oidc.provider.ts:18,44,86`).
+> - OpenID 구성 fetch에 `AbortSignal.timeout(3000)`(3초) 타임아웃을 걸어, 요청 경로에서 재초기화가 일어날 때 상대 서버 무응답이 요청을 붙잡지 않도록 했습니다 (`oidc.provider.ts:56`).
+> - 검증용 스펙 `src/common/providers/oidc.provider.spec.ts` 148줄 신규.
+>
+> ---
+
 > 📅 **2026-07-10 main pull 보강** (3 커밋)
 >
 > ### 펀딩 스토리 HTML 후처리에 Vimeo iframe 지연 로딩 추가 (FE1-1178)

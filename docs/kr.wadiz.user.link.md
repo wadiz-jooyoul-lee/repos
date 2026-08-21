@@ -15,6 +15,14 @@
 - ECR 이미지: `843734097580.dkr.ecr.ap-northeast-2.amazonaws.com/userplatform/link` (`build.gradle:61`) — **User Platform 팀** 소유.
 - Swagger: `https://{env}-platform.wadizcorp.net/link/swagger-ui/index.html` (dev/rc).
 
+## 최근 변경사항 (2026-08-21 pull 기준)
+
+- **BE3-795 — Campaign CDC 컨슈머의 `before` null 방어**: `kafka/message/MessageCampaign.java` 의 변경 감지 메서드 `isCancelStandingBy()`·`changedBizModel()` 가 `!isDeleted()` 로만 가드하고 있었습니다. 이 가드는 `after` 만 보장하기 때문에, `before` 가 없는 이벤트(INSERT `op=c`, 스냅샷 `op=r`)가 들어오면 `getPayloadBeforeData()` 에서 **NPE** 가 났습니다. 두 메서드의 가드를 `isValidBeforeData() && isValidAfterData()` 로 바꿔, `before`/`after` 를 함께 비교하는 '변경 감지'는 애초에 성립하지 않는 이벤트에서 실행되지 않도록 했습니다.
+- 함께 `changedBizModel()` 의 비교를 `!a.equals(b)` 에서 **`!Objects.equals(a, b)`** 로 바꿨습니다. `BizModel` 은 nullable 이고 `before` 값은 `isValidate()` 검사를 거치지 않기 때문입니다.
+- 검증 테스트 `MessageCampaignTest`(136줄) 신규. 같은 이슈에서 조건을 `isComparableChange()` 로 추출했다가 **되돌렸습니다**(`a7385b8`) — 현재 코드에는 그 메서드가 없습니다.
+
+---
+
 ## 기술 스택
 
 - **언어**: Java 17 (lombok 전면 사용), 패키지 prefix `kr.wadiz.user.link`.

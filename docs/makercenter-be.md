@@ -1,5 +1,18 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-08-21 main pull 보강** (2 커밋)
+>
+> ### CLIENT-208 — 오픈예정 권장 기간·일정 설정 마감일을 오픈일에서 파생
+> - **`service/ExhibitionService.java`** — 기획전 등록(`registExhibition`)·수정(`modifyExhibition`) 진입부에서 `fillSchedulesDerivedFromOpenDate(req)` 를 먼저 호출해 오픈일 기준 파생 일정을 서버가 채웁니다. **요청 값은 무시**합니다.
+> - **`data/request/ReqExhibitionBase.java`** — 파생 대상 3필드의 `@NotBlank`·`@Pattern` 검증을 제거하고 파생 규칙을 주석으로 남겼습니다: `coming_soon_recommend_start_date` = 오픈일 −14, `coming_soon_recommend_end_date` = 오픈일 −1, `schedule_due_date` = 오픈일 −1.
+> - 검증 테스트 `ExhibitionServiceTest`(88줄) 신규.
+>
+> ### CLIENT-207 — 공휴일 API 호출·스케줄러 비활성화 (장애 대응)
+> - **`scheduler/SchedulerService.java`** — 매주 월요일 01시에 돌던 `managerHolidayScheduler` 를 **전체 주석 처리**했습니다. 응답 없는 공공데이터 공휴일 API 를 기다리며 **단일 스케줄러 스레드를 16시간 점유**해, 2026-08-03 에 같은 스케줄러에 물린 10:00 계정만료·15:00 CRM 발송이 실행되지 않은 장애가 원인입니다.
+> - 되살릴 때를 대비해 `dataService` 필드는 남겨 두었고, "사내 공휴일 API 로 이관 후 되살릴 것 · HTTP 타임아웃 필수" TODO 를 코드에 명시했습니다. 관련 로직은 `service/DataService.java`·`controller/DataController.java` 에서도 함께 정리됐습니다.
+>
+> ---
+>
 > 📅 **2026-07-31 master pull 보강** (108 커밋)
 >
 > 이번 pull은 대부분 **기획전 CRM 자동 발송(회차별 알림톡·메일) + Braze 동기화** 신규 기능 한 덩어리입니다(에픽 CLIENT-181, 하위 CLIENT-183~193). 회차 정의는 DB 테이블 없이 코드 enum(`CrmRoundType`)으로 고정하고, 발송 예정 시각은 저장하지 않고 오픈일에서 파생 계산하며, 매일 15:00 KST 스케줄러가 발송 대상을 판정해 플랫폼 발송 API로 전달합니다.

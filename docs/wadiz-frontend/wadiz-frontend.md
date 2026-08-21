@@ -1,5 +1,60 @@
 # wadiz-frontend
 
+> 📅 **2026-08-21 master pull 보강** (직전 갱신 2026-07-31 이후 357 커밋, 이슈키 80여 종)
+>
+> **와디즈 에디션 기획전**(FE1-1317/1316/1318/1319/1342/1497)이 지면·어드민 양쪽에서 최대 테마입니다. 메이커 스튜디오의 GMV 구간별 컨설팅 수수료 안내(FE2-840), 어드민 실시간 콘텐츠 검사 화면(RWD-5879/RWD-5836), 매출업 스쿨 리네임(FE2-899), 웹접근성 개선(FE1-1400/1406)이 뒤를 잇습니다. i18n 동기화 커밋 다수는 생략합니다. 변경 규모는 `apps/global/src` 131파일 · `studio/funding/src` 62 · `static/services/admin` 58 · `packages/features/src` 52 · `packages/widgets/src` 43 순입니다.
+>
+> ### FE1-1316 / FE1-1318 / FE1-1497 — 와디즈 에디션 지면(홈·기획전)
+> - 홈 모바일에 에디션 섹션을 붙이고 카드 4종 렌더·썸네일 색 추출·카운트다운·랜덤 노출을 구현했습니다. 카드 노출 개수는 서버 응답을 그대로 따르고, 카드+MD 합산 높이를 고정한 뒤 320~359px 구간 반응형 분기를 추가했습니다(분기 훅은 공용 `useMediaQuery` 로 대체) (`apps/global/src/pages/home/HomeMobilePage.tsx`, `packages/features/src/home/ui/WadizEditionSection/`, `packages/api/src/main2/main2.service.ts`).
+> - 카드 CTA·타이틀을 어드민 입력값으로 통일하고 알림신청은 공통 컴포넌트를 재사용, 중복 다국어 키를 정리했습니다(FE1-1318).
+> - FE1-1497: 에디션 기획전 헤더를 일반 기획전과 동일하게 맞추고, 에디션 배지 count 는 진입마다 조회하도록 `staleTime` 을 해제했습니다. 검색 홈 카테고리 버튼의 GA 카테고리 값도 함께 변경 (`apps/global/src/pages/events/[eventNo]/`, `pages/home/`, `pages/search/`).
+>
+> ### FE1-1317 / FE1-1342 / FE1-1319 — 에디션·기획전 어드민
+> - 어드민에 에디션 카드 타입 4종 등록·미리보기·리뷰 팝업·랜덤 노출을 추가하고, 카드 CTA·타이틀 입력과 다국어 번역 편입, 웹 API 호스트 해석을 정리했습니다(FE1-1342).
+> - AD1 리워드 불러오기(수동) 추가, 타입 교체 시 콘텐츠 초기화, 스토어 리워드 메뉴 숨김. 메이커 기획전 미리보기에 쿠폰 winner·노출조건 미만족 표시를 넣고 미리보기 API 실패를 격리했습니다. 메이커 부스터 중복 제거 설명을 느낌표 아이콘 팝오버로 변경 (FE1-1317, `packages/api/src/web/reward/coupon.service.ts`, `collections.service.ts`, `static/services/admin`).
+> - FE1-1319: 통합 기획전 어드민의 타입 지정 프로젝트 영역 UX 개편 + 지면 미리보기 카드 추가. FE1-1573 에서 프로젝트 카드에 영역 데이터가 중첩 저장되는 버그를 고치고, 제출값 보충 범위를 `projects` 제외로 축소해 사이드 이펙트를 막았습니다.
+> - FE1-1531: 기획전 부스터 쿠폰을 `hasCoupon` 이 true 일 때만 노출하도록 가드를 추가했습니다(검색 서버 DISPLAY-1686 과 짝).
+>
+> ### FE2-840 / FE2-881 / FE2-832 — 메이커 스튜디오 요금·리워드 금액 정책
+> - GMV 구간별 컨설팅 수수료율 적용 고지(2026년 8월 10일 시행)를 추가하고, **제출일 정책에 따라 조건부 노출**합니다. 노출 판정 재료는 `com.wadiz.api.funding` 의 `GET /api/studio/campaigns/{projectNo}/submission` 응답 정책값 `GMV_TIERED_FEE_NOTICE` 입니다 (`apps/global/src/pages/create-project/`, `_api/useFundingOpenMaker.ts`·`useMakerProject.ts`). 안내 모달 메시지 박스 색상은 basic 으로 변경.
+> - FE2-832: 후원·캠페인 카테고리의 리워드 금액 초과(500만원 상한) 예외 처리를 추가했습니다(`com.wadiz.web` RWD-5819 와 짝).
+>
+> ### RWD-5879 / RWD-5836 — 어드민 실시간 콘텐츠 검사 화면
+> - 어드민에 실시간 콘텐츠 검사 화면을 신설하고, 프로젝트 단위 탭·상세 모달·삭제/블라인드 조치를 추가했습니다. 상세 스레드 테이블을 판정·코드·사유·점수 컬럼으로 개편하고 점수 셀 렌더러를 공용 모듈로 이관했습니다. rc 피드백으로 판정 기본값·날짜 입력·복구 버튼을 보강 (`static/services/admin`). 백엔드는 `co.wadiz.api.community` 의 `/api/v3/admin/realtime-content` 3 endpoint 입니다.
+>
+> ### FE2-899 / FE2-902 — 매출업·데이터인사이트 트래킹 정합
+> - FE2-899: 매출업의 `MakerClassList → SchoolList` 리네임에 맞춰 트래킹 카테고리·라벨·함수명을 GA 명세(`광고_와디즈스쿨`·`광고_펀딩인사이트`)와 정합시키고, 팁 컴포넌트를 `FundingInsightList` 로 리네임했습니다 (`apps/global/src/pages/maker/ad/_ui/MakerGuideSection/`).
+> - FE2-902: 데이터·인사이트 현황 메인 배너를 상시 노출로 바꾸고, GA 카테고리 접두사(`펀/프스튜디오_`) 제거를 시도했다가 **롤백해 접두사를 유지**합니다.
+>
+> ### CLIENT-55 계열 후속 / CLIENT-203 / CLIENT-206 / CLIENT-209 / FE2-808 / FE2-714 — WAi 채팅 위젯
+> - CLIENT-206: 스토리 생성 상태·탭 타이틀 관리를 `StoryGeneration` 클래스로 분리하고 `useWAiWebSocket` 이 위임하도록 리팩터링.
+> - CLIENT-209: 모바일에서 WAi Tip·`A2uiChip` 의 스크롤 터치가 클릭으로 동작하던 문제 수정.
+> - CLIENT-203: A2UI 개발 지침(`CLAUDE.md`·`NAMING_CONVENTIONS.md`·카탈로그 추출/위키 갱신 프롬프트) 정비 — 위키 미리보기 이미지를 자동 캡처 방식으로 변경, core 배럴 export 정렬 규약 적용.
+> - FE2-808: 스토리 생성 배너(`StoryAgentBanner`)를 추가하고 전송 시 닫히도록 처리, 워크스루 모달 로직(`walkthroughModal.ts`) 신설. FE2-714: WAi 런처 스크립트 로드 실패의 Sentry 노이즈 개선.
+>
+> ### FE1-1400 / FE1-1406 — 웹접근성
+> - 클릭 요소를 `button`/`link` 로 전환하고 SNSToggle 이벤트를 위임, ImageEditor 접근성 버그 수정과 샘플 삭제 키보드 지원을 추가했습니다(FE1-1406). account 아이콘 버튼에 `aria-label`·외부 링크 `rel` 추가, Avatar 프로필 이미지 대체 텍스트 추가(FE1-1400).
+>
+> ### FE1-1403 / FE1-1467 / FE1-1478 / FE1-1372 / FE1-1368 — GA·전자상거래 트래킹
+> - FE1-1403: 와디태그 색인용 최상위 `item_list_id` 추가 (`packages/event-tracker/src/ecommerce.tracker.ts`, `pages/modal/reward-selection/`). 저장 시 기존 맵 병합 시도는 되돌렸습니다.
+> - FE1-1478: 프로젝트 카드에 찜 여부 `is_interested` 전자상거래 속성을 추가하고 스토어·레거시 카드까지 확장(앱 FE1-1467 과 짝).
+> - FE1-1372: 스토어 카드 GA 전자상거래 `price` 에 `signaturePrice` 우선 적용, 홈 퀵메뉴 GA 이벤트 속성 변경. FE1-1368: 최근본·유사추천 섹션의 `ecommerceSectionName` 전달 누락 복구.
+>
+> ### FE1-1421 / FE1-1509 / FE1-1277 / QA-22868 — 도메인 전환·결제·주문
+> - FE1-1421: 클라우드 CDN 주소를 **`cdn-static.wadiz.io`** 로 통합하고 푸터 회사정보를 i18n 전환했습니다. FE1-1509 도 A2UI 카탈로그 식별자를 같은 도메인으로 맞췄습니다.
+> - FE1-1277: 스토어 결제 에러 응답 파싱을 fetch 구조에 맞게 수정(4곳)하고 스토어 참여 제한 안내 문구 용어를 정정 (`apps/global/src/pages/funding/payment/_api/`, `packages/features/src/store/payment/`).
+> - QA-22868: 주문 세션 리워드의 배송지 필요 여부 필드명을 **`isAddressRequired`** 로 맞추고(`com.wadiz.api.funding` RWD-5855 와 짝), 배송지 불필요 리워드 주문의 배송지 영역 비노출·주문 국가 코드 유실을 수정했습니다.
+>
+> ### 기타
+> - FE2-991: 가이드 콘텐츠 변경 — 메이커 추천 프로그램의 공유 문구·심사 혜택 삭제, 미사용 `.icon` 스타일·에셋 정리.
+> - FE2-906: 일정 페이지 광고 유도 배너와 저장완료 모달 광고 추천 영역 추가. FE2-849: 광고 결제 완료 다국어 메일 템플릿 추가(`apps/mail-template/src`). FE2-871: 스튜디오 펀딩 다국어에 일본어·중국어 추가.
+> - FE1-1517: 한국 참여완료 타이틀·참여내역 버튼 다국어 키 전환, 해외배송 관세·수입세 안내 문구 복원.
+> - FE1-1418: 글로벌 룰렛 결과 모달을 자동 이동으로 개선하고 닫기(X) 버튼 제거. FE1-1553: 스토어 상세 첫 결제 쿠폰 배너 노출 제외.
+> - FE1-1396: 글로벌 CI CHANGELOG 단계의 태그 전체 fetch 를 제거해 멈춤 해소. FE1-1373: fetch JSON 파싱 오류 처리 개선(SSR 환경 대응).
+> - 클라우드 환경 확장: `studio/store`·`studio/startup` 에 `.env.{development,production}.{cdev,clive,rc4}` 추가, ir 앱 cdev·clive 배포에 dev·live S3 버킷 사용.
+>
+> ---
+>
 > 📅 **2026-07-31 master pull 보강** (직전 갱신 2026-07-21 이후 197 커밋, 이슈키 20여 종)
 >
 > WAi(와디즈 AI 에이전트) 채팅 위젯을 A2UI 프로토콜 기반으로 대개편한 CLIENT-* 계열이 최대 테마입니다. 메이커홈 WAi 첫 진입 경험 재설계(FE2-669/709~712), 정적 리소스 CDN 도메인 전환(FE1-1302/1303), 헤더·기획전 정비가 뒤를 잇습니다. i18n 동기화 커밋 다수는 생략합니다.

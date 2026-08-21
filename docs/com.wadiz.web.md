@@ -6,6 +6,47 @@
 
 ---
 
+> 📅 **2026-08-21 master pull 보강** (20 커밋)
+>
+> 약관 5종 개정(2026.08.18 시행), 정책 sitemap 신설(CLIENT-157), 후원·캠페인 리워드 500만원 상한 검증, Framer 프록시 다중 페이지 확장이 핵심입니다.
+>
+> ### 약관·정책 개정 5종 (FE1-1603 / FE2-1021 / FE2-1012)
+> - 현행 약관 5개를 **2026.08.18 개정**본으로 교체하고, 직전 버전을 날짜 붙인 파일로 아카이브했습니다. 지난 약관 파일은 신규 추가만 하고 내용은 손대지 않았습니다.
+>
+> | 현행 파일 | 아카이브된 직전 버전 |
+> |---|---|
+> | `web/resources/terms/signup.html` | `signup_20251226.html` (개정 2025.12.26) |
+> | `web/resources/terms/service_reward.html` | `service_reward_20260721.html` (개정 2026.07.21) |
+> | `web/resources/terms/funding_maker_service.html` | `funding_maker_service_20260721.html` (개정 2026.07.21) |
+> | `web/resources/terms/supporter_club.html` | `supporter_club_20250220.html` (개정 2025.02.20) |
+> | `web/resources/terms/maker_page_service.html` | `maker_page_service_20220215.html` (제정 2022.02.15) |
+>
+> - 개정 사유는 커밋 기준 **도메인 전환 반영**(FE2-1021)과 **예약결제의 결제시도 횟수 변경**(FE2-1012)입니다.
+>
+> ### CLIENT-157 — 정책(약관) 전용 sitemap 신설
+> - **신규 `seo/service/SitemapPolicyService.java`** — 현행 정책 17종의 라우트(`/web/wterms/{key}`)와 정적 파일명을 `POLICIES` LinkedHashMap 으로 고정하고, 각 HTML 본문에서 `개정|제정 YYYY.M.D` 패턴(`REVISION_DATE`)을 읽어 `lastmod` 를 파생합니다. 항목 DTO 는 `SitemapPolicyEntry`.
+> - `SitemapXmlBuilder.buildPolicyUrlset()` 추가, `SeoSitemapController` 에 `sitemap-policies.xml` 매핑 추가, sitemap 인덱스(`web/sitemap.xml`)에 편입, `web/sitemap.xsl` 에 `lastmod` 렌더링 추가. 파일명은 작업 중 `sitemap-policy` → **`sitemap-policies.xml`** 로 정리됐습니다.
+>
+> ### RWD-5819 / PRODUCT-903 — 후원·캠페인 단일 리워드 500만원 상한 검증
+> - **신규 `reward/rewarditem/validator/RewardAmountLimitValidator.java`** — 대표 카테고리가 후원(B1380)·캠페인(B1360)인 프로젝트의 **단일 리워드 금액(배송비 제외 판매가)** 상한을 `MAX_SINGLE_REWARD_AMOUNT = 5_000_000` 으로 검증합니다. 위반 시 `NotAllowedRewardAmountException`.
+> - 적용 지점: 리워드 저장 · 프로젝트 정보 저장 · 제출/재제출/사후심사 재제출. 검증 위치를 `ScreeningRequirementValidator` 로 옮기면서 **임시저장은 검증을 건너뛰도록** 정정했습니다(`RewardItemValidator`, `RewardMakerStudioSubmitValidator`, `RewardMakerStudioSubmitService`).
+>
+> ### RWD-5856 — 프로젝트 다건 부스터 쿠폰 API 추가
+> - **신규 `reward/coupon/controller/ProjectCouponApiController.java`** — `GET /web/reward/api/coupons/projects/bulk` (비로그인 가능). 파라미터는 `projectNos`(콤마 구분, 최대 100개)·`projectType`(`CouponTargetType`), 헤더 `wadiz-country` 선택. 응답은 `ProjectCouponsVo` 목록이며, 프로젝트 전용 쿠폰만 내려줍니다. 실제 조회는 `com.wadiz.api.reward` 의 같은 이슈로 추가된 `/api/v1/rewards/coupons/projects/bulk` 를 호출합니다.
+>
+> ### FE1-1492 — Framer 프록시를 다중 페이지 구조로 확장 + 글로벌 에이전시 페이지 연결
+> - `FramerProxyProperties` 의 대상 URI 맵을 `Map<Language, String>` → **`Map<페이지슬러그, Map<Language, String>>`** 2단으로 바꾸고, `getTargetUri(page, language)` 로 조회하도록 변경했습니다. 미설정 슬러그는 `NullPointerException` 으로 즉시 드러냅니다.
+> - `proxy-common.xml` 에 기존 `about` 외에 **`globalagency`** 슬러그를 추가(ko/en/ja/zh 4개 URI)하고, `web.xml` 에 매핑을 등록했습니다. 대상 호스트는 전 환경 공통 `strange-encounter-209950.framer.app`.
+>
+> ### 기타 (CLIENT-213 / RWD-5872 / FE1-1397 / FE1-1313 / FE2-862)
+> - CLIENT-213: 펀딩 상세 `WebPage` 구조화 데이터의 `dateModified` 를 프로젝트 상태별로 분기 (`global-korea/detail-seo-head.jsp`).
+> - RWD-5872: 프로젝트 삭제 시 서버에서 제출 여부와 소유자를 검증하도록 보강.
+> - FE1-1397: 지지서명 상세의 `og:url` 누락을 `canonicalUrl` 주입으로 수정 (`global/detail-seo-head.jsp`).
+> - FE1-1313: `apple-app-site-association` 파일을 `web/.well-known/` 디렉터리로 이전.
+> - FE2-862: `robots.txt` 차단 목록에서 AI 크롤러 **Bytespider 제거**.
+>
+> ---
+>
 > 📅 **2026-07-31 master pull 보강** (28 커밋)
 >
 > 파일 업로드 저장소를 S3 전략으로 전환, 지지서명 레거시 v2 API 정리·community 전환, 글로벌 배송대행 서비스 종료(배너·약관·모델) 후속 정리가 핵심입니다.

@@ -1,5 +1,16 @@
 # makercenter-fe-admin
 
+> 📅 **2026-08-21 main pull 보강** (5 커밋)
+>
+> ### FE2-706 — 클라우드(cdev/clive/rc4) 빌드·배포 파이프라인 추가 및 dev 환경 재편
+> - GitHub Actions 워크플로 `build-and-deploy-app-to-s3.yml`(60줄) 신규 — cloud 환경(cdev/clive/rc4) 빌드·S3 배포. `cloud_live` OIDC role ARN 을 브랜치 기준으로 고르도록 수정했습니다.
+> - 환경 파일 재편: `.env.clive`·`.env.rc4` 신규, 기존 dev 설정을 **`.env.odev`(구 dev)** 로 분리하고 **`.env`(dev)를 cloud 기준으로 전환**했습니다. `package.json` 스크립트와 `.github/workflows/dev.yml` 도 함께 조정.
+>
+> ### CLIENT-208 — 오픈예정 권장 기간·일정 설정 마감일 자동 표시(입력 불가)
+> - 기획전 기본정보·폼에서 오픈예정 권장 시작/종료일과 일정 설정 마감일을 **사용자 입력 대신 오픈일에서 파생한 값으로 읽기 전용 표시**하도록 바꿨습니다 (`src/components/exhibitionManage/ExhibitionBasicInfoTab.jsx`, `ExhibitionForm.jsx`). 파생 규칙(오픈일 −14 / −1 / −1)은 서버(`makercenter-be` CLIENT-208)가 확정하며 요청 값은 무시됩니다.
+>
+> ---
+>
 > 📅 **2026-07-31 main pull 보강** (47 커밋)
 >
 > ### CLIENT-192 — 기획전 CRM 탭 전면 개편 (회차 발송현황·D-N 라인업·광고 패키지)

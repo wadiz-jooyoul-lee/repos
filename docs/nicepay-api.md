@@ -1,3 +1,11 @@
+> 📅 **2026-08-21 main pull 보강** (2 커밋)
+>
+> ### rc4 컨테이너 이미지 빌드·배포 워크플로 추가
+> - **신규 `.github/workflows/aws_deploy_ecr_rc4.yml`(23줄)** — `rc4` 브랜치 push 또는 수동 실행(`workflow_dispatch`) 시 동작합니다. 재사용 워크플로 `wadiz-gitops/workflows-container-image-build-push` 를 호출해 ECR(`843734097580.dkr.ecr.ap-northeast-2.amazonaws.com/platform/nicepay-api`)로 이미지를 push 하고, 이어서 `update_image_tag` 로 gitops 저장소의 `core/rc4/nicepay-api.yaml` 값 파일에 태그를 반영합니다(시크릿 `WADIZ_GITOPS_PAT`).
+> - 코드 변경은 없고 배포 파이프라인 추가만 있습니다. (2026-07-21 보강의 RWD-5816 clive 환경 추가에 이은 클라우드 환경 확장입니다.)
+>
+> ---
+>
 > 📅 **2026-07-21 main pull 보강** (3 커밋)
 >
 > ### RWD-5755 — n원(예약) 결제/취소 대사 이벤트 확장

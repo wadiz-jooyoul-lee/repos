@@ -6,6 +6,45 @@
 
 ---
 
+> 📅 **2026-08-21 develop pull 보강** (195 커밋, 26.30.2 → 26.33.1.0)
+>
+> **국내 GNB 위시 탭 복원(FE1-1496)**, **홈 에디션 섹션(FE1-1316)**, **deprecated 어댑터 전면 제거(IOS-3827)** 가 핵심입니다. (Bump up·다국어 리소스 동기화 커밋 다수 생략)
+>
+> ### FE1-1496 — 국내 GNB 위시 탭 구성
+> - `TabBarIndex` 구성을 바꿔 국내 GNB 에 **위시 탭**을 다시 넣고 라벨을 붙였습니다. 2026-07-31 보강의 FE1-1236/1378 에서 "위시 탭을 막펀잡기 탭이 대체"하고 `TabBarIndex.wish` 케이스를 제거했던 것이 이 이슈로 되돌아온 셈입니다.
+> - 기본 `rightBarButtonItem` 을 '검색 & 홈' 으로 수정하고 네비게이션 헤더·GNB 이벤트 action 을 정비했습니다. 상단 카테고리 버튼 클릭 이벤트 수집 값도 정정 (`Projects/App`).
+>
+> ### FE1-1316 — 홈 와디즈 에디션 섹션
+> - 에디션 DTO 디코딩 + 도메인 모델·매퍼·디스패치, 기본 섹션/카드 렌더, 탭 이동과 analytics 를 구현했습니다. DEBUG 빌드용 `HomeStub` 에디션 카드와 `UITestConfigurator` 런치 인자 게이트를 붙여 UI 테스트에서 고정 데이터를 쓸 수 있게 했습니다. 웹(FE1-1316/1318)과 같은 지면입니다.
+>
+> ### IOS-3827 — deprecated 어댑터·타입 전면 제거
+> - 1~5-2 단계에 걸쳐 deprecated 어댑터를 사용처 규모 순으로 걷어내고 DI 주입으로 전환했습니다. 1단계 `RecentCategoryManager`·`ZendeskManager` 어댑터 제거 → 2단계 `RecentKeywordManager`·`AppsFlyerAnalytics`·`BrazeManager` → 3단계 `WadizPreference`·`WaditagEventDispatcher` → 4단계 `GA4Manager`→`GA4AnalyticsService`, `UserManager`→`UserService` 직접 전환 → 5단계 `ScrollDepthCheckable` deprecated 제거·ga4 파라미터 주입, 5-2단계 `GA360.swift` deprecated 타입 제거 및 파일 삭제(동작 보존).
+> - `WadizPreference` 잔존 참조를 `AppPreference` 로, `logoutWithoutAPICall` 의 `BrazeManager` 참조를 주입 방식으로 전환하는 등 develop 신규 코드와의 리베이스 적응 커밋이 이어집니다. 비치명 resolve guard-return 은 `assertionFailure` 로 바꿔 조용히 넘어가지 않게 했습니다. 작업 문서는 `docs/IOS-3827/`(requirements·plan·progress).
+>
+> ### FE1-1415 — 막펀잡기 후속 UI 개선
+> - 카드 UI 를 고정 타이머 영역·16:9 이미지·뱃지 행·CTA 재구성으로 개편하고, 페이징 전환 모션을 '배경 고정 + 이미지 줌' 으로 교체했습니다. 찜 상태 연동과 자동넘김 진행값을 정합시키고, 다크 배경 화면용 검은 테두리 뱃지 variant 를 추가했습니다. '내가 찜한' 뱃지 라벨은 i18n 키로 교체.
+>
+> ### FE1-1467 / FE1-1478 — 이커머스 이벤트에 찜 여부(`is_interested`) 수집
+> - `ActivityProvider` 의 찜 상태를 **3-state 저장**(찜함/안함/미조회)으로 바꾸고, 찜 상태 조회 창구를 이커머스 수집에 연결했습니다. 막펀잡기 피드 적재 시점과 스토어홈 주 목록에도 찜 상태 조회를 추가. 비로그인 처리와 수집 값 표기는 플랫폼 합의(웹 FE1-1478)와 맞췄습니다.
+>
+> ### FE1-1264 — 글로벌 path URL 대응 (수집 URL 언어코드)
+> - 화면 URL 조립 공통 관문 `buildScreenUrl` 에 언어코드를 부착하고, `NavigationMap.needLogin` 은 언어코드를 제거한 뒤 비교하도록 바꿔 글로벌 경로에서도 로그인 판별이 되게 했습니다. `getValidDeepLinkUrl` 은 언어코드를 정규화해 비교(딥링크 쿼리 병합 유지)하고, `prependingLanguageCode` 의 `wadiz://` 스킴 언어코드 위치 버그를 고쳤습니다. 언어코드 유틸 2개를 `ScreenKeyParser` 에 프로토콜+구현+Mock 으로 추가.
+>
+> ### FE1-1250 — analytics 무효 쿼리 항목 단위 드롭·관측
+> - analytics 쿼리에서 무효 항목을 **쿼리 전체가 아니라 항목 단위로** 드롭하도록 바꾸고, 드롭된 항목을 Crashlytics non-fatal 로 기록합니다. non-fatal 폭주를 막기 위해 **조합당 1회**로 제한했습니다. Core 계약 문서에 항목 단위 드롭·관측을 반영.
+>
+> ### FE1-1585 — 테스트 정본 Mock 배선 (중복 double 제거)
+> - Core·Login·Search·EndingSoon·ServiceHome·Service 각 모듈에 `*Testing` 의존성을 배선하고 모듈별로 흩어져 있던 중복 Mock/double 을 제거했습니다. 정본 Mock 에 검증 knob 을 보강하고 `MockGA4AnalyticsService` 의 채널별 기록·대기 계약을 정리.
+>
+> ### FE1-1622 / FE1-1597 / FE1-1463 / FE1-1464 / FE1-1466 — 빌드·인프라·브랜치 정책
+> - FE1-1622: `Packages/Macro` 로컬 패키지를 제거하고 `UserDefaults` accessor 를 수동 전환, 불필요해진 `-skipMacroValidation` 플래그 제거. `docs/Workspace_ARCHITECTURE.md` 갱신.
+> - FE1-1597: `.io` 도메인 전환 시 `kr` 도메인의 `_waid` 쿠키를 `io` 도메인으로 이관하고, preload 실패 경로에서도 이관을 수행하며 조회는 활성 도메인 기준으로 합니다.
+> - FE1-1463/1464/1466: `main` 을 라이브 포인터로 두는 브랜치 정책을 `branching-pr.md` 에 명문화하고, 라이브 반영·머지백 PR 자동화 워크플로와 릴리즈 브랜치 분기점 검증 CI 게이트를 추가했습니다.
+> - FE1-1297: Firebase RemoteConfig 이관 및 A/B 테스트 작업 머지(#3287), 최신 AppSetting 값으로 `default.json` 갱신.
+> - FE1-1621: 스크린샷 공유하기 PV 이벤트를 제거하고 웹에서 보내는 PV 이벤트로 대체. FE1-1624: 더보기 GNB 클릭 트래킹 소실 수정.
+>
+> ---
+>
 > 📅 **2026-07-31 develop pull 보강** (97 커밋, 26.29.1 → 26.30.2)
 >
 > 신규 **막펀잡기(마감임박, EndingSoon)** 피드 모듈과 위시 Top Nav 전환이 핵심입니다. (Bump up 커밋 다수 생략)

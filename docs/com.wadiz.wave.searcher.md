@@ -6,6 +6,22 @@
 
 ---
 
+> 📅 **2026-08-21 master pull 보강** (5 커밋)
+>
+> 신규 엔드포인트는 없고, **막펀잡기 노출 정책 개편(DISPLAY-1673)** 과 **쿠폰 없는 국가에 할인 정보를 내려보내지 않도록 정정(DISPLAY-1686)** 두 가지입니다.
+>
+> ### 막펀잡기 노출·정렬 정책 개편 (DISPLAY-1673)
+> - **최소 노출 게이트 제거**: `CatchupController` 의 `MIN_DISPLAY_COUNT`(5) 상수를 없애고, 카드가 **0건일 때만** `200 + data null + "no data"` 로 영역을 미노출합니다(`web/rest/catchup/CatchupController.java`). 즉 1~4건이어도 노출됩니다.
+> - **조회 구조를 D-0 우선 + 부족분 fallback 2단으로 분리** (`core/catchup/service/CatchupEndingSoonService.java`): 오늘 마감(D-0)을 **찜 → 부스터 쿠폰 보유 → 랜덤** 순으로 최대 100건 구성하고(`findEndingSoonD0`), D-0 가 목표치 `TARGET_MIN_COUNT`(10)에 못 미칠 때만 fallback(`findFallback`, D-1~D-3 일자순+랜덤)으로 부족분을 채웁니다. 기존 상수 `MAX_REMAINING_DAY`(5, 한 쿼리로 D-0~D-5 탐색)는 `FALLBACK_MAX_DAY`(3)로 바뀌었습니다. 결제 제외 기간 `PAID_EXCLUDE_DAYS`(60일)는 **D-0 에만** 적용됩니다.
+> - 헤더 `wadiz-country` 를 이 경로에서 `CountryCode` enum → **`String`**(요청 원문)으로 변경. 배송 판정은 원문 매칭, 쿠폰은 `fromCode` 매핑을 씁니다. (2026-07-31 보강에서 `/api/search/home-feed` 에 적용한 것과 같은 취지입니다.)
+> - 중간에 롤백(#1330)이 있었으나 `feb2dd57` 로 재적용되어 **현 master 에 반영된 상태**입니다.
+>
+> ### 쿠폰 없는 국가에 할인 정보 미노출 (DISPLAY-1686)
+> - `hasCoupon` 이 false 이면 `maxDiscountRate`·`maxDiscountAmount`·`maxDiscountRateLimitAmount` 3개 필드를 **null 로 내려보냅니다**. 할인 정보가 쿠폰에서 파생된 값이라, 요청 국가에서 쓸 수 없는 쿠폰의 할인율이 남아 클라이언트가 근거 없는 할인을 노출하던 문제를 막습니다. `IntegrateCampaignResultConverter`(`convert`·`convertByRawCountry`)와 `IntegrateCampaignToResponseConverter`(Store·Funding·ComingSoon·PreOrder 4종)에 `mapMaxDiscount*` 매핑을 추가했습니다.
+> - **`/api/search/v2/products` 의 `hasCoupon` 필터 기준 변경**: ES 필터를 `termQuery("hasCoupon", true)` 에서 `termsQuery("countryTypes", countryCode.matchingCountryTypes())` 로 바꿔, 응답의 `hasCoupon` 파생 기준(요청 국가 ↔ doc 의 `countryTypes` 매칭)과 조회 필터 기준을 일치시켰습니다 (`service/feed/IntegrateCampaignServiceImpl.java:151-158`).
+>
+> ---
+>
 > 📅 **2026-07-31 master pull 보강** (11 커밋)
 >
 > ### 신규 엔드포인트: 막펀잡기(마감임박 따라잡기) `GET /api/search/v1/catchup/ending-soon` (DISPLAY-1637, DISPLAY-1660)
