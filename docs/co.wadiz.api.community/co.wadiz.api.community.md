@@ -1,31 +1,30 @@
 # co.wadiz.api.community
 
-> 📅 **2026-08-21 master pull 보강** (18 커밋)
+> 📅 **2026-08-25 cloud_live pull 보강** (20 커밋)
 >
-> 직전 갱신(2026-07-31) 이후 변경은 **QMT(2차 콘텐츠 심사) 파이프라인 신설(RWD-5823)** 과 **어드민 '실시간 콘텐츠 검사' 조회 API 신설(RWD-5823·RWD-5879)** 이 핵심이다. 신규 REST 컨트롤러 1개(`RealtimeContentAdminController`, endpoint 3) + 기존 `SupporterSignatureAdminController` 에 endpoint 1개 추가.
+> ⚠️ **기준 브랜치가 `master` → `cloud_live` 로 바뀌었습니다.** 내용은 master 와 거의 같고(클라우드 전용 커밋은 설정 재정렬 2건뿐), **QMT(2차 콘텐츠 심사) 파이프라인 신설(RWD-5823)** 과 **어드민 '실시간 콘텐츠 검사' 조회 API 신설(RWD-5823·RWD-5879)** 이 핵심입니다. 신규 REST 컨트롤러 1개(`RealtimeContentAdminController`, endpoint 3) + 기존 `SupporterSignatureAdminController` 에 endpoint 1개 추가.
 >
 > ### RWD-5823 — QMT(콘텐츠 심사) 트리거·발행·결과 저장
-> - 1차 프로파일링 결과의 메타 점수로 2차 심사(QMT) 후보를 거르는 파이프라인 신설. 신규 `config/properties/QmtProperties.java`(record) — 트리거는 **OR 조건**(`sentiment <= maxSentiment` OR `toxicity >= minToxicity` OR `riskScore >= minRiskScore`)이고 운영값 단일 출처는 `application.yml` 의 `qmt.trigger.*`(3축 모두 **0.5**). 클래스 상수 `DEFAULT_THRESHOLD`(0.5)는 yml 키 누락 시에만 쓰는 방어 기본값이라 운영값과 별개다.
-> - 감정(sentiment) 임계는 0.5 → 0.60 으로 올렸다가 rc 피드백으로 **0.5 로 원복**(2026-08-11)했다.
-> - 신규 Kafka 배선: `QmtRequestProducer`(요청 발행) · `QmtResultConsumer`(결과 수신) · `QmtScreenDispatcher`(발화 판정·디스패치), 결과 저장 매퍼 `mapper/content_profiler/QmtScreenMapper.xml`, DTO `dto/QmtRequest.java`·`dto/QmtResult.java`, 심각도 enum `model/constant/CmtSeverity.java`. 발행 on/off 는 `middleware.kafka.qmt-publish-enabled` 이며 **live 를 `true` 로 활성**했다(`application-live.yml`).
-> - 위협탐지 웹훅을 신뢰안전팀 채널로 교체(live). 프로파일 테이블에 `is_maker` 컬럼 추가 및 reuse(재사용) 판정을 sha·화자·promptVersion 조합으로 강화. 새소식 댓글의 `campaignId` 해석을 단건에서 **bulk 2-hop** 으로 바꿔 단건↔bulk 결과 불일치를 해소하고, 캠페인 단위 조회에 새소식 댓글을 편입했다.
+> - 1차 프로파일링 결과의 메타 점수로 2차 심사(QMT) 후보를 거르는 파이프라인 신설. 신규 `config/properties/QmtProperties.java`(record) — 트리거는 **OR 조건**(`sentiment <= maxSentiment` OR `toxicity >= minToxicity` OR `riskScore >= minRiskScore`)이고 운영값 단일 출처는 `application.yml` 의 `qmt.trigger.*`(3축 모두 **0.5**). 클래스 상수 `DEFAULT_THRESHOLD`(0.5)는 yml 키 누락 시에만 쓰는 방어 기본값이라 운영값과 별개입니다.
+> - 감정(sentiment) 임계는 0.5 → 0.60 으로 올렸다가 rc 피드백으로 **0.5 로 원복**(2026-08-11)했습니다.
+> - 신규 Kafka 배선: `QmtRequestProducer`(요청 발행) · `QmtResultConsumer`(결과 수신) · `QmtScreenDispatcher`(발화 판정·디스패치), 결과 저장 매퍼 `mapper/content_profiler/QmtScreenMapper.xml`, DTO `dto/QmtRequest.java`·`dto/QmtResult.java`, 심각도 enum `model/constant/CmtSeverity.java`. 발행 on/off 는 `middleware.kafka.qmt-publish-enabled` 이며 **live 를 `true` 로 활성**했습니다(`application-live.yml`).
+> - 위협탐지 웹훅을 신뢰안전팀 채널로 교체(live). 프로파일 테이블에 `is_maker` 컬럼 추가 및 reuse 판정을 sha·화자·promptVersion 조합으로 강화. 새소식 댓글의 `campaignId` 해석을 단건에서 **bulk 2-hop** 으로 바꿔 단건↔bulk 불일치를 해소하고, 캠페인 단위 조회에 새소식 댓글을 편입했습니다.
 >
 > ### RWD-5823 / RWD-5879 — 어드민 '실시간 콘텐츠 검사' 조회 API 신설
 > - **신규 컨트롤러 `module/content_profiler/admin/controller/RealtimeContentAdminController.java:62`** — base `/api/v3/admin/realtime-content`, endpoint 3개.
 >   - `GET /findings` — 실시간 콘텐츠 검사 목록·판정 집계(KST 하루 단위) (`:77`)
 >   - `GET /campaigns/{campaignId}/findings` — 프로젝트 단위·전체 기간 목록·판정 집계 (`:117`, RWD-5879)
 >   - `GET /thread-verdicts` — 스레드 항목 판정·점수 조회 (`:279`, RWD-5879)
-> - 조회 계층 신설: `admin/service/`(`RealtimeContentAdminService`·`RealtimeContentReader`·`RealtimeContentQuery`·`RealtimeContentCampaignQuery`·`RealtimeContentPage`·`RealtimeContentLookups`), `admin/repository/`(`RealtimeContentMapper` + `mapper/content_profiler/RealtimeContentMapper.xml` 497줄, `RealtimeContentFilter`·`RealtimeContentRow`·`RealtimeThreadVerdictRow`·`RealtimeVerdictCount`), 응답 DTO 3종·`RealtimeSourceType`·`RealtimeVerdict`. 판정 규칙 SQL 을 XML 한 곳으로 단일 출처화하고 조회는 Replica 로 라우팅한다.
-> - **`SupporterSignatureAdminController` 에 `GET /comments/{commentId}` 추가**(RWD-5879) — 답글 번호만 아는 호출자가 부모 서명을 되짚을 수 있도록 하는 답글 단건 조회. 삭제된 답글도 돌려주고(조사 경로가 삭제 답글에서 시작될 수 있음), 없는 번호는 200 + 빈 본문이 아니라 **404** 로 답한다.
+> - 조회 계층 신설: `admin/service/`(`RealtimeContentAdminService`·`RealtimeContentReader`·`RealtimeContentQuery`·`RealtimeContentCampaignQuery`·`RealtimeContentPage`·`RealtimeContentLookups`), `admin/repository/`(`RealtimeContentMapper` + XML 497줄, `RealtimeContentFilter`·`RealtimeContentRow`·`RealtimeThreadVerdictRow`·`RealtimeVerdictCount`), 응답 DTO 3종·`RealtimeSourceType`·`RealtimeVerdict`. 판정 규칙 SQL 을 XML 한 곳으로 단일 출처화하고 조회는 Replica 로 라우팅합니다.
+> - **`SupporterSignatureAdminController` 에 `GET /comments/{commentId}` 추가**(RWD-5879) — 답글 번호만 아는 호출자가 부모 서명을 되짚도록 하는 답글 단건 조회. 삭제된 답글도 돌려주고(조사 경로가 삭제 답글에서 시작될 수 있음), 없는 번호는 **404** 로 답합니다.
 >
 > ### RWD-5879 — 1:1 문의 본문 숫자 마스킹 + 모니터링 MCP 2차 심사(CMT) 노출
-> - **신규 `shared/util/BodyMasker.java`** — 콘텐츠 타입 이름이 `PERSONAL_MESSAGE` 로 시작할 때만(즉 1:1 문의) 본문의 **모든 숫자**(반각·전각 유니코드 십진 숫자)를 `*` 로 치환한다. 전화·계좌 패턴을 쫓지 않는 이유는 구분자로 쪼개 적으면 패턴이 뚫리기 때문이고, 공개 콘텐츠는 오탐 분석 재현을 위해 원문을 유지한다.
+> - **신규 `shared/util/BodyMasker.java`** — 콘텐츠 타입 이름이 `PERSONAL_MESSAGE` 로 시작할 때만(1:1 문의) 본문의 **모든 숫자**(반각·전각 유니코드 십진 숫자)를 `*` 로 치환합니다. 전화·계좌 패턴을 쫓지 않는 이유는 구분자로 쪼개 적으면 패턴이 뚫리기 때문이고, 공개 콘텐츠는 오탐 분석 재현을 위해 원문을 유지합니다.
 >   - **적용 지점(sink)**: 위협 탐지 Slack 알림(신규·reuse) · 룰 차단 Slack 알림 · 도배 정리 Slack 알림 · `content-rule-audit` 감사 로그 · 모니터링 MCP 의 본문 3도구와 `cmt.reason`.
->   - **의도적 제외**: `content_rule_block_log` DB 적재(ML 라벨·오탐 분석 소스), 어드민 실시간 콘텐츠 조회 응답의 `body`·`qmt.reason`(본문 판독이 기능 자체). `QmtResultConsumer` 로그는 마스킹 대신 `reason` 을 아예 찍지 않는다.
-> - 모니터링 MCP(`mcp/ProfileMonitoringTools`)에 2차 심사(CMT) 결과를 노출하도록 확장.
+>   - **의도적 제외**: `content_rule_block_log` DB 적재(ML 라벨·오탐 분석 소스), 어드민 실시간 콘텐츠 조회 응답의 `body`·`qmt.reason`(본문 판독이 기능 자체). `QmtResultConsumer` 로그는 마스킹 대신 `reason` 을 아예 찍지 않습니다.
 >
-> ### RWD-5885 — rc4 배포 워크플로 master 반영
-> - rc4 환경 배포 워크플로를 master 브랜치에도 반영(코드 변경 아님).
+> ### RWD-5897 / RWD-5885 — 클라우드 설정 정리 (cloud_live 전용)
+> - `application.yml` 의 default 값을 **commonConfig·Secret 기준으로 재정렬**하고, 가드 조건을 긍정 중첩으로 정리하며 주석을 압축했습니다. rc4 배포 워크플로를 master 에도 반영(RWD-5885).
 >
 > ---
 >

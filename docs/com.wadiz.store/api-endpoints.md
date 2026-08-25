@@ -1,6 +1,6 @@
 # com.wadiz.store — API 엔드포인트 전수 목록
 
-> 소스 기준: `store-api` 모듈 **73개 `*Controller.java` × 254 엔드포인트**(관측 기준, 2026-08-21 pull).
+> 소스 기준: `store-api` 모듈 **73개 `*Controller.java` × 254 엔드포인트**(관측 기준, 2026-08-25 cloud_live pull).
 > 도메인별 상세(입력 DTO / Service / SQL)는 향후 `api-details/*.md`로 확장 예정입니다.
 
 ## 작성 원칙·관측 규약

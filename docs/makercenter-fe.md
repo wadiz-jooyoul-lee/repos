@@ -1,16 +1,20 @@
 # makercenter-fe
 
-> 📅 **2026-08-21 main pull 보강** (5 커밋)
+> 📅 **2026-08-25 cloud_live pull 보강** (8 커밋)
 >
-> ### FE2-905 — 와디즈 도메인 `wadiz.io` 전환 및 고객센터 origin 분리
-> - dev·local 환경의 와디즈 도메인을 **`wadiz.io`** 로 전환하고, clive 환경의 자산·링크 origin 도 `wadiz.io` 로 교정했습니다 (`.env`, `.env.local.sample`, `.env.production.dev`, `.env.production.clive`, `.env.production.live`).
-> - 고객센터 origin 을 하드코딩 대신 환경 변수로 분리하고, `io` 정적 origin 을 화이트리스트에 추가했습니다 (`src/shared/config/urls.ts`, `src/shared/lib/url.ts`, `src/shared/types/env.d.ts`, `src/widgets/inner-html/api/fetchPageHtml.ts`, `src/widgets/inner-html/ui/InnerHtml.tsx`, `src/widgets/footer/ui/WadizFooter.tsx`, `src/shared/lib/pageMetadata.ts`). 검증 테스트 `url.test.ts`·`fetchPageHtml.test.ts` 보강.
+> ⚠️ **기준 브랜치가 `main` → `cloud_live` 로 바뀌었습니다.**
 >
-> ### FE2-718 — cloud_live(clive) 배포 환경 추가
-> - `.env.production.clive` 신규 및 `Dockerfile`·CI 워크플로(`app-makercenter-ci.yml`, `event-makercenter-ci.yml`)에 clive 환경을 추가했습니다.
+> ### FE2-905 — 와디즈 도메인 `wadiz.io` 전환
+> - dev·local 환경의 와디즈 도메인을 **`wadiz.io`** 로 전환하고, 자산·링크 origin 기본값도 `wadiz.io` 로 바꿨으며 clive 환경 origin 을 교정했습니다 (`.env`, `.env.local.sample`, `.env.production.dev`, `.env.production.clive`, `.env.production.live`).
+> - 고객센터 origin 을 환경 변수로 분리하고 `io` 정적 origin 을 화이트리스트에 추가했습니다 (`src/shared/config/urls.ts`, `src/shared/lib/url.ts`, `src/shared/types/env.d.ts`, `src/widgets/inner-html/api/fetchPageHtml.ts`, `src/widgets/inner-html/ui/InnerHtml.tsx`, `src/widgets/footer/ui/WadizFooter.tsx`, `src/shared/lib/pageMetadata.ts`). 검증 테스트 `url.test.ts`·`fetchPageHtml.test.ts` 보강.
+> - WAI AI 에이전트 `environment` 값을 **cdev·clive** 로 전환했습니다.
 >
-> ### FE2-862 — robots.txt 에서 AI 크롤러 Bytespider 제거
-> - `src/app/robots.ts` 차단 목록에서 `Bytespider` 를 제거했습니다. (`com.wadiz.web` 도 같은 이슈로 동일 변경.)
+> ### FE2-1121 — cloud_live 환경을 운영으로 판정해 robots.txt 색인 허용
+> - `cloud_live` 환경이 운영으로 판정되지 않아 `robots.txt` 가 색인을 막던 문제를 고쳤습니다.
+>
+> ### FE2-718 / FE2-862 — 기타
+> - FE2-718: `cloud_live(clive)` 배포 환경 추가 — `.env.production.clive` 신규 및 `Dockerfile`·CI 워크플로(`app-makercenter-ci.yml`, `event-makercenter-ci.yml`) 반영.
+> - FE2-862: `src/app/robots.ts` 차단 목록에서 AI 크롤러 **Bytespider** 제거.
 >
 > ---
 >

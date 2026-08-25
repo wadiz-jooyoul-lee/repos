@@ -15,11 +15,15 @@
 - ECR 이미지: `843734097580.dkr.ecr.ap-northeast-2.amazonaws.com/userplatform/link` (`build.gradle:61`) — **User Platform 팀** 소유.
 - Swagger: `https://{env}-platform.wadizcorp.net/link/swagger-ui/index.html` (dev/rc).
 
-## 최근 변경사항 (2026-08-21 pull 기준)
+## 최근 변경사항 (2026-08-25 cloud_live pull 기준)
 
-- **BE3-795 — Campaign CDC 컨슈머의 `before` null 방어**: `kafka/message/MessageCampaign.java` 의 변경 감지 메서드 `isCancelStandingBy()`·`changedBizModel()` 가 `!isDeleted()` 로만 가드하고 있었습니다. 이 가드는 `after` 만 보장하기 때문에, `before` 가 없는 이벤트(INSERT `op=c`, 스냅샷 `op=r`)가 들어오면 `getPayloadBeforeData()` 에서 **NPE** 가 났습니다. 두 메서드의 가드를 `isValidBeforeData() && isValidAfterData()` 로 바꿔, `before`/`after` 를 함께 비교하는 '변경 감지'는 애초에 성립하지 않는 이벤트에서 실행되지 않도록 했습니다.
-- 함께 `changedBizModel()` 의 비교를 `!a.equals(b)` 에서 **`!Objects.equals(a, b)`** 로 바꿨습니다. `BizModel` 은 nullable 이고 `before` 값은 `isValidate()` 검사를 거치지 않기 때문입니다.
-- 검증 테스트 `MessageCampaignTest`(136줄) 신규. 같은 이슈에서 조건을 `isComparableChange()` 로 추출했다가 **되돌렸습니다**(`a7385b8`) — 현재 코드에는 그 메서드가 없습니다.
+> 기준 브랜치는 `cloud_live`(클라우드 라이브)입니다. 20커밋.
+
+- **BE3-409 / BE3-758 — Neo4j 마이그레이션 파이프라인 신설**: export → import 파이프라인과 이를 묶는 오케스트레이터 `migrate.sh` 를 추가했습니다. Neo4j read 대상을 프로퍼티로 전환해 **노드별 격리 적재**를 지원하고, Neo4j 스키마를 단일 출처(SoT)로 통합하며 문서를 정리했습니다. 실사용에서 드러난 문제 3건을 후속 수정했고, BE3-814 에서 `migrate.sh` 가 export 전에 MySQL 인증을 선검증해 **T0 기록 전에 fail-fast** 하도록(그리고 `${VAR}` 자리표시자 힌트를 주도록) 보강했습니다.
+- **BE3-687 — Redis 키 네임스페이스를 서버 우선 체계로 통일**: 키를 `link:{env}:...` 형태로 맞추고, prefix 를 helm 프로퍼티 방식으로 전환하면서 용도 카테고리를 반영했습니다. 키에서 `cache:` 라벨을 제거해 도메인 직결로 통일하고, 메서드 구분자를 축약(`get-target-by-follow` → `by-follow`)한 뒤 소문자-kebab 으로 정렬했습니다. 검증 테스트 `LinkRedisKeyNamespaceTest`(87줄) 신규.
+- **BE3-795 — Campaign CDC 컨슈머의 `before` null 방어**: `kafka/message/MessageCampaign.java` 의 `isCancelStandingBy()`·`changedBizModel()` 가 `!isDeleted()` 로만 가드하고 있었습니다. 이 가드는 `after` 만 보장하므로 `before` 가 없는 이벤트(INSERT `op=c`, 스냅샷 `op=r`)에서 `getPayloadBeforeData()` 가 **NPE** 를 냈습니다. 가드를 `isValidBeforeData() && isValidAfterData()` 로 바꿨고, `changedBizModel()` 비교는 `BizModel` 이 nullable 이라 `!a.equals(b)` → **`!Objects.equals(a, b)`** 로 교체했습니다. 테스트 `MessageCampaignTest`(136줄) 신규. 조건을 `isComparableChange()` 로 추출했다가 되돌려(`181cfac`) 현재 코드에는 그 메서드가 없습니다.
+- **BE3-616 — 탈퇴 유저 FOLLOW/BLOCK 삭제 유실 수정**: `deleteRelationshipForUser` 를 멀티라벨 대응으로 고쳐, 탈퇴 시 관계가 지워지지 않던 문제를 해결했습니다.
+- **BE3-410 / BE3-408 — clive 배포·스키마 세팅**: clive GitHub Actions 워크플로(ECR 컨테이너 이미지 빌드·배포)를 추가하고 후속 수정했습니다. Neo4j 스크립트·문서를 환경 일반화해 rc4 스키마 세팅을 반영했습니다.
 
 ---
 

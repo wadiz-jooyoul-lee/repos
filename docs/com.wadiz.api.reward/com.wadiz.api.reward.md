@@ -1,17 +1,20 @@
 # com.wadiz.api.reward 분석 문서
 
-> 📅 **2026-08-21 master pull 보강** (10 커밋)
+> 📅 **2026-08-25 cloud_live pull 보강** (14 커밋)
 >
-> 전부 **RWD-5856 — 프로젝트 번호 다건(bulk) 부스터 쿠폰 조회** 한 덩어리입니다. 신규 endpoint 1개(`GET /api/v1/rewards/coupons/projects/bulk`).
+> ⚠️ **기준 브랜치가 `master` → `cloud_live` 로 바뀌었습니다.** 그래서 아래 인프라 항목이 직전 블록(2026-07-10)의 서술을 뒤집습니다.
 >
-> ### RWD-5856 — projectNos 다건 쿠폰 조회 엔드포인트 추가
-> - **`reward-api/.../rest/coupon/ProjectCouponSummaryController.java:42`** — `GET /api/v1/rewards/coupons/projects/bulk` 신규. 프로젝트 번호 목록을 받아 프로젝트별로 그룹핑한 `ProjectCouponSummaryDto.ProjectCoupons` 목록을 반환합니다. 기존 단건(`/{projectNo}`)·조건 조회(`""`)와 같은 컨트롤러에 붙습니다.
-> - **`ProjectCouponSummaryDao`·`project-coupon-summary-mapper.xml`** — `selectProjectCouponList` 를 단일 `projectNo` 조회에서 **`projectNos` IN 조회**로 일반화.
-> - **`coupon/application/ProjectCouponSummaryService.java`** — bulk 조회·그룹핑 메서드 추가. 기존 `enrichWithTemplate`(부수효과 방식)을 반환값 기반 `enrichAndFilterByCountry` 로 전환하고, 언어코드 해석 중복을 제거했습니다.
-> - **`exception/GlobalExceptionHandler.java:162`** — `BindException` 핸들러 추가. `@RequestBody` 는 하위 클래스인 `MethodArgumentNotValidException` 을 던지지만 `@ModelAttribute` 는 상위인 `BindException` 을 던져 기존에는 `handleException(Exception)` 으로 떨어져 **500** 이 나던 것을, 필드/글로벌 오류 목록과 함께 **400** 으로 응답하도록 했습니다.
-> - 안전망으로 현재 동작을 고정하는 characterization 테스트를 먼저 깔았습니다 — `ProjectCouponSummaryServiceTest`(526줄), `ProjectCouponSummaryDaoTest`(149줄, `reward-test` 에 H2 스키마 `ProjectCouponSummary` 추가), `ProjectCouponSummaryControllerTest`(108줄), `BulkSearchValidationTest`(105줄).
-> - `reward-models` 의존성 0.4.21-SNAPSHOT 로 버전 점프 검증(`gradle.properties`).
-> - 소비처: `com.wadiz.web` 이 같은 이슈에서 `GET /web/reward/api/coupons/projects/bulk` 프록시 엔드포인트를 추가해 이 API 를 호출합니다.
+> ### 클라우드 이전(CM2-102) 재적용 — 직전 문서 서술 정정
+> - 2026-07-10 블록은 *"PR #478 `Revert "Cloud live into master"` 로 전량 되돌려져 현 master 는 Jenkins + Consul/Hazelcast(비 k8s) 유지"* 라고 적었습니다. **`cloud_live` 브랜치에서는 그 revert 가 다시 되돌려져(`5f4f0d0e` `Revert "Revert "Cloud live into master""`) 클라우드 구성이 살아 있습니다.**
+> - 현재 `cloud_live` 에는 `.github/workflows/aws_deploy_ecr_{dev,clive,rc4}.yml` 3종과 `src/main/resources/hazelcast/hazelcast-kubernetes.yaml` 이 존재합니다. `Jenkinsfile-API`·`Jenkinsfile-BATCH` 는 파일 자체는 남아 있습니다.
+> - 이번 pull 에서 rc4 GitHub Actions 워크플로 추가(`c893d0f2`), ECR 빌드 워크플로에 `extra_tag` 추가(`b9631315`), 워크플로 브랜치를 dev/master 로 바꾼 변경의 revert(`b3018c27`) 가 함께 들어왔습니다.
+>
+> ### RWD-5856 — projectNos 다건(bulk) 부스터 쿠폰 조회 엔드포인트 추가
+> - **`reward-api/.../rest/coupon/ProjectCouponSummaryController.java:42`** — `GET /api/v1/rewards/coupons/projects/bulk` 신규. 프로젝트 번호 목록을 받아 프로젝트별로 그룹핑한 `ProjectCouponSummaryDto.ProjectCoupons` 목록을 반환합니다.
+> - **`ProjectCouponSummaryDao`·`project-coupon-summary-mapper.xml`** — `selectProjectCouponList` 를 단일 `projectNo` 조회에서 **`projectNos` IN 조회**로 일반화. 서비스에는 bulk 조회·그룹핑 메서드를 추가하고, 기존 `enrichWithTemplate`(부수효과 방식)을 반환값 기반 `enrichAndFilterByCountry` 로 전환하면서 언어코드 해석 중복을 제거했습니다.
+> - **`exception/GlobalExceptionHandler.java:162`** — `BindException` 핸들러 추가. `@RequestBody` 는 하위 클래스인 `MethodArgumentNotValidException` 을 던지지만 `@ModelAttribute` 는 상위인 `BindException` 을 던져 기존에는 `handleException(Exception)` 으로 떨어져 **500** 이 나던 것을, 오류 목록과 함께 **400** 으로 응답하도록 했습니다.
+> - 안전망으로 characterization 테스트를 먼저 깔았습니다 — `ProjectCouponSummaryServiceTest`(526줄), `ProjectCouponSummaryDaoTest`(149줄, `reward-test` H2 스키마에 `ProjectCouponSummary` 추가), `ProjectCouponSummaryControllerTest`(108줄), `BulkSearchValidationTest`(105줄). `reward-models` 0.4.21-SNAPSHOT 버전 점프 검증.
+> - 소비처: `com.wadiz.web` 이 같은 이슈로 `GET /web/reward/api/coupons/projects/bulk` 프록시 엔드포인트를 추가해 이 API 를 호출합니다.
 >
 > ---
 >
