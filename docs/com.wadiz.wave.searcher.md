@@ -6,6 +6,28 @@
 
 ---
 
+> 📅 **2026-08-25 clive pull 보강** (16 커밋)
+>
+> ⚠️ **기준 브랜치가 `master` → `clive`(클라우드 라이브) 로 바뀌었습니다.** 이 레포는 `cloud_live` 가 아니라 `clive` 를 씁니다. 최대 변경은 **Elasticsearch → OpenSearch 전환을 위한 검색 엔진 추상화**입니다(clive 에만 있고 master 에는 없습니다).
+>
+> ### 검색 엔진 추상화 레이어 도입 (ES(VM) ↔ OpenSearch(AWS) 런타임 전환)
+> - `SearchClient`·`IndexClient` 인터페이스를 두고 구현체를 4종으로 분리했습니다 — `ElasticsearchSearchClient`·`ElasticsearchIndexClient`·`OpenSearchSearchClient`·`OpenSearchIndexClient`. **`search.engine` 프로퍼티로 런타임에 ES(VM)/OpenSearch(AWS) 를 전환**합니다.
+> - `IndexUtil` 이 `RestHighLevelClient` 를 직접 의존하던 것을 `IndexClient` 인터페이스로 교체하고, bulk 색인과 그룹 count 조회도 타입 중립 API 로 정합시켰습니다.
+> - 의존성·빌드 마이그레이션 동반: `opensearch-java` 3.x(+`httpclient5:5.3.1`, `jakarta.json-api`) 추가, Gradle 7.x 호환(`compile` → `implementation`), QueryDSL 5.0.0 업그레이드, Lombok `compileOnly`, **Springfox → `springdoc-openapi-ui:1.7.0` 교체(`SwaggerConfig` 제거)**, `commons-lang` → `commons-lang3` 전면 교체, `resilience4j` → `spring-cloud-starter-circuitbreaker-resilience4j` 전환, logback 을 VM(파일+콘솔)/K8s(콘솔 전용)으로 분리.
+> - **OpenSearch 전환 후 회귀 수정**: 검색 집계 응답이 유실돼 추천·피드가 빈 응답으로 나오던 문제를 고쳤고(`fef26f51`), 이어서 집계 응답 처리를 Buckets 유니온 방식으로 정리하며 중립 모델 명칭을 정정했습니다(`69b7b633`).
+> - Actuator liveness/readiness probe 활성화(`management.endpoint.health.probes.enabled: true`) — k8s 배포 대응. `SearchHit` 의 sort values reflection 변환 코드는 실제 호출부(`CampaignServiceImpl`)가 source 만 쓰고 sort values 를 읽지 않아 제거했습니다.
+>
+> ### 막펀잡기 노출·정렬 정책 개편 (DISPLAY-1673)
+> - **최소 노출 게이트 제거**: `CatchupController` 의 `MIN_DISPLAY_COUNT`(5) 상수를 없애고, 카드가 **0건일 때만** `200 + data null + "no data"` 로 영역을 미노출합니다. 즉 1~4건이어도 노출됩니다.
+> - **조회를 D-0 우선 + 부족분 fallback 2단으로 분리** (`core/catchup/service/CatchupEndingSoonService.java`): 오늘 마감(D-0)을 **찜 → 부스터 쿠폰 보유 → 랜덤** 순으로 최대 100건 구성하고(`findEndingSoonD0`), D-0 가 `TARGET_MIN_COUNT`(10)에 못 미칠 때만 fallback(`findFallback`, D-1~D-3 일자순+랜덤)으로 부족분을 채웁니다. 기존 `MAX_REMAINING_DAY`(5)는 `FALLBACK_MAX_DAY`(3)로 바뀌었고, 결제 제외 기간 `PAID_EXCLUDE_DAYS`(60일)는 **D-0 에만** 적용됩니다.
+> - 헤더 `wadiz-country` 를 이 경로에서 `CountryCode` enum → **`String`**(요청 원문)으로 변경. 배송 판정은 원문 매칭, 쿠폰은 `fromCode` 매핑을 씁니다. 중간에 롤백(#1330)이 있었으나 `feb2dd57` 로 재적용돼 현재 반영 상태입니다.
+>
+> ### 쿠폰 없는 국가에 할인 정보 미노출 (DISPLAY-1686)
+> - `hasCoupon` 이 false 이면 `maxDiscountRate`·`maxDiscountAmount`·`maxDiscountRateLimitAmount` 3개 필드를 **null 로** 내려보냅니다. 할인 정보가 쿠폰에서 파생된 값이라, 요청 국가에서 쓸 수 없는 쿠폰의 할인율이 남아 클라이언트가 근거 없는 할인을 노출하던 문제를 막습니다. `IntegrateCampaignResultConverter`(`convert`·`convertByRawCountry`)와 `IntegrateCampaignToResponseConverter`(Store·Funding·ComingSoon·PreOrder 4종)에 `mapMaxDiscount*` 매핑 추가.
+> - **`/api/search/v2/products` 의 `hasCoupon` 필터 기준 변경**: ES 필터를 `termQuery("hasCoupon", true)` 에서 `termsQuery("countryTypes", countryCode.matchingCountryTypes())` 로 바꿔, 응답의 `hasCoupon` 파생 기준과 조회 필터 기준을 일치시켰습니다 (`service/feed/IntegrateCampaignServiceImpl.java:151-158`).
+>
+> ---
+>
 > 📅 **2026-07-31 master pull 보강** (11 커밋)
 >
 > ### 신규 엔드포인트: 막펀잡기(마감임박 따라잡기) `GET /api/search/v1/catchup/ending-soon` (DISPLAY-1637, DISPLAY-1660)

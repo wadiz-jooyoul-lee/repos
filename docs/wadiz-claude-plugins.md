@@ -1,5 +1,32 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-08-25 main pull 보강** (30 커밋)
+>
+> ℹ️ 이 레포는 클라우드 브랜치가 없어 **`main` 이 현행선**입니다. 직전 pull 은 `feature/create-project-v2` 에서 떴는데, 그 브랜치는 이미 main 에 전부 병합돼 있습니다. 최대 테마는 **클라우드(cdev/rc4) 전용 시딩·생성 스킬군 신설**입니다.
+>
+> ### [Shared] 클라우드 전용 시딩·생성 스킬 5종 신설
+> - **`cloud-db-query`** — 클라우드 환경(cdev / rc4) MySQL RDS 쿼리 실행 스킬이자 **클라우드 DB 접속 정보의 단일 원천**. 참고 문서로 AWS SSO 설정(`references/aws_sso_setup.md`), 클라우드 스키마 차이(`references/cloud_schema_delta.md`), 접속 정보(`references/connections.json`)를 동봉했습니다. `create-project-v2` 가 DB 접속을 이 스킬에 위임합니다.
+> - **`cloud-create-store-project`·`cloud-seed-funding-comment`·`cloud-seed-funding-satisfaction`·`cloud-seed-store-satisfaction`** — 클라우드(cdev/rc4) 전용 생성·시딩 스킬 4개를 추가했습니다. 이후 `cloud-create-store-project` 를 **API 오케스트레이션 방식으로 재작성**하고, 대표상품 지정·사업자번호 검증·스토어 메이커 미등록 시 어드민 등록 경로 안내를 더했으며 첫 실행에서 드러난 결함 2건을 고쳤습니다.
+> - **`cloud-exhibition-content`** — 클라우드 기획전 테스트 JSON 생성 스킬 신설.
+> - **라이브 수집 호스트를 `clive`(`www.wadiz.io`)로 전환**하고 수집 규칙을 단일화했습니다. `create-project-v2` 는 라이브 스토리 출처를 앱 BFF 에서 원본 게이트웨이로 정정하고, 오픈예정 cdev 실검증 결과(일정 수정 마감 함정 등 4건)와 기준 사업자번호 교체·재색인 소요·대표자 정보 취득 경로를 반영했습니다. `wadiz-shared` plugin.json 0.6.0 → **0.6.1**.
+>
+> ### [FE2] `commit` + `review-to-pr` → `commit-pr` 통합 (FE2-851)
+> - 기존 `commit`(250줄)·`review-to-pr`(253줄 + `references/review-process.md` 104줄) 두 스킬을 삭제하고 **`commit-pr`(499줄) 하나로 통합**했습니다. `references/pr-creation.md` 는 새 스킬 아래로 이동.
+>
+> ### [FE2] meta-prompting 하네스 추가 (FE2-925)
+> - 프롬프트를 다듬는 **meta-prompting 하네스와 에이전트 4종**을 추가했습니다.
+>
+> ### [Client] `regular-release` 문서 정비 (0.5.11 → 0.5.12)
+> - 배포 담당자 cc 정책과 인수 시 `deployer` 갱신 규칙을 정리하고, CI/CD 트리거에 `environment` 인자를 명시하는 규칙을 강조했습니다. 배포 시작 메시지 문구 개선, 강조 표현 중립화.
+>
+> ### [FE1] `figma-node-index` Dev Mode 대응 (0.1.2)
+> - Figma Dev Mode 주석과 숨김 노드 처리 절차를 추가했습니다.
+>
+> ### [Shared] 기존 스킬 보정
+> - `seed-funding-satisfaction`·`seed-store-satisfaction` 스킬 추가, `create-project` 리워드 발송일을 종료일 기준으로 재계산, `create-store-project` 이전 펀딩 연결 가드 2개 추가.
+>
+> ---
+>
 > 📅 **2026-07-31 main pull 보강** (4 커밋)
 >
 > ### [Shared] `create-store-project` 스킬 신설

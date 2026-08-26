@@ -1,5 +1,47 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-08-25 master pull 보강** (66 커밋)
+>
+> ℹ️ 이 레포는 **원격에 `cloud_live` 브랜치가 없어(정리됨) `master` 가 현행선**입니다. 26년 8월 요금 정책 개편(RWD-5845), 예약결제 회차 개편(RWD-5862), 후원·캠페인 500만원 참여 제한(RWD-5799), OpenAPI 스펙 개편(RWD-5875)이 핵심입니다.
+>
+> ### RWD-5845 / PRODUCT-936 — 26년 8월 요금 개편 기준일 공용 상수화 + 제출 정보 조회 API
+> - **신규 `core/domain/.../studio/pricing/model/FeePolicyRevision.java`** — 개편 기준 시각을 `EFFECTIVE_AT = 2026-08-10 00:00` 상수 하나로 고정. Starter 요금제 종료 판정과 GMV 구간별 수수료율 안내 노출 판정이 이 상수를 공유합니다. QA 기간의 임시 기준일(7/29·7/30·8/5·8/6) 커밋들은 **최종 8월 10일로 원복 완료**(`12ff73bc8`).
+> - **신규 컨트롤러 `adapter/application/.../campaign/submitapproval/CampaignSubmissionStudioController.java`** — `GET /api/studio/campaigns/{projectNo}/submission`(권한 `isMaker(#projectNo) or isAdmin()`). 제출 여부·제출 시각과 **제출일 기반 화면 정책 목록(`policies`)** 을 반환합니다. `GMV_TIERED_FEE_NOTICE` 는 GMV 구간별 수수료율 안내 노출 대상(미제출이거나 기준일 이후 제출, 국내/해외 공통)을 뜻하며, FE 는 모르는 정책 값을 무시하는 계약입니다.
+> - 신규 도메인 계층 `CampaignSubmissionUseCase`·`CampaignSubmissionGateway`·`CampaignSubmissionInfo`·`CampaignSubmissionPolicy`·`CampaignSubmissionResponse`. 제출 시각 응답은 오프셋 포함 `ZonedDateTime`(Asia/Seoul). Starter 요금제 종료를 **국내/해외 공통으로 확대**(가드의 국가 분기 제거).
+>
+> ### RWD-5862 — 예약결제 회차·결제일 개편
+> - 예약 결제 회차를 확인해 **다음 결제일을 노출**하고, 최종 결제일에서 **공휴일을 제외**하도록 바꿨습니다. 예약 결제 배치 확대 시간을 적용하고 메이커스튜디오의 예상 결제일 표기를 정정했으며, 알림톡 발송예정일 형식과 `EFFECTIVE_DATE` 를 수정했습니다. (웹의 FE2-1012 "예약결제 결제시도 횟수 변경" 약관 개정과 짝입니다.)
+>
+> ### RWD-5799 / PRODUCT-905 — 후원·캠페인 프로젝트 참여 금액 500만원 제한
+> - **신규 `core/domain/.../order/ParticipationLimitPolicy.java`** — 대상은 후원(B1380)·캠페인(B1360). (리워드 총액 + 후원금 + 배송비) ≤ **500만원**, 글로벌은 ≤ **$5,000**(USD cent `500_000`)이며 **쿠폰·포인트 적용 전 금액** 기준입니다. 프로젝트당 유효 결제 이력(취소 제외)이 0건일 때만 참여 가능하고 취소 시 원복됩니다. `CreateOrderSheetUsecase` 에 검증을 걸고 `OrderErrorCode` 에 금액 초과·중복 참여 구별 코드를 추가했습니다.
+>
+> ### RWD-5875 — OpenAPI 스펙 개편 (springdoc 1.8.0 + javadoc 흡수)
+> - `springdoc-openapi-ui` 1.4.2 → **1.8.0**, `springdoc-openapi-javadoc` 1.8.0 과 `therapi-runtime-javadoc-scribe` 0.15.0 애너테이션 프로세서 추가 — 컴파일 시 javadoc 을 jar 리소스로 넣어 런타임 `/v3/api-docs` 생성 때 summary/description 으로 흡수합니다(swagger 어노테이션 우선).
+> - 전 컨트롤러 클래스 javadoc `@title` 마이그레이션 **102건**. **live 기동 실패 수정**: 문서 비노출 환경에서 `SwaggerUiConfigProperties` 빈이 없어 기동에 실패하던 문제를 `ObjectProvider` 주입으로 해결.
+>
+> ### RWD-5896 — 에디션 프리오더 네이버 쇼핑 EP 피드
+> - 네이버 쇼핑 EP 용 **에디션 프리오더 피드 조회**를 추가했습니다. 프로젝트 단위 피드도 넣었다가 **최종적으로 제거하고 상품 단위만 유지**합니다. 카탈로그 컨트롤러 테스트에 에디션 프리오더 프록시 목을 추가했습니다.
+>
+> ### RWD-5916 — Datadog 트레이스에 인증 사용자 ID 태그
+> - 사용자 ID 태깅을 인증 컨버터에서 **전용 필터로 분리**하고, 태그 키를 Datadog 표준 **`usr.id`** 로 맞췄습니다. 비로그인 기본값은 태깅에서 제외하고, **태깅 실패가 요청 처리에 영향을 주지 않도록** 예외를 차단했습니다. (store 의 STORE-1633 과 같은 작업입니다.)
+>
+> ### RWD-5884 — 캐시 오류 장애 전파 차단
+> - Kryo 역직렬화 실패를 **캐시 미스로 처리**해 캐시 오류가 장애로 전파되지 않게 하고, `KryoSerializer` 의 read null 강등을 제거해 원소 단위 오염을 막았습니다.
+>
+> ### RWD-5874 — Z11(0원 결제) 어뷰징 방지 + 결제 시나리오 검증 문서
+> - 어뷰징 방지 로직을 `OrderPaymentUsecase`·`CreateOrderSheetUsecase` 에 추가하고 시나리오별 결제 시뮬레이터 `scripts/payment-scenario-verify.sh`(128줄)를 도입했습니다. **신규 문서 `docs/payment-verification-scenarios.md`** 는 결제수단(none/nicepay/sbcredit/dbcredit/stripe/alipay) × 통화(KRW/USD) × 할인 조합으로 정상결제(C10)·ZeroPayment(Z11)·거부(4xx) 기대값을 매트릭스로 정리합니다.
+>
+> ### RWD-5855 / RWD-5852 / RWD-5839 / RWD-5854 등 기타
+> - RWD-5855: 글로벌 리워드 응답 `isAddressRequired` 를 `boolean` → **`Boolean`**(nullable)로 변경. 같은 이슈의 "출고 국가 추가"·docs 수정은 **되돌려졌습니다**(Revert 4건).
+> - RWD-5852: `GlobalProjectRewardResult.Enhanced` 에 `ZonedDateTime limitedTimeOfferEndDateTime` 추가, 기존 `isOverTimeLimit` 불리언을 대체. 잔여 수량은 종료 일시가 과거면 0으로 계산합니다.
+> - RWD-5839: 글로벌 프로젝트 조회 응답에 앵콜 원본 프로젝트 번호 `encoreSourceProjectNo` 추가.
+> - RWD-5823: 캠페인별 새소식(CampaignUpdate) ID 조회 internal API 추가 — community 의 새소식 댓글 campaignId bulk 2-hop 해석이 소비합니다.
+> - RWD-5854: 삭제된 프로젝트 인가 검사에 삭제 제외 조건을 넣어 500(NPE)을 404로 정정. Gradle `test` 는 단위 테스트만 돌리고 `*IntegTest`/`*IntegrationTest`/`*SmokeTest` 는 신규 **`integTest`** 태스크로 분리, 컨텍스트 캐시 OOM 회피로 `maxHeapSize = 3g` 상향.
+> - RWD-5881: batch 모듈에 slack-client webhook 설정 추가. RWD-5791: 배포 시 오래된 버전 디렉터리 정리(실행 중 제외, 최근 3개 유지).
+> - 의존성: `reward-http-client` 0.4.13 → 0.4.18-SNAPSHOT, `reward-models` 0.4.18 → 0.4.20-SNAPSHOT, `point-client` 1.1.3 → 1.1.4-SNAPSHOT.
+>
+> ---
+>
 > 📅 **2026-07-21 master pull 보강** (약 29 커밋)
 >
 > 급상승 프로젝트 컬렉션 자동화(DP ES 연동), 주민등록번호 파기 배치, 약정 도메인 분리가 핵심입니다.

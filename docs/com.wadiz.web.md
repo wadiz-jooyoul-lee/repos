@@ -6,6 +6,71 @@
 
 ---
 
+> 📅 **2026-08-25 cloud_live pull 보강** (234 커밋)
+>
+> ⚠️ **기준 브랜치가 `master` → `cloud_live` 로 바뀌었습니다.** 그래서 master 기준으로는 보이지 않던 **클라우드 이관 작업 전체**가 들어옵니다 — 도메인 전환(`wadiz.kr`/`wadiz.co` → `wadiz.io`), 정적 CDN 도메인 교체, 쿠버네티스·Redis 세션·JDBC 설정, 투자(equity)·W9 지면 제거가 그것입니다. 약관 개정과 정책 sitemap 등 서비스 변경은 master 와 공통입니다.
+>
+> ### FE1-798 / FE1-894 / FE1-1060 — 와디즈 도메인 `wadiz.io` 전환 (cloud_live 전용)
+> - 하드코딩된 `wadiz.kr`/`wadiz.co` 도메인을 **동적 분기 처리**로 전환하고, `clive.wadiz.co` 분기 적용과 메일 도메인 교체를 진행했습니다(FE1-798). dev/local/rc4 의 static CDN 도메인도 함께 변경했습니다.
+> - CDN 도메인이 여러 차례 정리됐습니다: `clive-cdn-static.wadiz.co` → `cdn-clive-static.wadiz.co` → **`cdn-static.wadiz.co`**(FE1-894), 이어서 **`wadiz.co` 전체를 `wadiz.io` 로 교체**하고 `cdn-funding`·local 도메인까지 맞췄습니다(FE1-1060).
+>
+> ### FE1-1359 / FE1-1322 — 투자(equity)·W9 지면 제거
+> - 규칙에 가려져 도달 불가하던 **W9 멤버십 가입 안내 지면을 제거**하고, 소비처가 사라진 equity chunk 선언을 정리했습니다(FE1-1359).
+> - 투자 관련 진입구를 걷어냈습니다 — 회원가입 흐름의 투자 계좌개설 진입구 제거, 투자 예치금·출금계좌 조회 API 호출부 제거, 도달 불가한 투자 가입 불가 모달 분기 제거, 종료 지면으로 보내던 투자 링크 제거, 투자 청약 에러 지면을 공통 에러 페이지로 대체, 스쿨 투자형 강의 이동 대상을 스쿨 메인으로 변경(FE1-1322).
+>
+> ### RWD-5606 / RWD-5766 / RWD-5863 / RWD-5593 / BE3-688 — 클라우드 인프라 설정 (cloud_live 전용)
+> - RWD-5606: `session_token_redis`(standalone/elasticache) 키 추가. oauth2 `issuer-uri` 를 클러스터 내부 account-server 로 바꿨다가 **`https://account.wadiz.co` 로 원복**했습니다.
+> - RWD-5766: clive JDBC 주소 변경, JDBC·CORS 필터의 io 전환, `jdbc-local.properties` 개행 문자(CR) 정리.
+> - RWD-5863: rc4 `file-rc4.properties` 의 누락 키(walink·redis port 등 env 무관 키)와 세션 Redis host·스토리지 버킷·자격증명 값을 보완했습니다.
+> - RWD-5593: `wave-data` 기본값을 **standalone(3.x)** 으로 맞춰 flavor 매트릭스를 정합시키고 누락 설정을 추가했습니다.
+> - BE3-688: Tomcat 7 이 지원하지 않는 `disableURLRewriting` 을 **`web.xml` 의 tracking-mode COOKIE** 로 교체하고, Dockerfile 주석을 `RUN` 밖으로 옮겼습니다(IDE 파서 호환).
+>
+> ### BE3-464 — 따라잡기(catch-up) 연동 보정
+> - `CatchUpServiceAdapter` 에서 따라잡기 액션의 `country` 를 **요청 헤더에서 추출해 funding 으로 전달**하도록 하고, funding 응답의 body status 를 검사해 **HTTP 200 + envelope 4xx** 조합을 실패로 판정하게 했습니다.
+>
+> ### 약관·정책 개정 5종 (FE1-1603 / FE2-1021 / FE2-1012)
+> - 현행 약관 5개를 **2026.08.18 개정**본으로 교체하고 직전 버전을 날짜 붙인 파일로 아카이브했습니다. 지난 약관 파일은 신규 추가만 하고 내용은 손대지 않았습니다.
+>
+> | 현행 파일 | 아카이브된 직전 버전 |
+> |---|---|
+> | `web/resources/terms/signup.html` | `signup_20251226.html` (개정 2025.12.26) |
+> | `web/resources/terms/service_reward.html` | `service_reward_20260721.html` (개정 2026.07.21) |
+> | `web/resources/terms/funding_maker_service.html` | `funding_maker_service_20260721.html` (개정 2026.07.21) |
+> | `web/resources/terms/supporter_club.html` | `supporter_club_20250220.html` (개정 2025.02.20) |
+> | `web/resources/terms/maker_page_service.html` | `maker_page_service_20220215.html` (제정 2022.02.15) |
+>
+> - 개정 사유는 커밋 기준 **도메인 전환 반영**(FE2-1021)과 **예약결제의 결제시도 횟수 변경**(FE2-1012)입니다.
+>
+> ### CLIENT-157 — 정책(약관) 전용 sitemap 신설
+> - **신규 `seo/service/SitemapPolicyService.java`** — 현행 정책 17종의 라우트(`/web/wterms/{key}`)와 정적 파일명을 `POLICIES` LinkedHashMap 으로 고정하고, 각 HTML 본문에서 `개정|제정 YYYY.M.D` 패턴(`REVISION_DATE`)을 읽어 `lastmod` 를 파생합니다. 항목 DTO 는 `SitemapPolicyEntry`.
+> - `SitemapXmlBuilder.buildPolicyUrlset()` 추가, `SeoSitemapController` 에 `sitemap-policies.xml` 매핑 추가, sitemap 인덱스(`web/sitemap.xml`) 편입, `web/sitemap.xsl` 에 `lastmod` 렌더링 추가. 파일명은 작업 중 `sitemap-policy` → **`sitemap-policies.xml`** 로 정리됐습니다.
+>
+> ### RWD-5819 / PRODUCT-903 — 후원·캠페인 단일 리워드 500만원 상한 검증
+> - **신규 `reward/rewarditem/validator/RewardAmountLimitValidator.java`** — 대표 카테고리가 후원(B1380)·캠페인(B1360)인 프로젝트의 **단일 리워드 금액(배송비 제외 판매가)** 상한을 `MAX_SINGLE_REWARD_AMOUNT = 5_000_000` 으로 검증합니다. 위반 시 `NotAllowedRewardAmountException`.
+> - 적용 지점: 리워드 저장 · 프로젝트 정보 저장 · 제출/재제출/사후심사 재제출. 검증을 `ScreeningRequirementValidator` 로 옮기면서 **임시저장은 건너뛰도록** 정정했습니다.
+>
+> ### RWD-5856 — 프로젝트 다건 부스터 쿠폰 API 추가
+> - **신규 `reward/coupon/controller/ProjectCouponApiController.java`** — `GET /web/reward/api/coupons/projects/bulk`(비로그인 가능). 파라미터는 `projectNos`(콤마 구분, 최대 100개)·`projectType`(`CouponTargetType`), 헤더 `wadiz-country` 선택. 응답은 `ProjectCouponsVo` 목록이며 프로젝트 전용 쿠폰만 내려줍니다. 실제 조회는 `com.wadiz.api.reward` 의 `/api/v1/rewards/coupons/projects/bulk` 를 호출합니다.
+>
+> ### RWD-5896 / RWD-5862 / RWD-5916 / RWD-5801 — 피드·예약결제·관측
+> - RWD-5896: 사입(와배송) 피드를 추가하고 피드 URL 도메인을 프로퍼티화했습니다. 프로젝트 단위도 넣었다가 **상품 단위만 유지**하는 것으로 정정했습니다.
+> - RWD-5862: 예약 결제 회차를 확인해 다음 결제일을 노출하고 최종 결제일에서 공휴일을 제외합니다(funding 의 같은 이슈와 짝).
+> - RWD-5916: Datadog 트레이스에 인증 사용자 ID(`usr.id`) 태그 추가 — 비로그인 제외, 태깅 실패는 요청에 영향 없음.
+> - RWD-5801: `X-Forwarded-Proto` 관련 로그를 추가했다가 롤백했습니다.
+>
+> ### FE1-1492 — Framer 프록시를 다중 페이지 구조로 확장
+> - `FramerProxyProperties` 의 대상 URI 맵을 `Map<Language, String>` → **`Map<페이지슬러그, Map<Language, String>>`** 2단으로 바꾸고 `getTargetUri(page, language)` 로 조회합니다. 미설정 슬러그는 `NullPointerException` 으로 즉시 드러냅니다.
+> - `proxy-common.xml` 에 기존 `about` 외에 **`globalagency`** 슬러그(ko/en/ja/zh 4개 URI)를 추가하고 `web.xml` 에 매핑을 등록했습니다.
+>
+> ### 기타 (CLIENT-213 / RWD-5872 / FE1-1397 / FE1-1313 / FE2-862)
+> - CLIENT-213: 펀딩 상세 `WebPage` 구조화 데이터의 `dateModified` 를 프로젝트 상태별로 분기.
+> - RWD-5872: 프로젝트 삭제 시 서버에서 제출 여부와 소유자를 검증.
+> - FE1-1397: 지지서명 상세 `og:url` 누락을 `canonicalUrl` 주입으로 수정.
+> - FE1-1313: `apple-app-site-association` 을 `web/.well-known/` 으로 이전.
+> - FE2-862: `robots.txt` 차단 목록에서 AI 크롤러 **Bytespider** 제거.
+>
+> ---
+>
 > 📅 **2026-07-31 master pull 보강** (28 커밋)
 >
 > 파일 업로드 저장소를 S3 전략으로 전환, 지지서명 레거시 v2 API 정리·community 전환, 글로벌 배송대행 서비스 종료(배너·약관·모델) 후속 정리가 핵심입니다.

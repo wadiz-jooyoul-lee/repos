@@ -1,6 +1,6 @@
 # com.wadiz.store — API 엔드포인트 전수 목록
 
-> 소스 기준: `store-api` 모듈 **73개 `*Controller.java` × 252 엔드포인트**(관측 기준).
+> 소스 기준: `store-api` 모듈 **73개 `*Controller.java` × 254 엔드포인트**(관측 기준, 2026-08-25 cloud_live pull).
 > 도메인별 상세(입력 DTO / Service / SQL)는 향후 `api-details/*.md`로 확장 예정입니다.
 
 ## 작성 원칙·관측 규약
@@ -758,6 +758,8 @@ base: `/api/external/projects/catalog-feed` (`store-api/.../rest/project/externa
 | GET | `/api/external/projects/catalog-feed/facebook-csv` | getFacebookCatalogAsCsv | 페이스북 카탈로그(CSV) | 없음 |
 | GET | `/api/external/projects/catalog-feed/by-project/naver-shopping-tsv` | getNaverShoppingCatalogAsTsvByProject | 네이버 쇼핑(프로젝트 단위 TSV) | 없음 |
 | GET | `/api/external/projects/catalog-feed/naver-shopping-tsv` | getNaverShoppingCatalogAsTsv | 네이버 쇼핑(상품 단위 TSV) | 없음 |
+| GET | `/api/external/projects/catalog-feed/buying-wa-delivery/naver-shopping-tsv` | getBuyingWaDeliveryNaverShoppingCatalogAsTsv | 네이버 쇼핑 와배송(사입) 상품 피드(TSV) | 없음 |
+| GET | `/api/external/projects/catalog-feed/buying-wa-delivery/by-project/naver-shopping-tsv` | getBuyingWaDeliveryNaverShoppingCatalogAsTsvByProject | 네이버 쇼핑 와배송(사입) 프로젝트 피드(TSV) | 없음 |
 
 ### `LinkpriceCpsPerformanceController` — 링크프라이스 CPS 실적
 base: `/api/linkprice/performances` (`store-api/.../rest/external/linkprice/LinkpriceCpsPerformanceController.java:17`, `@RestController`, `@Validated`)
@@ -780,8 +782,8 @@ base: `/api/linkprice/performances` (`store-api/.../rest/external/linkprice/Link
 | 정산/수수료/출금 | 12 | 44 |
 | 스튜디오/메이커 | 10 | 26 |
 | 배송/만족도/리액션 | 10 | 30 |
-| 컬렉션/큐레이션/프로모션/첨부/연동/셋업 | 13 | 34 |
-| **합계** | **73** | **252** |
+| 컬렉션/큐레이션/프로모션/첨부/연동/셋업 | 13 | 36 |
+| **합계** | **73** | **254** |
 
 ## 인증 표현식 관측 목록
 

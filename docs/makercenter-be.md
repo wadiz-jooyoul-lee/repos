@@ -1,5 +1,32 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-08-25 cloud_live pull 보강** (36 커밋)
+>
+> ⚠️ **기준 브랜치가 `main` → `cloud_live` 로 바뀌었습니다.** 최대 테마는 **기획전 CRM BENEFIT 회차를 Braze 커스텀 이벤트로 전환(CLIENT-216)** 이며, 쿠버네티스·io 환경 구성(FE2-713/749/750)이 cloud_live 에만 있는 인프라 변경입니다.
+>
+> ### CLIENT-216 — BENEFIT 회차 Braze 커스텀 이벤트 전환
+> - **Channel 속성 모델 도입** — 채널 enum 에 **BRAZE 를 신설**하고 청크 상한(75)·수신처 종별(이메일)을 enum 속성으로 옮겼습니다. 포트 요청도 채널별 확정 타입으로 분리했습니다.
+> - **`sendEvents` 순수 전송 어댑터** — 단일 PUT 와이어 계약, `time` 은 `+09:00` 스탬프, 예외는 그대로 전파. CRM2.0 스펙 소유자가 어댑터이므로 **상한 초과(76건)는 어댑터가 즉시 거부**합니다.
+> - **회원 식별자 파이프라인** — `wadiz_user_id` 를 조회·운반해 포트의 `externalId` 로 전달하고, 비숫자면 결원으로 판정합니다.
+> - **BRAZE 발송 분기와 fail-closed 가드 4종**(상한·숫자 이벤트명·식별자 필터·유효 0건). 채널 조립 default 를 fail-closed 로 바꾸고 Braze drop 은 집계 로그로 남깁니다. 이벤트명은 환경 설정으로 외부화해 **비운영 환경 킬스위치**를 복구했습니다.
+> - **보안 처리**: 신청서 자유입력 메이커명을 렌더러 전달 전에 무해화하고, Liquid 태그 구분자·서로게이트 처리를 보정했습니다. 정보보안팀 판정에 따라 **브레이즈 이벤트에서 `recipientEmail` 을 제거**했습니다 — 수신 주소는 웹훅 프로필 이메일 소관입니다. 엔진이 만드는 Braze variables 키 셋 8종을 테스트로 직접 고정해 회귀를 감지합니다.
+>
+> ### CLIENT-208 — 오픈예정 권장 기간·일정 설정 마감일을 오픈일에서 파생
+> - **`service/ExhibitionService.java`** — 기획전 등록·수정 진입부에서 `fillSchedulesDerivedFromOpenDate(req)` 를 먼저 호출해 오픈일 기준 파생 일정을 서버가 채우고 **요청 값은 무시**합니다.
+> - **`data/request/ReqExhibitionBase.java`** — 파생 대상 3필드의 `@NotBlank`·`@Pattern` 을 제거하고 규칙을 주석으로 남겼습니다: `coming_soon_recommend_start_date` = 오픈일 −14, `coming_soon_recommend_end_date` = 오픈일 −1, `schedule_due_date` = 오픈일 −1. 테스트 `ExhibitionServiceTest`(88줄) 신규.
+>
+> ### CLIENT-207 — 공휴일 API 호출·스케줄러 비활성화 (장애 대응)
+> - **`scheduler/SchedulerService.java`** — 매주 월요일 01시에 돌던 `managerHolidayScheduler` 를 **전체 주석 처리**했습니다. 응답 없는 공공데이터 공휴일 API 를 기다리며 **단일 스케줄러 스레드를 16시간 점유**해, 2026-08-03 에 같은 스케줄러에 물린 10:00 계정만료·15:00 CRM 발송이 실행되지 않은 장애가 원인입니다. 되살릴 때를 위해 `dataService` 필드는 남기고 "사내 공휴일 API 이관 후 되살릴 것 · HTTP 타임아웃 필수" TODO 를 명시했습니다.
+>
+> ### FE2-713 / FE2-749 / FE2-750 — 쿠버네티스·io 환경 구성 (cloud_live 전용)
+> - 쿠버네티스 설정 로드를 위해 `spring-cloud-starter-bootstrap` 을 추가하고, Spring Cloud BOM 을 **Java 8 호환 트레인(2021.0.9)으로 다운그레이드**했습니다. EKS IRSA 동작을 위한 AWS STS SDK 의존성을 넣고 SES 클라이언트 자격증명을 프로필별로 분리했습니다.
+> - 메이커센터 BE 배포 브랜치명을 **`clive` → `cloud_live`** 로 변경(FE2-749)하고, 기존 ECR 기반 io 환경을 `dev` 브랜치 기준으로 구성했습니다(FE2-750). 이미지 빌드·배포 워크플로 트리거 브랜치를 `dev` 로 변경(FE2-992).
+>
+> ### FE2-1098 — 삭제된 게시물 상세 조회 500 → 404
+> - 삭제된 게시물 상세를 조회할 때 500 이 나던 것을 **404** 로 응답하도록 고쳤습니다.
+>
+> ---
+>
 > 📅 **2026-07-31 master pull 보강** (108 커밋)
 >
 > 이번 pull은 대부분 **기획전 CRM 자동 발송(회차별 알림톡·메일) + Braze 동기화** 신규 기능 한 덩어리입니다(에픽 CLIENT-181, 하위 CLIENT-183~193). 회차 정의는 DB 테이블 없이 코드 enum(`CrmRoundType`)으로 고정하고, 발송 예정 시각은 저장하지 않고 오픈일에서 파생 계산하며, 매일 15:00 KST 스케줄러가 발송 대상을 판정해 플랫폼 발송 API로 전달합니다.

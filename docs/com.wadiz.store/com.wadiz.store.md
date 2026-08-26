@@ -4,8 +4,22 @@
 
 > **기록 범위**: `store-api`/`store-batch`/`store-service`/`store-shared` 소스를 직접 관측한 사실만 기록합니다. 사내 아티팩트(`reward-*`, `notification-client`, `wave-crypto` 등) 내부 구현과 Kafka 스키마 원본(Schema Registry), 배치 스케줄 주기(외부 스케줄러)는 저장소 밖이라 확인 불가입니다.
 
-- **엔드포인트 전수**: [`api-endpoints.md`](./api-endpoints.md) — 73개 컨트롤러 × **252 엔드포인트**
+- **엔드포인트 전수**: [`api-endpoints.md`](./api-endpoints.md) — 73개 컨트롤러 × **254 엔드포인트**
 - **API 진입점**: `store-api/src/main/java/com/wadiz/store/api/ApiApplication.java`, 서버 포트 **9080**
+
+---
+
+## 최근 변경사항 (2026-08-25 cloud_live pull 기준)
+
+> ⚠️ 기준 브랜치가 `master` → **`cloud_live`** 로 바뀌었습니다. 33커밋.
+
+- **STORE-1631 — 와배송(사입) 전용 네이버 EP 피드 2종 추가**: `store-api/.../rest/project/external/ExternalProjectCatalogFeedController.java` 에 `GET /api/external/projects/catalog-feed/buying-wa-delivery/naver-shopping-tsv`(상품 단위)와 `GET .../buying-wa-delivery/by-project/naver-shopping-tsv`(프로젝트 단위)를 추가했습니다(TSV, `produces = "text/plain"`). 확장 payload `EnhancedProductNaverShoppingCatalogFeed`·`EnhancedProjectNaverShoppingCatalogFeed` 와 `converter/NaverShoppingCatalogFeedConverter` 를 신설하고 컬럼 순서를 고정하는 `NaverShoppingCatalogFeedColumnOrderTest`(86줄)를 붙였습니다. 만족도 집계를 위해 `SatisfactionQueryProcessor`·`ProjectSatisfactionScores`·`ProjectSatisfactionSummary` 를 추가했고, **프로젝트별 만족도 후기 수 집계에 `GROUP BY` 가 빠져 있던 버그**를 함께 고쳤습니다. → 엔드포인트 총계 252 → **254**.
+- **RWD-5799 / PRODUCT-905 — 스토어 캠페인 참여 금액·횟수 제한**: 신규 `store-service/order/.../order/application/support/ParticipationLimitPolicy.java`. 대상은 캠페인 카테고리 **B1361**, (상품 금액 + 배송비 + 추가 배송비) ≤ **500만원**(쿠폰·배송지원 적용 **전** 금액, KRW 전용), 프로젝트당 유효 결제 이력(취소 제외) 0건일 때만 참여 가능합니다. `CreateOrderSheetService`·`PayOrderService` 에 검증을 걸고 `AlreadyParticipatedException`·`ParticipationAmountExceededException` 및 `ErrorCode` 를 추가했습니다.
+- **STORE-1628 — 단일 상품 500만원 상한 검증**: `project/application/project/ProductPriceLimitValidator.java` 신설. 프로젝트 저장·제출·어드민 가격 수정 경로에 적용하고 **임시저장은 제외**합니다. 위반 시 `InvalidProductPriceLimitException`.
+- **RWD-5867 — REST Docs 문서 생성·PlantUML 다이어그램 정비** (cloud_live 전용): jib 이미지에 REST Docs 문서를 포함(clive 제외)하고, 폰트 없는 러너에서 PlantUML 렌더링이 실패하던 문제를 겪으며 여러 차례 방식을 바꿨습니다 — 사전 렌더링 SVG 참조 → graphviz 재렌더링 → **폰트를 레포에 동봉해 `plantuml::` 방식으로 원복**. 다이어그램 작성 가이드를 추가하고, 폰트 없는 환경에서 엑셀 컬럼 자동 너비 실패 시 다운로드가 죽지 않도록 고쳤습니다.
+- **STORE-1633 — Datadog 트레이스에 인증 사용자 ID 태그 추가** (cloud_live 전용): 태그 키를 Datadog 표준 **`usr.id`** 로 맞추고, 비로그인 기본값은 태깅에서 제외하며, **태깅 실패가 요청 처리에 영향을 주지 않도록** 예외를 차단했습니다.
+- **STORE-1634 / RWD-5920 — 클라우드 운영 보정** (cloud_live 전용): `clive` 프로파일에서도 미정의 오류 응답 메시지를 숨기도록 처리하고, 페이스북 카탈로그 피드 쿼리의 **MySQL 8.0 예약어 `rank` 충돌**을 수정했습니다. `store-api`·`store-batch` 에서 AWS access/secret key 를 제거(IRSA 전환)하고, `application-clive.yml` 은 helm-charts 로 이관해 레포에서 삭제했습니다.
+- 빌드·배포: ECR 빌드 워크플로에 `extra_tag` 추가, 빌드 트리거·소스 브랜치를 cloud 브랜치로 변경, rc4 GitHub Actions 워크플로 추가, `store-api` clive web-url 을 `io` 로 변경, point-client 버전 업.
 
 ---
 
@@ -59,8 +73,8 @@ service 내부 의존: `order` → `misc`·`project`; `satisfaction` → `misc`�
 | 정산/수수료/출금 | 12 | 44 | 판매·셀러 정산, 마감·재정산, 수수료율, 나이스페이 지급대행, 주문 철회 |
 | 스튜디오/메이커 | 10 | 26 | 입고(FMS), 발송, 사업자·약관·기능정책, 메이커 대시보드 |
 | 배송/만족도/리액션 | 10 | 30 | 송장 확인, 와배송, 만족도·답글, 리액션, 배송지 |
-| 컬렉션/큐레이션/프로모션/연동 | 13 | 34 | 컬렉션·큐레이션, 할인 프로모션, 첨부, SCM, 외부 카탈로그 피드, Linkprice CPS |
-| **합계** | **73** | **252** | |
+| 컬렉션/큐레이션/프로모션/연동 | 13 | 36 | 컬렉션·큐레이션, 할인 프로모션, 첨부, SCM, 외부 카탈로그 피드, Linkprice CPS |
+| **합계** | **73** | **254** | |
 
 경로 접두 규약: 공개 `/api/...`, 스튜디오(메이커) `/api/studio/...`, 어드민 `/api/admin/...`, 내부 `/api/internal/...`, 외부 `/api/external/...`.
 

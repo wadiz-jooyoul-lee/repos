@@ -1,3 +1,23 @@
+> 📅 **2026-08-25 cloud_live pull 보강** (11 커밋)
+>
+> ⚠️ **기준 브랜치가 `main` → `cloud_live` 로 바뀌었습니다.** 아래 내용은 클라우드 라이브 배포선 기준이며, 도메인 전환(`wadiz.kr` → `wadiz.io`)과 `/api` 접두사 제거가 핵심입니다.
+>
+> ### FE1-859 — `/api` 글로벌 접두사 제거 + 하위버전 호환 미들웨어
+> - **본문 "아키텍처" 절의 "글로벌 Prefix `/api` 설정" 서술은 더 이상 사실이 아닙니다.** `app.setGlobalPrefix('api', { exclude: [...] })` 를 통째로 제거해 이제 컨트롤러 경로가 곧 최종 경로입니다 (`src/main.ts:47-53`).
+> - 대신 `/api/` 로 시작하는 요청의 접두사를 지우는 Express 미들웨어를 앞단에 두어 구버전 클라이언트를 계속 받습니다(`req.url.replace(/^\/api/, '')`). `/links/:shortId`·`/links/*splat`·`/redirect/*splat` 를 예외로 빼던 `exclude` 설정도 함께 불필요해져 삭제됐습니다.
+> - 단위 테스트 `api-prefix-rewrite.middleware.spec.ts`(82줄) 추가, e2e 테스트 경로 수정.
+>
+> ### FE1-1063 / FE1-1551 / FE1-1552 / FE1-1673 — 와디즈 도메인 `wadiz.io` 전환
+> - 와링크 허용 도메인을 `wadiz.co` → **`wadiz.io`** 로 변경(FE1-1063). cloud 환경에 남은 `wadiz.kr` 하드코딩을 정리(FE1-1552)하고, 로컬 개발 도메인 `local.wadiz.io` 를 CORS 허용에 추가(FE1-1551).
+> - FE1-1673: **구 도메인(`wadiz.kr`) 와링크가 브리지 페이지를 거치도록 수정**하고, 테스트용으로 주석 처리했던 모바일 웹 자동 이동을 복원했습니다.
+>
+> ### FE1-1469 — OIDC 프로바이더 초기화 실패 시 요청 시점 재초기화
+> - `AccountOidcProvider` 는 기동 시점(`onModuleInit`)에 한 번만 초기화되던 구조라, 그때 OpenID 구성 조회가 실패하면 파드를 다시 띄울 때까지 모든 인증 요청이 401로 고착됐습니다. `ensureInitialized()` 를 두어 `getPublicKey()`·`getUserInfo()` 진입 시 미초기화면 그 자리에서 재초기화합니다 (`src/common/providers/oidc.provider.ts:29,93,106`).
+> - 동시 요청이 몰려도 중복 실행되지 않도록 진행 중인 Promise(`initializing`)를 공유하고, 재초기화 후에도 실패면 마지막 오류(`lastInitializationError`)를 `cause` 로 연결해 던집니다(ES2021 타깃에 `cause` 옵션 타입이 없어 `Object.assign` 사용).
+> - OpenID 구성 fetch 에 `AbortSignal.timeout(3000)` 3초 타임아웃을 걸었습니다. 검증 스펙 `oidc.provider.spec.ts` 148줄 신규.
+>
+> ---
+
 > 📅 **2026-07-10 main pull 보강** (3 커밋)
 >
 > ### 펀딩 스토리 HTML 후처리에 Vimeo iframe 지연 로딩 추가 (FE1-1178)
@@ -45,7 +65,7 @@
 
 - 진입점 `src/main.ts:14-67`
   - 로컬 환경일 때 `cert/local.wadiz.*`를 이용한 HTTPS 바인딩
-  - 글로벌 Prefix `/api` 설정, 단 `/links/:shortId`, `/links/*splat`, `/redirect/*splat`는 예외 (브라우저 리다이렉트 대응)
+  - ~~글로벌 Prefix `/api` 설정~~ → **2026-08-25 갱신(FE1-859)**: `setGlobalPrefix('api')` 제거. 컨트롤러 경로가 곧 최종 경로이며, `/api/` 로 들어오는 구버전 요청만 Express 미들웨어가 접두사를 잘라 하위호환을 유지합니다 (`src/main.ts:47-53`). 기존 예외 대상(`/links/:shortId`, `/links/*splat`, `/redirect/*splat`)도 함께 불필요해져 삭제됐습니다.
   - `ValidationPipe`(whitelist, transform), 글로벌 `HttpExceptionFilter`, `DatadogErrorInterceptor`
   - URI versioning(`app.enableVersioning()`) + 각 컨트롤러에서 `@Version('1')`, `@Version('2')` 명시
 - 모듈 구성 `src/app.module.ts:19-43`
