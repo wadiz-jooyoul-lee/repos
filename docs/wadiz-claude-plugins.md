@@ -1,5 +1,19 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-08-27 main pull 보강** (5 커밋)
+>
+> ### [Client] `regular-release` — 자동 배포 제거 및 Stage 건너뛰기 옵션 (0.6.0 → 0.6.1)
+> - 정기배포 스킬에서 **자동 배포를 제거**하고 **Stage 건너뛰기 옵션**을 추가했습니다. 이에 따라 Jenkins 빌드 스크립트(`scripts/jenkins_build.sh` 121줄)와 캐시(`references/jenkins_cache.json`)를 삭제했습니다.
+> - 릴리스 노트 **컬럼 구조 변경에 대응**하고 서비스명 매핑을 추가했습니다 (`scripts/parse_release_note.py`). `references/slack_id_cache.json` 갱신.
+>
+> ### [FE1] `generate-exhibition-content` 삭제 — 자산을 `cloud-exhibition-content` 로 이관
+> - 기존 `generate-exhibition-content`(97줄)를 삭제하고 참고 자산(`allocation_rules.md`·`db_queries.md`·`template.json`·`scripts/generate.py`)을 **`cloud-exhibition-content`** 아래로 옮겼습니다. 기획전 JSON 생성은 이제 클라우드 스킬 하나로 일원화됩니다.
+>
+> ### [Shared] rc4 전면 재검증 — 차단 해제·CDN 값 정정·presign 만료 명시
+> - 클라우드 시딩·생성 스킬 5종(`cloud-create-store-project`·`cloud-seed-funding-comment`·`cloud-seed-funding-satisfaction`·`cloud-seed-store-satisfaction`·`create-project-v2`)의 rc4 환경을 전면 재검증해, 차단 사유를 해제하고 `references/config.json` 의 CDN 값을 정정했으며 presign URL 만료 조건을 문서에 명시했습니다.
+>
+> ---
+>
 > 📅 **2026-08-25 main pull 보강** (30 커밋)
 >
 > ℹ️ 이 레포는 클라우드 브랜치가 없어 **`main` 이 현행선**입니다. 직전 pull 은 `feature/create-project-v2` 에서 떴는데, 그 브랜치는 이미 main 에 전부 병합돼 있습니다. 최대 테마는 **클라우드(cdev/rc4) 전용 시딩·생성 스킬군 신설**입니다.

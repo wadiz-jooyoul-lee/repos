@@ -6,6 +6,30 @@
 
 ---
 
+> 📅 **2026-08-27 cloud_live pull 보강** (13 커밋)
+>
+> 광고센터 소재 제작기(`/tools`) 서빙 컨트롤러 신설이 핵심입니다.
+>
+> ### FE2-1109 — 광고센터 소재 제작기 `/tools` 서빙 컨트롤러 추가
+> - **신규 `web/tools/controller/ToolsController.java`** — `GET /tools/{name}`. CDN 에 올려둔 정적 HTML 을 서버가 받아 그대로 내려주는 서빙 엔드포인트입니다.
+> - **캐시 없음**: 서버 캐시를 두지 않고 매 요청마다 CDN 에서 최신 HTML 을 가져오며, 응답에 `Cache-Control: no-cache, no-store, must-revalidate` 를 붙입니다(사내 무캐시 관례와 동일) (`:42,66`).
+> - **검색 색인 제외**: 응답 헤더에 `X-Robots-Tag: noindex, nofollow` 를 추가했습니다 (`:95`).
+> - **에러 매핑**: CDN 이 403(없는 파일)을 주는 경우까지 **404** 로 매핑하고, 에러 응답은 404/500 공통 에러 페이지로 분기합니다.
+> - **로케일 리다이렉트 예외**: `GlobalUrlMappingConfig` 의 `noRedirectList` 에 `/tools/**` 를 추가해, 로케일 무관 정적 HTML 이 국내·글로벌 양쪽에서 진입되도록 했습니다 (`fw/config/GlobalUrlMappingConfig.java:86-87`).
+>
+> ### RWD-5944 / WSR-3459 — 본펀딩 카탈로그 피드에 기획전·부스터쿠폰 구분 라벨 추가
+> - `affiliation/criteo/service/CriteoRewardService.java` 의 피드 컬럼에 **`internal_label_0`·`internal_label_1`** 을 추가했습니다. `custom_label_0~9` 가 이미 사용 중이라 별도 이름을 씁니다.
+> - `internal_label_0` 은 기획전(`CuratedCollection`) 편입 여부로 `Y` 또는 빈 값, `internal_label_1` 은 부스터쿠폰(`boostercoupon`) 편입 여부로 `booster_y`/`booster_n` 을 채웁니다. 카탈로그 광고의 **제품 세트 자동 구성**이 목적입니다.
+> - 캠페인 수천 건을 순회하므로 컬렉션 캠페인 ID 를 **루프 진입 전 1회만 조회해 `Set` 으로 보관**(O(1) 조회)합니다. 컬렉션 조회가 실패하면 피드 전체를 실패시키지 않고 **해당 라벨만 비워** 크롤러가 계속 수집할 수 있게 합니다(`getCampaignIdsByKeywordQuietly`).
+>
+> ### RWD-5957 — 댓글 이미지 CDN base-url 을 funding-public-cdn 도메인으로 전환
+> - `application_funding_cdn_base_url` 을 CloudFront 기본 도메인(`https://d1ruwxjthziwe4.cloudfront.net/`)에서 환경별 **`funding-public-cdn.{env}.wadiz.io`** 로 바꿨습니다 — dev·local 은 `funding-public-cdn.dev.wadiz.io`, rc4 는 `funding-public-cdn.rc4.wadiz.io`(rc4 버킷 배포) (`resources/properties/file-{dev,local,rc4}.properties`).
+>
+> ### FE1-1680 — 로컬 개발환경 user API HTTPS 호출 실패 수정
+> - `catchup/config/CatchUpClientConfig.java` 에 https 스킴 등록을 추가해 로컬에서 user API HTTPS 호출이 실패하던 문제를 고쳤고, 등록 형태를 기존 클라이언트 설정과 동일하게 통일했습니다.
+>
+> ---
+>
 > 📅 **2026-08-25 cloud_live pull 보강** (234 커밋)
 >
 > ⚠️ **기준 브랜치가 `master` → `cloud_live` 로 바뀌었습니다.** 그래서 master 기준으로는 보이지 않던 **클라우드 이관 작업 전체**가 들어옵니다 — 도메인 전환(`wadiz.kr`/`wadiz.co` → `wadiz.io`), 정적 CDN 도메인 교체, 쿠버네티스·Redis 세션·JDBC 설정, 투자(equity)·W9 지면 제거가 그것입니다. 약관 개정과 정책 sitemap 등 서비스 변경은 master 와 공통입니다.

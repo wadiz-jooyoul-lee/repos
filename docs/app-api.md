@@ -1,3 +1,11 @@
+> 📅 **2026-08-27 cloud_live pull 보강** (1 커밋)
+>
+> ### FE1-1685 — 프로덕션 환경 debug 로그 출력 차단
+> - `ConsoleLogger` 에 `logLevels` 를 명시해 로그 레벨을 환경별로 갈랐습니다 (`src/main.ts:31-39`). 프로덕션(`NODE_ENV === 'production'`)은 `['log','warn','error','fatal']` 만, 그 외 환경은 여기에 `'debug'`·`'verbose'` 를 더한 6종을 출력합니다.
+> - 기존에는 `json` 옵션만 환경으로 갈랐고 레벨은 NestJS 기본값(전 레벨 출력)이라 프로덕션에도 debug·verbose 로그가 그대로 나가고 있었습니다.
+>
+> ---
+
 > 📅 **2026-08-25 cloud_live pull 보강** (11 커밋)
 >
 > ⚠️ **기준 브랜치가 `main` → `cloud_live` 로 바뀌었습니다.** 아래 내용은 클라우드 라이브 배포선 기준이며, 도메인 전환(`wadiz.kr` → `wadiz.io`)과 `/api` 접두사 제거가 핵심입니다.
