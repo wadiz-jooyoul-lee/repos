@@ -5,7 +5,7 @@
 
 > 📅 분석 기준: 2026-09-01, **`main` 브랜치**(`f6a0648`, 2026-08-26). Java 173개. README 없음.
 
-> ℹ️ 짝이 되는 색인기가 하나 더 있습니다 — **`indexer-geojedo`**(`wadiz-search/com.wadiz.search.indexer-geojedo`, 기준 브랜치 `master`, Java 155개, 메모리 **4Gi**). 이름만 다른 지명 코드네임이고 둘의 역할 분담은 미확인입니다.
+> ℹ️ 짝이 되는 색인기가 하나 더 있습니다 — [**`indexer-geojedo`**](./com.wadiz.search.indexer-geojedo.md)(`wadiz-search/com.wadiz.search.indexer-geojedo`, 기준 브랜치 `master`, Java 155개, 메모리 **4Gi**). **dokdo 는 검색·전시 카탈로그, geojedo 는 친구·피드**를 색인합니다.
 
 ---
 
@@ -104,8 +104,8 @@ com/wadiz/search/indexer/dokdo/
 
 ## 미확인 항목
 
-- **`indexer-dokdo` 와 `indexer-geojedo` 의 역할 분담** — 둘 다 검색 색인기이고 규모도 비슷한데(173 vs 155 파일), 무엇을 나눠 맡는지. geojedo 는 기준 브랜치가 `master` 이고 메모리가 4Gi 로 더 큽니다.
+- ~~`indexer-dokdo` 와 `indexer-geojedo` 의 역할 분담~~ → **해소(2026-09-01)**: dokdo 는 **검색·전시 카탈로그**(`reward_project`·`store_project`·`integrate_search`·카테고리·해시태그 → 검색 서버가 소비), geojedo 는 **친구·피드**(`integrate_feeds`·`supporter_activity_feeds`·`last_entered_feeds` 등 → 친구 서비스가 소비)를 맡습니다. 자세한 대조는 [`indexer-geojedo` 문서](./com.wadiz.search.indexer-geojedo.md)를 보세요.
 - OpenSearch 이관 완료 여부 — clive 에서 실제 어느 엔진을 쓰는지는 [`helm-charts-gitops`](./helm-charts-gitops.md) 의 `configmap.data` 를 봐야 합니다.
-- `UserSearchEventListener` 가 소비하는 이벤트 소스(Kafka/Redis 등).
+- `UserSearchEventListener` 가 소비하는 이벤트 소스 — **부분 확인(2026-09-01)**: `user-activity-api` 가 `DISPLAY-1603`·`DISPLAY-1612`(2026-07-02)로 **최근 검색어 저장·변경 시 indexer-dokdo 로 토픽을 발행**합니다([묶음 문서](./display-platform-services-2.md) 참조). 전송 수단(Kafka 등)과 다른 발행자는 여전히 미확인.
 - 색인 대상 인덱스 전체 목록 — 검색 서버 문서([`com.wadiz.wave.searcher.md`](./com.wadiz.wave.searcher.md))의 인덱스와 대조하면 파이프라인 양끝이 맞춰집니다.
 - README 가 없어 신규 투입자가 참고할 문서가 저장소 안에 없습니다.

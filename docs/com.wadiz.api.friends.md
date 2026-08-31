@@ -206,4 +206,4 @@ FOLLOWER_COMING_SOON_APPLICANT, FOLLOWER_ORDER             // 액션형 피드
 ## 미확인 항목
 
 - **테스트가 사실상 없습니다**(테스트 Java 파일 1개). 회귀 안전망이 없는 상태입니다.
-- 피드 카드를 만드는 원천 데이터(누가 `integrate_feeds` 인덱스에 색인하는지) — 이 저장소는 조회와 `last_entered`·`push_history` 색인만 합니다.
+- ~~피드 카드를 만드는 원천 데이터(누가 `integrate_feeds` 인덱스에 색인하는지)~~ → **해소(2026-09-01)**: [`indexer-geojedo`](./com.wadiz.search.indexer-geojedo.md) 가 채웁니다. `integrate_feeds`·`supporter_activity_feeds`·`maker_activity_feeds`·`last_entered_feeds`·`push_history_feeds` 를 스케줄러 14종으로 색인하며, 이 저장소는 조회와 `last_entered`·`push_history` 색인만 담당합니다.
