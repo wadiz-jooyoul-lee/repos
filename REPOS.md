@@ -15,6 +15,36 @@
 | com.wadiz.api.reward | https://github.com/wadiz-service/com.wadiz.api.reward.git | wadiz-service |
 | com.wadiz.api.startup | https://github.com/wadiz-service/com.wadiz.api.startup.git | wadiz-service |
 | co.wadiz.api.community | https://github.com/wadiz-service/co.wadiz.api.community.git | wadiz-service |
+| com.wadiz.api.friends | https://github.com/wadiz-service/com.wadiz.api.friends.git | wadiz-service |
+| com.wadiz.store | https://github.com/wadiz-service/com.wadiz.store.git | wadiz-service |
+| com.wadiz.startup.batch | https://github.com/wadiz-batch/com.wadiz.startup.batch.git | wadiz-batch |
+| kr.wadiz.backoffice.api | https://github.com/wadiz-backoffice/kr.wadiz.backoffice.api.git | wadiz-backoffice |
+| kr.wadiz.backoffice.indexer-cdc | https://github.com/wadiz-backoffice/kr.wadiz.backoffice.indexer-cdc.git | wadiz-backoffice |
+| kr.wadiz.backoffice.indexer-schedule | https://github.com/wadiz-backoffice/kr.wadiz.backoffice.indexer-schedule.git | wadiz-backoffice |
+| helm-charts-gitops | https://github.com/wadiz-gitops/helm-charts.git | wadiz-gitops |
+| platform-admin | https://github.com/wadiz-tech/platform-admin.git | wadiz-tech |
+| display-agent | https://github.com/wadiz-tech/display-agent.git | wadiz-tech |
+| mail-normal-api | https://github.com/wadiz-tech/mail-normal-api.git | wadiz-tech |
+| mail-common-api | https://github.com/wadiz-tech/mail-common-api.git | wadiz-tech |
+| notification-log-agent | https://github.com/wadiz-tech/notification-log-agent.git | wadiz-tech |
+| main2-batch-api | https://github.com/wadiz-tech/main2-batch-api.git | wadiz-tech |
+| main2-api | https://github.com/wadiz-tech/main2-api.git | wadiz-tech |
+| kr.wadiz.platform.inbox | https://github.com/wadiz-tech/kr.wadiz.platform.inbox.git | wadiz-tech |
+| kr.wadiz.platform.crm | https://github.com/wadiz-tech/kr.wadiz.platform.crm.git | wadiz-tech |
+| inbox-agent | https://github.com/wadiz-tech/inbox-agent.git | wadiz-tech |
+| mail-fast-api | https://github.com/wadiz-tech/mail-fast-api.git | wadiz-tech |
+| kr.wadiz.platform.api.friendtalk | https://github.com/wadiz-tech/kr.wadiz.platform.api.friendtalk.git | wadiz-tech |
+| wish-api | https://github.com/wadiz-tech/wish-api.git | wadiz-tech |
+| keyword | https://github.com/wadiz-tech/keyword.git | wadiz-tech |
+| main2-stream-agent | https://github.com/wadiz-tech/main2-stream-agent.git | wadiz-tech |
+| push-api | https://github.com/wadiz-tech/push-api.git | wadiz-tech |
+| user-activity-api | https://github.com/wadiz-tech/user-activity-api.git | wadiz-tech |
+| com.wadiz.search.indexer-dokdo | https://github.com/wadiz-search/com.wadiz.search.indexer-dokdo.git | wadiz-search |
+| com.wadiz.search.indexer-geojedo | https://github.com/wadiz-search/com.wadiz.search.indexer-geojedo.git | wadiz-search |
+| main2-batch | https://github.com/wadiz-batch/main2-batch.git | wadiz-batch |
+| com.wadiz.wave.statistics | https://github.com/wadiz-batch/com.wadiz.wave.statistics.git | wadiz-batch |
+| kr.wadiz.catalogagent | https://github.com/wadiz-service/kr.wadiz.catalogagent.git | wadiz-service |
+| com.wadiz.api.main | https://github.com/wadiz-service/com.wadiz.api.main.git | wadiz-service |
 | co.wadiz.currency-exchange | https://github.com/wadiz-service/co.wadiz.currency-exchange.git | wadiz-service |
 | co.wadiz.fep | https://github.com/wadiz-service/co.wadiz.fep.git | wadiz-service |
 | nicepay-api | https://github.com/wadiz-service/nicepay-api.git | wadiz-service |
@@ -52,3 +82,6 @@
 | execute_all | 스크립트 파일(폴더 아님) |
 
 > 폴더명이 레포명과 다른 케이스: `web-test-automation`(구 `Regression`), `web-test-automation-global`(구 `Global-Regression-by-Claude`). 이 표의 폴더명 기준으로 clone 됩니다.
+
+> **2026-09-01 추가**: display-platform(전시플랫폼) 팀 저장소 23개를 신규 등록했습니다(`wadiz-tech`·`wadiz-search`·`wadiz-batch`·`wadiz-service`). 기본 브랜치 마지막 커밋이 2026-06-19~06-04 구간에 몰린 `wadiz-tech` 레포 18개와 `com.wadiz.wave.notification`·`com.wadiz.crmgateway` 는 이번 범위에서 제외했습니다.
+> `helm-charts` 는 **이름이 같은 저장소가 둘**입니다 — `wa-infrastructure/helm-charts`(차트·템플릿, 폴더 `helm-charts`)와 `wadiz-gitops/helm-charts`(GitOps 배포 상태, 폴더 `helm-charts-gitops`). 폴더명으로 구분합니다.
