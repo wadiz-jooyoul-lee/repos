@@ -50,7 +50,7 @@
 
 - 컨트롤러 3개: `SendController`(발송) · `TemplateController`(템플릿 2) · `ImageUploadController`(이미지 업로드).
 - 알림톡(`kr.wadiz.platform.api.alimtalk`)·SMS(`…api.sms`)와 형제 구조이나, 그쪽은 이번 등록 범위에서 제외됐습니다(기본 브랜치 커밋이 2026-06-04 에 멈춘 그룹).
-- **최근 변경**: 기능 변경 없이 **`RWD-5632` live 워크플로 정리**(`cdev` → `clive` 명칭 정정, `update-image-tag-cdev` 통합)뿐입니다.
+- **최근 변경**: 기능 변경 없이 워크플로 정리뿐입니다 — **`RWD-5632`**(`cdev` → `clive` 명칭 정정, `update-image-tag-cdev` 통합), 이어서 **2026-09-01 `CI 워크플로우 정규화 및 rc4 추가`**(dev·live 워크플로에서 각 −8·−9줄 정리, `aws_deploy_ecr_rc4.yml` 신규).
 
 ## crm — CRM (Braze 연동)
 

@@ -9,6 +9,21 @@
 
 ---
 
+> 📅 **2026-09-02 main pull 보강** (12 커밋)
+>
+> ### ⚠️ `live`·`rc2` 환경의 서비스 values 가 전 플랫폼에서 삭제됐습니다
+> - 커밋 `470f891` **"live, rc2 밸류 제거"** 로 `values/{플랫폼}/live/` 와 `values/{플랫폼}/rc2/` 디렉터리가 통째로 사라졌습니다(총 −3,429줄). 삭제 규모: display-platform live 38·rc2 38, core live 9·rc2 8, backoffice live 8·rc2 7, client live 5·rc2 3, user-platform live 2·rc2 2 등.
+> - **이제 이 저장소의 환경은 [`helm-charts-gitops`](./helm-charts-gitops.md) 와 일치합니다** — `clive` · `dev` · `rc1` · `rc4` (+ display-platform 만 `stage`). 온프레미스 라이브(`live`)와 `rc2` 는 더 이상 이 차트로 관리되지 않습니다.
+> - 다만 **최상위 환경 values 파일 `live.yaml`·`rc2.yaml` 은 남아 있습니다**(서비스 values 만 지워짐). 참조하는 서비스가 없어 사실상 고아 파일입니다.
+> - 통계 재측정: 서비스 values **467 → 357개**, 고유 서비스명 **108 → 109개**.
+>
+> ### 기타
+> - `d0c06e4` — clive `funding-api` 에 **preStop 적용**(2026-08-27 보강에서 추가한 훅의 첫 실사용).
+> - `dfb3405` — **Prometheus 메트릭 Datadog 수집 목록 옵션** 추가.
+> - rc4 `main2-api`·`share-api`, web rc4 `web-server` 등 개별 values 조정.
+>
+> ---
+>
 > 📅 **2026-08-27 main pull 보강** (39 커밋)
 >
 > 커밋 제목이 대부분 `small change` 라 제목만으로는 내용을 알 수 없어, 실제 diff 를 읽어 정리했습니다. 차트 템플릿 변경 3건과 values 대량 정리(74파일 수정, 2파일 삭제)입니다.
@@ -63,6 +78,8 @@ charts/service/
 
 ## 환경별 공통 설정 (`values/{env}.yaml`)
 
+> ⚠️ **2026-09-02 갱신**: `live`·`rc2` 는 **서비스 values 가 전 플랫폼에서 삭제**됐습니다(커밋 `470f891`). 아래 표의 두 행은 최상위 `live.yaml`·`rc2.yaml` 파일이 남아 있어 기록을 유지하지만, **참조하는 서비스가 없는 고아 설정**입니다. 현행 환경은 `clive`·`dev`·`rc1`·`rc4`(+display-platform `stage`)입니다.
+
 | 환경 | `gatewayHosts` | `activeProfiles` | `datadog.env` | `sbaLabel` | 비고 |
 |---|---|---|---|---|---|
 | `dev` | `api.dev.wadiz.io` | `dev` | `dev` | `dev` | CORS 기본 허용 `dev.wadiz.io`·`local.wadiz.io` |
@@ -79,7 +96,7 @@ charts/service/
 
 ## 플랫폼별 서비스 목록 (clive 기준)
 
-`clive`(클라우드 라이브)에 정의된 서비스입니다. 고유 서비스명은 전체 **108개**, 서비스 values 파일은 **467개**입니다.
+`clive`(클라우드 라이브)에 정의된 서비스입니다. 고유 서비스명은 전체 **109개**, 서비스 values 파일은 **357개**입니다(2026-09-02 기준).
 
 | 플랫폼 | 서비스 |
 |---|---|
@@ -141,7 +158,7 @@ charts/service/
 - `type` 이 실제로 가르는 것은 **인바운드 라우팅 3종**(Service·VirtualService·DestinationRule)뿐입니다. `agent` 면 이 셋이 만들어지지 않습니다.
 - **`agent` 라고 해서 Deployment 가 꺼지지는 않습니다.** Deployment 게이트는 `template.deployment.enabled` 하나이고 기본값이 `true` 이므로, `type: agent` 만 적은 서비스는 여전히 Deployment 로 상주합니다. 예: `values/display-platform/live/push-agent.yaml` 은 `type: agent` + HPA(min/max 2)만 지정하고 Deployment 를 끄지 않습니다 — 즉 "인바운드 없는 상주 워커"입니다.
 
-## 실사용 통계 (values 467개 실측)
+## 실사용 통계 (values 실측 — 아래 수치는 467개 시점 기준, `live`·`rc2` 삭제 전)
 
 | 항목 | 건수 | 메모 |
 |---|---:|---|
@@ -178,7 +195,7 @@ charts/service/
 
 | README 서술 | 실제 |
 |---|---|
-| "총 서비스 수: 305개" | 서비스 values 파일 **467개**, 고유 서비스명 **108개**. 305 는 어느 쪽과도 맞지 않습니다 |
+| "총 서비스 수: 305개" | 서비스 values 파일 **357개**, 고유 서비스명 **109개** (2026-09-02 기준. `live`·`rc2` 삭제 전에는 467/108). 305 는 어느 쪽과도 맞지 않습니다 |
 | `agent` = "Deployment 비활성화, Job/CronJob 사용" | `type` 은 Deployment 를 끄지 않습니다. 인바운드 3종만 끕니다. CronJob 사용처는 0건입니다 |
 | Service 는 `template.service.enabled` 로 제어 | `type == "api"` 조건이 먼저 걸립니다 |
 | VirtualService/DestinationRule 은 `template.*.enabled` 로 제어 | `ingressMode` 와 `type == "api"` 가 함께 걸립니다 |

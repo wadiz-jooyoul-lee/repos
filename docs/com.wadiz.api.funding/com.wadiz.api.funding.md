@@ -1,5 +1,36 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-09-02 master pull 보강** (8 커밋)
+>
+> **앵콜 프로젝트의 리뷰 불러오기(RWD-5942)** 와 **누적 카운트 타입 추가(RWD-5940)**, **다국어 조인 전환(RWD-5901)** 세 덩어리입니다.
+>
+> ### RWD-5942 — 펀딩 상세 리뷰 불러오기 설정 조회 API 신설
+> - **신규 엔드포인트 `GET /api/global/projects/{projectNo}/review-import-settings`** (`GlobalProjectController`). 앵콜 프로젝트가 이전(원본) 프로젝트에서 **만족도·체험리뷰를 이어받았는지**와 그 원본 프로젝트 번호 목록을 내려줍니다.
+> - 신규 도메인 `domain/globalproject/reviewimport/` — `ImportedReviewProjectResolver`(44줄) · `ReviewImportSourceGateway` · `ReviewImportUsage` · `GlobalProjectReviewImportSettingsUseCase` · `GlobalProjectReviewImportSettingsResult`. 인프라는 `ReviewImportSourceGatewayImpl` + `ReviewImportMapper`(+XML).
+> - 응답은 `satisfaction`·`experienceReview` 두 설정으로 나뉘고, 각각 `used`(사용 여부)와 `sourceProjectNos`(원본 프로젝트 번호)를 담습니다. **사용하지 않으면 목록 조회를 건너뛰고 빈 배열**을 반환합니다.
+> - **`fix`**: 사용여부 조회에 **앵콜 판별 조건을 추가**했습니다 — 비앵콜 프로젝트에 마커가 잔존하면 `isUsed` 가 참으로 오탐되던 문제입니다.
+> - REST Docs 문서 등록(`funding-global.adoc`).
+>
+> ### RWD-5940 — activity-counts 에 체험리뷰·누적 건수 타입 추가
+> - `GlobalProjectActivityCountsRequest` 의 타입 enum 에 **3종 추가**:
+>
+> | 타입 | 의미 |
+> |---|---|
+> | `EXPERIENCE_REVIEW` | 체험리뷰 — **이 프로젝트에 직접 작성된 것만** |
+> | `ACCUMULATED_EXPERIENCE_REVIEW` | 누적 체험리뷰 — 직접 작성분 + **원본 프로젝트에서 이어받은 체험리뷰** |
+> | `ACCUMULATED_COMMENT` | 누적 댓글 — 응원·의견·체험리뷰 합계 + 이어받은 체험리뷰 |
+>
+> - 리뷰 불러오기를 쓰지 않는 프로젝트는 누적값이 직접 작성분과 같아집니다.
+> - 카운터 구현 3종 신규(`ExperienceReviewCounter`·`AccumulatedExperienceReviewCounter`·`AccumulatedCommentCounter`), 커뮤니티 카운트 노출 판정 조건을 **SQL fragment 로 공통화**했습니다. 테스트 `AccumulatedCommentCounterTest`(60줄) 추가.
+>
+> ### RWD-5901 — 다국어 조인·폴백 전환
+> - **심사 카테고리 조회**를 `ScreeningRewardItemCategoryLanguage`(ko) 조인으로 전환.
+> - **메이커 소재지 시/도 명칭**을 ko/en/ja/zh 지원 + **영문 폴백**으로 전환 (`region/response/MakerRegionResponse.java`).
+> - `funding-core` 의존성 **1.0.149-SNAPSHOT** 으로 갱신.
+> - [`com.wadiz.web`](./com.wadiz.web.md) 의 같은 이슈(하드코딩 ko/en 분기 → MessageSource·언어 테이블 조인)와 짝입니다.
+>
+> ---
+>
 > 📅 **2026-08-25 master pull 보강** (66 커밋)
 >
 > ℹ️ 이 레포는 **원격에 `cloud_live` 브랜치가 없어(정리됨) `master` 가 현행선**입니다. 26년 8월 요금 정책 개편(RWD-5845), 예약결제 회차 개편(RWD-5862), 후원·캠페인 500만원 참여 제한(RWD-5799), OpenAPI 스펙 개편(RWD-5875)이 핵심입니다.

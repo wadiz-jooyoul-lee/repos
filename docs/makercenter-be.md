@@ -1,5 +1,20 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-09-02 cloud_live pull 보강** (4 커밋)
+>
+> 전부 **잘못된 HTTP 상태 코드 정정**입니다. 500 으로 나가던 것을 의미에 맞는 코드로 바꿨습니다.
+>
+> | 이슈 | 정정 |
+> |---|---|
+> | FE2-1104 | 잘못된 정수 파라미터 → 500 대신 **400**. 신규 `utils/RequestParamUtil.java`(126줄)로 파싱·검증을 공통화 |
+> | FE2-1124 | 게시판 목록·토큰 잔여시간 조회의 NPE 500 → **404·401** |
+> | FE2-1171 | 로그인 필요 게시글의 비인증 조회 → 500 대신 **401** |
+> | FE2-1100 | 로컬 프로필 DB·인증서버 주소를 `dev.wadiz.io` 로 변경 |
+>
+> - 테스트가 함께 붙었습니다 — `RequestParamUtilTest`(133줄) · `BoardUserDetailParamValidationTest`(76줄) · `BoardUserDetailLoginRequiredTest`(79줄) · `BoardUserListNotFoundTest`(72줄) · `AuthExpiredTimerTest`(71줄).
+>
+> ---
+>
 > 📅 **2026-08-25 cloud_live pull 보강** (36 커밋)
 >
 > ⚠️ **기준 브랜치가 `main` → `cloud_live` 로 바뀌었습니다.** 최대 테마는 **기획전 CRM BENEFIT 회차를 Braze 커스텀 이벤트로 전환(CLIENT-216)** 이며, 쿠버네티스·io 환경 구성(FE2-713/749/750)이 cloud_live 에만 있는 인프라 변경입니다.

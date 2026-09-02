@@ -1,5 +1,27 @@
 # com.wadiz.api.reward 분석 문서
 
+> 📅 **2026-09-02 cloud_live pull 보강** (35 커밋)
+>
+> **쿠폰 코드 체계 개편(RWD-5778)** 과 **쿠폰 다국가·다통화 대응(RWD-5812)** 두 덩어리입니다. 테스트가 대폭 보강돼 총 +4,719/−257줄입니다.
+>
+> ### RWD-5778 — 공용 쿠폰 코드(SHARED) 도입과 광고센터 메이커 쿠폰
+> - **`CouponCodeUsageType` 신설** — 쿠폰 코드 사용 타입을 `INDIVIDUAL`(개별 발급)과 `SHARED`(공용 코드)로 나눕니다. 템플릿 생성 시 값이 없으면 기본값을 넣습니다.
+> - **`CouponCode` ↔ `Coupon` 관계를 1:1 → 1:N 으로 변경**. SHARED 는 발행 시 랜덤 publish 없이 **입력 코드 1건만 저장**하고, 템플릿 생성 시 곧바로 `CouponIssue` 를 만듭니다. 공용 코드는 **10자로 제한**하고 validation 을 추가했습니다.
+> - 쿠폰 정보 집계를 타입별로 분기 — **INDIVIDUAL 은 발행된 쿠폰 수, SHARED 는 실제 발행 수**를 계산합니다.
+> - **광고센터 메이커 쿠폰** — 템플릿 생성 시 쿠폰코드도 함께 만들 수 있게 하고, `CouponIssue` 발행 API 를 추가했습니다. **이미 발급된 템플릿은 금액 수정 불가**로 막았습니다. 메이커 INDIVIDUAL 발행 시 소유권 검증을 넣으면서 slave DB 연결 오류를 함께 고쳤습니다.
+> - 쿠폰 템플릿 조회 응답에 SHARED 인 경우 코드 정보를 포함하고, 사용 타입 조건 검색 필터를 추가했습니다.
+>
+> ### RWD-5812 — 쿠폰 다국가·다통화 대응
+> - **지원 국가·통화를 enum 으로 모으고** 수정 경로의 통화 검증을 보강했습니다. 쿠폰 수정 시 통화·국가를 요청값으로 전체 교체하되, **이미 발급된 쿠폰은 금액·통화·발급국가 변경을 차단**합니다.
+> - **`ProjectCouponSummary` 에 USD 금액을 적재**하고, 메이커 쿠폰 컨버터에 `couponCurrencies`·`availableCountries` 매핑을 추가했습니다.
+> - **쿠폰 발급국가 선택 목록 API** 신규. Braze 메이커 부스팅쿠폰 조회를 국가/통화/언어에 대응시켰습니다.
+> - 로케일 헤더를 Swagger 에 노출하고, **국가 불일치 예외에 에러 코드를 부여**했습니다.
+>
+> ### 테스트
+> - 검증 테스트가 대거 추가됐습니다 — `CouponTemplateDtoValidatorTest`(358줄) · `CouponTemplateBuilderTest`(313줄) · `CouponTemplateValidatorTest`(269줄) · `MakerCouponDaoTest`(179줄) · `CouponTemplateTest`(137줄) 등.
+>
+> ---
+>
 > 📅 **2026-08-25 cloud_live pull 보강** (14 커밋)
 >
 > ⚠️ **기준 브랜치가 `master` → `cloud_live` 로 바뀌었습니다.** 그래서 아래 인프라 항목이 직전 블록(2026-07-10)의 서술을 뒤집습니다.

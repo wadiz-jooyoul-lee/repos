@@ -9,6 +9,16 @@
 
 ---
 
+> 📅 **2026-09-02 main pull 보강** (68 커밋)
+>
+> 예상대로 **거의 전부 CI 자동 이미지 태그 갱신**입니다(`[org/repo] {작성자} - Merge …` 형식). 문서에 반영할 구조 변경은 없습니다.
+>
+> - 갱신이 잦았던 소스 레포: `wadiz-tech/kr.wadiz.platform.{api,agent}.friendtalk`(워크플로 정규화 `feature/update_workflow_20260901183520` 반영), `wadiz-service/com.wadiz.store`(RWD-5974) 등.
+> - 수동 커밋은 소수이며 개별 서비스 설정 조정입니다(예: `fix(ai-hub): 공유 도구 링크 로그인 복귀 수정`).
+> - 짝이 되는 [`helm-charts`](./helm-charts.md) 에서 **`live`·`rc2` 서비스 values 가 삭제**돼, 두 저장소의 환경 집합이 이제 일치합니다(이 저장소에는 원래 `live`·`rc2` 가 없었습니다).
+>
+> ---
+>
 ## 두 저장소의 관계
 
 | | `wa-infrastructure/helm-charts` | `wadiz-gitops/helm-charts` (이 문서) |
