@@ -1,5 +1,14 @@
 # makercenter-fe
 
+> 📅 **2026-09-03 cloud_live pull 보강** (1 커밋)
+>
+> ### FE2-966 — 홈 About 섹션을 와디즈 스쿨 보드로 전환
+> - 홈의 About 섹션이 읽어 오는 대상을 **와디즈 스쿨 보드**로 바꾸고, 섹션 라벨을 **어드민에 등록된 게시판명 기준**으로 표시하도록 했습니다(`src/widgets/home-sections/ui/AboutWadiz.tsx`, 387줄 수정 — 사실상 재작성). 검색 결과 항목(`SearchResultItem.tsx`)과 홈 컨텍스트도 함께 손봤습니다.
+> - 백엔드의 같은 이슈([`makercenter-be`](./makercenter-be.md) FE2-966, 조회 게시판 변경)와 짝입니다.
+> - E2E(`home.spec.ts`·`swiper-drag.spec.ts`)도 함께 수정됐습니다.
+>
+> ---
+
 > 📅 **2026-09-02 cloud_live pull 보강** (6 커밋)
 >
 > ### FE2-1168 — Next.js 16.3.3 업그레이드 (보안 대응)

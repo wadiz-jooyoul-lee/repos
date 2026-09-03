@@ -1,5 +1,21 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-09-03 cloud_live pull 보강** (4 커밋)
+>
+> 직전 보강에 이어 **잘못된 HTTP 상태 코드 정정**이 계속됩니다.
+>
+> | 이슈 | 정정 |
+> |---|---|
+> | FE2-1105 | 존재하지 않는 게시물 상세 조회 → 500 대신 **404** (`BoardService`) |
+> | FE2-1106 | 인증 실패 → **401**, 검증 실패 → **400** 으로 수정(`AuthService`·`RequestInterceptor`·`ExceptionController`). **번역 요청이 길이 상한을 넘겼을 때의 400 도 그대로 전파**하도록 했습니다(`ContentTranslationService`) |
+>
+> - 테스트가 함께 붙었습니다 — `ExceptionControllerTest`(36줄) · `BoardAdminDataDetailNotFoundTest`(64줄) · `BoardLoginRequiredTest`(39줄) · `ContentTranslationServiceTest` 보강.
+>
+> ### FE2-966 — 메인 카드 영역 조회 게시판을 와디즈 스쿨로 변경
+> - 홈 메인 카드가 읽어 오는 게시판을 **와디즈 스쿨 보드**로 바꿨습니다(`MainController`·`SearchController`). 프론트의 같은 이슈([`makercenter-fe`](./makercenter-fe.md) FE2-966)와 짝입니다.
+>
+> ---
+
 > 📅 **2026-09-02 cloud_live pull 보강** (4 커밋)
 >
 > 전부 **잘못된 HTTP 상태 코드 정정**입니다. 500 으로 나가던 것을 의미에 맞는 코드로 바꿨습니다.

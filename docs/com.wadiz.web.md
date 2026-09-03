@@ -6,6 +6,38 @@
 
 ---
 
+> 📅 **2026-09-03 cloud_live pull 보강** (26 커밋)
+>
+> **HTML 메타데이터의 다국어 전환(CLIENT-229, 8커밋)** 이 최대 테마이고, 서포터클럽 약관 개정과 릴리즈 당일 되돌림 1건이 뒤를 잇습니다.
+>
+> ### CLIENT-229 — HTML 메타데이터를 JSP 분기에서 다국어 메시지로 이전
+> - 지금까지 페이지 `title`·`description`·OG/트위터 이미지는 **JSP 안에서 국내/글로벌을 갈라 출력**했습니다. 이 분기를 걷어내고 **메시지 프로퍼티(시트) 기반**으로 바꿨습니다.
+> - 신규 `HtmlMetadataMessageResolver`(`src/main/java/com/wadiz/web/fw/utils/`) — 메시지 템플릿 안의 `{{ arg_0 }}` 자리표시자를 인자로 채웁니다. 인자가 모자라면 빈 문자열로 대체해 예외 없이 넘어갑니다.
+> - 메시지 파일 `messages/html-metadata{,_ko,_ja,_zh}.properties` 신설. 키는 `{페이지키}.meta.title` · `.meta.description` · `.meta_og.image_url` 형태이고, 프로젝트·스토어 상세처럼 값이 변하는 페이지는 `funding_{project_no}_page.meta.title={{ arg_0 }} by {{ arg_1 }} | 와디즈` 처럼 인자를 씁니다.
+> - 기존 `PageKeyResolver` 를 **`HtmlMetadataPageKeyResolver`** 로 이름을 바꿨고, JSP(`global/index.jsp`·`global-korea/index.jsp`)의 출력 분기를 **`meta` 객체 하나로 통일**했습니다(`global-korea/index.jsp` −89줄).
+> - 스토어 상세·선물하기 메타데이터도 같은 방식으로 이전했고, 메이커 추천 프로그램의 하드코딩 메타데이터는 제거했습니다.
+> - 지지서명 상세의 경로 변수명을 `supportShareNo` → **`supportShareId`** 로 바꿨습니다.
+>
+> ### FE1-1761 — 서포터클럽 멤버십 약관 개정 (결제 실패 유예기간 신설)
+> - **결제 실패 시 익일 효력 상실 → 7일 유예기간**으로 바뀝니다. 개정 약관은 **2026년 9월 10일 시행**(개정일 2026.09.03)입니다.
+> - 조문 변경: 결제가 정상 처리되지 않으면 혜택 제공은 즉시 중단되고, 결제 실패일로부터 7일간 유예기간이 부여되며 그 안에 결제가 완료되지 않으면 멤버십이 자동 해지됩니다.
+> - 직전 판(2026.08.18 개정)은 `web/resources/terms/supporter_club_20260818.html` 로 보존되고 `/web/wterms/supporter_club/20260818` 에서 볼 수 있습니다.
+>
+> ### RWD-5981 / RWD-5951 — 멤버십 뱃지 판정 필드 정정 (릴리즈 당일 되돌림)
+> - 커뮤니티 데이터와 참여자 리스트의 멤버십 뱃지 판정을 `isAvailable` → **`hasMembership`** 으로 바꿨습니다(RWD-5951 → RWD-5981).
+> - ⚠️ 그런데 **RWD-5981 은 `release/v20260903` 에서 되돌려졌습니다**(`72e2296c18`). 짝이 되는 [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md) 의 RWD-5981(서포터 목록 `hasMembership`/`canUseBenefit` 분리)도 같은 날 함께 되돌려졌습니다. 앞선 RWD-5951(커뮤니티 데이터)은 남아 있어 **현재 두 지면의 판정 기준이 서로 다릅니다.**
+>
+> ### 기타
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | SCOUT-152 | 중간 배송 처리 시 **프로젝트 KC 인증 여부 체크를 제거**(테스트 포함, `InDemandValidator`) |
+> | FE1-1752 | 사용하지 않는 펀딩 결제 실패 지면 매핑 제거(`GlobalUrlMappingConfig`). `wadiz-frontend` 의 같은 이슈와 짝 |
+> | RWD-5868 | 정산 비율 버전 조회 실패 시 **기본 버전을 반환**하고 timeout 설정 추가(`SettlementGateway`) |
+> | FE1-9 | 로컬 개발 환경 정비 — `scripts/local-setup.sh`·`local-run.sh` 로 CLI 기반 서버 구동, JDK 8 전환, VS Code 디버깅 설정. 2026-03 작업이 이번에 cloud_live 로 올라왔습니다 |
+>
+> ---
+
 > 📅 **2026-09-02 cloud_live pull 보강** (45 커밋)
 >
 > ⚠️ 직전 동기화 때 로컬이 `bugfix/rc4-profile-image-cdn-url` 브랜치에 있어 pull 대상이 어긋나 있었습니다. **`cloud_live` 로 복귀**해 다시 맞췄습니다.

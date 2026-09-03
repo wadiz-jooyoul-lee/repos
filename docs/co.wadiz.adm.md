@@ -9,6 +9,26 @@
 
 ---
 
+> 📅 **2026-09-03 master pull 보강** (3 커밋)
+>
+> 세 커밋 모두 `BE3-643` 한 이슈이며, 주제는 **하드코딩된 도메인 정리**입니다.
+>
+> ### 관리자 화면·메일의 `wadiz.kr` → `wadiz.io` 전환 (BE3-601 후속)
+> - 관리자 회원·메이커 화면 JSP 3종(`account/memberBacked·memberCampaign·memberDetail`, `maker/makerNewsletter`)과 메일 템플릿에 박혀 있던 `wadiz.kr` 하드코딩을 **`wadiz.io`** 로 바꿨습니다.
+>
+> ### 발신자 주소·메일 푸터 도메인 전환 (BE3-828 정책)
+> - `application-real.yml` 의 `default_send_email` 을 `info@wadiz.kr` → **`info@wadiz.io`** 로 바꿨습니다. 이는 RWD-5882 가 base 설정을 `.io` 로 바꾼 뒤 real 프로파일에만 걸어 두었던 **`.kr` override 를 해제**한 것입니다.
+> - 같은 이유로 2026-08-11 이후 실패 상태였던 `LegacyPropertiesFileBeanTest` 의 기대값도 함께 정상화됐습니다.
+> - 범위에서 제외된 것: 심사 BCC 수신자(`reward_scr1_email`), 참조 0건인 죽은 상수 3종.
+>
+> ### 메일 템플릿 정적 이미지 호스트를 `cdn.wadiz.kr` 로 통일
+> - 메일 템플릿 22종에 흩어져 있던 `www.wadiz.kr/resources/static/img/*` **102건을 `cdn.wadiz.kr` 로 치환**했습니다. 저장소에 이미 있던 cdn 사용 55건과 혼재하던 상태를 없애 **도메인 전환의 영향을 차단**하려는 조치입니다.
+> - `authResetPassword.mail` 의 가입 안내 이미지는 URL 에 `/web/` 세그먼트가 끼어 있어 `.kr`·`.io` 양쪽에서 모두 404 였습니다. 이번에 정상 경로로 교체했습니다.
+> - ⚠️ **이미지 호스트는 아직 `wadiz.kr` 쪽입니다.** 위의 발신자·링크 도메인은 `.io` 로 가는 중인데 이미지만 `.kr` 로 모은 것이라, CDN 도메인 전환 시 이 102건이 다시 대상이 됩니다.
+> - 별도 처리가 필요하다고 커밋에 남은 항목: `wadizres.imgix.net`(410 응답, 대체 이미지 없음), `application-real.yml` 의 `pdfviewer_url`(404).
+>
+> ---
+
 ## 개요
 
 - 와디즈 사내 관리자 포털입니다. 정산·심사·쿠폰·캠페인·회원·메일·투자(equity)·스타트업 등 운영 업무 화면을 JSP 로 렌더링합니다.
