@@ -1,7 +1,7 @@
 # helm-charts (wa-infrastructure/helm-charts)
 
 > 와디즈 마이크로서비스를 쿠버네티스에 배포하기 위한 **공용 Helm 차트 저장소**입니다. Org: `wa-infrastructure` (remote: `https://github.com/wa-infrastructure/helm-charts.git`).
-> 차트는 `service` **하나뿐**이고, 108개 서비스가 이 차트 하나를 공유하면서 values 파일로만 동작을 달리합니다.
+> 차트는 `service` **하나뿐**이고, 109개 서비스가 이 차트 하나를 공유하면서 values 파일로만 동작을 달리합니다(2026-09-03 기준).
 >
 > ⚠️ **이름이 같은 저장소가 둘입니다.** 이미지 태그(`imageVersion`)와 애플리케이션 설정(`configmap.data`)은 이 저장소가 아니라 GitOps 저장소 [`helm-charts-gitops`](./helm-charts-gitops.md)(`wadiz-gitops/helm-charts`)에 있습니다. 이 문서는 **차트·템플릿·배포 스펙** 쪽만 다룹니다.
 
@@ -9,6 +9,44 @@
 
 ---
 
+> 📅 **2026-09-03 main pull 보강** (12 커밋)
+>
+> ### ⚠️ `rc1` 환경이 전 플랫폼에서 삭제됐습니다
+> - 커밋 `5470844` **"rc1 밸류 제거"** 로 `values/{플랫폼}/rc1/` 디렉터리가 통째로 사라졌습니다(**57개 파일**, −1,505줄). 직전 동기화에서 `live`·`rc2` 가 지워진 데 이어진 정리입니다.
+> - **이제 이 저장소의 환경은 `clive` · `dev` · `rc4` 세 개뿐입니다** (+ display-platform 만 `stage` 1건). 짝이 되는 [`helm-charts-gitops`](./helm-charts-gitops.md) 에서도 같은 날 rc1 57개 파일이 함께 지워져 두 저장소가 계속 맞물려 있습니다.
+> - 최상위 환경 values `live.yaml`·`rc2.yaml` 에 이어 **`rc1.yaml` 도 참조하는 서비스 없이 남았습니다** — 고아 파일이 3개로 늘었습니다.
+> - **`deep-link-bridge` 서비스가 저장소에서 사라졌습니다.** rc1 에만 values 가 있던 유일한 서비스였기 때문입니다(`client/rc1/deep-link-bridge.yaml`). 다른 환경에 없으므로 이 차트로는 더 이상 배포되지 않습니다.
+> - 통계 재측정: 서비스 values **357 → 302개**, 고유 서비스명 **109개 유지**(deep-link-bridge 1개 삭제 · order-api 1개 신설).
+>
+> ### 신규 서비스 `order-api` 등록
+> - `core/dev/order-api.yaml` · `core/rc4/order-api.yaml` 2건이 생겼습니다. 소스 저장소는 `wadiz-service/io.wadiz.order`(RWD-5804 — 환불 로직 일원화, OpenAPI/Swagger UI, jib 도입)입니다.
+> - **`core/clive/order-api.yaml` 은 이 저장소에 아직 없고 [`helm-charts-gitops`](./helm-charts-gitops.md) 쪽에만 추가됐습니다.** 두 저장소의 서비스 집합이 어긋난 상태입니다.
+>
+> ### 차트 템플릿 변경 — 롤링 업데이트 전략과 종료 유예시간을 열었습니다
+> - `templates/deployment.yaml` · `templates/rollout.yaml` 에 두 가지 선택 설정이 추가됐습니다(`2ae298d`).
+>   - **`strategy.enabled`** — `maxSurge` · `maxUnavailable` 을 서비스별로 덮어쓸 수 있습니다.
+>   - **`terminationGracePeriodSeconds`** — 파드 종료 유예시간을 지정할 수 있습니다.
+> - 값을 주지 않으면 쿠버네티스 기본값(25%/25%, 30초)이 그대로 유지됩니다.
+> - 첫 적용 대상은 **`funding-api`(dev·rc4·clive)** 로 `maxSurge=1` · `maxUnavailable=0` · `terminationGracePeriodSeconds=90` 입니다. 즉 배포 중 **가용 파드를 줄이지 않고**(unavailable 0) 한 개씩 늘려 교체하며, 종료 유예를 90초로 크게 늘렸습니다. 같은 서비스에 이미 걸려 있는 preStop 훅과 함께 무중단 배포를 노린 설정으로 읽힙니다.
+> - 나머지 커밋은 제목이 전부 `small change` 이며, dev `web-server` 등 개별 values 조정입니다.
+>
+> ---
+
+> 📅 **2026-09-02 main pull 보강** (12 커밋)
+>
+> ### ⚠️ `live`·`rc2` 환경의 서비스 values 가 전 플랫폼에서 삭제됐습니다
+> - 커밋 `470f891` **"live, rc2 밸류 제거"** 로 `values/{플랫폼}/live/` 와 `values/{플랫폼}/rc2/` 디렉터리가 통째로 사라졌습니다(총 −3,429줄). 삭제 규모: display-platform live 38·rc2 38, core live 9·rc2 8, backoffice live 8·rc2 7, client live 5·rc2 3, user-platform live 2·rc2 2 등.
+> - **이제 이 저장소의 환경은 [`helm-charts-gitops`](./helm-charts-gitops.md) 와 일치합니다** — `clive` · `dev` · `rc1` · `rc4` (+ display-platform 만 `stage`). 온프레미스 라이브(`live`)와 `rc2` 는 더 이상 이 차트로 관리되지 않습니다.
+> - 다만 **최상위 환경 values 파일 `live.yaml`·`rc2.yaml` 은 남아 있습니다**(서비스 values 만 지워짐). 참조하는 서비스가 없어 사실상 고아 파일입니다.
+> - 통계 재측정: 서비스 values **467 → 357개**, 고유 서비스명 **108 → 109개**.
+>
+> ### 기타
+> - `d0c06e4` — clive `funding-api` 에 **preStop 적용**(2026-08-27 보강에서 추가한 훅의 첫 실사용).
+> - `dfb3405` — **Prometheus 메트릭 Datadog 수집 목록 옵션** 추가.
+> - rc4 `main2-api`·`share-api`, web rc4 `web-server` 등 개별 values 조정.
+>
+> ---
+>
 > 📅 **2026-08-27 main pull 보강** (39 커밋)
 >
 > 커밋 제목이 대부분 `small change` 라 제목만으로는 내용을 알 수 없어, 실제 diff 를 읽어 정리했습니다. 차트 템플릿 변경 3건과 values 대량 정리(74파일 수정, 2파일 삭제)입니다.
@@ -63,6 +101,8 @@ charts/service/
 
 ## 환경별 공통 설정 (`values/{env}.yaml`)
 
+> ⚠️ **2026-09-02 갱신**: `live`·`rc2` 는 **서비스 values 가 전 플랫폼에서 삭제**됐습니다(커밋 `470f891`). 아래 표의 두 행은 최상위 `live.yaml`·`rc2.yaml` 파일이 남아 있어 기록을 유지하지만, **참조하는 서비스가 없는 고아 설정**입니다. 현행 환경은 `clive`·`dev`·`rc1`·`rc4`(+display-platform `stage`)입니다.
+
 | 환경 | `gatewayHosts` | `activeProfiles` | `datadog.env` | `sbaLabel` | 비고 |
 |---|---|---|---|---|---|
 | `dev` | `api.dev.wadiz.io` | `dev` | `dev` | `dev` | CORS 기본 허용 `dev.wadiz.io`·`local.wadiz.io` |
@@ -79,7 +119,7 @@ charts/service/
 
 ## 플랫폼별 서비스 목록 (clive 기준)
 
-`clive`(클라우드 라이브)에 정의된 서비스입니다. 고유 서비스명은 전체 **108개**, 서비스 values 파일은 **467개**입니다.
+`clive`(클라우드 라이브)에 정의된 서비스입니다. 고유 서비스명은 전체 **109개**, 서비스 values 파일은 **357개**입니다(2026-09-02 기준).
 
 | 플랫폼 | 서비스 |
 |---|---|
@@ -141,7 +181,7 @@ charts/service/
 - `type` 이 실제로 가르는 것은 **인바운드 라우팅 3종**(Service·VirtualService·DestinationRule)뿐입니다. `agent` 면 이 셋이 만들어지지 않습니다.
 - **`agent` 라고 해서 Deployment 가 꺼지지는 않습니다.** Deployment 게이트는 `template.deployment.enabled` 하나이고 기본값이 `true` 이므로, `type: agent` 만 적은 서비스는 여전히 Deployment 로 상주합니다. 예: `values/display-platform/live/push-agent.yaml` 은 `type: agent` + HPA(min/max 2)만 지정하고 Deployment 를 끄지 않습니다 — 즉 "인바운드 없는 상주 워커"입니다.
 
-## 실사용 통계 (values 467개 실측)
+## 실사용 통계 (values 실측 — 아래 수치는 467개 시점 기준, `live`·`rc2` 삭제 전)
 
 | 항목 | 건수 | 메모 |
 |---|---:|---|
@@ -178,7 +218,7 @@ charts/service/
 
 | README 서술 | 실제 |
 |---|---|
-| "총 서비스 수: 305개" | 서비스 values 파일 **467개**, 고유 서비스명 **108개**. 305 는 어느 쪽과도 맞지 않습니다 |
+| "총 서비스 수: 305개" | 서비스 values 파일 **357개**, 고유 서비스명 **109개** (2026-09-02 기준. `live`·`rc2` 삭제 전에는 467/108). 305 는 어느 쪽과도 맞지 않습니다 |
 | `agent` = "Deployment 비활성화, Job/CronJob 사용" | `type` 은 Deployment 를 끄지 않습니다. 인바운드 3종만 끕니다. CronJob 사용처는 0건입니다 |
 | Service 는 `template.service.enabled` 로 제어 | `type == "api"` 조건이 먼저 걸립니다 |
 | VirtualService/DestinationRule 은 `template.*.enabled` 로 제어 | `ingressMode` 와 `type == "api"` 가 함께 걸립니다 |

@@ -1,5 +1,68 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-09-03 master pull 보강** (10 커밋)
+>
+> **캐시 장애 내성 강화(RWD-5982, 5커밋)** 가 최대 테마입니다. Hazelcast 멤버가 갑자기 죽었을 때 API 가 함께 멈추던 구조를 여러 겹으로 끊었습니다.
+>
+> ### RWD-5982 — Hazelcast 멤버 급사 시 캐시 대기가 API 를 멈추는 문제
+>
+> 문제의 뿌리는 **분산 캐시(Hazelcast)의 한 멤버가 갑자기 죽으면, 그 멤버가 들고 있던 파티션의 캐시 연산이 복구될 때까지 호출 스레드가 대기**한다는 점입니다. 기본값 조합에서 그 대기가 최대 60초까지 갈 수 있어 API 응답이 통째로 밀렸습니다. 네 가지를 동시에 걸었습니다.
+>
+> | 조치 | 내용 | 파일 |
+> |---|---|---|
+> | ① 사망 판정 단축 | `hazelcast.max.no.heartbeat.seconds` 를 **60초 → 30초**. 대기 시간이 곧 피해이므로 상한을 반감. 오탐(살아 있는 멤버를 강퇴) 기준인 GC 정지가 실측 1초 미만이라 여유가 있다는 판단 | `config/HazelcastConfig.java` |
+> | ② 읽기 타임아웃 | 캐시 read 대기 상한을 **5초**로 지정(`setDefaultReadTimeout`). 타임아웃은 실패가 아니라 **캐시 미스로 강등** | `config/CacheConfig.java` |
+> | ③ sync 경로 폴백 | `@Cacheable(sync = true)` 경로는 Spring 이 `CacheErrorHandler` 를 타지 않아 제공자 예외가 그대로 호출부로 터집니다. 이를 감싸는 데코레이터 `SyncGetFallbackCache`(114줄) + `SyncGetFallbackCacheManager` 신설 — 제공자 예외면 **캐시를 건너뛰고 원본에서 읽습니다** | `support/cache/` |
+> | ④ evict 비동기화 | get 실패 뒤의 캐시 무효화를 비동기로 돌려, 무효화가 다시 같은 파티션 대기에 걸리지 않게 함 | `config/CacheErrorConfig.java` |
+>
+> - ③의 설계 판단이 눈에 띕니다 — **폴백할 때는 캐시에 넣지 않습니다.** 제공자가 아픈 상태에서의 put 은 다시 같은 파티션 대기로 막힐 수 있기 때문입니다. 대신 같은 키로 동시에 들어온 요청은 첫 로더 결과를 공유해 원본 중복 조회를 막습니다. 로더 자체의 실패는 삼키지 않고 그대로 전파합니다.
+> - 진단용으로 **Hazelcast 종료 계측 리스너**(`HazelcastShutdownJournal`, 69줄)를 붙였고, 종료 구간의 로그가 유실되던 문제를 **logback 자체 shutdownHook 제거**로 해결했습니다.
+> - 검증 테스트 `SyncCacheErrorFallbackTest`(272줄) · `HazelcastConfigTest`.
+>
+> ### RWD-5969 — 참여내역 상세에 사용 쿠폰 목록 추가
+> - 참여내역 상세 조회 응답에 **실제로 사용한 쿠폰 목록**을 담았습니다. 신규 포트 `CouponQueryGateway` + 어댑터 `CouponQueryGatewayImpl`, 조회 매퍼 `BackingPaymentCouponQueryMapper`(+XML), `FundingDetailUseCase`·`FundingDetailResult` 확장.
+> - 유스케이스 테스트 164줄 + 통합 테스트 83줄이 함께 붙었습니다.
+>
+> ### RWD-5981 — 서포터 목록 멤버십 필드 정정 (릴리즈 당일 되돌림)
+> - 서포터 목록의 멤버십 표기를 **`hasMembership`(가입 여부)과 `canUseBenefit`(혜택 사용 가능 여부)으로 분리**했다가, 다음 날 `release/v20260903` 에서 **되돌렸습니다**(`53d8da9ec`). 짝이 되는 [`com.wadiz.web`](../com.wadiz.web.md) 의 RWD-5981 도 같이 되돌려졌습니다.
+>
+> ### 기타
+> - **RWD-5991**: AI 요약 클라이언트가 받는 204·404 는 정상 흐름이므로 로그를 `INFO` → `DEBUG` 로 낮췄습니다.
+> - **RWD-5909**: Slack webhook 기본값을 **개발 채널로 분리**하고, 운영 채널은 `live` 프로파일에서만 쓰도록 했습니다. 비운영 환경의 알림이 운영 채널로 새던 것을 막는 조치입니다.
+>
+> ---
+
+> 📅 **2026-09-02 master pull 보강** (8 커밋)
+>
+> **앵콜 프로젝트의 리뷰 불러오기(RWD-5942)** 와 **누적 카운트 타입 추가(RWD-5940)**, **다국어 조인 전환(RWD-5901)** 세 덩어리입니다.
+>
+> ### RWD-5942 — 펀딩 상세 리뷰 불러오기 설정 조회 API 신설
+> - **신규 엔드포인트 `GET /api/global/projects/{projectNo}/review-import-settings`** (`GlobalProjectController`). 앵콜 프로젝트가 이전(원본) 프로젝트에서 **만족도·체험리뷰를 이어받았는지**와 그 원본 프로젝트 번호 목록을 내려줍니다.
+> - 신규 도메인 `domain/globalproject/reviewimport/` — `ImportedReviewProjectResolver`(44줄) · `ReviewImportSourceGateway` · `ReviewImportUsage` · `GlobalProjectReviewImportSettingsUseCase` · `GlobalProjectReviewImportSettingsResult`. 인프라는 `ReviewImportSourceGatewayImpl` + `ReviewImportMapper`(+XML).
+> - 응답은 `satisfaction`·`experienceReview` 두 설정으로 나뉘고, 각각 `used`(사용 여부)와 `sourceProjectNos`(원본 프로젝트 번호)를 담습니다. **사용하지 않으면 목록 조회를 건너뛰고 빈 배열**을 반환합니다.
+> - **`fix`**: 사용여부 조회에 **앵콜 판별 조건을 추가**했습니다 — 비앵콜 프로젝트에 마커가 잔존하면 `isUsed` 가 참으로 오탐되던 문제입니다.
+> - REST Docs 문서 등록(`funding-global.adoc`).
+>
+> ### RWD-5940 — activity-counts 에 체험리뷰·누적 건수 타입 추가
+> - `GlobalProjectActivityCountsRequest` 의 타입 enum 에 **3종 추가**:
+>
+> | 타입 | 의미 |
+> |---|---|
+> | `EXPERIENCE_REVIEW` | 체험리뷰 — **이 프로젝트에 직접 작성된 것만** |
+> | `ACCUMULATED_EXPERIENCE_REVIEW` | 누적 체험리뷰 — 직접 작성분 + **원본 프로젝트에서 이어받은 체험리뷰** |
+> | `ACCUMULATED_COMMENT` | 누적 댓글 — 응원·의견·체험리뷰 합계 + 이어받은 체험리뷰 |
+>
+> - 리뷰 불러오기를 쓰지 않는 프로젝트는 누적값이 직접 작성분과 같아집니다.
+> - 카운터 구현 3종 신규(`ExperienceReviewCounter`·`AccumulatedExperienceReviewCounter`·`AccumulatedCommentCounter`), 커뮤니티 카운트 노출 판정 조건을 **SQL fragment 로 공통화**했습니다. 테스트 `AccumulatedCommentCounterTest`(60줄) 추가.
+>
+> ### RWD-5901 — 다국어 조인·폴백 전환
+> - **심사 카테고리 조회**를 `ScreeningRewardItemCategoryLanguage`(ko) 조인으로 전환.
+> - **메이커 소재지 시/도 명칭**을 ko/en/ja/zh 지원 + **영문 폴백**으로 전환 (`region/response/MakerRegionResponse.java`).
+> - `funding-core` 의존성 **1.0.149-SNAPSHOT** 으로 갱신.
+> - [`com.wadiz.web`](./com.wadiz.web.md) 의 같은 이슈(하드코딩 ko/en 분기 → MessageSource·언어 테이블 조인)와 짝입니다.
+>
+> ---
+>
 > 📅 **2026-08-25 master pull 보강** (66 커밋)
 >
 > ℹ️ 이 레포는 **원격에 `cloud_live` 브랜치가 없어(정리됨) `master` 가 현행선**입니다. 26년 8월 요금 정책 개편(RWD-5845), 예약결제 회차 개편(RWD-5862), 후원·캠페인 500만원 참여 제한(RWD-5799), OpenAPI 스펙 개편(RWD-5875)이 핵심입니다.

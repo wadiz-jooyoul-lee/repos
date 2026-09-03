@@ -1,3 +1,25 @@
+> 📅 **2026-09-03 cloud_live pull 보강** (5 커밋)
+>
+> ### CLIENT-235 — 클라우드 CDN 호스트 매핑 신설
+> - 기존 `wadiz.kr` CDN 호스트를 **클라우드 CDN(`wadiz.io`) 호스트로 치환**하는 표와 헬퍼를 새로 만들었습니다 (`src/common/constants/cdn.constants.ts`, `src/common/helpers/cdn.helper.ts`).
+> - 핵심은 **kr 호스트 하나가 로케일에 따라 두 호스트로 갈린다**는 점입니다. 클라우드 CDN 은 국내(`cdn-*`)와 해외(`cf-*`)를 서로 다른 도메인으로 관리하기 때문입니다. 해외 배포가 없는 서비스는 국내 호스트를 그대로 씁니다.
+>
+> | kr 호스트 | 국내(KR) | 해외 |
+> |---|---|---|
+> | `cdn.wadiz.kr` | `cdn-funding.wadiz.io` | (동일) |
+> | `cdn1.wadiz.kr` | `cdn-business.wadiz.io` | `cf-business.wadiz.io` |
+> | `cdn2.wadiz.kr` | `cdn-store.wadiz.io` | (동일) |
+> | `cdn3.wadiz.kr` | `cdn-funding-public.wadiz.io` | `cf-funding-public.wadiz.io` |
+> | `cdn4.wadiz.kr` | `cdn-display.wadiz.io` | (동일) |
+> | `cdnai.wadiz.kr` | `cdn-aidata.wadiz.io` | `ai-cdn.wadiz.io` |
+>
+> - 국가 코드는 `wadiz-country` 헤더에서 오고, **값이 없으면 해외로 판정**합니다(컨트롤러 기본값과 같은 규칙). 표에 없는 호스트는 원본 URL 을 그대로 돌려주고, 치환은 호스트 부분만 바꿔 경로·쿼리는 원문을 유지합니다.
+> - 적용처는 펀딩 프로젝트 조회입니다 (`src/api/funding/projects/project.service.ts`). 테스트 165줄이 함께 붙었습니다.
+> - 후속 커밋에서 **`cloud` 환경 판정 분기를 제거**했습니다 — 환경과 무관하게 표에 있으면 치환하는 단순한 규칙으로 정리한 것입니다.
+> - 짝이 되는 작업이 `wadiz-frontend` 에도 있습니다(FE1-1733, 스토리 이미지 변환의 클라우드 CDN 호스트 인식 확장).
+>
+> ---
+
 > 📅 **2026-08-27 cloud_live pull 보강** (1 커밋)
 >
 > ### FE1-1685 — 프로덕션 환경 debug 로그 출력 차단

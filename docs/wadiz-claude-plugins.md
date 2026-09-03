@@ -1,5 +1,19 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-09-02 main pull 보강** (9 커밋)
+>
+> 전부 **FE1-962 — Figma 디자인 정합성 검증 스킬** 한 덩어리입니다(+3,943줄).
+>
+> ### [FE1] `figma-design-validation` 스킬 신설
+> - Figma 디자인과 구현의 정합성을 검증하는 스킬입니다 (`SKILL.md` 1,356줄). 스크립트 3종을 동봉했습니다 — **`scorecard.py`(1,471줄)** · **`validate.py`(714줄)** · **`visual.py`(228줄)**.
+> - 검증 룰이 계속 보강됐습니다: **M-9 `validate.py` 필수 게이트** 룰 추가와 B-16 padding 조건 완화, **B-31 paint opacity → rgba alpha 보존**, B-14 룰에 **와디즈 text-ellipsis 믹스인 검증** 추가.
+> - `scorecard.py` 에 **스펙 스냅샷**(`--spec`/`--generate-spec`) 지원을 넣고 SKILL.md 의 M-9 게이트를 갱신했습니다. 사후 채점 옵트인 프롬프트도 추가.
+>
+> ### [FE1] `figma-self-check` 스킬 신설
+> - **디자이너 자가 검증용** 스킬(173줄). fe1 플러그인 버전 0.6.0 → **0.7.0**.
+>
+> ---
+>
 > 📅 **2026-08-27 main pull 보강** (5 커밋)
 >
 > ### [Client] `regular-release` — 자동 배포 제거 및 Stage 건너뛰기 옵션 (0.6.0 → 0.6.1)

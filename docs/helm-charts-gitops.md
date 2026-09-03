@@ -9,6 +9,40 @@
 
 ---
 
+> 📅 **2026-09-03 main pull 보강** (77 커밋)
+>
+> 직전 보강과 마찬가지로 **대부분(약 77%)이 CI 자동 이미지 태그 갱신**입니다. 다만 이번에는 사람이 만든 구조 변경이 셋 있습니다.
+>
+> ### ⚠️ `rc1` · `odev` 환경 삭제
+> - `values/{플랫폼}/rc1/` **57개 파일**이 통째로 삭제됐습니다(`87c3dbb18` "rc1 밸류 제거"). 짝이 되는 [`helm-charts`](./helm-charts.md) 에서도 같은 날 같은 57개가 지워졌습니다.
+> - `core/odev/currency-exchange-api.yaml` 이 지워지면서 **`odev` 환경도 완전히 사라졌습니다**.
+> - **현재 환경은 `clive` · `dev` · `rc4` 뿐입니다** (+ display-platform `stage` 1건). values 파일 **361 → 304개**.
+>
+> ### RWD-5996 — admin-server 의 AWS 액세스 키를 values 에서 제거
+> - `web/{dev,rc4,clive}/admin-server.yaml` 세 파일에서 **평문 AWS access key / secret key 를 삭제**하고 **EKS IRSA**(파드에 IAM 역할을 직접 붙이는 방식) 주입으로 전환했습니다. 애플리케이션은 키가 비면 `DefaultCredentialsProvider` 로 넘어갑니다. RWD-5920(`store-api`·`store-batch`)과 같은 방식입니다.
+> - 커밋에 **선행 조건이 명시돼 있습니다** — IAM 정책 `eks-service-admin-server` 의 private 버킷 statement 에 `s3:DeleteObject` 를 추가해야 합니다. 현행 IAM 사용자에는 있지만 IRSA 역할에는 없어서, 먼저 반영하지 않으면 **서류 승인·반려 시 원본 삭제(move)가 AccessDenied** 로 실패합니다.
+> - 이 문서가 앞서 기록한 "values 에 평문 자격증명이 들어 있다"는 관측이 실제로 정리되기 시작했습니다. **AWS 키가 남은 파일은 이제 `client/dev/makercenter-api.yaml` 1건**입니다(dev 환경).
+>
+> ### `clive/order-api` 추가
+> - `core/clive/order-api.yaml` 이 새로 생겼습니다(`5ddc0ca73`). 소스는 `wadiz-service/io.wadiz.order` 이고, 같은 기간에 **환불 로직 일원화·OpenAPI 문서·힙/메타스페이스 예산(1Gi 기준)·플랫폼 토큰 정합** 커밋이 이어졌습니다. `live` 프로파일에서는 springdoc 을 끄도록 설정했습니다.
+> - 반대로 [`helm-charts`](./helm-charts.md) 에는 `core/{dev,rc4}/order-api.yaml` 만 있고 clive 가 없어, **두 저장소의 서비스 집합이 어긋나 있습니다.**
+>
+> ### 기타 수동 커밋
+> - `core-mcp` 의 configmap 이 6회 연속 수정됐고(DB 커넥션 오류 수정 포함), audit API 의 MongoDB URI 가 3회 수정됐습니다. 짧은 간격의 반복 수정이라 **설정을 맞춰 가는 중**으로 보입니다(추정).
+> - `order-api` 의 connect-timeout 조정, RC4 환경의 키 prefix·프로파일 갱신.
+>
+> ---
+
+> 📅 **2026-09-02 main pull 보강** (68 커밋)
+>
+> 예상대로 **거의 전부 CI 자동 이미지 태그 갱신**입니다(`[org/repo] {작성자} - Merge …` 형식). 문서에 반영할 구조 변경은 없습니다.
+>
+> - 갱신이 잦았던 소스 레포: `wadiz-tech/kr.wadiz.platform.{api,agent}.friendtalk`(워크플로 정규화 `feature/update_workflow_20260901183520` 반영), `wadiz-service/com.wadiz.store`(RWD-5974) 등.
+> - 수동 커밋은 소수이며 개별 서비스 설정 조정입니다(예: `fix(ai-hub): 공유 도구 링크 로그인 복귀 수정`).
+> - 짝이 되는 [`helm-charts`](./helm-charts.md) 에서 **`live`·`rc2` 서비스 values 가 삭제**돼, 두 저장소의 환경 집합이 이제 일치합니다(이 저장소에는 원래 `live`·`rc2` 가 없었습니다).
+>
+> ---
+>
 ## 두 저장소의 관계
 
 | | `wa-infrastructure/helm-charts` | `wadiz-gitops/helm-charts` (이 문서) |

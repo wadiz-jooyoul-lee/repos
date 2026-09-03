@@ -9,6 +9,16 @@
 
 ---
 
+> 📅 **2026-09-03 main pull 보강** (1 커밋)
+>
+> ### DISPLAY-1725 — 찜 갱신 이벤트를 500건 단위로 쪼개 발행
+> - 프로젝트·캠페인이 바뀌면 그 프로젝트를 찜하거나 알림신청한 **모든 사용자 ID 를 하나의 대용량 레코드로** 발행하고 있었습니다. 인기 프로젝트일수록 레코드가 커집니다.
+> - 이 때문에 소비 쪽(`createUserCuration` 컨슈머)이 한 건을 처리하다 poll 타임아웃에 걸려 **리밸런스(파티션 재배치)가 반복되는 루프**에 빠졌습니다. 컨슈머가 계속 재시작되니 처리가 진행되지 않는 상태입니다.
+> - 토폴로지를 `map` → **`flatMap`** 으로 바꾸고 사용자 ID 를 **500개씩 청크로 나눠 여러 레코드로 발행**하도록 고쳤습니다 (`agent/.../topology/wish/ProjectChangeToUserWishTopologies.java`, 38줄 추가 / 63줄 삭제).
+> - 대상 토폴로지 3종 모두에 적용됐습니다 — `campaignToUserWishCurationRefresh`(펀딩 캠페인) · `rewardComingSoonToUserWishCurationRefresh`(오픈예정 알림신청) · `projectToUserWishCurationRefresh`(스토어).
+>
+> ---
+
 ## 개요
 
 - **데이터 흐름**: `Database CDC → Kafka Topics → Kafka Streams → Internal Topics → display-agent` (README).

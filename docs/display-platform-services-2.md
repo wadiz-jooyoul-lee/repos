@@ -7,6 +7,15 @@
 
 ---
 
+> 📅 **2026-09-03 main pull 보강** — `main2-batch-api` (3 커밋)
+>
+> ### DISPLAY-1713 — 배포 워크플로 정리
+> - **live 워크플로의 중복 clive 잡을 제거**했습니다. 아래 "공통 관측" 에 기록한 `update_image_tag` 이중 실행 문제가 이 서비스에서는 해소됐습니다.
+> - dev 워크플로의 odev 이미지 태그 갱신 스텝도 제거했고, **rc3 → rc4 로 배포 환경을 전환**했습니다(`aws_deploy_ecr_rc3.yml` → `aws_deploy_ecr_rc4.yml`).
+> - 기능 변경 1건: **배너가 0개가 될 때 기존 배너를 삭제**하도록 처리했습니다(`BannerRepositoryV2`·`MainService`). 이전에는 빈 목록이 오면 아무것도 하지 않아 옛 배너가 지면에 남았을 것으로 보입니다(추정).
+>
+> ---
+
 ## 한눈에 보기
 
 | 서비스 | 저장소 | 브랜치 | Java | 컨트롤러/EP | Boot / Java | 저장소 계층 |
@@ -74,14 +83,16 @@
 
 ## ⚠️ 공통 관측 — live 배포 경로가 gitops 에 없습니다
 
-`main2-batch-api` · `inbox` · `user-activity-api` 세 서비스의 live 워크플로는 **`update_image_tag` 잡을 두 번** 돌립니다.
+> ⚠️ **2026-09-03 갱신 — 절반이 정리됐습니다.** `main2-batch-api`(DISPLAY-1713)와 [`main2-api`](./main2-api.md)(DISPLAY-1688)는 중복 clive 잡을 제거해 이제 clive 하나만 갱신합니다. **아직 이중으로 남은 서비스는 `inbox` 와 `user-activity-api` 둘뿐입니다.** 아래 서술은 그 둘에 해당합니다.
+
+`inbox` · `user-activity-api` 의 live 워크플로는 **`update_image_tag` 잡을 두 번** 돌립니다.
 
 ```yaml
 update-image-tag:        value_file_path: display-platform/live/{svc}.yaml    # ①
 update-image-tag-clive:  value_file_path: display-platform/clive/{svc}.yaml   # ② needs: ①
 ```
 
-그런데 **`display-platform/live/` 디렉터리는 [`helm-charts-gitops`](./helm-charts-gitops.md) 에 존재하지 않습니다**(gitops 환경은 `clive`·`dev`·`rc1`·`rc4`·`stage`). `live` 경로는 [`wa-infrastructure/helm-charts`](./helm-charts.md) 에만 있습니다.
+그런데 **`display-platform/live/` 디렉터리는 [`helm-charts-gitops`](./helm-charts-gitops.md) 에 존재하지 않습니다**(gitops 환경은 `clive`·`dev`·`rc4`·`stage` — `rc1` 은 2026-09-03 에 삭제됐습니다). `live` 경로는 [`wa-infrastructure/helm-charts`](./helm-charts.md) 에만 있습니다.
 
 | 경로 | gitops | wa-infrastructure |
 |---|:---:|:---:|
@@ -90,7 +101,7 @@ update-image-tag-clive:  value_file_path: display-platform/clive/{svc}.yaml   # 
 
 - ①이 실제로 어디에 반영되는지(다른 gitops 저장소·브랜치인지, 실패하는지)는 **확인하지 못했습니다.**
 - ②가 ①에 `needs` 로 걸려 있어, ①이 실패하면 **clive 반영까지 막힐 수 있는 구조**입니다.
-- 같은 패턴이 [`main2-api`](./main2-api.md) 에도 있습니다. 온프레미스 → 클라우드 이관 과도기의 잔재로 보이나 미확인입니다.
+- 온프레미스 → 클라우드 이관 과도기의 잔재로 보이나 미확인입니다. 팀이 이 구조를 걷어내는 중이며(DISPLAY-1713 등), 남은 둘도 같은 정리를 기다리는 상태로 보입니다.
 
 ## 미확인 항목
 

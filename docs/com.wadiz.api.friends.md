@@ -7,6 +7,20 @@
 
 ---
 
+> 📅 **2026-09-02 master pull 보강** (5 커밋)
+>
+> ### 배포 트리거를 `main` 으로 전환 (⚠️ 기준 브랜치 변동 예고)
+> - `aws_deploy_ecr_live.yml` 의 트리거를 **`master` → `main`** 으로 바꾸고 rc4 배포 워크플로를 추가했습니다(`a960c2b`·`92573e5`). 다만 이번 pull 시점에는 `main`·`master` 가 같은 커밋을 가리켜 문서 기준은 `master` 를 유지합니다. 다음 동기화에서 `main` 이 앞서면 그쪽으로 전환됩니다.
+>
+> ### DISPLAY-1724 — 서포터 피드 액션 윈도우 확대
+> - 친구 서포터 피드의 **액션 윈도우를 15 → 30** 으로 늘리고, 값을 하드코딩이 아니라 설정 주입으로 바꿨습니다. 이어서 **환경별 필수 주입**으로 강화해 기본값 누락을 막았습니다 (`service/feed/supporter/FeedServiceImpl.java`).
+>
+> ### DISPLAY-1699 — 미사용 `MemberShipState` 제거
+> - `model/follow/MemberShipState.java`(17줄) 삭제, `SupporterReviewFeed` 에서 관련 필드 제거.
+>
+> ---
+>
+
 ## ⚠️ 기준 브랜치 주의 — `cloud_live` 가 아니라 `master`
 
 다른 레포와 달리 이 저장소는 **`cloud_live` 브랜치가 버려진 상태**입니다. 문서·작업 기준은 `master` 입니다.
