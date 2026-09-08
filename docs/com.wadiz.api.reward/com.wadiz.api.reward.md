@@ -1,5 +1,18 @@
 # com.wadiz.api.reward 분석 문서
 
+> 📅 **2026-09-08 cloud_live pull 보강** (6 커밋)
+>
+> 6커밋 전부 `RWD-5974` 한 이슈이며, **온프레미스 잔재를 걷어내고 로컬·테스트 프로파일을 자립시키는 정리**입니다. 기능 변경은 없습니다.
+>
+> ### RWD-5974 — 프로파일 재편 (온프렘 제거 · local/test 자립)
+> - **온프레미스 dev 계열 프로파일을 제거**했습니다 — `reward-api/application-odev.yml`(96줄), `reward-batch-api/application-dev.yml`(76줄), 루트 `application-default.yml`(77줄).
+> - 대신 **로컬 실행 기준 `application-local.yml`** 을 각 모듈에 두고(`reward-api` 74줄 · `reward-batch-api` 68줄), 루트에 있던 파일을 모듈별로 흩었습니다.
+> - **테스트 프로파일이 local 없이 자급**하도록 `application-test.yml`(76줄)을 신설하고, 테스트 프로파일을 `local,intg,test` 조합으로 전환했습니다. 즉 테스트가 개인 로컬 설정에 기대지 않습니다.
+> - 루트 모듈의 테스트 컨텍스트가 아예 뜨지 않던 문제를 의존성 2건 추가로 풀었습니다.
+> - 같은 이슈가 [`com.wadiz.store`](../com.wadiz.store/com.wadiz.store.md) 에서도 같은 시기에 진행됐습니다(그쪽은 깨져 있던 테스트 복구가 중심).
+>
+> ---
+
 > 📅 **2026-09-02 cloud_live pull 보강** (35 커밋)
 >
 > **쿠폰 코드 체계 개편(RWD-5778)** 과 **쿠폰 다국가·다통화 대응(RWD-5812)** 두 덩어리입니다. 테스트가 대폭 보강돼 총 +4,719/−257줄입니다.

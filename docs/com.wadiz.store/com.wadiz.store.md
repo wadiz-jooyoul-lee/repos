@@ -9,6 +9,18 @@
 
 ---
 
+> 📅 **2026-09-08 cloud_live pull 보강** (8 커밋)
+>
+> 8커밋 전부 `RWD-5974` 한 이슈로, **깨져 있던 테스트를 되살리고 테스트 DB 를 클라우드로 옮기는 정리**입니다. 기능 변경은 없습니다.
+>
+> ### RWD-5974 — 테스트 기반 복구
+> - **`@MybatisTest` 의 datasource 를 cloud dev RDS 로 전환**했습니다(`application-mybatis.yml` 3개 모듈). base 설정에서는 DB 접속값을 빼고 `store-batch` 전용 테스트 프로파일을 따로 뒀습니다.
+> - **컴파일이 깨져 실행조차 되지 않던 테스트 두 모듈을 복구**했습니다. JPA 슬라이스 테스트 3개 모듈은 `TextCryptor` mock 이 없어 컨텍스트가 뜨지 않던 것을 고쳤습니다(엔티티 암복호화 의존).
+> - `PayOrderServiceTest` 에 누락된 `ProjectFragmentQueryProcessor` mock 을 추가했습니다.
+> - CI 에서 일관되게 실패하던 `AbstractSimpleExcelTest.testInterrupted` 는 **`@Disabled` 처리**했습니다(원인 미해결, 비활성으로 우회).
+> - 로컬 실행 기준 `application-local.yml` 추가, 저장소에 `CLAUDE.md` 신설.
+> - 같은 이슈가 [`com.wadiz.api.reward`](../com.wadiz.api.reward/com.wadiz.api.reward.md) 에서도 같은 시기에 진행됐습니다(그쪽은 온프렘 프로파일 제거가 중심).
+
 ## 최근 변경사항 (2026-08-25 cloud_live pull 기준)
 
 > ⚠️ 기준 브랜치가 `master` → **`cloud_live`** 로 바뀌었습니다. 33커밋.

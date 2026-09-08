@@ -7,6 +7,16 @@
 
 ---
 
+> 📅 **2026-09-08 master pull 보강** (2 커밋)
+>
+> ### DISPLAY-1734 — 친구 서포터 피드에 액션 카드 유형별 쿼터 적용
+> - 친구들의 활동을 모아 보여 주는 서포터 피드에서 **한 종류의 활동(예: 결제)만으로 화면이 도배되지 않도록** 카드 유형별 상한(쿼터)을 뒀습니다.
+> - 신규 `model/feed/supporter/ActionQuotaGroup.java` 로 액션을 그룹으로 묶고, `SupporterActionService`(+68줄)와 `FeedServiceImpl` 에서 그룹별 개수를 제한합니다.
+> - 검색 클라이언트 3종(`SearchClient` 인터페이스 · `ElasticsearchSearchClient` · `OpenSearchSearchClient`)과 응답 서비스에 관련 조회가 함께 추가됐습니다. **ES·OpenSearch 양쪽 모두에 같은 변경을 넣는 구조**가 유지되고 있습니다(이관 진행 중).
+> - 후속 커밋에서 설정 키 이름을 `funding-order` → **`payment`** 로 바꿨습니다.
+>
+> ---
+
 > 📅 **2026-09-02 master pull 보강** (5 커밋)
 >
 > ### 배포 트리거를 `main` 으로 전환 (⚠️ 기준 브랜치 변동 예고)

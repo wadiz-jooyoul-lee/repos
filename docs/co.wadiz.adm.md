@@ -9,6 +9,15 @@
 
 ---
 
+> 📅 **2026-09-08 master pull 보강** (1 커밋)
+>
+> ### RWD-5996 — 레거시 업로드의 S3 액세스 키 제거, IRSA 단일화
+> - `S3UploadStorage`·`UploadStorageConfig` 에서 **access key / secret key 주입을 걷어내고** EKS IRSA(파드에 IAM 역할을 직접 붙이는 방식) 하나로 맞췄습니다. 프로파일 4종(`local`·`rc`·`rc2`·`real`)의 키 설정도 함께 지웠습니다.
+> - 직전 보강에서 기록한 [`helm-charts-gitops`](./helm-charts-gitops.md) 쪽 `admin-server` values 의 평문 키 제거(RWD-5996)와 **짝이 되는 애플리케이션 변경**입니다. 설정에서 키를 빼도 코드가 키를 요구하면 뜨지 않으므로 두 쪽이 함께 가야 합니다.
+> - 같은 이슈·같은 날짜로 [`com.wadiz.web`](./com.wadiz.web.md) 에도 동일 변경이 들어갔습니다.
+>
+> ---
+
 > 📅 **2026-09-03 master pull 보강** (3 커밋)
 >
 > 세 커밋 모두 `BE3-643` 한 이슈이며, 주제는 **하드코딩된 도메인 정리**입니다.

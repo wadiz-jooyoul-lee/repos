@@ -1,5 +1,70 @@
 # co.wadiz.api.community
 
+> 📅 **2026-09-08 cloud_live pull 보강** (54 커밋, 505파일 +12,861/−4,283)
+>
+> ⚠️ **이번 pull 의 대부분은 기능 추가가 아니라 아키텍처 재편(RWD-5878)입니다.** DB 접근 코드를 계층으로 갈라내고, 그 경계를 테스트로 강제하는 작업이 8월 17일부터 3주에 걸쳐 진행됐습니다. 패키지 구조·클래스 위치가 크게 바뀌었으므로 **기존 문서의 경로 표기는 상당수 옛 위치**입니다.
+>
+> ### RWD-5878 — DB 접근 계층 재편 (약 40커밋)
+>
+> **무엇이 문제였나**: 매퍼(MyBatis)·엔티티·열거형이 도메인 모듈 안에 흩어져 있어, 어느 코드가 어느 DB(schema)를 건드리는지 코드만 봐서는 알 수 없었습니다. 트랜잭션 경계도 바깥쪽 서비스에 선언돼 있어 조회 하나가 큰 트랜잭션에 묶이곤 했습니다.
+>
+> **어떻게 바꿨나** — 최상위 패키지가 6개가 됐습니다.
+>
+> | 패키지 | 파일 | 역할 |
+> |---|---:|---|
+> | `module` | 134 | 도메인 모듈(지지서명·content_profiler·content_rule·maker_opinion_notify) |
+> | `persistence` | **72** | **신설** — 매퍼·엔티티·파라미터 타입을 DB(schema)별로 모음 |
+> | `shared` | 71 | 공용 도메인 어휘(`shared/domain`)·유틸 |
+> | `config` | 56 | 설정 |
+> | `integration` | 52 | 외부 연동 |
+> | `component` | **52** | **신설·최상위 승격** — DB 조회/쓰기 단위를 주제별로 묶은 층 |
+>
+> 주요 단계는 이렇습니다.
+> - **`wadiz-reward` 전용 DataSource 신설** — 이제 datasource 가 `wadiz-db` · `wadiz-community` · `wadiz-reward` **3종이고 각각 main/replica 2풀씩 총 6풀**입니다. 6풀 모두에 `connection-timeout: 5000`(5초)을 명시했습니다. 예전에는 값이 없어 기본값에 의존했습니다.
+> - **매퍼 이관** — 만족도 매퍼를 `wadiz_reward` 로 발췌하고, `wadiz_community`·`wadiz_db` 매퍼를 `persistence` 로 옮겼습니다. `typeAliasesPackage` 도 함께 전환했습니다.
+> - **component 층 실체화 → 최상위 승격** — DB 접근 3종(cleanup·지지서명 조회/쓰기·확산·포인트)을 component 로 추출한 뒤(Phase 4a~4d), 층 자체를 최상위로 올리고 주제별 서브패키지로 나눴습니다(Phase 7).
+> - **트랜잭션 경계 정리** — 순수 조회는 `readOnly` 로 라우팅하고 경계가 없는 곳은 명시화했으며, **바깥쪽 트랜잭션 선언을 전량 제거**했습니다. 의견 집계의 트랜잭션 경계는 조회 단위까지 좁혔습니다.
+> - **아키텍처 가드 테스트 2종 신설** — `architecture/DbAccessArchitectureTest` · `ModuleLayoutArchitectureTest`. 처음엔 기존 위반을 눈감아 주는 ratchet(현 상태 고정) 방식으로 시작해 축별로 하나씩 **ENFORCE(위반 시 빌드 실패)로 승격**하고, 마지막에 ratchet 자체를 제거했습니다. 가드 자신의 사각(가드가 못 보는 구멍)도 두 차례 막았습니다.
+> - **배치 스케줄러를 플랫폼 스레드로** — 가상 스레드(Virtual Thread)에서 돌리면 블로킹 작업이 캐리어 스레드를 붙잡는(pin) 문제가 있어 되돌렸습니다.
+> - 정리: 와일드카드 import 축약 **144파일 −579줄**, dead code 4파일 제거, 문서 과대주장 3건 정정, 저장소 문서 정합.
+>
+> ### ⚠️ `qmt` → `cmt` 표기 전환 (본문 정정 필요)
+> - **2차 콘텐츠 심사를 가리키는 이름이 `QMT` 에서 `CMT` 로 바뀌었습니다.** 아래 2026-08-25 블록의 `qmt.trigger.*` · `qmt-publish-enabled` 등 표기는 현재 코드에서 `cmt.*` 입니다.
+> - 다만 **전환기라 와이어(Kafka 토픽)와 설정 키가 이중화돼 있습니다.**
+>
+> | 항목 | 현재 값 |
+> |---|---|
+> | 설정 루트 | `cmt:` (구 `qmt:`) |
+> | 발행 on/off | `middleware.kafka.cmt-publish-enabled` — 값은 아직 `${middleware.kafka.qmt-publish-enabled:false}` 를 읽어 옴(gitops 전환 대기) |
+> | 요청 토픽 | `{prefix}-content-cmt-requested-v1` (2026-08-24 전환, 롤백은 ConfigMap override) |
+> | 결과 토픽 | `{prefix}-community-cmt-result-v1` (신 토픽이 정본, 구 `qmt-result-topic-legacy` 는 전환기 동안 병행) |
+>
+> - `application.yml` 주석에 **제거 조건이 명시**돼 있습니다 — 엔진·community 배포 후 구 토픽 유입이 0 인지 확인한 뒤 리스너·NewTopic·legacy 키를 지웁니다.
+>
+> ### RWD-5961 — 도배 수동 차단 API 신설
+> - 자동 차단은 **링크가 있는 콘텐츠에만** 발동합니다(무링크는 관측만). 그런데 도배는 링크 없이도 성립하고, 그 판단은 알림을 받은 담당자가 합니다. 종전에는 **해제 API 만 있어 담당자가 판단해도 집행할 수단이 없었습니다.**
+> - `ContentRuleController`(`/api/v1/content-rule`)에 2개가 늘어 **엔드포인트 3 → 5개**가 됐습니다.
+>
+> | Method | Path | 비고 |
+> |---|---|---|
+> | **POST** | `/blocked-users/{userId}` | **신설** — 수동 차단. body 에 `reason`·`requestedBy`(담당자 userId) 필수 |
+> | **GET** | `/blocked-users/{userId}` | **신설** — 차단 여부 조회 |
+> | DELETE | `/blocked-users/{userId}` | ⚠️ **계약 변경** — 해제에도 같은 근거를 query 파라미터로 요구합니다(호출처 0건 확인 후 변경) |
+>
+> - 차단·해제 **둘 다 WARN 으로 남깁니다.** 차단 상태는 Redis 에 userId 만 남아 근거가 사라지고, 한쪽만 기록하면 "막혔다 풀린" 계정과 "애초에 안 막힌" 계정이 로그에서 구분되지 않기 때문입니다. 사유의 개행·제어문자는 공백으로 접어 **로그 줄을 위조하지 못하게** 합니다.
+> - `requestedBy` 를 `int` 가 아니라 `Integer + @NotNull` 로 둔 이유도 기록돼 있습니다 — `int` 면 필드가 없을 때 조용히 `0` 으로 바인딩돼 검증을 통과합니다.
+> - D1(도배) 탐지에서 삭제 필터를 걷고 **삭제 여부를 값으로 실어** 오도록 바꿨으며, D1 판정 조회 상한을 상수에서 설정키로 뺐습니다.
+> - **`ContentType.PERSONAL_MESSAGE` 를 제거**했습니다(발신자 분리 이행 완료). 1:1 문의는 이제 다른 경로로 다룹니다.
+>
+> ### 기타 안정화
+> - `ConstraintViolationException` 을 **400** 으로 받도록 하고 컨트롤러 검증 경로를 통일했습니다(계약 테스트 신설).
+> - 지지서명 제휴포인트에서 **point-api 응답이 비어 오는 경우를 로그로 드러내도록** 했습니다. 종전에는 조용히 넘어갔습니다.
+>
+> ### 규모 갱신
+> - REST 컨트롤러 **15개 · 엔드포인트 57개** (직전 문서 기록: 13 / 47). 늘어난 것은 `RealtimeContentAdminController` 3 · `MakerOpinionNotifyController` 4 · ContentRule 2 등입니다.
+>
+> ---
+
 > 📅 **2026-08-25 cloud_live pull 보강** (20 커밋)
 >
 > ⚠️ **기준 브랜치가 `master` → `cloud_live` 로 바뀌었습니다.** 내용은 master 와 거의 같고(클라우드 전용 커밋은 설정 재정렬 2건뿐), **QMT(2차 콘텐츠 심사) 파이프라인 신설(RWD-5823)** 과 **어드민 '실시간 콘텐츠 검사' 조회 API 신설(RWD-5823·RWD-5879)** 이 핵심입니다. 신규 REST 컨트롤러 1개(`RealtimeContentAdminController`, endpoint 3) + 기존 `SupporterSignatureAdminController` 에 endpoint 1개 추가.

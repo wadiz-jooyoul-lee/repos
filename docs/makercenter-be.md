@@ -1,5 +1,20 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-09-08 cloud_live pull 보강** (6 커밋)
+>
+> ### FE2-1221 — 어드민 기획전 신청 벌크 철회
+> - 기획전 신청을 **여러 건 한 번에 철회하는 어드민 API** 를 추가했습니다 (`ExhibitionApplicationAdminController`·`ExhibitionApplicationAdminService` 82줄·`Exhibition.xml`). 요청 DTO `ReqBulkApplicationWithdraw`.
+> - 입력 검증을 함께 넣었습니다 — **철회 사유의 길이 초과와 프로젝트 번호 배열의 `null` 원소를 400 으로 거부**합니다.
+> - 신규 `WebApiService`(57줄) — **와디즈 웹 서버(`com.wadiz.web`) API 를 호출하는 클라이언트**입니다. 메이커센터에서 웹 서버를 직접 부르는 경로가 새로 생겼습니다.
+> - 화면은 [`makercenter-fe-admin`](./makercenter-fe-admin.md) 의 같은 이슈(FE2-1221)에 있습니다.
+> - 테스트 277줄(컨트롤러 88 · 서비스 119 · WebApiService 70).
+>
+> ### 기타
+> - `prod` yml 의 `web-server-url` 을 `wadiz.io` 도메인으로 고쳤다가, PR 리뷰에서 **미사용 dev·prod yml 이라는 지적을 받아 롤백**했습니다.
+> - `CLAUDE.md` 의 인프라 절을 **EKS·GitOps 현행 구조로 갱신**했습니다.
+>
+> ---
+
 > 📅 **2026-09-03 cloud_live pull 보강** (4 커밋)
 >
 > 직전 보강에 이어 **잘못된 HTTP 상태 코드 정정**이 계속됩니다.

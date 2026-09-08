@@ -6,6 +6,48 @@
 
 ---
 
+> 📅 **2026-09-08 cloud_live pull 보강** (40 커밋, −8,858줄)
+>
+> ⚠️ **이번 pull 의 핵심은 대규모 죽은 코드 정리입니다.** SPA(글로벌) 이관으로 참조를 잃은 **JSP 61개와 컨트롤러·검증기 11개 클래스**가 삭제됐습니다. 이 레거시 저장소가 실제로 줄어들기 시작했습니다.
+>
+> ### CLIENT-238 / CLIENT-239 / CLIENT-240 — 참조를 잃은 JSP·컨트롤러 제거 (17커밋)
+>
+> 세 이슈가 단계적으로 진행됐습니다.
+>
+> | 이슈 | 범위 |
+> |---|---|
+> | **CLIENT-238** | 통합으로 참조를 잃은 **펀딩 상세·오픈예정 상세** JSP 와, 주석 처리돼 있던 뷰 메서드·미사용 필드. 호출 지점이 없는 검증기 2종(`CampaignAccessPermitValidator`·`WRewardComingSoonValidator`)과 오픈예정 상세 전용 조회·캐시 설정 |
+> | **CLIENT-239** | 지면 JSP 일괄 제거 — `wmain`(통합 이전 지면) · `waccount`/`account`(계정) · `wterms`(약관) · `winclude`(공통 include) · `wlayout`(레이아웃) · `wpurchase`·`wpayment`·`wcampaign`·`wcoming`·`wevent`·`wmypage`·`wsub`·`oauth`·`mobile` |
+> | **CLIENT-240** | JSP 가 사라져 **존재하지 않는 화면을 가리키게 된 컨트롤러·메서드** 정리 — 투자 커뮤니티·투자 헬프센터 컨트롤러 4종, 이전 약관 컨트롤러, W9 웨비나 컨트롤러, 스쿨 강의 영상·청약 안내·사전 퀴즈·모바일 쿠폰·이벤트 지면 메서드. `waccount` 의 비로그인 분기는 **로그인 지면 리다이렉트로 변경** |
+>
+> - 삭제된 Java 클래스 11개: `FTMOWCommunityController` · `FTWEBCommunityController` · `FTMOBHelpCenterController` · `FTWEBHelpCenterController` · `WEBTermsController` · `WMyWebinarController` · `CampaignAccessPermitValidator`(+테스트) · `WRewardComingSoonValidator` · `RewardComingSoonPageType` · `ComingSoonForSPA`.
+> - **남은 JSP 는 265개**입니다(이번에 61개 삭제).
+> - 큰 파일이 여럿 빠졌습니다 — `wpurchase/reward/step10.jsp`(816줄), 약관 include 6종(`innerTerms*`, 합계 1,175줄) 등.
+>
+> ### RWD-6014 — IP 국가판별 재활성화와 기본값 정리
+> - IP 로 접속 국가를 판별하는 기능을 **다시 켰습니다**. 판별 실패 시 기본 언어는 `en` 으로 원복했다가, 이어서 **`KR_ko`** 로 정리했습니다(응답의 `country` 가 `null` 인 경우도 `KR_ko`).
+> - rc4·cdev 의 국가판별 API 호스트를 **aidata 도메인으로 교체**했습니다.
+>
+> ### FE2-1214 — 메이커 이용약관 2026.09.08 개정
+> - **2026년 9월 15일 이후 제출된 프로젝트부터 시행**됩니다(개정일 2026.09.08). 직전 판(2026.08.18)은 `funding_maker_service_20260818.html`(1,265줄)로 보존되고 `/web/wterms/maker_service/20260818` 에서 볼 수 있습니다.
+> - 주요 변경 두 가지입니다.
+>   - **데이터 활용 범위 확대** — 종전 "프로젝트 이력 등의 정보를 통계자료 작성·다른 서비스 적용에 활용" 에서, **판매 데이터·광고 집행 및 성과 이력**까지 포함해 서비스 제공·운영·개선, 신규 서비스 개발, 통계·자료 작성 목적으로 **수집·저장·분석·가공·결합**할 수 있도록 넓혔습니다.
+>   - **가공 결과물의 권리 귀속 조항 신설** — 위에 따라 작성한 통계·지표·분석 자료·데이터베이스 등 가공 결과물의 권리는 **회사에 귀속**됩니다.
+>
+> ### 기타
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | RWD-5944 | 프로젝트 라벨 열 정리 — `custom_label_0/1` 을 **기획전·부스터쿠폰 라벨로 교체**하고 미활용 `custom_label_5~9`·`internal_label` 열 제거 |
+> | BE3-903 | GTM(구글 태그 매니저) 개발 환경 격리 — rc 계열(rc4 포함)과 dev 를 운영과 분리. 클라우드 캐시가 `null` 을 미처리해 나던 오류도 수정(메이커 인증 상태 조회·펀딩 완료 첫 진입 판정) |
+> | RWD-5996 | 레거시 업로드 S3 access/secret key 제거 — IRSA 단일화. [`co.wadiz.adm`](./co.wadiz.adm.md) 과 같은 작업 |
+> | FE1-1778 | 더보기 페이지 `/web/main/more` 를 **`global-korea/index` 로 전환** (프론트 `wadiz-frontend` FE1-1778 과 짝) |
+> | FE1-1672 | 막펀잡기 페이지 진입 경로 추가 |
+> | SCOUT-152 | 결제 배송 정보 엑셀에 **배송비 할인 금액** 추가(+테스트) |
+> | RWD-6011 | 호출부가 없는 간편결제 API 를 `deprecated` 처리 |
+>
+> ---
+
 > 📅 **2026-09-03 cloud_live pull 보강** (26 커밋)
 >
 > **HTML 메타데이터의 다국어 전환(CLIENT-229, 8커밋)** 이 최대 테마이고, 서포터클럽 약관 개정과 릴리즈 당일 되돌림 1건이 뒤를 잇습니다.

@@ -7,6 +7,16 @@
 
 ---
 
+> 📅 **2026-09-08 main pull 보강** — `wish-api` (2 커밋)
+>
+> ### DISPLAY-1735 — 브레이즈용 찜한 프로젝트 조회 API 추가
+> - CRM 도구인 **Braze 가 쓸 "찜한 프로젝트" 조회 API** 를 추가했습니다(`WishController`). 특징은 **이미 결제로 참여한 프로젝트는 빼고** 내려준다는 점입니다 — 이미 산 것을 다시 권하지 않으려는 의도로 보입니다.
+> - 이를 위해 참여 이력을 읽는 계층이 새로 붙었습니다 — `model/document/Purchase.java` · `service/PurchaseService.java`(+43줄) · `WishRepository`·`WishService` 확장, 쿼리 상수 추가.
+> - 인프라 쪽 짝: [`helm-charts`](./helm-charts.md) 의 **CINFRA-663** — rc4 `wish-api` values 에서 Braze IP 에 `/api/v4/wish/braze` 를 허용했습니다.
+> - **배포 워크플로를 rc3 → rc4 로 전환**하고 미사용 배포 스텝(dev odev · live 중복)을 제거했습니다. `main2-batch-api`(DISPLAY-1713)와 같은 정리입니다.
+>
+> ---
+
 > 📅 **2026-09-03 main pull 보강** — `main2-batch-api` (3 커밋)
 >
 > ### DISPLAY-1713 — 배포 워크플로 정리

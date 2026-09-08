@@ -1,3 +1,24 @@
+> 📅 **2026-09-08 cloud_live pull 보강** (13 커밋)
+>
+> 13커밋 전부 `CLIENT-236` 한 이슈입니다. 주제는 **"업스트림(뒷단 API)이 아플 때 app-api 가 대신 욕먹지 않게 하기"** 입니다.
+>
+> ### CLIENT-236 — 업스트림 장애를 app-api 오류와 분리
+> - 스토리 조회는 뒷단 API 를 `fetch` 로 호출합니다. 뒷단이 5xx 를 주거나 응답이 없으면 그 실패가 app-api 자신의 500 으로 잡혀 **Datadog 에러율이 app-api 탓으로 집계**됐습니다.
+> - 전용 예외 **`UpstreamRelayException`**(`src/common/exceptions/upstream-relay.exception.ts`)을 만들어 "내 잘못이 아니라 전달일 뿐" 을 타입으로 구분했습니다. 변환 규칙은 두 가지입니다.
+>   - 뒷단이 **5xx** → `502 Bad Gateway`
+>   - `fetch` 자체 실패 → `502`, 그중 **타임아웃(`AbortError`)이면 `504 Gateway Timeout`**
+>   - 뒷단의 4xx 는 그대로 전달합니다(변환하지 않음).
+> - `DatadogErrorInterceptor` 가 이 예외를 만나면 요청에 표시를 남기고(`markUpstreamRelay`), `src/tracing.ts` 의 express 훅이 그 요청을 **에러 집계에서 제외**합니다. 502·504 둘 다 제외 대상입니다.
+> - **fetch 타임아웃을 30초 → 5초로 줄였습니다** (`FETCH_TIMEOUT`, `project.controller.ts:28`). 응답 수신과 파싱까지 포함한 예산입니다.
+> - 집계에서는 빼되 **원인 스택은 남깁니다** — `cause` 로 원본 오류를 연결하고, Datadog 스팬 태그에 `cause` 를 우선 기록합니다. 즉 "에러율에는 안 잡히지만 무슨 일이 있었는지는 추적 가능" 한 상태입니다.
+> - 테스트 169줄 보강(`project.controller.spec.ts` +126, `datadog-error.interceptor.spec.ts` +43).
+>
+> ### CLAUDE.md — 주석 작성 규칙 추가
+> - 저장소 지침에 주석 규칙 3줄이 들어갔습니다: **한 줄로 쓰고 코드만 봐서는 알 수 없는 이유·함정만 남긴다**, 코드가 하는 일을 그대로 옮겨 적지 않는다, **수치의 산출 근거·측정값·배경 설명은 이슈에 남기고 주석에 옮기지 않는다.**
+> - 규칙 자체가 6커밋에 걸쳐 오갔습니다(줄 수 제약 추가 → 제거, 판단 근거 금지 → 허용). 최종 형태가 위 3줄입니다.
+>
+> ---
+
 > 📅 **2026-09-03 cloud_live pull 보강** (5 커밋)
 >
 > ### CLIENT-235 — 클라우드 CDN 호스트 매핑 신설

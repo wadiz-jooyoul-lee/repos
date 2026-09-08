@@ -1,5 +1,14 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-09-08 master pull 보강** (2 커밋)
+>
+> ### RWD-6009 — AI 컬렉션(AiCenter) 자동화 전략 추가
+> - 컬렉션(기획전)을 자동으로 채우는 전략에 **`AiCenterAutomatedCollection`** 을 추가했습니다 (`.../collection/automation/strategy/`). `CollectionKeyword` 에 항목이 하나 늘고, 조회 게이트웨이·매퍼(+XML)에 대응 쿼리가 붙었습니다.
+> - 후속 커밋에서 **산출 조건을 AI 토큰 정규식으로 보강**했습니다 — 단순 문자열 포함이 아니라 정규식으로 AI 관련 토큰을 판별합니다.
+> - 검증은 `CollectionAutomationJobConfigTest`(+20줄)에서 합니다.
+>
+> ---
+
 > 📅 **2026-09-03 master pull 보강** (10 커밋)
 >
 > **캐시 장애 내성 강화(RWD-5982, 5커밋)** 가 최대 테마입니다. Hazelcast 멤버가 갑자기 죽었을 때 API 가 함께 멈추던 구조를 여러 겹으로 끊었습니다.

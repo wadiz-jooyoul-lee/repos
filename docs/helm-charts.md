@@ -9,6 +9,29 @@
 
 ---
 
+> 📅 **2026-09-08 main pull 보강** (14 커밋)
+>
+> ### 차트 템플릿 — dark-release 헤더 매치가 죽은 규칙이었습니다
+> - **`canary.darkRelease`(특정 헤더를 단 요청만 카나리로 보내는 기능)가 실제로는 동작하지 않고 있었습니다.** VirtualService 의 헤더 매치 규칙이 `gateways: default` 스코프에 있었는데, **ambient 모드에서는 실제 subset(카나리/정본) 결정을 waypoint 의 mesh 스코프 규칙이** 하기 때문입니다.
+> - 이 규칙을 통째로 `gateways: mesh` 쪽으로 옮겼습니다(`templates/virtualservice.yaml`, `c355d6f`). 새 규칙 이름은 **`darkReleaseMesh`** 이고, `canary.darkRelease.enabled` 와 `template.virtualservice.mesh.enabled` 가 **둘 다 켜져야** 렌더됩니다. uri prefix 는 subPath 가 아니라 `/` 이고 rewrite 는 없습니다.
+> - 즉 이 기능을 쓰던 서비스가 있었다면 **그동안 카나리로 가지 않고 정본으로 흘렀을 것**입니다.
+>
+> ### 서비스·정책 변경
+>
+> | 항목 | 내용 |
+> |---|---|
+> | `core/clive/order-api.yaml` | **신설**(+6줄) — 직전 보강에서 "gitops 에만 있고 이 저장소에는 없다" 고 기록한 어긋남이 **해소됐습니다.** 이제 order-api 는 dev·rc4·clive 3환경 모두 있습니다 |
+> | `core/clive/settlement-orchestrator-api.yaml` | authz(인가) 정책 수정(+11줄) |
+> | `sre/dev/crypto-api.yaml` | 설정 추가(+7줄) |
+> | `display-platform/rc4/wish-api.yaml` | **CINFRA-663** — Braze IP 에 `/api/v4/wish/braze` 허용(+17줄). [`wish-api`](./display-platform-services-2.md) 의 DISPLAY-1735 신규 API 와 짝입니다 |
+> | `web/dev/web-server.yaml` | makercenter delegate 루트 경로 변경 |
+> | `display-platform/{dev,rc4}/friendtalk-api.yaml` | 개별 조정 |
+>
+> - 통계: 서비스 values **302 → 303개**(order-api clive 1건 추가), 고유 서비스명 **109개 유지**.
+> - 나머지 커밋은 제목이 전부 `small change` 입니다.
+>
+> ---
+
 > 📅 **2026-09-03 main pull 보강** (12 커밋)
 >
 > ### ⚠️ `rc1` 환경이 전 플랫폼에서 삭제됐습니다

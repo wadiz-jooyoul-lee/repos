@@ -9,6 +9,17 @@
 
 ---
 
+> 📅 **2026-09-08 main pull 보강** (24 커밋)
+>
+> 이번 범위(2026-09-03 ~ 09-08)는 **거의 전부 CI 자동 이미지 태그 갱신**이고, 변경 파일 19개가 모두 `imageVersion` 한 줄 수정입니다. 구조 변경은 없습니다.
+>
+> - 갱신이 잦았던 소스 레포: `wadiz-service/co.wadiz.api.community`(3회) · **`wadiz-service/io.wadiz.agent.content-profiler`**(3회) · `wadiz-tech/core-mcp` · `wadiz-tech/kr.wadiz.platform.crm`(3회) · `wadiz-service/com.wadiz.store` · `wadiz-web/com.wadiz.web`.
+> - ℹ️ **`io.wadiz.agent.content-profiler` 는 아직 도서관에 등록되지 않은 저장소**입니다(`core/{dev,rc4,clive}/content-profiler.yaml`). [`co.wadiz.api.community`](./co.wadiz.api.community/co.wadiz.api.community.md) 의 콘텐츠 프로파일링 파이프라인과 짝이 되는 엔진으로 보입니다(추정, 미확인).
+> - `core-mcp` 는 이번에도 configmap 수정이 잦았고, **OAuth 인증 설정을 넣었다가 롤백**했습니다(`18f879fbe` — dev, 구글 인증·감사로그 미도입).
+> - `kr.wadiz.platform.crm` 은 **live 배포 워크플로의 gitops 경로를 `live` → `clive` 로 고쳤습니다**(소스 저장소 커밋 `cad4f6b`). [묶음 ③](./display-platform-services-3-messaging.md) 참조.
+>
+> ---
+
 > 📅 **2026-09-03 main pull 보강** (77 커밋)
 >
 > 직전 보강과 마찬가지로 **대부분(약 77%)이 CI 자동 이미지 태그 갱신**입니다. 다만 이번에는 사람이 만든 구조 변경이 셋 있습니다.
