@@ -1,5 +1,14 @@
 # makercenter-fe-admin
 
+> 📅 **2026-09-08 cloud_live pull 보강** (1 커밋)
+>
+> ### FE2-1221 — 기획전 신청 벌크 철회 어드민 화면
+> - 기획전 관리 화면에 **여러 신청 건을 한 번에 철회하는 대화상자**를 붙였습니다 (`components/applicationManage/BulkWithdrawDialog.jsx` 199줄, `pages/ExhibitionManagement.jsx`, `api/exhibition.js`).
+> - E2E 스펙 `e2e/tests/exhibition-applications.spec.ts`(104줄)가 함께 들어왔습니다.
+> - 백엔드는 [`makercenter-be`](./makercenter-be.md) 의 같은 이슈(FE2-1221)입니다.
+>
+> ---
+
 > 📅 **2026-08-25 cloud_live pull 보강** (7 커밋)
 >
 > ⚠️ **기준 브랜치가 `main` → `cloud_live` 로 바뀌었습니다.**

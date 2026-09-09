@@ -3,6 +3,8 @@
 > 2026-04-26 기준 풀 구현 상태. 공개 API(`/api/v3/...`) 는 `wave.user` V3 와 1:1 일치 (이관 완료).
 > **2026-06-17 갱신 (RWD-5698)**: adm(관리자) 지지서명 관리 API 2 컨트롤러 · 7 endpoint 추가 (`/api/v3/admin/...`). 검색(삭제 포함)·답글 조회·개별 삭제/복구·답글 생성/삭제/복구.
 > **2026-07-10 갱신 (RWD-5712/5713)**: Content Rule V1 API 1 컨트롤러 · 3 endpoint 추가 (`/api/v1/content-rule/...`). 생성 시점 룰 평가·차단 해제·URL 평판 캐시 제거. → **총 13 컨트롤러 · 47 REST endpoint**.
+> **2026-08 갱신 (RWD-5823/5879)**: content_profiler 어드민 조회 API 1 컨트롤러 · 3 endpoint 추가 (`/api/v3/admin/realtime-content/...`).
+> **2026-09-08 갱신 (RWD-5961)**: Content Rule 에 수동 차단·차단 여부 조회 2 endpoint 추가. → **총 15 컨트롤러 · 57 REST endpoint**(2026-09-08 실측).
 > 상세 분석: [`api-details/supporter-signature-module.md`](./api-details/supporter-signature-module.md)
 
 ## 1. SupporterSignatureController (`controller/SupporterSignatureController.java:30`)
@@ -127,7 +129,9 @@ base: `/api/v1/content-rule` — **RWD-5712/5713 신규 (콘텐츠 룰 평가·�
 | Method | Path | 용도 |
 |---|---|---|
 | POST | `/{contentType}/{userId}/evaluations` | 콘텐츠 룰 평가 — 결정론적 룰로 피싱/홍보 평가 후 `{status: OK\|BLOCK}` 반환 (RWD-5712) |
-| DELETE | `/blocked-users/{userId}` | 확정 차단 사용자 해제 (관리/이의제기 복구, 멱등) (RWD-5712) |
+| **POST** | **`/blocked-users/{userId}`** | **수동 차단 (RWD-5961 신설)** — body `reason`·`requestedBy`(담당자 userId) 필수. 자동 차단은 링크 보유 콘텐츠에만 발동해, 링크 없는 도배는 담당자가 직접 집행 |
+| **GET** | **`/blocked-users/{userId}`** | **차단 여부 조회 (RWD-5961 신설)** |
+| DELETE | `/blocked-users/{userId}?reason=&requestedBy=` | 확정 차단 사용자 해제 (관리/이의제기 복구, 멱등) (RWD-5712). ⚠️ RWD-5961 에서 **근거 query 파라미터를 필수로** 요구하도록 계약이 바뀌었습니다 |
 | DELETE | `/url-reputations?url=` | 공유 URL 평판 캐시 항목 제거 (관리/오탐 정정, 멱등) (RWD-5713) |
 
 > `contentType` PathVariable 은 `shared/contentrule/model/ContentType` enum 12종 (CHEER, OPINION, EXPERIENCE_REVIEW, SUPPORTER_SIGNATURE + 각 `*_COMMENT`, NEWS_COMMENT, PERSONAL_MESSAGE, SATISFACTION/SATISFACTION_COMMENT). 만족도 2종은 CDC 후처리 경로 전용.
@@ -144,9 +148,11 @@ base: `/api/v1/content-rule` — **RWD-5712/5713 신규 (콘텐츠 룰 평가·�
 | Point (관리자/유저) | 2 | 9 |
 | Communication (관리자/유저) | 2 | 6 |
 | Affiliate (관리자/유저) | 2 | 4 |
-| **adm Admin (검색·삭제/복구·답글)** | **2** | **7** |
-| **Content Rule V1 (평가·차단해제·캐시제거)** | **1** | **3** |
-| **합계 (관측)** | **13** | **47** |
+| **adm Admin (검색·삭제/복구·답글)** | **2** | **8** |
+| **Content Rule V1 (평가·수동차단·해제·캐시제거)** | **1** | **5** |
+| **RealtimeContent Admin (실시간 콘텐츠 검사 조회)** | **1** | **3** |
+| **MakerOpinionNotify** | **1** | **4** |
+| **합계 (2026-09-08 실측)** | **15** | **57** |
 
 → 공개 API(`/api/v3/...`) 10 컨트롤러·37 endpoint 는 wave.user signature-v3 와 동일 path (**1:1 이관**). adm 관리자 API(`/api/v3/admin/...`) 2 컨트롤러·7 endpoint 는 community 신규 (RWD-5698). Content Rule V1(`/api/v1/content-rule/...`) 1 컨트롤러·3 endpoint 는 community 신규 (RWD-5712/5713, 내부망 전제).
 

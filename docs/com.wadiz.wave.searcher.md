@@ -6,6 +6,23 @@
 
 ---
 
+> 📅 **2026-09-02 main pull 보강** (6 커밋)
+>
+> ### ⚠️ 기준 브랜치가 `clive` → `main` 으로 바뀌었습니다
+> - `eba1bfbe` **`[workflow-update-20260824] clive -> main 브랜치 변경`** — live 배포 워크플로의 트리거가 `clive` 에서 `main` 으로 바뀌었습니다. `main` 은 `clive` 를 완전히 포함하고 6커밋 앞서 있어(`clive` 는 2026-08-12 에서 정체), **`main` 이 현행선**입니다. rc4 배포 워크플로도 추가됐습니다.
+> - 이 문서의 앞선 블록들은 `clive` 기준으로 작성됐습니다. 내용은 `main` 에 그대로 포함돼 있어 사실관계는 유지됩니다.
+>
+> ### DISPLAY-1705 — 큰 Request Body 를 캐시 키로 쓰던 문제 수정
+> - `reward_ad` 캐시가 **크기가 큰 Request Body 를 캐시 키로 사용**하고 있었습니다. 해당 캐시를 제거했습니다(`config/CacheConfig.java`, `CampaignServiceEhcacheImpl`, `FundingServiceEhcacheImpl`). 이어서 라이브 경로의 `reward_ad` 캐시도 제거했습니다.
+>
+> ### DISPLAY-1714 — 키워드 검색 정확도 개선
+> - 유니그램 매칭을 **PHRASE 로 복원**했습니다 (`service/helper/SearchQueryServiceImpl.java`).
+>
+> ### DISPLAY-1719 — 검색 홈 피드 동영상 비율 변경
+> - `service/home/SearchHomeFeedV2Service.java` 에서 동영상 비율을 조정했습니다(+103/−48줄로 이번 변경 중 가장 큼).
+>
+> ---
+>
 > 📅 **2026-08-25 clive pull 보강** (16 커밋)
 >
 > ⚠️ **기준 브랜치가 `master` → `clive`(클라우드 라이브) 로 바뀌었습니다.** 이 레포는 `cloud_live` 가 아니라 `clive` 를 씁니다. 최대 변경은 **Elasticsearch → OpenSearch 전환을 위한 검색 엔진 추상화**입니다(clive 에만 있고 master 에는 없습니다).

@@ -1,5 +1,13 @@
 # kr.wadiz.account 분석 문서
 
+> 📅 **2026-09-02 cloud_live pull 보강** (2 커밋)
+>
+> ### BE3-864 — clive DEBUG 로그·민감정보 로깅 제거
+> - clive 환경의 **DEBUG 로그와 민감정보 로깅을 제거**했습니다 (`application.yml`·`application-local.yml`, `EmailService`·`PasswordService`·`SocialAccount`·`User`·`AbstractCreateUserService` 등). 미사용 `templates/test.html`(50줄)도 삭제. 총 −318줄로 정리 성격이 큽니다.
+> - 후속 커밋에서 **Apple 서버 통지 로그에는 이메일 주소를 복원**했습니다 — 통지 처리 추적에 필요한 값이라 되살리고 주석으로 근거를 남겼습니다.
+>
+> ---
+>
 > 📅 **2026-07-10 master pull 보강** (2 커밋)
 >
 > ### BE3-483 — 로그인/가입/find OIDC `ui_locales` 표시 언어 지원 + 비번재설정 메일 언어 통일

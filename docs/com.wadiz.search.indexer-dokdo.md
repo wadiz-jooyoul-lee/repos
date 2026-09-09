@@ -9,6 +9,13 @@
 
 ---
 
+> 📅 **2026-09-08 main pull 보강** (1 커밋)
+>
+> ### DISPLAY-1747 — OpenSearch 타임아웃 신설과 검색홈 색인 무한 대기 방어
+> - **OpenSearch 클라이언트에 타임아웃 설정이 없었습니다.** 응답이 오지 않으면 색인 작업이 무한정 기다리는 구조라, `OpenSearchConfig` 에 타임아웃을 넣고 `indexer-dokdo.yml` 에 값을 뺐습니다.
+> - 검색홈 색인 쪽(`SearchHomeIndexingServiceImpl`, `SearchHomeBatchServiceImpl`, `SearchHomeServiceImpl`)에도 대기가 걸리지 않도록 방어를 넣었습니다.
+> - 검색홈은 이 색인기가 만드는 인덱스 중 하나이므로, 여기서 멈추면 **검색홈 피드가 갱신되지 않습니다.**
+
 ## 개요
 
 - **읽기 전용 색인 파이프라인**이 아니라, 스케줄러로 원본을 긁어 색인하고 **수동 실행용 REST API 도 제공**하는 구조입니다.

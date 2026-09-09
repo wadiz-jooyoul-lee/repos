@@ -8,6 +8,24 @@
 
 ---
 
+> 📅 **2026-09-08 main pull 보강** — `crm` (10 커밋)
+>
+> ℹ️ 이 문서의 "미확인 항목" 에 적었던 **"`crm` 의 실제 개발 브랜치 — `main` 이 조용한데 배포는 최신"** 이 이번에 풀렸습니다. `main` 에 8월 21일 이후 작업이 한꺼번에 올라왔습니다.
+>
+> ### DISPLAY-1702 / DISPLAY-1729 — 막펀잡기 수신동의 API 신설
+> - **막펀잡기(따라잡기) 알림 수신동의를 저장·조회하는 API** 를 새로 만들었습니다. 신규 `FinalCallSubscribeService`(161줄) + DTO 2종 + 컨트롤러·서비스 테스트 413줄.
+> - 네이밍이 **"막펀잡기" → `final call`** 로 확정됐습니다(클래스·API 경로 모두).
+> - **수신동의 변경 시각을 UTC(`Instant`)로 고정**했습니다 — 시간대에 따라 동의 시점이 달라지지 않게 하려는 조치입니다.
+> - 저장 응답을 조회 응답과 **같은 형태로 통일**했고, 예외 핸들러를 정리했습니다.
+>
+> ### 코드 정리 — 뉴스레터 구독 기능 제거
+> - `NewsletterSubscriber` 계열이 통째로 삭제됐습니다 — 컨트롤러·도메인·DTO 5종·리포지토리·서비스(202줄)·`InflowPath` enum·토스트 메일 DTO 3종. Braze `UserService`(67줄)와 `DeactivateUserRes`·`User` DTO, `S3Client`·`S3Util` 도 함께 빠졌습니다.
+> - 대신 `CryptoUtil`(50줄, +테스트 37줄)이 새로 들어왔습니다.
+>
+> ### 배포
+> - **live 배포 워크플로의 gitops value 경로를 `live` → `clive` 로 정정**했습니다(`cad4f6b`). 잘못된 경로를 가리키고 있었다는 뜻입니다.
+> - rc4 배포 워크플로 추가, dev 배포 워크플로 트리거 브랜치 정정.
+
 ## 한눈에 보기
 
 | 서비스 | 저장소(`wadiz-tech/…`) | Boot | 컨트롤러/EP | 메시지 브로커 | 저장소 계층 |
@@ -50,7 +68,7 @@
 
 - 컨트롤러 3개: `SendController`(발송) · `TemplateController`(템플릿 2) · `ImageUploadController`(이미지 업로드).
 - 알림톡(`kr.wadiz.platform.api.alimtalk`)·SMS(`…api.sms`)와 형제 구조이나, 그쪽은 이번 등록 범위에서 제외됐습니다(기본 브랜치 커밋이 2026-06-04 에 멈춘 그룹).
-- **최근 변경**: 기능 변경 없이 **`RWD-5632` live 워크플로 정리**(`cdev` → `clive` 명칭 정정, `update-image-tag-cdev` 통합)뿐입니다.
+- **최근 변경**: 기능 변경 없이 워크플로 정리뿐입니다 — **`RWD-5632`**(`cdev` → `clive` 명칭 정정, `update-image-tag-cdev` 통합), 이어서 **2026-09-01 `CI 워크플로우 정규화 및 rc4 추가`**(dev·live 워크플로에서 각 −8·−9줄 정리, `aws_deploy_ecr_rc4.yml` 신규).
 
 ## crm — CRM (Braze 연동)
 
@@ -83,7 +101,7 @@ RWD-56xx 3건은 **같은 작업을 서비스별로 나눠 단 것**입니다. �
 ## 미확인 항목
 
 - 메일 3종의 정확한 분기 기준 — "normal" 과 "fast" 를 무엇으로 나누는지(발송량·우선순위·SLA 추정, 근거 미확보).
-- `crm` 의 실제 개발 브랜치 — `main` 이 조용한데 배포는 최신입니다.
+- ~~`crm` 의 실제 개발 브랜치 — `main` 이 조용한데 배포는 최신입니다.~~ → **2026-09-08 해소.** 8월 21일 이후 작업(DISPLAY-1702 등)이 `main` 에 반영됐습니다. 위 보강 블록 참조.
 - 이번 범위에서 빠진 형제 서비스들(`alimtalk-*`·`sms-*`·`mail-ses-agent`·`mail-toast-agent`·`mail-log-agent`·`push-agent`·`push-read-api`·`crm-agent`·`noti-channel`)과의 전체 발송 파이프라인 그림.
 - 각 서비스의 clive 실제 운영 설정 — [`helm-charts-gitops`](./helm-charts-gitops.md) 의 `display-platform/clive/{svc}.yaml` `configmap.data` 참조.
 - 테스트 코드 규모는 이번 스캔 범위 밖입니다.

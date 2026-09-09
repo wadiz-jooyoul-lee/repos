@@ -1,5 +1,28 @@
 # makercenter-fe
 
+> 📅 **2026-09-03 cloud_live pull 보강** (1 커밋)
+>
+> ### FE2-966 — 홈 About 섹션을 와디즈 스쿨 보드로 전환
+> - 홈의 About 섹션이 읽어 오는 대상을 **와디즈 스쿨 보드**로 바꾸고, 섹션 라벨을 **어드민에 등록된 게시판명 기준**으로 표시하도록 했습니다(`src/widgets/home-sections/ui/AboutWadiz.tsx`, 387줄 수정 — 사실상 재작성). 검색 결과 항목(`SearchResultItem.tsx`)과 홈 컨텍스트도 함께 손봤습니다.
+> - 백엔드의 같은 이슈([`makercenter-be`](./makercenter-be.md) FE2-966, 조회 게시판 변경)와 짝입니다.
+> - E2E(`home.spec.ts`·`swiper-drag.spec.ts`)도 함께 수정됐습니다.
+>
+> ---
+
+> 📅 **2026-09-02 cloud_live pull 보강** (6 커밋)
+>
+> ### FE2-1168 — Next.js 16.3.3 업그레이드 (보안 대응)
+> - **AVIF Image RCE 취약점(GHSA-2xp9-vwfh-vxw4)** 대응으로 Next.js 를 16.3.3 으로 올렸습니다. 같은 이슈로 [`good-wave`](https://github.com/wadiz-fe/good-wave) 도 함께 올렸습니다.
+>
+> ### FE2-1173 — E2E 를 실 배포본 대상으로 안정화
+> - E2E 를 실 배포본 대상으로 돌리도록 바꾸고 **SSR 통제용 mock BE 스택**을 추가했습니다. sitemap 스펙은 상류 BE 의 순간 장애를 흡수하도록 **200 응답 폴링 방식**으로 바꾸고, dev 대상 실행에서는 제외했습니다.
+>
+> ### FE2-962 / FE2-1100
+> - FE2-962: **상세에서 목록으로 돌아갈 때 404 나던 문제** 수정 (`views/board-detail/ui/{Calendar,Card,Event}Detail.tsx`, 헤더 툴바).
+> - FE2-1100: static origin 화이트리스트에서 `wadiz.kr` 을 제거하고 **`wadiz.io` 로 일원화**했습니다.
+>
+> ---
+>
 > 📅 **2026-08-25 cloud_live pull 보강** (8 커밋)
 >
 > ⚠️ **기준 브랜치가 `main` → `cloud_live` 로 바뀌었습니다.**

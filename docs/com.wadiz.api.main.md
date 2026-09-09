@@ -7,6 +7,25 @@
 
 ---
 
+> 📅 **2026-09-02 master pull 보강** (2 커밋)
+>
+> ### DISPLAY-1691 — 따라잡기 글로벌 확대를 `/api/v4` 로 분리
+>
+> 이 레포에서 이번에 가장 중요한 변경입니다. **처음에는 `/api/v3` 를 직접 글로벌로 확대했다가, 되돌리고 `/api/v4` 를 새로 만드는 쪽으로 방향을 바꿨습니다.**
+>
+> - **1차(`78f690ab`)**: `/api/v3` 에 `wadiz-country` 헤더(기본 KR)를 추가해 요청 국가로 배송 가능한 프로젝트만 노출하도록 필터링. 오픈예정 쿼리에 `wadiz_db.CampaignShippingCountry` EXISTS 조건 추가, fallback 을 국가별로 분기.
+> - **2차(`eeb773c1`)**: **`/api/v3` 를 글로벌 확대 이전 코드로 원복**(v1·v2 포함, 동작 변경 없음)하고 **`/api/v4` 를 신설**했습니다.
+>   - 신규 엔드포인트 — `GET /api/v4/catchup/{userId}` · `GET /api/v4/catchup/{userId}/coming-soon-today`
+>   - `wadiz-country` 헤더(기본 KR)로 배송 가능한 프로젝트만 노출. AI 추천 호출에 `country_code` 쿼리 파라미터 전달.
+>   - 오픈예정 조회는 `findByCatchUpComingSoonV4`·`findByCatchUpComingSoonByPostedRangeV4` 로 분리.
+>   - **fallback 분기**: KR 은 기존 스토어를 쓰고, **글로벌은 스토어 참여가 불가하므로** 해당 국가로 배송 가능한 진행중 펀딩(`findByCatchUpFunding`)으로 대체합니다.
+>   - 슬롯 구성은 v3 와 같지만 V4 전용 상수·조립 메서드로 분리해 **버전 간 영향을 차단**했습니다.
+>   - `AiRecommendationAdapter` 만 오버로드로 공유하며, `countryCode` 가 비면 `country_code` 를 붙이지 않아 **v1~v3 요청 URI 는 기존과 동일**합니다.
+> - 관련 레포: [`main2-api`](./main2-api.md) 가 호출 경로를 v3 → v4 로 바꿨고(DISPLAY-1688), [`com.wadiz.wave.user`](./com.wadiz.wave.user/com.wadiz.wave.user.md) 가 country/language 를 main2 상품 API 로 전파합니다(BE3-769).
+>
+> ---
+>
+
 ## main1 과 main2 의 관계 — 세대 차이가 큽니다
 
 | | **main1-api** (이 문서) | [**main2-api**](./main2-api.md) |

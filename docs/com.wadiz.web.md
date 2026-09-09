@@ -6,6 +6,111 @@
 
 ---
 
+> 📅 **2026-09-08 cloud_live pull 보강** (40 커밋, −8,858줄)
+>
+> ⚠️ **이번 pull 의 핵심은 대규모 죽은 코드 정리입니다.** SPA(글로벌) 이관으로 참조를 잃은 **JSP 61개와 컨트롤러·검증기 11개 클래스**가 삭제됐습니다. 이 레거시 저장소가 실제로 줄어들기 시작했습니다.
+>
+> ### CLIENT-238 / CLIENT-239 / CLIENT-240 — 참조를 잃은 JSP·컨트롤러 제거 (17커밋)
+>
+> 세 이슈가 단계적으로 진행됐습니다.
+>
+> | 이슈 | 범위 |
+> |---|---|
+> | **CLIENT-238** | 통합으로 참조를 잃은 **펀딩 상세·오픈예정 상세** JSP 와, 주석 처리돼 있던 뷰 메서드·미사용 필드. 호출 지점이 없는 검증기 2종(`CampaignAccessPermitValidator`·`WRewardComingSoonValidator`)과 오픈예정 상세 전용 조회·캐시 설정 |
+> | **CLIENT-239** | 지면 JSP 일괄 제거 — `wmain`(통합 이전 지면) · `waccount`/`account`(계정) · `wterms`(약관) · `winclude`(공통 include) · `wlayout`(레이아웃) · `wpurchase`·`wpayment`·`wcampaign`·`wcoming`·`wevent`·`wmypage`·`wsub`·`oauth`·`mobile` |
+> | **CLIENT-240** | JSP 가 사라져 **존재하지 않는 화면을 가리키게 된 컨트롤러·메서드** 정리 — 투자 커뮤니티·투자 헬프센터 컨트롤러 4종, 이전 약관 컨트롤러, W9 웨비나 컨트롤러, 스쿨 강의 영상·청약 안내·사전 퀴즈·모바일 쿠폰·이벤트 지면 메서드. `waccount` 의 비로그인 분기는 **로그인 지면 리다이렉트로 변경** |
+>
+> - 삭제된 Java 클래스 11개: `FTMOWCommunityController` · `FTWEBCommunityController` · `FTMOBHelpCenterController` · `FTWEBHelpCenterController` · `WEBTermsController` · `WMyWebinarController` · `CampaignAccessPermitValidator`(+테스트) · `WRewardComingSoonValidator` · `RewardComingSoonPageType` · `ComingSoonForSPA`.
+> - **남은 JSP 는 265개**입니다(이번에 61개 삭제).
+> - 큰 파일이 여럿 빠졌습니다 — `wpurchase/reward/step10.jsp`(816줄), 약관 include 6종(`innerTerms*`, 합계 1,175줄) 등.
+>
+> ### RWD-6014 — IP 국가판별 재활성화와 기본값 정리
+> - IP 로 접속 국가를 판별하는 기능을 **다시 켰습니다**. 판별 실패 시 기본 언어는 `en` 으로 원복했다가, 이어서 **`KR_ko`** 로 정리했습니다(응답의 `country` 가 `null` 인 경우도 `KR_ko`).
+> - rc4·cdev 의 국가판별 API 호스트를 **aidata 도메인으로 교체**했습니다.
+>
+> ### FE2-1214 — 메이커 이용약관 2026.09.08 개정
+> - **2026년 9월 15일 이후 제출된 프로젝트부터 시행**됩니다(개정일 2026.09.08). 직전 판(2026.08.18)은 `funding_maker_service_20260818.html`(1,265줄)로 보존되고 `/web/wterms/maker_service/20260818` 에서 볼 수 있습니다.
+> - 주요 변경 두 가지입니다.
+>   - **데이터 활용 범위 확대** — 종전 "프로젝트 이력 등의 정보를 통계자료 작성·다른 서비스 적용에 활용" 에서, **판매 데이터·광고 집행 및 성과 이력**까지 포함해 서비스 제공·운영·개선, 신규 서비스 개발, 통계·자료 작성 목적으로 **수집·저장·분석·가공·결합**할 수 있도록 넓혔습니다.
+>   - **가공 결과물의 권리 귀속 조항 신설** — 위에 따라 작성한 통계·지표·분석 자료·데이터베이스 등 가공 결과물의 권리는 **회사에 귀속**됩니다.
+>
+> ### 기타
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | RWD-5944 | 프로젝트 라벨 열 정리 — `custom_label_0/1` 을 **기획전·부스터쿠폰 라벨로 교체**하고 미활용 `custom_label_5~9`·`internal_label` 열 제거 |
+> | BE3-903 | GTM(구글 태그 매니저) 개발 환경 격리 — rc 계열(rc4 포함)과 dev 를 운영과 분리. 클라우드 캐시가 `null` 을 미처리해 나던 오류도 수정(메이커 인증 상태 조회·펀딩 완료 첫 진입 판정) |
+> | RWD-5996 | 레거시 업로드 S3 access/secret key 제거 — IRSA 단일화. [`co.wadiz.adm`](./co.wadiz.adm.md) 과 같은 작업 |
+> | FE1-1778 | 더보기 페이지 `/web/main/more` 를 **`global-korea/index` 로 전환** (프론트 `wadiz-frontend` FE1-1778 과 짝) |
+> | FE1-1672 | 막펀잡기 페이지 진입 경로 추가 |
+> | SCOUT-152 | 결제 배송 정보 엑셀에 **배송비 할인 금액** 추가(+테스트) |
+> | RWD-6011 | 호출부가 없는 간편결제 API 를 `deprecated` 처리 |
+>
+> ---
+
+> 📅 **2026-09-03 cloud_live pull 보강** (26 커밋)
+>
+> **HTML 메타데이터의 다국어 전환(CLIENT-229, 8커밋)** 이 최대 테마이고, 서포터클럽 약관 개정과 릴리즈 당일 되돌림 1건이 뒤를 잇습니다.
+>
+> ### CLIENT-229 — HTML 메타데이터를 JSP 분기에서 다국어 메시지로 이전
+> - 지금까지 페이지 `title`·`description`·OG/트위터 이미지는 **JSP 안에서 국내/글로벌을 갈라 출력**했습니다. 이 분기를 걷어내고 **메시지 프로퍼티(시트) 기반**으로 바꿨습니다.
+> - 신규 `HtmlMetadataMessageResolver`(`src/main/java/com/wadiz/web/fw/utils/`) — 메시지 템플릿 안의 `{{ arg_0 }}` 자리표시자를 인자로 채웁니다. 인자가 모자라면 빈 문자열로 대체해 예외 없이 넘어갑니다.
+> - 메시지 파일 `messages/html-metadata{,_ko,_ja,_zh}.properties` 신설. 키는 `{페이지키}.meta.title` · `.meta.description` · `.meta_og.image_url` 형태이고, 프로젝트·스토어 상세처럼 값이 변하는 페이지는 `funding_{project_no}_page.meta.title={{ arg_0 }} by {{ arg_1 }} | 와디즈` 처럼 인자를 씁니다.
+> - 기존 `PageKeyResolver` 를 **`HtmlMetadataPageKeyResolver`** 로 이름을 바꿨고, JSP(`global/index.jsp`·`global-korea/index.jsp`)의 출력 분기를 **`meta` 객체 하나로 통일**했습니다(`global-korea/index.jsp` −89줄).
+> - 스토어 상세·선물하기 메타데이터도 같은 방식으로 이전했고, 메이커 추천 프로그램의 하드코딩 메타데이터는 제거했습니다.
+> - 지지서명 상세의 경로 변수명을 `supportShareNo` → **`supportShareId`** 로 바꿨습니다.
+>
+> ### FE1-1761 — 서포터클럽 멤버십 약관 개정 (결제 실패 유예기간 신설)
+> - **결제 실패 시 익일 효력 상실 → 7일 유예기간**으로 바뀝니다. 개정 약관은 **2026년 9월 10일 시행**(개정일 2026.09.03)입니다.
+> - 조문 변경: 결제가 정상 처리되지 않으면 혜택 제공은 즉시 중단되고, 결제 실패일로부터 7일간 유예기간이 부여되며 그 안에 결제가 완료되지 않으면 멤버십이 자동 해지됩니다.
+> - 직전 판(2026.08.18 개정)은 `web/resources/terms/supporter_club_20260818.html` 로 보존되고 `/web/wterms/supporter_club/20260818` 에서 볼 수 있습니다.
+>
+> ### RWD-5981 / RWD-5951 — 멤버십 뱃지 판정 필드 정정 (릴리즈 당일 되돌림)
+> - 커뮤니티 데이터와 참여자 리스트의 멤버십 뱃지 판정을 `isAvailable` → **`hasMembership`** 으로 바꿨습니다(RWD-5951 → RWD-5981).
+> - ⚠️ 그런데 **RWD-5981 은 `release/v20260903` 에서 되돌려졌습니다**(`72e2296c18`). 짝이 되는 [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md) 의 RWD-5981(서포터 목록 `hasMembership`/`canUseBenefit` 분리)도 같은 날 함께 되돌려졌습니다. 앞선 RWD-5951(커뮤니티 데이터)은 남아 있어 **현재 두 지면의 판정 기준이 서로 다릅니다.**
+>
+> ### 기타
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | SCOUT-152 | 중간 배송 처리 시 **프로젝트 KC 인증 여부 체크를 제거**(테스트 포함, `InDemandValidator`) |
+> | FE1-1752 | 사용하지 않는 펀딩 결제 실패 지면 매핑 제거(`GlobalUrlMappingConfig`). `wadiz-frontend` 의 같은 이슈와 짝 |
+> | RWD-5868 | 정산 비율 버전 조회 실패 시 **기본 버전을 반환**하고 timeout 설정 추가(`SettlementGateway`) |
+> | FE1-9 | 로컬 개발 환경 정비 — `scripts/local-setup.sh`·`local-run.sh` 로 CLI 기반 서버 구동, JDK 8 전환, VS Code 디버깅 설정. 2026-03 작업이 이번에 cloud_live 로 올라왔습니다 |
+>
+> ---
+
+> 📅 **2026-09-02 cloud_live pull 보강** (45 커밋)
+>
+> ⚠️ 직전 동기화 때 로컬이 `bugfix/rc4-profile-image-cdn-url` 브랜치에 있어 pull 대상이 어긋나 있었습니다. **`cloud_live` 로 복귀**해 다시 맞췄습니다.
+>
+> **다국어(en/ja/zh) 폴백 전환(RWD-5901·SCOUT-153)** 과 **앵콜 불러오기 정합성(RWD-5915)** 이 핵심입니다.
+>
+> ### RWD-5901 — 하드코딩 이분 분기를 MessageSource·언어 테이블 조인으로 전환 (9커밋)
+> - 심사서류 라벨·**KC 서류 카운트 설명문**의 `ko`/`en` 이분 분기를 **MessageSource 다국어 처리**로 바꿨습니다.
+> - **심사 카테고리 조회**를 `ScreeningRewardItemCategoryLanguage`(ko) 조인으로, **은행 코드 조회**를 `BankCodeLanguage` 조인 + **en 폴백**으로 전환했습니다.
+> - 메이커 소재지 시/도 명칭을 **ko/en/ja/zh 지원 + 영문 폴백**으로 전환. 정보제공고시 라벨에도 en 폴백 추가.
+> - 심사 base 테이블의 `LanguageCode` 컬럼 삭제에 대비해 전환기용 `'ko'` 필터를 제거했습니다. `funding-core` 의존성 1.0.149-SNAPSHOT.
+> - '원하는 리워드 없음' 판정을 `IsNoMatching` 플래그 비교로 전환.
+>
+> ### SCOUT-152 / SCOUT-153 — 인디맨드 발송 처리와 발송 다국어
+> - **인디맨드 발송 처리 API 추가**(SCOUT-152). 발송 처리중 전환 API 응답에 **성공·실패 건수와 미전환 발송번호**를 포함하도록 보강했습니다.
+> - SCOUT-153: 일괄 발송 처리 다국어, **환불 거절 사유 번역본 저장** 후 서포터 참여 내역 화면에서 번역해 내려주기. 발송 환불 페이지와 발송 관련 API 는 `DisplayLanguageResolver` 로 **ja/zh → en 폴백**을 적용합니다.
+>
+> ### RWD-5915 — 앵콜 불러오기 정합성
+> - 앵콜 불러오기 시 **만족도·체험리뷰 사용여부를 `CampaignMarker` 에 저장**하고, 프로젝트 정보 저장 시 정합성 검증을 추가했습니다. 앵콜 리뷰 마커명은 `MarkerId varchar(30)` 제한에 맞춰 단축했습니다.
+>
+> ### FE1-1488 — `JoinController` 복원 (삭제 회귀 방지)
+> - `/web/v2/join` 컨트롤러를 **복원**했습니다. 소셜 연동 약관(`/web/v2/join/terms`)이 실사용 중이라 삭제하면 회귀가 발생합니다.
+>
+> ### RWD-5979 — 헬스체크 경로 언어 판별 제외
+> - 헬스체크 경로는 **언어 판별 필터를 건너뛰도록** 수정하고, `skip=request-header` 로그를 제거했습니다.
+>
+> ### BE3-769 — 따라잡기 글로벌
+> - 따라잡기 글로벌 확대에 맞춰 country/language 전파를 반영했습니다([`main1-api`](./com.wadiz.api.main.md) DISPLAY-1691 과 연결).
+>
+> ---
+>
 > 📅 **2026-08-27 cloud_live pull 보강** (13 커밋)
 >
 > 광고센터 소재 제작기(`/tools`) 서빙 컨트롤러 신설이 핵심입니다.

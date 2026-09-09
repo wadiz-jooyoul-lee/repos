@@ -1,3 +1,15 @@
+> 📅 **2026-09-02 cloud_live pull 보강** (2 커밋)
+>
+> ### BE3-769 — 따라잡기 글로벌: 요청 country/language 를 main2 상품 API 로 전파
+> - **신규 `outbound/external/product/Main2CatchUpClient.java`(83줄)** — 따라잡기 상품 조회를 별도 클라이언트로 분리하고, 요청의 `wadiz-country`·`wadiz-language` 를 main2 상품 API 로 전파합니다. 기존 `ProductAdapter`(−55줄)·`BonusProductAdapter`(−40줄)에서 해당 로직을 걷어냈습니다.
+> - 검증 테스트 `Main2CatchUpClientLocaleTest`(89줄) 신규.
+> - 관련: [`main1-api`](../com.wadiz.api.main.md) 가 `/api/v4` 를 신설(DISPLAY-1691)하고 [`main2-api`](../main2-api.md) 가 호출 경로를 v4 로 바꾼(DISPLAY-1688) 것과 **같은 따라잡기 글로벌 확대 작업**입니다.
+>
+> ### `wadiz-country`/`wadiz-language` 헤더 상수 중앙화
+> - **신규 `common/WadizHeaders.java`(18줄)** — 두 헤더 이름을 상수로 모았습니다. `HeaderLocaleResolver`·`SwaggerConfig`·`CampaignGateway`·`NormalMailV3Gateway` 가 이 상수를 참조하도록 바꿨습니다.
+>
+> ---
+>
 > 📅 **2026-07-21 master pull 보강** (3 커밋 · 전부 BE3-592 단일 피처)
 >
 > ### BE3-592 — 회원가입 쿠폰 정보 조회 API 추가 (user-api)

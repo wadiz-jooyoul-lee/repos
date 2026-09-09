@@ -9,6 +9,18 @@
 
 ---
 
+> 📅 **2026-09-02 main pull 보강** (4 커밋)
+>
+> ### DISPLAY-1688 — 따라잡기 API 호출 경로를 v3 → v4 로 전환
+> - 따라잡기 글로벌 지원을 위해 [`main1-api`](./com.wadiz.api.main.md) 의 **`/api/v4` 를 호출하도록 변경**했습니다 (`controller/CommonController.java`, `service/CommonService.java`). main1 이 v3 를 원복하고 v4 를 신설한 것(DISPLAY-1691)과 짝입니다.
+> - dev 배포 워크플로에서 **odev 이미지 태그 갱신 스텝을 제거**했습니다. live 워크플로의 중복 스텝도 정리(−9줄).
+>
+> ### DISPLAY-1667 — 추천 카드 링크에 `recommendation_type` 추가
+> - 추천 카드 링크 URL 에 `recommendation_type` 파라미터를 붙이고 **MOMENTUM 필터링을 제거**했습니다.
+>
+> ---
+>
+
 ## 개요
 
 - 와디즈 **메인 홈 지면**을 구성하는 API 입니다. 프론트엔드는 `packages/api/src/main2/main2.service.ts` 로 이 서버를 호출합니다(예: 홈 와디즈 에디션 섹션, FE1-1316·FE1-1497).

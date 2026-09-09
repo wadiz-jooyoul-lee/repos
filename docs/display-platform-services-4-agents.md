@@ -7,6 +7,23 @@
 
 ---
 
+> 📅 **2026-09-08 main pull 보강** — `display-agent` (5 커밋)
+>
+> ### DISPLAY-1728 — 펀딩·스토어 구매내역 CDC 색인 추가
+> - **구매내역(주문)을 CDC 로 받아 MongoDB 에 적재하는 경로가 새로 생겼습니다.** 신규 `PurchaseListener`(70줄) · `PurchaseService`(83줄) · 문서 모델 2종(`FundingPurchaseDoc`·`StorePurchaseDoc`) · CDC DTO 2종 · `StoreOrderStatus` enum. 테스트 157줄.
+> - 이 문서 앞부분에 적힌 리스너 2종(`ProjectMetricListener`·`UserActivityListener`)에 **세 번째 리스너가 추가**된 셈입니다.
+> - **행 삭제 판정 방식이 두 번 바뀌었습니다.** 처음에는 `__deleted` 필드 기준으로 정정했다가, 곧 **CDC 메타데이터 필드를 제거하고 행 삭제를 아예 처리하지 않는 정책**으로 정리했습니다(tombstone 스킵 분기도 제거). 즉 **주문 행이 지워져도 색인은 남습니다** — 주문은 지워지지 않는다는 전제로 보입니다(추정).
+> - 마지막 커밋에서 **order 토픽 이름 규칙에 `state` 세그먼트가 추가**돼 그에 맞춰 설정을 바꿨습니다.
+>
+> ---
+
+> 📅 **2026-09-03 main pull 보강** — `inbox-agent` (4 커밋)
+>
+> - **DISPLAY-1163** — 로그 소음 정리입니다. 캐시 이미지 조회 반복 로그를 제거하거나 `debug` 로 낮추고(`RedisCacheUtil`), 중복 데이터 제거 로그도 `debug` 로 낮췄습니다(`InboxService`).
+> - **CI 워크플로 정규화** — live 워크플로에서 9줄이 지워졌습니다. 아래 "워크플로 정리 상태" 표의 이중 `update_image_tag` 가 이 서비스에서도 해소됐습니다.
+>
+> ---
+
 ## 한눈에 보기
 
 | 서비스 | 저장소(`wadiz-tech/…`) | Boot | 컨트롤러/EP | 리스너 | 저장소 계층 | helm type |
@@ -66,9 +83,10 @@
 
 | 상태 | 서비스 |
 |---|---|
-| **정리 완료** | `display-agent`(중복 clive·odev 스텝 제거, 2026-08-26) · `indexer-dokdo`(트리거 브랜치 정리, 08-26) · `catalog-agent`(live 트리거를 main 으로, 08-25) |
-| **정리 중 / 뒤집힘** | `inbox-agent`·`inbox`(rc3 제거↔복원 3회, 08-19) |
-| **미정리** | `main2-batch-api`·`user-activity-api`·`main2-api` — live/clive 이중 스텝이 남아 있고 `display-platform/live/` 는 gitops 에 없음 |
+| **정리 완료** | `display-agent`(중복 clive·odev 스텝 제거, 2026-08-26) · `indexer-dokdo`(트리거 브랜치 정리, 08-26) · `catalog-agent`(live 트리거를 main 으로, 08-25) · `main2-api`(DISPLAY-1688, 09-02) · **`inbox-agent`**(CI 워크플로 정규화, 09-02) · **`main2-batch-api`**(DISPLAY-1713, 09-03) |
+| **미정리** | `inbox` · `user-activity-api` — live/clive 이중 스텝이 남아 있고 `display-platform/live/` 는 gitops 에 없음 |
+
+> 📅 2026-09-03 기준입니다. 2026-09-01 최초 작성 시점의 "미정리 3건"이 **2건으로 줄었습니다.**
 
 ## 미확인 항목
 
