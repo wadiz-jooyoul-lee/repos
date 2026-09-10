@@ -9,6 +9,19 @@
 
 ---
 
+> 📅 **2026-09-10 cloud_live pull 보강** (3 커밋)
+>
+> 세 커밋 모두 **멤버십 결제 유예(GRACE_PERIOD) 대응**입니다.
+>
+> ### RWD-5899 — 멤버십 상태 enum 에 GRACE_PERIOD 추가
+> - **유예 상태 회원의 응답을 역직렬화하다 예외가 나던 문제**를 막았습니다 (`membership/payload/MembershipResponse`). 멤버십 서비스가 새 상태값을 내려주기 시작했는데 이쪽 enum 에 없어 파싱이 깨지는 구조였습니다.
+> - 상태값 역직렬화 테스트 171줄(`MembershipResponseTest` 104 · `MembershipAvailableUserResponseTest` 67) 신규.
+>
+> ### RWD-5951 — 스토어 만족도 멤버십 뱃지를 `isAvailable` → `hasMembership` 으로
+> - 만족도(후기)에 붙는 멤버십 뱃지 판정을 **"혜택 사용 가능" 이 아니라 "가입 여부"** 기준으로 바꿨습니다 (`SatisfactionQueryProcessor`). 결제 유예 중인 회원도 가입자이므로 뱃지가 유지됩니다.
+>
+> ---
+
 > 📅 **2026-09-08 cloud_live pull 보강** (8 커밋)
 >
 > 8커밋 전부 `RWD-5974` 한 이슈로, **깨져 있던 테스트를 되살리고 테스트 DB 를 클라우드로 옮기는 정리**입니다. 기능 변경은 없습니다.

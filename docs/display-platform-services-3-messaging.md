@@ -8,6 +8,19 @@
 
 ---
 
+> 📅 **2026-09-10 main pull 보강** — `mail-common-api`(2) · `mail-normal-api`(3)
+>
+> ### DISPLAY-1723 — 도메인코드 공용화의 마무리
+> - [`platform-admin`](./platform-admin.md) 이 2026-08-27 에 도메인코드 조회를 `platform_admin` 으로 이전·공용화한(DISPLAY-1723) 작업의 **메일 서비스 쪽 대응**입니다.
+> - **`mail-common-api`**: 메일 템플릿 응답(`TemplateInfoResponse`)과 몽고 엔티티(`MailTemplateEntity`)에 **도메인코드 필드를 추가**했습니다.
+> - **`mail-normal-api`**: 자체적으로 들고 있던 **`DomainCode` enum(58줄)과 `CodeController`·`CodeService`·`CodeRepository`·`CodeType`·`CodeValue` 를 통째로 제거**하고, 발송 시 **템플릿이 들고 있는 도메인코드를 우선 적용**하도록 바꿨습니다. 템플릿 캐시의 역직렬화 하위호환도 함께 손봤습니다.
+> - 같은 이슈로 **메일 발송 이력 발행을 일원화**하고, 서비스 계층의 Response 반환을 없애 **`SendMailException` 예외 처리로 대체**했습니다(`ToastMailSendServiceV2`).
+>
+> ### 배포
+> - 두 서비스 모두 **rc4 배포 워크플로가 추가**되고 dev·live 이미지 태그 갱신 대상이 정리됐습니다(`update_workflow_20260827`).
+>
+> ---
+
 > 📅 **2026-09-08 main pull 보강** — `crm` (10 커밋)
 >
 > ℹ️ 이 문서의 "미확인 항목" 에 적었던 **"`crm` 의 실제 개발 브랜치 — `main` 이 조용한데 배포는 최신"** 이 이번에 풀렸습니다. `main` 에 8월 21일 이후 작업이 한꺼번에 올라왔습니다.

@@ -7,6 +7,13 @@
 
 ---
 
+> 📅 **2026-09-10 main pull 보강** (1 커밋)
+>
+> ### DISPLAY-1699 — `MemberState` 에 GRACE_PERIOD 추가
+> - 색인 대상 회원 모델의 멤버십 상태에 **결제 유예(`GRACE_PERIOD`)** 를 넣었습니다 (`model/membership/MemberState.java`, 1줄).
+> - 색인기는 원본 데이터를 그대로 읽어 넣으므로, **상태값이 하나 늘면 여기도 알아야 파싱이 깨지지 않습니다.** 같은 이유로 [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md)·[`com.wadiz.store`](./com.wadiz.store/com.wadiz.store.md) 등 8개 저장소에 같은 변경이 들어갔습니다.
+> - 짝이 되는 검색 서버 [`com.wadiz.wave.searcher`](./com.wadiz.wave.searcher.md) 는 반대로 **쓰지 않던 `MemberShipState` 를 제거**했습니다(같은 이슈 DISPLAY-1699).
+
 ## dokdo 와 geojedo 의 역할 분담 — 인덱스로 갈립니다
 
 이름이 지명 코드네임이라 역할을 알 수 없었는데, **각자 다루는 인덱스 이름으로 확인됐습니다.**

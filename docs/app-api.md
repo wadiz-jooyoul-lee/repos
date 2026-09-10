@@ -1,3 +1,17 @@
+> 📅 **2026-09-10 cloud_live pull 보강** (3 커밋)
+>
+> ### CLIENT-236 후속 — 직전에 만든 구조를 되돌렸습니다
+> - 2026-09-08 보강에서 기록한 **`UpstreamRelayException` 전용 예외와 Datadog span 표시가 제거됐습니다.**
+>   - `src/common/exceptions/upstream-relay.exception.ts` 삭제
+>   - `DatadogErrorInterceptor` 의 `markUpstreamRelay` 호출과 `src/tracing.ts` 의 express 훅(22줄) 삭제
+> - 커밋 제목에 이유가 적혀 있습니다 — **"동작이 없어진"**, **"모니터가 쓰지 않는"**. 즉 만들어 두었으나 실제로 모니터링 쪽에서 그 표시를 쓰지 않아 효과가 없던 코드입니다.
+> - ⚠️ 따라서 **에러 집계 제외는 현재 동작하지 않습니다.** 다만 **502·504 변환 자체는 남아 있습니다**(`project.controller.ts` 에서 `HttpException` 으로 직접 던짐). 뒷단 장애를 5xx 로 뭉뚱그리지 않고 게이트웨이 오류로 구분하는 부분은 유효합니다.
+>
+> ### CLIENT-249 — 스토리 캐시 삭제 시 500 오류 수정
+> - 스토리 캐시를 지울 때 500 이 나던 문제를 고쳤습니다 (`project.module.ts`). 모듈 단위 검증 `project.module.spec.ts`(39줄)가 새로 붙었습니다.
+>
+> ---
+
 > 📅 **2026-09-08 cloud_live pull 보강** (13 커밋)
 >
 > 13커밋 전부 `CLIENT-236` 한 이슈입니다. 주제는 **"업스트림(뒷단 API)이 아플 때 app-api 가 대신 욕먹지 않게 하기"** 입니다.

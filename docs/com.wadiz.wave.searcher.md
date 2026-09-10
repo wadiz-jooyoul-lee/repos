@@ -6,6 +6,14 @@
 
 ---
 
+> 📅 **2026-09-10 main pull 보강** (1 커밋)
+>
+> ### DISPLAY-1699 — 미사용 `MemberShipState` 제거
+> - 검색 서버가 들고 있던 멤버십 상태 enum(`model/membership/MemberShipState.java`, 17줄)과 `SupporterReviewFeed` 의 참조를 지웠습니다. **실제로 쓰이지 않던 모델**입니다.
+> - 같은 이슈로 색인기 [`com.wadiz.search.indexer-geojedo`](./com.wadiz.search.indexer-geojedo.md) 에는 반대로 새 상태값(`GRACE_PERIOD`)이 추가됐습니다. 즉 **결제 유예 상태를 다루면서 "누가 이 모델을 실제로 쓰는가" 를 정리한 것**으로 보입니다.
+>
+> ---
+
 > 📅 **2026-09-02 main pull 보강** (6 커밋)
 >
 > ### ⚠️ 기준 브랜치가 `clive` → `main` 으로 바뀌었습니다
