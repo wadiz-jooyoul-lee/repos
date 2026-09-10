@@ -9,6 +9,25 @@
 
 ---
 
+> 📅 **2026-09-10 main pull 보강** (80 커밋)
+>
+> 대부분 CI 자동 이미지 태그 갱신이지만(소스 레포 기준 `com.wadiz.web` 11 · `co.wadiz.adm` 8 · `main2-api` 6 · `com.wadiz.api.funding` 6 · `com.wadiz.store` 5 등), **수동 커밋 7건에 신규 서비스와 설정 변경이 있습니다.**
+>
+> ### RWD-5893 — 신규 서비스 `community-agent` 등록
+> - `core/{dev,rc4,clive}/community-agent.yaml` **3건 신설**. 후속 커밋에서 **`SERVER__PORT` 를 8000 → 9000 으로 정정**했습니다(표기 정합).
+> - ⚠️ **[`helm-charts`](./helm-charts.md) 에는 아직 없습니다.** 직전 회차의 `order-api` 와 같은 형태의 어긋남입니다.
+> - 이름으로 보아 [`co.wadiz.api.community`](./co.wadiz.api.community/co.wadiz.api.community.md) 의 짝이 되는 에이전트로 보이나, **소스 저장소는 확인하지 못했습니다**(자동 갱신 커밋이 아직 없어 `[org/repo]` 표기가 잡히지 않음).
+>
+> ### DISPLAY-1756 — dev `display-agent` 에 지지서명 색인·user-activity 토픽 반영
+> - [`display-agent`](./display-platform-services-4-agents.md) 의 dev values 에 **지지서명 색인과 user-activity 토픽 설정**이 들어갔습니다. 직전 회차의 DISPLAY-1728(구매내역 CDC 색인)에 이어 **display-agent 가 다루는 데이터 종류가 계속 늘고 있습니다.**
+>
+> ### 기타 수동 커밋
+> - `main2-api` dev·rc4 에 **추천 모델 `v3_5` 설정** 추가 — [`main2-api`](./main2-api.md) 의 DISPLAY-1758 A/B 테스트용입니다(본 저장소 커밋은 남았으나 애플리케이션 쪽 A/B 분기는 제거됐습니다).
+> - `order-api` 의 lock-ttl 조정, `friendtalk-api` configmap 수정.
+> - **FE2-1231** — dev `makercenter-api` URL 에 `/web/maker/makercenter` 컨텍스트 경로 추가.
+>
+> ---
+
 > 📅 **2026-09-08 main pull 보강** (24 커밋)
 >
 > 이번 범위(2026-09-03 ~ 09-08)는 **거의 전부 CI 자동 이미지 태그 갱신**이고, 변경 파일 19개가 모두 `imageVersion` 한 줄 수정입니다. 구조 변경은 없습니다.

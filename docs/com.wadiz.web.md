@@ -6,6 +6,33 @@
 
 ---
 
+> 📅 **2026-09-10 cloud_live pull 보강** (17 커밋, −54,764줄)
+>
+> **참조 없는 스크립트·스타일 파일 제거(CLIENT-241)** 로 5만 줄 넘게 빠졌고, 결제 유예(GRACE_PERIOD) 대응과 SPA 이관이 이어집니다.
+>
+> ### CLIENT-241 / CLIENT-242 — 죽은 자산·설정 정리 (−54,764줄)
+> - 직전 회차에서 JSP 61개를 지운 데 이어, 이번에는 **그 JSP 들이 참조하던 스크립트·스타일 파일**을 걷어냈습니다 (`js` · `static` · `equity` · `Content` 영역).
+> - 빠진 대표 파일: `wadiz/lib/text.js`(408줄) · `wadiz/lib/cookie.js`(165줄) · `lib/jquery.placeholder.js`(185줄) · `TextareaAutoResize.js`(194줄) · `landing.js`(152줄) · `reward.js`(142줄) · `wadiz/lib/lodash.min.js` · `lib/lottie.min.js` · `lib/require.js` · `lib/vue-touch.min.js` · `lazysizes.min.js` 등. **번들 라이브러리(minified)가 다수 포함돼 삭제 줄 수가 큽니다.**
+> - CLIENT-242: 목적지가 사라진 **urlrewrite 규칙 3건 제거**, Eclipse 설정 파일 제거, **Maven 래퍼를 jar 없는 방식으로 복구**하고 `local-run.sh` 를 래퍼 호출로 바꿨습니다.
+>
+> ### 결제 유예(GRACE_PERIOD) 대응 — BE3-783 · BE3-784 · BE3-635 · RWD-5951 · RWD-5981
+> - **BE3-783**: 멤버십 상태에 `GRACE_PERIOD` 를 추가하고, 응답에 **`nextRetryDate`(다음 재시도일) · `graceUntil`(유예 종료일)** 을 실어 보냅니다.
+> - **BE3-635**: 위 두 날짜를 **`String` 으로 내려보내도록 바꿨습니다.** 이유가 명시돼 있습니다 — 이 저장소는 **Spring Boot 1.x 의 Jackson 이라 `java.time` 타입을 역직렬화하지 못합니다.**
+> - **RWD-5951 / RWD-5981**: 커뮤니티 데이터와 참여자 리스트의 멤버십 뱃지를 `isAvailable` → **`hasMembership`** 축으로 전환했습니다. RWD-5981 은 2026-09-03 에 릴리즈 당일 되돌려졌다가 **이번에 다시 적용됐습니다**(`f6fe4bfc75`, "Revert 의 Revert"). 짝이 되는 [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md) 의 RWD-5981 도 함께 되살아났습니다.
+>
+> ### 글로벌 SPA 이관 3건 (FE1-1751 · FE1-1754 · FE1-1756)
+> - **서포터클럽 소개**(`/web/supporter-club/intro`) · **앱 설치 랜딩** · **서비스 제공 현황** 세 지면의 뷰를 **`global-korea/index` 로 전환**했습니다. 프론트 쪽에서 같은 이슈로 `apps/global` 한국 라우트에 페이지를 만들었습니다.
+> - 앱 설치 랜딩 라우트는 이후 `GlobalKoreaUIController` 로 옮겼습니다.
+>
+> ### FE1-1836 — 개인정보처리방침 위탁 업체·글로벌 파트너사 목록 변경
+> - `web/resources/terms/privacy_entrustments.html` 과 `privacy_third_parties_global_partners.html` 을 갱신했습니다(후자 53줄 변경).
+>
+> ### 기타
+> - **FE1-1811** — 로컬 개발 도메인을 `local.wadiz.io` 로 변경.
+> - 직전 회차의 CLIENT-229(HTML 메타데이터 다국어)에서 `html-metadata_ko` 변경분 일부를 되돌렸습니다(FE1-1754).
+>
+> ---
+
 > 📅 **2026-09-08 cloud_live pull 보강** (40 커밋, −8,858줄)
 >
 > ⚠️ **이번 pull 의 핵심은 대규모 죽은 코드 정리입니다.** SPA(글로벌) 이관으로 참조를 잃은 **JSP 61개와 컨트롤러·검증기 11개 클래스**가 삭제됐습니다. 이 레거시 저장소가 실제로 줄어들기 시작했습니다.

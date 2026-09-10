@@ -9,6 +9,21 @@
 
 ---
 
+> 📅 **2026-09-10 main pull 보강** (5 커밋)
+>
+> ### DISPLAY-1758 — 메인 홈 개인화 추천을 v3 로 올리고 A/B 분기를 걷어냈습니다
+> - 개인화 추천 API 를 **v3 로 적용**한 뒤, v3 / v3.5 를 나눠 보는 **A/B 테스트를 붙였다가 곧바로 제거**했습니다. 최종 형태는 **앱 버전 v10 이상에 v3 API 단일 적용**입니다 (`MainService`, `enums/ai/RecommendationVersion`).
+> - `application-local.yml`·`application-localrc.yml` 에 관련 설정이 추가됐습니다. [`helm-charts-gitops`](./helm-charts-gitops.md) 쪽에도 dev·rc4 의 `main2-api` values 에 **추천 모델 `v3_5` 설정**이 들어갔습니다.
+>
+> ### DISPLAY-1709 — 마이와디즈 멤버십 결제 유예(GRACE_PERIOD) 대응
+> - 마이와디즈 카드에 **결제 유예 상태**를 반영했습니다 (`MyWadizService`·`MyWadizConstants`·`model/dto/MembershipDto`·`model/card/CardSupporterClub`).
+> - **`MyWadizVersion` 에 버전이 하나 늘어 `/api/v6/my-wadiz` 가 생겼습니다.** 이 문서 본문에 기록한 "`my-wadiz` v1~v5 누적" 은 이제 **v1~v6** 입니다. 프론트도 마이와디즈 카드 API 를 v6 로 올렸습니다(`wadiz-frontend` FE1-1637).
+>
+> ### 배포
+> - **rc4 배포 워크플로가 추가**됐습니다(`aws_deploy_ecr_rc4.yml`).
+>
+> ---
+
 > 📅 **2026-09-02 main pull 보강** (4 커밋)
 >
 > ### DISPLAY-1688 — 따라잡기 API 호출 경로를 v3 → v4 로 전환
@@ -68,7 +83,7 @@
 
 ### `MyWadizController` — 마이와디즈 (6개)
 
-`/api/v1/mywadiz`(붙여쓴 옛 경로) · `/api/v1/my-wadiz` ~ `/api/v5/my-wadiz`. 여기도 v1~v5 누적입니다.
+`/api/v1/mywadiz`(붙여쓴 옛 경로) · `/api/v1/my-wadiz` ~ **`/api/v6/my-wadiz`**. 여기도 누적입니다(v6 은 2026-09-09 DISPLAY-1709 에서 결제 유예 대응으로 추가).
 
 ### `CommonController` — 공통 지면 요소 (20개)
 

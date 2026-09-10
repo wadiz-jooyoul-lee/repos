@@ -1,5 +1,42 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-09-10 master pull 보강** (7 커밋)
+>
+> ### RWD-5981 — 되돌렸던 멤버십 필드 분리를 다시 적용했습니다 (Revert of Revert)
+> - 2026-09-03 보강에 "릴리즈 당일 되돌려졌다" 고 기록한 **서포터 목록의 `hasMembership`/`canUseBenefit` 분리가 이번에 재적용**됐습니다(`8285d212c`, "Revert 의 Revert").
+> - 짝이 되는 [`com.wadiz.web`](../com.wadiz.web.md) 의 RWD-5981 도 같은 날 함께 되살아났습니다. 즉 **두 축 분리가 최종 확정**됐습니다.
+>   - `hasMembership` — 멤버십에 **가입돼 있는가**
+>   - `canUseBenefit` — 지금 **혜택을 쓸 수 있는가** (결제 유예 중이면 가입돼 있어도 혜택은 못 씀)
+>
+> ### RWD-5899 — 멤버십에 결제 유예 상태(GRACE_PERIOD) 추가
+> - `MembershipState` enum 에 **`GRACE_PERIOD`(결제 실패 유예)** 를 넣었습니다. 서포터클럽 약관 개정(FE1-1761, 결제 실패 시 **7일 유예**)의 백엔드 대응입니다.
+> - 상태별 멤버십 혜택 조회의 **현재 동작을 고정하는 characterization 테스트**를 먼저 붙이고 상태를 추가했습니다 — 기존 동작을 깨뜨리지 않았음을 증명하는 방식입니다.
+> - ℹ️ **이 상태 추가는 최소 8개 저장소에 걸쳐 진행됐습니다.** 아래 "전 서비스 파급" 참조.
+>
+> ### RWD-5880 — 빌키 카드 유효기간 bulk 조회
+> - 간편결제 빌키(자동결제용 카드 등록 키) 목록으로 **카드 유효기간을 한 번에 조회하는 internal 엔드포인트**를 추가했습니다. 신규 도메인 `simplepay/cardexpire/` — `BillkeyCardExpire` · `BillkeyCardExpireQuery` · `BillkeyCardExpireQueryUseCase`(52줄), 게이트웨이·리포지토리 경로 확장. 테스트 119줄.
+> - 결제 유예가 생기면서 **카드 만료가 임박한 회원을 미리 찾아야** 하는 흐름과 이어지는 것으로 보입니다(추정).
+>
+> ### RWD-4231 — 더존 ERP access token Redis 캐시
+> - 정산 연동에 쓰는 더존 ERP 의 access token 을 **Redis 에 캐시**합니다. 매번 토큰을 새로 받지 않게 하는 변경이며, 테스트 171줄(`ErpTokenProviderTest`)이 함께 붙었습니다.
+>
+> ### 🔗 전 서비스 파급 — 결제 유예(GRACE_PERIOD) 상태 추가
+>
+> 같은 상태값이 이번 pull 범위에서 **8개 저장소에 동시에** 들어갔습니다. 멤버십 상태 enum 을 각자 들고 있어서, 하나라도 빠지면 **역직렬화 예외**가 납니다.
+>
+> | 저장소 | 이슈 |
+> |---|---|
+> | com.wadiz.api.funding | RWD-5899 |
+> | [`com.wadiz.store`](../com.wadiz.store/com.wadiz.store.md) | RWD-5899 (역직렬화 예외 방지 명시) |
+> | [`com.wadiz.web`](../com.wadiz.web.md) | BE3-783 |
+> | [`com.wadiz.wave.user`](../com.wadiz.wave.user/com.wadiz.wave.user.md) | BE3-784 |
+> | [`com.wadiz.search.indexer-geojedo`](../com.wadiz.search.indexer-geojedo.md) | DISPLAY-1699 |
+> | [`main2-api`](../main2-api.md) | DISPLAY-1709 |
+> | `kr.wadiz.backoffice.indexer-schedule` | SCOUT-150 (문서 없음) |
+> | [`co.wadiz.adm`](../co.wadiz.adm.md) | BE3-785 (2026-09-02 반영분, 라벨 추가) |
+>
+> ---
+
 > 📅 **2026-09-08 master pull 보강** (2 커밋)
 >
 > ### RWD-6009 — AI 컬렉션(AiCenter) 자동화 전략 추가

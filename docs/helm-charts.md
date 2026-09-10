@@ -9,6 +9,18 @@
 
 ---
 
+> 📅 **2026-09-10 main pull 보강** (3 커밋)
+>
+> | 항목 | 내용 |
+> |---|---|
+> | **CINFRA-665** | clive `crm` 에 **App(임의 IP)의 `GET`/`PUT /api/v1/final-call-subscription` 을 허용**(+12줄). [`kr.wadiz.platform.crm`](./display-platform-services-3-messaging.md) 이 만든 막펀잡기 수신동의 API(DISPLAY-1702)를 앱이 직접 호출할 수 있게 여는 조치입니다. iOS FE1-1638·Android FE1-1648 의 알림 수신동의 화면과 이어집니다 |
+> | **Datadog 비용 최적화** | `global-api`·`funding-api` 의 **커스텀 메트릭 스크랩 설정을 정리**했습니다(core dev/rc4/clive). clive `global-api` 에 3줄 추가, dev·rc4 `global-api` 에서 3줄씩 제거, rc4 `funding-api` 에서 11줄 제거 |
+> | small change | dev `makercenter` values 조정 |
+>
+> - ⚠️ **`community-agent` 가 [`helm-charts-gitops`](./helm-charts-gitops.md) 에만 신설되고 이 저장소에는 없습니다**(RWD-5893, dev·rc4·clive 3건). 직전 회차의 `order-api` 어긋남이 해소되자마자 같은 형태의 어긋남이 다시 생겼습니다 — **gitops 에 먼저 만들고 나중에 차트 저장소에 반영하는 순서**로 보입니다(추정).
+>
+> ---
+
 > 📅 **2026-09-08 main pull 보강** (14 커밋)
 >
 > ### 차트 템플릿 — dark-release 헤더 매치가 죽은 규칙이었습니다
