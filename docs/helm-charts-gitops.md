@@ -83,7 +83,7 @@
 > - 이 문서가 앞서 기록한 "values 에 평문 자격증명이 들어 있다"는 관측이 실제로 정리되기 시작했습니다. **AWS 키가 남은 파일은 이제 `client/dev/makercenter-api.yaml` 1건**입니다(dev 환경).
 >
 > ### `clive/order-api` 추가
-> - `core/clive/order-api.yaml` 이 새로 생겼습니다(`5ddc0ca73`). 소스는 `wadiz-service/io.wadiz.order` 이고, 같은 기간에 **환불 로직 일원화·OpenAPI 문서·힙/메타스페이스 예산(1Gi 기준)·플랫폼 토큰 정합** 커밋이 이어졌습니다. `live` 프로파일에서는 springdoc 을 끄도록 설정했습니다.
+> - `core/clive/order-api.yaml` 이 새로 생겼습니다(`5ddc0ca73`). 소스는 [`io.wadiz.order`](./io.wadiz.order.md) 이고, 같은 기간에 **환불 로직 일원화·OpenAPI 문서·힙/메타스페이스 예산(1Gi 기준)·플랫폼 토큰 정합** 커밋이 이어졌습니다. `live` 프로파일에서는 springdoc 을 끄도록 설정했습니다.
 > - 반대로 [`helm-charts`](./helm-charts.md) 에는 `core/{dev,rc4}/order-api.yaml` 만 있고 clive 가 없어, **두 저장소의 서비스 집합이 어긋나 있습니다.**
 >
 > ### 기타 수동 커밋

@@ -71,7 +71,7 @@
 > - 통계 재측정: 서비스 values **357 → 302개**, 고유 서비스명 **109개 유지**(deep-link-bridge 1개 삭제 · order-api 1개 신설).
 >
 > ### 신규 서비스 `order-api` 등록
-> - `core/dev/order-api.yaml` · `core/rc4/order-api.yaml` 2건이 생겼습니다. 소스 저장소는 `wadiz-service/io.wadiz.order`(RWD-5804 — 환불 로직 일원화, OpenAPI/Swagger UI, jib 도입)입니다.
+> - `core/dev/order-api.yaml` · `core/rc4/order-api.yaml` 2건이 생겼습니다. 소스 저장소는 [`io.wadiz.order`](./io.wadiz.order.md)(RWD-5804 — 환불 로직 일원화, OpenAPI/Swagger UI, jib 도입)입니다.
 > - **`core/clive/order-api.yaml` 은 이 저장소에 아직 없고 [`helm-charts-gitops`](./helm-charts-gitops.md) 쪽에만 추가됐습니다.** 두 저장소의 서비스 집합이 어긋난 상태입니다.
 >
 > ### 차트 템플릿 변경 — 롤링 업데이트 전략과 종료 유예시간을 열었습니다
