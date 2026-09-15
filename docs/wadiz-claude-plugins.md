@@ -1,5 +1,17 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-09-15 main pull 보강** (15 커밋)
+>
+> ### `regular-release` → `regular-deployment` 로 개편 (13커밋)
+> - 정기 배포 스킬의 **이름을 `regular-deployment` 로 바꾸고** 설명을 "전 과정 기준" 으로 교체했습니다. `plugins/client` 버전이 **0.7.1 → 1.0.0** 으로 올라갔습니다.
+> - **정적 자동 CI/CD 를 재개**하고 대상을 **`cloud_live`·`clive` 로 전환**했습니다. 기능 스위치 이름은 `AUTO_STATIC_CI_CD` 입니다.
+> - **Stage 단계를 다시 짰습니다** — Step 3 을 "stage CI/CD 실행 결과 확인" 으로 바꾸고, 트리거 제거에 맞춰 단계 설명을 정리했으며, Stage 상태표에서 정적 서비스 항목을 뺐습니다.
+> - 규약 정리: 완료 플래그 이름을 **`<단계>_<대상>_<작업>_done`** 규칙으로 통일, 워크플로 ID 자리 표시자를 영문으로 통일, `workflow_cache` 키를 `ci_cd` 로 교체, message-2b 발송 시점을 Step 6 직후로 변경.
+> - 문서에서 **정기 배포 실행 시각 언급을 제거**했습니다.
+>
+> ### `weekly-report` 보강
+> - Jira 조회가 빠지던 2건을 보강했습니다.
+
 > 📅 **2026-09-10 main pull 보강** (1 커밋)
 >
 > ### `merge-branch` 스킬 보완

@@ -6,6 +6,34 @@
 
 ---
 
+> 📅 **2026-09-15 cloud_live pull 보강** (22 커밋)
+>
+> ⚠️ **직전 동기화 뒤 로컬이 `cloud_dev` 로 옮겨져 있었습니다.** 기준 브랜치 규칙(cloud_live 우선)에 따라 **`cloud_live` 로 되돌린 뒤** 2026-09-10 시점(`e6708608b6`)부터 다시 맞췄습니다.
+>
+> **stage 환경을 클라우드로 재구축(RWD-6044·CLIENT-258·BE3-930)** 이 최대 테마입니다.
+>
+> ### RWD-6044 / CLIENT-258 / BE3-930 — stage 환경을 클라우드 기반으로 재구축
+> - **스테이지 브랜치명을 `cloud_stage` → `stage` 로 확정**했습니다.
+> - **stage 프로파일을 `clive` 기반으로 다시 만들었습니다** (`stage.wadiz.io`). env 별 리소스 **14종을 clive 기준으로 동기화**했고, stage 의 main2·account 호출을 **stage 네임스페이스 서비스**로 돌렸습니다 (`proxy-stage.xml`·`reward-stage.xml`·`searcher-stage.xml`·`user-stage.xml`).
+> - stage 지면의 전역 주소를 **stage 전용 공개 호스트**로, 정적 자원 원본을 **`cdn-static.stage.wadiz.io`** 로 바꿨습니다.
+> - 인프라 쪽 짝: [`helm-charts`](./helm-charts.md)·[`helm-charts-gitops`](./helm-charts-gitops.md) 에 **`web/stage`·`user-platform/stage` 환경이 신설**됐습니다.
+>
+> ### FE1-1867 — Braze 초기화 실패 대응
+> - **쿠키에 접근할 수 없는 문서에서는 Braze SDK 로드를 차단**합니다(스텁은 유지해 호출부가 깨지지 않게 함). 미초기화 상태에서는 아예 호출하지 않는 게이트를 두고, 전송 호출을 예외로부터 격리했습니다.
+> - 초기화 실패 **원인 진단과 재시도**를 추가했습니다 (`web/WEB-INF/jsp/winclude/tracking-braze-head.jsp` +71줄).
+>
+> ### RWD-6027 — 취소·반환 원장에 행위 주체 기록
+> - `RefundActorType` 을 도입하고, **메이커 승인 경로의 반환 주체를 `MAKER` 로** 기록합니다. **order 서버 프록시 경로**도 추가했습니다(`proxy-*.xml` 4종).
+> - [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md)·[`co.wadiz.adm`](./co.wadiz.adm.md) 의 같은 이슈와 짝입니다.
+>
+> ### 기타
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | FE1-1780 | **카테고리 지면을 global 쉘로 전환**하고 `wmain/category.jsp` 를 삭제했습니다. 프론트에서 카테고리 페이지를 `apps/global` 로 이전한 것과 짝입니다 |
+> | BE3-938 | 인증 성공 시 **SMS 발송 카운트 초기화를 허용 국가로 제한**(`SmsAuthenticationSendLimiterTest` 52줄 신규) |
+> | CLIENT-269 | 이미지 빌드 워크플로의 환경 순서를 배포 단계에 맞추고 **rc4 추가**, 정기배포 브랜치 준비 대상을 기본 브랜치로 교체 |
+
 > 📅 **2026-09-10 cloud_live pull 보강** (17 커밋, −54,764줄)
 >
 > **참조 없는 스크립트·스타일 파일 제거(CLIENT-241)** 로 5만 줄 넘게 빠졌고, 결제 유예(GRACE_PERIOD) 대응과 SPA 이관이 이어집니다.

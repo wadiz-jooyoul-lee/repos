@@ -9,6 +9,35 @@
 
 ---
 
+> 📅 **2026-09-15 main pull 보강** (265 커밋)
+>
+> 커밋 수는 많지만 **대부분 CI 자동 이미지 태그 갱신**입니다(소스 레포 기준 `com.wadiz.web` 41 · `com.wadiz.api.funding` 30 · `io.wadiz.order` 16 · `co.wadiz.adm` 11 · `com.wadiz.batch.payment` 10). 수동 커밋 약 30건에 의미 있는 변경이 있습니다.
+>
+> ### 🆕 `stage` 환경 신설 (RWD-6044 · BE3-930)
+> - `web/stage/web-server.yaml` 과 `user-platform/stage/account-server.yaml` 이 새로 생겼습니다. [`helm-charts`](./helm-charts.md) 에도 같은 파일이 동시에 추가돼 **두 저장소가 일치합니다.**
+> - stage 의 standalone web client 는 **`com_wadiz_web_stage` 로 override** 합니다.
+>
+> ### `community-agent` 의 정체가 조금 드러났습니다
+> 직전 회차에 "소스 저장소 미확인" 으로 남긴 서비스입니다. 이번 설정 변경으로 성격을 알 수 있습니다.
+>
+> | 커밋 | 알 수 있는 것 |
+> |---|---|
+> | RWD-6002 | **dev·rc4 의 원천을 RDS 로 전환**하고 큐 주석 갱신 — 큐가 아니라 DB 에서 읽는 구조로 바뀜 |
+> | RWD-6043 | **결과 인덱스 이름 3개** 설정, 사용 정보 기록 스위치 추가 |
+> | RWD-6045 | **dev 의 LLM 제공자를 Gemini 2.5 → OpenAI 로 전환**(Gemini 404 우회). RDS 계정을 리터럴에서 **시크릿 키로** 바꿔 dev 기동 실패(MySQL 1045)를 해소 |
+>
+> → **LLM 을 써서 커뮤니티 콘텐츠를 처리하고 결과를 인덱스에 적재하는 에이전트**로 보입니다. 제공자를 설정으로 갈아끼울 수 있습니다. 소스 저장소는 여전히 미확인입니다(자동 갱신 커밋이 아직 없음).
+>
+> ### FE2-1225 — makercenter-api 에 noti-channel·user-api 연동 설정
+> - dev·clive `makercenter-api` configmap 에 **`noti-channel-api-url`·`noti-channel-api-token`·`user-api-url`** 을 추가했습니다. [`makercenter-be`](./makercenter-be.md) 의 FE2-1225(벌크 신청 시 메이커 정보 조회)와 짝입니다.
+> - ⚠️ clive 의 noti-channel 설정은 **한 차례 롤백**됐다가 다시 들어갔습니다.
+>
+> ### 기타 수동 커밋
+> - **FE1-1844** — `ai-hub` 에 **MCP `searchTools` + OAuth 2.1** 적용(dev).
+> - `core-mcp` — **`callWadizApi` 의 라이브 호출을 차단**(`is-live-enabled`)하고 제네릭 호출 허용 path 를 설정했습니다.
+> - **RWD-6026** — `wave-batch` dev 에 친구톡 카탈로그 템플릿 번호를 넣었다가 **코드 상수로 옮기며 다시 제거**했습니다.
+> - `clive` 에 **`makercenter-delegate`** 추가, `display-agent` rc4 설정 변경, `indexer-dokdo` 로그 모니터링 추가, rc4 `admin-server` CDN 주소 변경, 개발환경 전화번호 화이트리스트 등록.
+
 > 📅 **2026-09-10 main pull 보강** (80 커밋)
 >
 > 대부분 CI 자동 이미지 태그 갱신이지만(소스 레포 기준 `com.wadiz.web` 11 · `co.wadiz.adm` 8 · `main2-api` 6 · `com.wadiz.api.funding` 6 · `com.wadiz.store` 5 등), **수동 커밋 7건에 신규 서비스와 설정 변경이 있습니다.**

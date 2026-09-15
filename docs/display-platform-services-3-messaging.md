@@ -8,6 +8,16 @@
 
 ---
 
+> 📅 **2026-09-15 main pull 보강** — `mail-fast-api`(1) · `notification-log-agent`(5)
+>
+> ### CI 워크플로 정규화 (2026-09-10, 팀 일괄)
+> - 두 서비스 모두 **live 워크플로의 중복 스텝(9줄)과 dev 의 odev 스텝(8줄)을 제거하고 rc4 워크플로를 추가**했습니다. 같은 날 `keyword`·`inbox`·`main2-stream-agent` 도 같은 정리를 받았습니다.
+> - ⚠️ `notification-log-agent` 는 rc4 워크플로를 **추가했다가 되돌린 뒤 다시** 넣었습니다(3커밋).
+>
+> ### DISPLAY-1762 — DocumentDB "Badly Format Exception" 추적
+> - `notification-log-agent` 에서 **DocumentDB 저장이 형식 오류로 실패**하는 문제를 쫓았습니다. 확인용 로그를 붙였다가, 곧 **진단 유틸을 걷어내고 실패한 데이터만 로깅하도록 단순화**했습니다 (`MessageMongoRepository`·`BrandMessageLogService`·`LogService`).
+> - 즉 **원인은 아직 밝혀지지 않았고**, 실패 건을 남겨 두고 보는 상태로 보입니다(추정).
+
 > 📅 **2026-09-10 main pull 보강** — `mail-common-api`(2) · `mail-normal-api`(3)
 >
 > ### DISPLAY-1723 — 도메인코드 공용화의 마무리

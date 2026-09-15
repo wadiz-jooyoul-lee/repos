@@ -7,6 +7,13 @@
 
 ---
 
+> 📅 **2026-09-15 main pull 보강** — `inbox` (1 커밋)
+>
+> ### ✅ live/clive 이중 배포가 해소됐습니다
+> - **"CI 워크플로우 정규화"** 커밋으로 live 워크플로에서 9줄이 지워졌습니다. 이제 `display-platform/clive/inbox.yaml` **하나만** 갱신합니다.
+> - 아래 "공통 관측" 에 적은 이중 `update_image_tag` 문제가 **`user-activity-api` 하나만 남았습니다.**
+> - 이 정규화는 2026-09-10 에 display-platform 팀 전반에 일괄 적용됐습니다 — 같은 날 `keyword` · `mail-fast-api` · `main2-stream-agent` · `notification-log-agent` 도 같은 커밋 제목으로 정리됐습니다.
+
 > 📅 **2026-09-08 main pull 보강** — `wish-api` (2 커밋)
 >
 > ### DISPLAY-1735 — 브레이즈용 찜한 프로젝트 조회 API 추가
@@ -95,7 +102,9 @@
 
 > ⚠️ **2026-09-03 갱신 — 절반이 정리됐습니다.** `main2-batch-api`(DISPLAY-1713)와 [`main2-api`](./main2-api.md)(DISPLAY-1688)는 중복 clive 잡을 제거해 이제 clive 하나만 갱신합니다. **아직 이중으로 남은 서비스는 `inbox` 와 `user-activity-api` 둘뿐입니다.** 아래 서술은 그 둘에 해당합니다.
 
-`inbox` · `user-activity-api` 의 live 워크플로는 **`update_image_tag` 잡을 두 번** 돌립니다.
+> 📅 **2026-09-15 갱신 — `inbox` 도 정리됐습니다.** CI 워크플로 정규화로 `inbox` 의 live 워크플로가 clive 하나만 갱신하도록 바뀌었습니다. **이제 이중으로 남은 서비스는 `user-activity-api` 하나뿐입니다.**
+
+`user-activity-api` 의 live 워크플로는 **`update_image_tag` 잡을 두 번** 돌립니다.
 
 ```yaml
 update-image-tag:        value_file_path: display-platform/live/{svc}.yaml    # ①

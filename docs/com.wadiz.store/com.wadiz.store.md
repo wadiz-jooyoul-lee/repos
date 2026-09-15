@@ -9,6 +9,17 @@
 
 ---
 
+> 📅 **2026-09-15 cloud_live pull 보강** (4 커밋)
+>
+> 4커밋 모두 `RWD-6022` 로, **문서 테스트(REST Docs)를 가볍게 만드는 정리**입니다. 기능 변경은 없습니다.
+>
+> ### RWD-6022 — store-api 문서 테스트를 standalone MockMvc 로 전환
+> - 문서 테스트가 **스프링 컨텍스트를 통째로 띄우던 것을 컨텍스트 없는 standalone MockMvc 로** 바꿨습니다. 신규 `AbstractStandaloneApiDocsTest`(391줄) + `StandaloneSecurityPostProcessors`(44줄).
+> - **테스트에서 쿠버네티스 ConfigMap 조회를 제거**했습니다 — 테스트가 클러스터 설정을 읽으러 가던 구조였습니다.
+> - 테스트를 **코어 수 절반으로 병렬 실행**하도록 했습니다.
+> - `CLAUDE.md` 에 **문서 테스트 규약과 CI 실행 범위**를 명시했습니다.
+> - 앞선 `RWD-5974`(테스트 복구·테스트 DB 를 cloud dev RDS 로)의 후속으로, **테스트를 외부 의존 없이 빠르게 돌리는 방향**이 이어지고 있습니다.
+
 > 📅 **2026-09-10 cloud_live pull 보강** (3 커밋)
 >
 > 세 커밋 모두 **멤버십 결제 유예(GRACE_PERIOD) 대응**입니다.
