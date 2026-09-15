@@ -9,6 +9,15 @@
 
 ---
 
+> 📅 **2026-09-15 main pull 보강** (4 커밋)
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | **DISPLAY-1715** | **색인 과정에서 데이터가 누락되던 문제**를 고쳤습니다. 조회 계층(`SearchService`·`ElasticsearchSearchServiceImpl`·`OpenSearchSearchServiceImpl`)과 각 색인 서비스(피드·팔로우·메타광고·카테고리·프로젝트 건수) 전반에 걸친 수정입니다 |
+> | **DISPLAY-1760** | **OpenSearch 커넥션 유지시간(keep-alive) 설정 추가.** 직전 회차의 DISPLAY-1747(타임아웃 신설)에 이은 연결 안정화입니다 |
+> | **DISPLAY-1772** | OpenSearch 조회 시 **필요한 건수만 가져오도록** 수정 — 과다 조회를 줄이는 변경입니다 |
+> | **DISPLAY-1773** | 미사용 **인기 해시태그 색인 코드**를 폐기 표시(`@Deprecated`)했습니다 |
+
 > 📅 **2026-09-08 main pull 보강** (1 커밋)
 >
 > ### DISPLAY-1747 — OpenSearch 타임아웃 신설과 검색홈 색인 무한 대기 방어

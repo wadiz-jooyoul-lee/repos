@@ -1,5 +1,14 @@
 # kr.wadiz.account 분석 문서
 
+> 📅 **2026-09-15 cloud_live pull 보강** (2 커밋)
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | **BE3-930** | **stage 브랜치용 이미지 빌드 워크플로 추가**(`aws_deploy_ecr_stage.yml`). [`helm-charts`](../helm-charts.md) 에 `user-platform/stage/account-server.yaml` 이 신설된 것과 짝이며, `account.stage.wadiz.io` 로 뜹니다 |
+> | **BE3-939** | **Spring Session cleanup-cron 활성화** — 매분 17초에 만료 세션을 정리합니다(`application.yml`). 종전에는 정리가 돌지 않아 만료 세션이 쌓였을 것으로 보입니다 |
+>
+> ---
+
 > 📅 **2026-09-02 cloud_live pull 보강** (2 커밋)
 >
 > ### BE3-864 — clive DEBUG 로그·민감정보 로깅 제거

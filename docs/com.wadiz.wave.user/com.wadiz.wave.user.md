@@ -1,3 +1,12 @@
+> 📅 **2026-09-10 cloud_live pull 보강** (2 커밋)
+>
+> ### BE3-784 — 멤버십 결제 유예(GRACE_PERIOD) 대응과 배지 축 정합
+> - `membership/constant/MembershipState` 에 **`GRACE_PERIOD`** 를 추가했습니다.
+> - **link 도메인의 멤버십 배지 소스를 `hasMembership`(자격) 축으로 맞췄습니다** (`MembershipAvailableDto` +22줄, `UserLinkInfrastructureServiceImpl`). 결제 유예 중이면 혜택은 못 쓰지만 가입자이므로, 배지는 **가입 여부**를 따라야 한다는 판단입니다.
+> - 같은 전환이 [`co.wadiz.api.community`](../co.wadiz.api.community/co.wadiz.api.community.md)·[`com.wadiz.store`](../com.wadiz.store/com.wadiz.store.md)·[`com.wadiz.web`](../com.wadiz.web.md) 에도 들어갔습니다(RWD-5951 계열).
+>
+> ---
+
 > 📅 **2026-09-02 cloud_live pull 보강** (2 커밋)
 >
 > ### BE3-769 — 따라잡기 글로벌: 요청 country/language 를 main2 상품 API 로 전파

@@ -1,5 +1,18 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-09-15 cloud_live pull 보강** (8 커밋)
+>
+> 8커밋 모두 `FE2-1225` 로, 직전 회차의 **어드민 기획전 벌크 신청(FE2-1221)** 에 이어 **신청자 정보를 채워 넣는 작업**입니다.
+>
+> ### FE2-1225 — 벌크 신청에 메이커 정보·CSV 컬럼 추가
+> - 어드민이 기획전을 벌크로 신청할 때 **메이커 이름·이메일·연락처를 신청 응답으로 저장**합니다.
+> - 그 정보를 어디서 가져올지가 **세 번 바뀌었습니다** — 프로젝트 계약 담당자 → **계정 프로필(`UserProfile`)** 기준으로 최종 교체. 신규 `UserApiService`(107줄, 테스트 158줄)·`StartupApiService`(51줄)가 이를 위해 들어왔습니다.
+> - 신청자 CSV 에 **메이커 유형(신규·기존)** 과 **광고수신동의(SMS)** 컬럼을 추가했습니다.
+> - **메이커 유형 판정이 두 번 정정**됐습니다 — 스토어 이력을 **"존재" 가 아니라 "오픈 여부"** 로 보게 했다가, 최종적으로 **스토어 이력을 아예 제외**했습니다. 즉 메이커 유형은 펀딩 이력만으로 판단합니다.
+> - 요청의 프로젝트 번호 `null` 원소를 400 으로 거부합니다.
+> - 인프라 짝: [`helm-charts-gitops`](./helm-charts-gitops.md) 의 dev·clive `makercenter-api` configmap 에 `noti-channel`·`user-api` 설정이 추가됐습니다.
+> - 테스트가 크게 늘었습니다 — `ExhibitionApplicationAdminServiceTest` +455줄, `UserApiServiceTest` 158줄, `NotiChannelClientTest` 128줄, `WebApiServiceTest` +75줄.
+
 > 📅 **2026-09-08 cloud_live pull 보강** (6 커밋)
 >
 > ### FE2-1221 — 어드민 기획전 신청 벌크 철회

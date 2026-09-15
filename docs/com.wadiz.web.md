@@ -6,6 +6,61 @@
 
 ---
 
+> 📅 **2026-09-15 cloud_live pull 보강** (22 커밋)
+>
+> ⚠️ **직전 동기화 뒤 로컬이 `cloud_dev` 로 옮겨져 있었습니다.** 기준 브랜치 규칙(cloud_live 우선)에 따라 **`cloud_live` 로 되돌린 뒤** 2026-09-10 시점(`e6708608b6`)부터 다시 맞췄습니다.
+>
+> **stage 환경을 클라우드로 재구축(RWD-6044·CLIENT-258·BE3-930)** 이 최대 테마입니다.
+>
+> ### RWD-6044 / CLIENT-258 / BE3-930 — stage 환경을 클라우드 기반으로 재구축
+> - **스테이지 브랜치명을 `cloud_stage` → `stage` 로 확정**했습니다.
+> - **stage 프로파일을 `clive` 기반으로 다시 만들었습니다** (`stage.wadiz.io`). env 별 리소스 **14종을 clive 기준으로 동기화**했고, stage 의 main2·account 호출을 **stage 네임스페이스 서비스**로 돌렸습니다 (`proxy-stage.xml`·`reward-stage.xml`·`searcher-stage.xml`·`user-stage.xml`).
+> - stage 지면의 전역 주소를 **stage 전용 공개 호스트**로, 정적 자원 원본을 **`cdn-static.stage.wadiz.io`** 로 바꿨습니다.
+> - 인프라 쪽 짝: [`helm-charts`](./helm-charts.md)·[`helm-charts-gitops`](./helm-charts-gitops.md) 에 **`web/stage`·`user-platform/stage` 환경이 신설**됐습니다.
+>
+> ### FE1-1867 — Braze 초기화 실패 대응
+> - **쿠키에 접근할 수 없는 문서에서는 Braze SDK 로드를 차단**합니다(스텁은 유지해 호출부가 깨지지 않게 함). 미초기화 상태에서는 아예 호출하지 않는 게이트를 두고, 전송 호출을 예외로부터 격리했습니다.
+> - 초기화 실패 **원인 진단과 재시도**를 추가했습니다 (`web/WEB-INF/jsp/winclude/tracking-braze-head.jsp` +71줄).
+>
+> ### RWD-6027 — 취소·반환 원장에 행위 주체 기록
+> - `RefundActorType` 을 도입하고, **메이커 승인 경로의 반환 주체를 `MAKER` 로** 기록합니다. **order 서버 프록시 경로**도 추가했습니다(`proxy-*.xml` 4종).
+> - [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md)·[`co.wadiz.adm`](./co.wadiz.adm.md) 의 같은 이슈와 짝입니다.
+>
+> ### 기타
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | FE1-1780 | **카테고리 지면을 global 쉘로 전환**하고 `wmain/category.jsp` 를 삭제했습니다. 프론트에서 카테고리 페이지를 `apps/global` 로 이전한 것과 짝입니다 |
+> | BE3-938 | 인증 성공 시 **SMS 발송 카운트 초기화를 허용 국가로 제한**(`SmsAuthenticationSendLimiterTest` 52줄 신규) |
+> | CLIENT-269 | 이미지 빌드 워크플로의 환경 순서를 배포 단계에 맞추고 **rc4 추가**, 정기배포 브랜치 준비 대상을 기본 브랜치로 교체 |
+
+> 📅 **2026-09-10 cloud_live pull 보강** (17 커밋, −54,764줄)
+>
+> **참조 없는 스크립트·스타일 파일 제거(CLIENT-241)** 로 5만 줄 넘게 빠졌고, 결제 유예(GRACE_PERIOD) 대응과 SPA 이관이 이어집니다.
+>
+> ### CLIENT-241 / CLIENT-242 — 죽은 자산·설정 정리 (−54,764줄)
+> - 직전 회차에서 JSP 61개를 지운 데 이어, 이번에는 **그 JSP 들이 참조하던 스크립트·스타일 파일**을 걷어냈습니다 (`js` · `static` · `equity` · `Content` 영역).
+> - 빠진 대표 파일: `wadiz/lib/text.js`(408줄) · `wadiz/lib/cookie.js`(165줄) · `lib/jquery.placeholder.js`(185줄) · `TextareaAutoResize.js`(194줄) · `landing.js`(152줄) · `reward.js`(142줄) · `wadiz/lib/lodash.min.js` · `lib/lottie.min.js` · `lib/require.js` · `lib/vue-touch.min.js` · `lazysizes.min.js` 등. **번들 라이브러리(minified)가 다수 포함돼 삭제 줄 수가 큽니다.**
+> - CLIENT-242: 목적지가 사라진 **urlrewrite 규칙 3건 제거**, Eclipse 설정 파일 제거, **Maven 래퍼를 jar 없는 방식으로 복구**하고 `local-run.sh` 를 래퍼 호출로 바꿨습니다.
+>
+> ### 결제 유예(GRACE_PERIOD) 대응 — BE3-783 · BE3-784 · BE3-635 · RWD-5951 · RWD-5981
+> - **BE3-783**: 멤버십 상태에 `GRACE_PERIOD` 를 추가하고, 응답에 **`nextRetryDate`(다음 재시도일) · `graceUntil`(유예 종료일)** 을 실어 보냅니다.
+> - **BE3-635**: 위 두 날짜를 **`String` 으로 내려보내도록 바꿨습니다.** 이유가 명시돼 있습니다 — 이 저장소는 **Spring Boot 1.x 의 Jackson 이라 `java.time` 타입을 역직렬화하지 못합니다.**
+> - **RWD-5951 / RWD-5981**: 커뮤니티 데이터와 참여자 리스트의 멤버십 뱃지를 `isAvailable` → **`hasMembership`** 축으로 전환했습니다. RWD-5981 은 2026-09-03 에 릴리즈 당일 되돌려졌다가 **이번에 다시 적용됐습니다**(`f6fe4bfc75`, "Revert 의 Revert"). 짝이 되는 [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md) 의 RWD-5981 도 함께 되살아났습니다.
+>
+> ### 글로벌 SPA 이관 3건 (FE1-1751 · FE1-1754 · FE1-1756)
+> - **서포터클럽 소개**(`/web/supporter-club/intro`) · **앱 설치 랜딩** · **서비스 제공 현황** 세 지면의 뷰를 **`global-korea/index` 로 전환**했습니다. 프론트 쪽에서 같은 이슈로 `apps/global` 한국 라우트에 페이지를 만들었습니다.
+> - 앱 설치 랜딩 라우트는 이후 `GlobalKoreaUIController` 로 옮겼습니다.
+>
+> ### FE1-1836 — 개인정보처리방침 위탁 업체·글로벌 파트너사 목록 변경
+> - `web/resources/terms/privacy_entrustments.html` 과 `privacy_third_parties_global_partners.html` 을 갱신했습니다(후자 53줄 변경).
+>
+> ### 기타
+> - **FE1-1811** — 로컬 개발 도메인을 `local.wadiz.io` 로 변경.
+> - 직전 회차의 CLIENT-229(HTML 메타데이터 다국어)에서 `html-metadata_ko` 변경분 일부를 되돌렸습니다(FE1-1754).
+>
+> ---
+
 > 📅 **2026-09-08 cloud_live pull 보강** (40 커밋, −8,858줄)
 >
 > ⚠️ **이번 pull 의 핵심은 대규모 죽은 코드 정리입니다.** SPA(글로벌) 이관으로 참조를 잃은 **JSP 61개와 컨트롤러·검증기 11개 클래스**가 삭제됐습니다. 이 레거시 저장소가 실제로 줄어들기 시작했습니다.

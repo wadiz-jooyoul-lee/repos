@@ -1,3 +1,39 @@
+> 📅 **2026-09-15 cloud_live pull 보강** (25 커밋)
+>
+> ⚠️ **오래 묵혀 둔 `FE-8218` 통합기획전 BFF 브랜치가 통째로 들어왔습니다.** 커밋 날짜가 **2024-08 ~ 2026-09** 로 2년 넘게 걸쳐 있습니다. 실제 코드 규모는 **+7,394줄**(테스트 3,179줄 포함)입니다.
+>
+> ### FE-8218 — 통합기획전 BFF (Backend For Frontend)
+>
+> **BFF 가 무엇인가**: 프론트가 여러 상위 API 를 각각 부르는 대신, app-api 가 대신 모아서 한 번에 내려주는 중간 계층입니다.
+>
+> - 신규 모듈 `src/api/exhibition/` — `exhibition.validation.ts`(152줄) · `types/exhibition.types.ts`(282줄) + 테스트 7개 파일(합계 **3,179줄**, 그중 `exhibition.service.spec.ts` 만 1,300줄).
+> - **부분 실패를 흡수합니다** — 상위 API 중 일부가 404 를 주면 그 항목만 빼고 나머지를 내려주고, 같은 요청은 합쳐서 한 번만 호출합니다.
+> - 잘못된 요청은 **400** 으로 끊습니다.
+> - **응답 압축으로 202KB → 5.6KB** 로 줄였습니다.
+> - **캐시 칸을 국가·API 버전까지 나눴습니다.** 한글 user-agent 가 훼손되던 문제를 되돌리면서 캐시 키가 무한히 늘어나지 않도록 유한하게 만들었습니다.
+> - 호출자의 **user-agent 를 상위 API 로 전달**합니다(dev 에서 검증 후 결과를 문서로 남김).
+> - 프론트 쪽 짝은 [`wadiz-frontend`](./wadiz-frontend/wadiz-frontend.md) 의 `FE-8218`(기획전 배치 로직 분리·BFF 연동, 서버 캐시를 국내/해외로 나눠 on/off)입니다.
+>
+> ### 기타
+> - **FE1-1924** — 검색 API 배치 크기를 **프런트엔드와 같은 150** 으로 낮췄습니다.
+> - **CLIENT-270** — `robots.txt` 에 `/links/`·`/redirect/` **Allow** 추가.
+>
+> ---
+
+> 📅 **2026-09-10 cloud_live pull 보강** (3 커밋)
+>
+> ### CLIENT-236 후속 — 직전에 만든 구조를 되돌렸습니다
+> - 2026-09-08 보강에서 기록한 **`UpstreamRelayException` 전용 예외와 Datadog span 표시가 제거됐습니다.**
+>   - `src/common/exceptions/upstream-relay.exception.ts` 삭제
+>   - `DatadogErrorInterceptor` 의 `markUpstreamRelay` 호출과 `src/tracing.ts` 의 express 훅(22줄) 삭제
+> - 커밋 제목에 이유가 적혀 있습니다 — **"동작이 없어진"**, **"모니터가 쓰지 않는"**. 즉 만들어 두었으나 실제로 모니터링 쪽에서 그 표시를 쓰지 않아 효과가 없던 코드입니다.
+> - ⚠️ 따라서 **에러 집계 제외는 현재 동작하지 않습니다.** 다만 **502·504 변환 자체는 남아 있습니다**(`project.controller.ts` 에서 `HttpException` 으로 직접 던짐). 뒷단 장애를 5xx 로 뭉뚱그리지 않고 게이트웨이 오류로 구분하는 부분은 유효합니다.
+>
+> ### CLIENT-249 — 스토리 캐시 삭제 시 500 오류 수정
+> - 스토리 캐시를 지울 때 500 이 나던 문제를 고쳤습니다 (`project.module.ts`). 모듈 단위 검증 `project.module.spec.ts`(39줄)가 새로 붙었습니다.
+>
+> ---
+
 > 📅 **2026-09-08 cloud_live pull 보강** (13 커밋)
 >
 > 13커밋 전부 `CLIENT-236` 한 이슈입니다. 주제는 **"업스트림(뒷단 API)이 아플 때 app-api 가 대신 욕먹지 않게 하기"** 입니다.

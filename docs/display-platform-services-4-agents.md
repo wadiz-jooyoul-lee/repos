@@ -7,6 +7,13 @@
 
 ---
 
+> 📅 **2026-09-15 main pull 보강** — `keyword`(1) · `main2-stream-agent`(2)
+>
+> ### CI 워크플로 정규화 (2026-09-10, 팀 일괄)
+> - `keyword`: live 워크플로의 중복 스텝 9줄 제거, **rc4 워크플로 추가**.
+> - `main2-stream-agent`: **`aws_deploy_ecr_clive.yml` 을 `aws_deploy_ecr_rc4.yml` 로 교체**하고 live 워크플로를 정리했습니다(누락분 보완 커밋 포함).
+> - 같은 날 `inbox`·`mail-fast-api`·`notification-log-agent` 도 같은 정리를 받았습니다. **display-platform 팀이 배포 워크플로를 한 형태로 맞추는 작업**이 마무리 단계로 보입니다.
+
 > 📅 **2026-09-08 main pull 보강** — `display-agent` (5 커밋)
 >
 > ### DISPLAY-1728 — 펀딩·스토어 구매내역 CDC 색인 추가
@@ -84,7 +91,8 @@
 | 상태 | 서비스 |
 |---|---|
 | **정리 완료** | `display-agent`(중복 clive·odev 스텝 제거, 2026-08-26) · `indexer-dokdo`(트리거 브랜치 정리, 08-26) · `catalog-agent`(live 트리거를 main 으로, 08-25) · `main2-api`(DISPLAY-1688, 09-02) · **`inbox-agent`**(CI 워크플로 정규화, 09-02) · **`main2-batch-api`**(DISPLAY-1713, 09-03) |
-| **미정리** | `inbox` · `user-activity-api` — live/clive 이중 스텝이 남아 있고 `display-platform/live/` 는 gitops 에 없음 |
+| **미정리** | `user-activity-api` — live/clive 이중 스텝이 남아 있고 `display-platform/live/` 는 gitops 에 없음 |
+| **2026-09-10 일괄 정규화** | `inbox` · `keyword` · `mail-fast-api` · `main2-stream-agent` · `notification-log-agent` — 같은 날 "CI 워크플로우 정규화" 커밋으로 일괄 정리 |
 
 > 📅 2026-09-03 기준입니다. 2026-09-01 최초 작성 시점의 "미정리 3건"이 **2건으로 줄었습니다.**
 

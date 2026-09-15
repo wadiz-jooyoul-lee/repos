@@ -1,5 +1,14 @@
 # co.wadiz.api.community
 
+> 📅 **2026-09-10 cloud_live pull 보강** (1 커밋)
+>
+> ### RWD-5951 — 멤버십 응답 판정을 `isAvailable` → `hasMembership` 으로 전환
+> - 멤버십 응답에서 **"멤버십을 쓸 수 있는가"(`isAvailable`) 하나로 판단하던 것을 "가입돼 있는가"(`hasMembership`) 축으로 바꿨습니다** (`MembershipApiGateway`·`MembershipAvailableDto`). 결제 유예(GRACE_PERIOD)가 생기면서 **가입 상태와 혜택 사용 가능 여부가 갈리게 됐기 때문**입니다.
+> - 검증 테스트 `MembershipAvailableDtoTest`(67줄) 신규.
+> - 같은 전환이 [`com.wadiz.store`](../com.wadiz.store/com.wadiz.store.md)·[`com.wadiz.web`](../com.wadiz.web.md)·[`com.wadiz.api.funding`](../com.wadiz.api.funding/com.wadiz.api.funding.md)·[`com.wadiz.wave.user`](../com.wadiz.wave.user/com.wadiz.wave.user.md) 에도 함께 들어갔습니다.
+>
+> ---
+
 > 📅 **2026-09-08 cloud_live pull 보강** (54 커밋, 505파일 +12,861/−4,283)
 >
 > ⚠️ **이번 pull 의 대부분은 기능 추가가 아니라 아키텍처 재편(RWD-5878)입니다.** DB 접근 코드를 계층으로 갈라내고, 그 경계를 테스트로 강제하는 작업이 8월 17일부터 3주에 걸쳐 진행됐습니다. 패키지 구조·클래스 위치가 크게 바뀌었으므로 **기존 문서의 경로 표기는 상당수 옛 위치**입니다.

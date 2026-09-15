@@ -9,6 +9,35 @@
 
 ---
 
+> 📅 **2026-09-15 main pull 보강** (16 커밋)
+>
+> ### 🆕 `stage` 환경이 신설됐습니다
+> - `values/web/stage/` 와 `values/user-platform/stage/` 가 새로 생겼습니다 — **`web-server.yaml`(68줄, RWD-6044)** 와 **`account-server.yaml`(23줄, BE3-930)**.
+> - 기존에 `display-platform/stage` 하나뿐이던 stage 가 **3개 플랫폼으로 늘었습니다.** 환경 집합은 이제 **`clive` · `dev` · `rc4` · `stage`(display-platform·user-platform·web)** 입니다.
+> - [`helm-charts-gitops`](./helm-charts-gitops.md) 에도 같은 3개 파일이 동시에 생겨 **두 저장소가 일치합니다.**
+> - 소스 쪽 짝: [`com.wadiz.web`](./com.wadiz.web.md) RWD-6044(stage 프로파일을 clive 기반으로 재구축, `stage.wadiz.io`)·`kr.wadiz.account` BE3-930.
+>
+> ### 차트 템플릿 — delegate 재구성과 mesh 전용 모드
+> - `4932ff9` **"delegate 템플릿 재구성 및 mesh 전용 모드 지원"** — VirtualService 의 delegate(다른 VirtualService 로 라우팅을 위임하는 Istio 기능) 템플릿을 다시 짜고 **mesh 전용 모드**를 지원합니다. 직전 회차의 dark-release 를 mesh 스코프로 옮긴 작업과 같은 흐름입니다.
+> - `cb127a1` **CORS** — `virtualService.cors.defaultAllowOrigins` 를 **전 환경에 적용**하고 서비스별 중복 origin 을 정리했습니다(2026-08-27 에 2단 구조로 나눈 것의 마무리).
+>
+> ### 서비스 변경
+> - **`clive` 에 `makercenter-delegate` 추가** — 신규 고유 서비스입니다(gitops 에도 같은 날 추가).
+> - `startup-api` 메모리 조정(clive·dev·rc4), rc4 `web-server` 정리.
+> - 통계: 서비스 values **303 → 308개**, 고유 서비스명 **109 → 110개**.
+
+> 📅 **2026-09-10 main pull 보강** (3 커밋)
+>
+> | 항목 | 내용 |
+> |---|---|
+> | **CINFRA-665** | clive `crm` 에 **App(임의 IP)의 `GET`/`PUT /api/v1/final-call-subscription` 을 허용**(+12줄). [`kr.wadiz.platform.crm`](./display-platform-services-3-messaging.md) 이 만든 막펀잡기 수신동의 API(DISPLAY-1702)를 앱이 직접 호출할 수 있게 여는 조치입니다. iOS FE1-1638·Android FE1-1648 의 알림 수신동의 화면과 이어집니다 |
+> | **Datadog 비용 최적화** | `global-api`·`funding-api` 의 **커스텀 메트릭 스크랩 설정을 정리**했습니다(core dev/rc4/clive). clive `global-api` 에 3줄 추가, dev·rc4 `global-api` 에서 3줄씩 제거, rc4 `funding-api` 에서 11줄 제거 |
+> | small change | dev `makercenter` values 조정 |
+>
+> - ⚠️ **`community-agent` 가 [`helm-charts-gitops`](./helm-charts-gitops.md) 에만 신설되고 이 저장소에는 없습니다**(RWD-5893, dev·rc4·clive 3건). 직전 회차의 `order-api` 어긋남이 해소되자마자 같은 형태의 어긋남이 다시 생겼습니다 — **gitops 에 먼저 만들고 나중에 차트 저장소에 반영하는 순서**로 보입니다(추정).
+>
+> ---
+
 > 📅 **2026-09-08 main pull 보강** (14 커밋)
 >
 > ### 차트 템플릿 — dark-release 헤더 매치가 죽은 규칙이었습니다

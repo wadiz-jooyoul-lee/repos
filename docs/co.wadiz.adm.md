@@ -9,6 +9,14 @@
 
 ---
 
+> 📅 **2026-09-15 master pull 보강** (3 커밋)
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | **RWD-6027** | **취소·반환 원장에 행위 주체를 기록**합니다. 신규 `RefundActorType`(24줄)과 `BackingPaymentCancel`·`BackingPaymentRefund` 모델 확장, 취소·환불 서비스와 매퍼 XML 반영. [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md)·[`com.wadiz.web`](./com.wadiz.web.md) 의 같은 이슈와 짝입니다 |
+> | **RWD-6055** | 심사 피드백 팝업 조회 시 **legacy 섹션 `BASIC_INFO` 를 제외**해 500 오류를 고쳤습니다 |
+> | **RWD-6056** | 시간한정 리워드의 **제한시간 입력을 4자리까지 허용**하고, 만료일시 **양방향 미리보기**를 붙였습니다 (`popCampaignManage.jsp` +50줄) |
+
 > 📅 **2026-09-08 master pull 보강** (1 커밋)
 >
 > ### RWD-5996 — 레거시 업로드의 S3 액세스 키 제거, IRSA 단일화
