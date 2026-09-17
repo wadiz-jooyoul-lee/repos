@@ -1,5 +1,12 @@
 # wadiz-claude-plugins
 
+> 📅 **2026-09-17 main pull 보강** (1 커밋)
+>
+> ### 스킬 이름을 `regular-release` 로 되돌렸습니다
+>
+> 직전 회차(2026-09-15)에 `regular-release` 를 `regular-deployment` 로 바꿨는데, 이번에 **다시 `regular-release` 로 되돌렸습니다.**
+> 같은 날 [`com.wadiz.web`](./com.wadiz.web.md) 의 워크플로 파일 이름도 `prepare-branch-for-regular-release` 로 함께 되돌아갔습니다.
+
 > 📅 **2026-09-15 main pull 보강** (15 커밋)
 >
 > ### `regular-release` → `regular-deployment` 로 개편 (13커밋)

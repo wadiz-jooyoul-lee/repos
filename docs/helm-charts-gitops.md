@@ -9,6 +9,39 @@
 
 ---
 
+> 📅 **2026-09-17 main pull 보강** (96 커밋)
+>
+> 대부분은 통합 검사 자동 이미지 태그 갱신입니다.
+> 소스 저장소 기준으로 `platform-admin` 18건, `com.wadiz.web` 10건, `com.wadiz.api.funding` 10건, `io.wadiz.order` 8건 순입니다.
+> 사람이 만든 커밋은 11건이고, 그 안에 의미 있는 변경이 있습니다.
+>
+> ### `community-agent` 측정 창을 열었다 닫았습니다 (RWD-6045 · RWD-6054)
+>
+> `community-agent` 는 커뮤니티 글을 큰 언어모델로 처리해 결과를 인덱스에 넣는 에이전트입니다.
+>
+> - dev 스케줄러를 **측정하는 동안만 켰다가**, 주기를 30분으로 바꾸고, 측정이 끝나자 **원복**했습니다. 세 커밋에 걸쳐 있습니다.
+> - RWD-6054 로 **앱 기본값과 공용 ConfigMap 이 이미 커버하는 키를 values 에서 지웠습니다.** 같은 값을 두 곳에서 관리하지 않으려는 정리입니다.
+>
+> ### FE2-1231 — 메이커센터 주소 이전에 맞춘 설정 변경
+>
+> clive 의 `makercenter-api` OAuth 콜백 주소를 두 번에 걸쳐 바꿨습니다.
+> 먼저 호스트를 `www.wadiz.io` 로 바꾸고, 그다음 `/web/maker/makercenter` 경로를 붙였습니다.
+> 소스 쪽 짝은 [`makercenter-be`](./makercenter-be.md)·[`makercenter-fe`](./makercenter-fe.md)·[`com.wadiz.web`](./com.wadiz.web.md) 의 같은 이슈입니다.
+>
+> ### rc1 시험 배포 값 추가
+>
+> `client/rc1/app-api.yaml` 이 새로 생겼습니다. 커밋에 **"파이프라인 검증용, 토큰 제외"** 라고 적혀 있습니다.
+> [`helm-charts`](./helm-charts.md) 쪽에도 같은 날 같은 파일이 생겨 두 저장소가 맞춰져 있습니다.
+>
+> ### 그 밖의 수동 커밋
+>
+> | 대상 | 내용 |
+> |---|---|
+> | `io.wadiz.order` | dev 검증 콘솔 토큰의 사용자 번호를 `1000002636` 으로 바꿨습니다 |
+> | `platform-admin` | 이미지 버전을 수동으로 고쳤습니다 |
+> | 백오피스 | FEP 도메인 이름을 설정에 추가했습니다 |
+> | `wave-batch` · `catalog-agent` | 개별 설정 조정 |
+
 > 📅 **2026-09-15 main pull 보강** (265 커밋)
 >
 > 커밋 수는 많지만 **대부분 CI 자동 이미지 태그 갱신**입니다(소스 레포 기준 `com.wadiz.web` 41 · `com.wadiz.api.funding` 30 · `io.wadiz.order` 16 · `co.wadiz.adm` 11 · `com.wadiz.batch.payment` 10). 수동 커밋 약 30건에 의미 있는 변경이 있습니다.
