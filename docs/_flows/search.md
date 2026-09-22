@@ -32,20 +32,20 @@
 
 ---
 
-## 🔑 새로운 Host 발견 — `service.wadiz.kr`
+## 🔑 새로운 Host 발견 — `api.wadiz.io`
 지금까지 확인된 host 목록에 추가:
 
 | Host | 환경변수 | 담당 서비스 |
 |---|---|---|
-| `www.wadiz.kr` | `VITE_SERVICE_API_URL` 아님 (별도 `VITE_BASE_URL` 또는 none) | com.wadiz.web (레거시 + ApiProxy hub) |
-| `account.wadiz.kr` | `VITE_ACCOUNT_URL` | kr.wadiz.account (OAuth2 IdP) |
-| `app.wadiz.kr` | `VITE_APP_API_URL` | app-api (NestJS BFF) |
-| `platform.wadiz.kr` | `VITE_PLATFORM_API_URL` | 플랫폼 서비스 군 |
-| **`service.wadiz.kr`** ← | **`VITE_SERVICE_API_URL`** | **검색·카테고리·통합 조회 (Service API)** |
-| `public-api.wadiz.kr` | `VITE_PUBLIC_API_URL` | 비로그인 공개 |
-| `analytics.wadiz.kr` | — | 애널리틱스 |
+| `www.wadiz.io` | `VITE_SERVICE_API_URL` 아님 (별도 `VITE_BASE_URL` 또는 none) | com.wadiz.web (레거시 + ApiProxy hub) |
+| `account.wadiz.io` | `VITE_ACCOUNT_URL` | kr.wadiz.account (OAuth2 IdP) |
+| `api.wadiz.io/app` | `VITE_APP_API_URL` | app-api (NestJS BFF) |
+| `api.wadiz.io` | `VITE_PLATFORM_API_URL` | 플랫폼 서비스 군 |
+| **`api.wadiz.io`** ← | **`VITE_SERVICE_API_URL`** | **검색·카테고리·통합 조회 (Service API)** |
+| `api.wadiz.io` | `VITE_PUBLIC_API_URL` | 비로그인 공개 |
+| `analytics.wadiz.io` | — | 애널리틱스 |
 
-환경별 prefix: live/stage → `https://service.wadiz.kr`, rc/rc2/rc3 → `https://rc-service.wadiz.kr`, dev → `https://dev-service.wadiz.kr`.
+환경별 prefix: live/stage → `https://api.wadiz.io`, rc/rc2/rc3 → `https://rc-api.wadiz.io`, dev → `https://dev-api.wadiz.io`.
 
 ---
 
@@ -89,9 +89,9 @@ queryKey: generateQueryKey(['api/search/v2/funding'], params)
 
 ---
 
-## 2. Hub — `service.wadiz.kr` = `com.wadiz.wave.searcher`
+## 2. Hub — `api.wadiz.io` = `com.wadiz.wave.searcher`
 
-`/api/search/*` 는 **com.wadiz.web 이 아닌 별도 호스트** `service.wadiz.kr` 에서 처리하며, 그 실체는 **본 모노레포의 `com.wadiz.wave.searcher`** (port 9120) 이다. 외부 경계가 아니라 추적 가능 영역.
+`/api/search/*` 는 **com.wadiz.web 이 아닌 별도 호스트** `api.wadiz.io` 에서 처리하며, 그 실체는 **본 모노레포의 `com.wadiz.wave.searcher`** (port 9120) 이다. 외부 경계가 아니라 추적 가능 영역.
 
 ### 2.0 기술 스택 요약 (`com.wadiz.wave.searcher`)
 
@@ -168,7 +168,7 @@ public class SearcherApiAdapter {
 - `searcher_api_url` 은 외부 파일(예: `wave.properties`) 로 주입 → 런타임에 search 엔진 호스트 변경 가능. **실 호스트는 `dev-app01:9120` 등 — 결국 동일 `com.wadiz.wave.searcher` 인스턴스.**
 
 ### 2.3 Jersey `/api/*` 경로
-com.wadiz.web 의 web.xml 은 `/api/*` 를 **Jersey Spring Servlet** 으로 매핑(:190). 하지만 Jersey `@Path` 중 `api/search/*` 를 매칭하는 리소스는 본 레포에 없음 → 따라서 FE 가 `service.wadiz.kr/api/search/*` 를 호출할 때 www.wadiz.kr 을 경유하지 않고 **별도 호스트(`com.wadiz.wave.searcher`)** 로 가는 것으로 해석.
+com.wadiz.web 의 web.xml 은 `/api/*` 를 **Jersey Spring Servlet** 으로 매핑(:190). 하지만 Jersey `@Path` 중 `api/search/*` 를 매칭하는 리소스는 본 레포에 없음 → 따라서 FE 가 `api.wadiz.io/api/search/*` 를 호출할 때 www.wadiz.io 을 경유하지 않고 **별도 호스트(`com.wadiz.wave.searcher`)** 로 가는 것으로 해석.
 
 ---
 
@@ -251,11 +251,11 @@ CategorySearchService / IntegrateCampaignServiceImpl / TotalSearchServiceImpl
 ### A. 통합 검색 (쿼리 입력)
 ```
 [FE: 상단 검색창 → "키워드" 입력 → 엔터]
-   │ GET https://service.wadiz.kr/api/search/v2/products?q=키워드&page=0&size=20&sort=...
-   │ (별도 host — www.wadiz.kr 경유 X)
+   │ GET https://api.wadiz.io/api/search/v2/products?q=키워드&page=0&size=20&sort=...
+   │ (별도 host — www.wadiz.io 경유 X)
    │ credentials 불필요 (비로그인도 가능한 경우), 단 일부 검색은 쿠키 전송 가능
    ▼
-[service.wadiz.kr — Searcher / Catalog API (외부 서비스)]
+[api.wadiz.io — Searcher / Catalog API (외부 서비스)]
    │
    └─ (내부 구현 불명)
         ├─ 쿼리 파싱 · 필터 적용
@@ -270,7 +270,7 @@ CategorySearchService / IntegrateCampaignServiceImpl / TotalSearchServiceImpl
 ### B. 카테고리 진입
 ```
 [FE: 카테고리 탭 클릭]
-   │ GET https://service.wadiz.kr/api/search/v2/categories?serviceType=...&categoryCode=...
+   │ GET https://api.wadiz.io/api/search/v2/categories?serviceType=...&categoryCode=...
    │ Header: wadiz-language: ko/en
    ▼
 [com.wadiz.wave.searcher  (port 9120)]
@@ -292,10 +292,10 @@ CategorySearchService / IntegrateCampaignServiceImpl / TotalSearchServiceImpl
 ### C. 탭별 검색 (펀딩/프리오더/오픈예정)
 ```
 [FE: 펀딩 탭]
-   │ POST https://service.wadiz.kr/api/search/v2/funding
+   │ POST https://api.wadiz.io/api/search/v2/funding
    │    body: { filters: {...}, sort: '...', page: 0, size: 20 }
    ▼
-[service.wadiz.kr]
+[api.wadiz.io]
    └─ 펀딩 전용 인덱스 쿼리 (프리오더/오픈예정은 각자 다른 endpoint)
 ```
 
@@ -314,7 +314,7 @@ CategorySearchService / IntegrateCampaignServiceImpl / TotalSearchServiceImpl
 
 ## 경계·미탐색
 
-1. ~~**`service.wadiz.kr` 서비스 정체**~~ → ✅ 해소: `com.wadiz.wave.searcher` (port 9120, Spring Boot) 로 확정 (2026-04-29).
+1. ~~**`api.wadiz.io` 서비스 정체**~~ → ✅ 해소: `com.wadiz.wave.searcher` (port 9120, Spring Boot) 로 확정 (2026-04-29).
 2. ~~**내부 Searcher 스택**~~ → ✅ 해소: **ElasticSearch 7.x** (`org.elasticsearch.action.*` 직접 사용) + MySQL master/slave (JPA 직조회 hybrid). `co.wadiz.currency-exchange` 와 별개.
 3. **인덱스 싱크 publisher 의 정체** ⚠️ — `com.wadiz.wave.searcher` 의 자체 `ScheduledHandler` 는 **검색어 통계 + last-entered-feeds 색인만** 담당. **Campaign/Reward 도큐먼트(카드·달성률·카테고리 카운트)** 색인은 외부 indexer 가 publish 하는데, 본 모노레포에는 해당 코드 없음. 후보: (a) 별도 repo, (b) Kafka CDC (Debezium) MySQL binlog → ES, (c) `com.wadiz.api.funding` 의 도메인 이벤트 발행. **추적 필요**.
 4. **광고 카드 mixin 로직** — `rewardAD` 와 `reward` 의 조합 시점(서버단 vs FE 조합). searcher 의 `service/advertise/AdvertisementServiceImpl` 에 단서 있을 것 — 별도 분석 필요.

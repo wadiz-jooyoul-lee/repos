@@ -198,7 +198,7 @@ Transaction (pointTransactionId, userId, type, amount, executionDate)
    ├─ GET /web/point/api/summation/my                       (보유 + 내일 만료)
    └─ GET /web/point/api/transactions/my?page=N&size=10     (내역 — useInfiniteQuery)
    ▼
-[www.wadiz.kr — com.wadiz.web]
+[www.wadiz.io — com.wadiz.web]
    │
    ├─ MyPointApiController#getAllMyPointSummation            (point/MyPointApiController.java:64)
    │     @RequiredLogin → SessionUtil.getUserId()
@@ -226,7 +226,7 @@ Transaction (pointTransactionId, userId, type, amount, executionDate)
    ├─ GET /web/reward/api/coupons/owners/my            (목록)
    └─ GET /web/reward/api/coupons/owners/my/qty        (개수)
    ▼
-[www.wadiz.kr — com.wadiz.web]
+[www.wadiz.io — com.wadiz.web]
    │ 쿠폰 adapter → com.wadiz.api.reward HTTP 호출 (추정: Feign/RestClient)
    ▼
 [com.wadiz.api.reward]

@@ -62,12 +62,12 @@
 
 ## 2. 관측된 주요 경로 (FE → 서버)
 
-### 2.1 wai-agent-launcher → app.wadiz.kr
+### 2.1 wai-agent-launcher → api.wadiz.io/app
 ```
 GET /app/wai/agents                 # 에이전트 목록 (추정)
 POST /app/wai/agents/{id}/invoke    # 에이전트 실행 (추정)
 ```
-(환경변수 `VITE_APP_API_URL` → app.wadiz.kr = app-api 호스트)
+(환경변수 `VITE_APP_API_URL` → api.wadiz.io/app = app-api 호스트)
 
 ### 2.2 AI Review (메이커 스튜디오)
 ```
@@ -82,12 +82,12 @@ GET  /web/apip/funding/projectaisummary/{projectNo}/summary   # 요약 조회 (�
 
 ## 3. Hub — 분산됨
 
-### 3.1 `app.wadiz.kr` (app-api NestJS)
+### 3.1 `api.wadiz.io/app` (app-api NestJS)
 - WAi 관련 FE 호출의 1차 진입
 - 내부에서 OpenAI/Anthropic/사내 AI 서비스 호출 (추정)
 - Zendesk Webhooks 수신 → 번역 후 회신
 
-### 3.2 `www.wadiz.kr/web/apip/funding/*` (ApiProxy)
+### 3.2 `www.wadiz.io/web/apip/funding/*` (ApiProxy)
 - `aireview`, `projectaisummary` 영역이 funding 도메인 내에 있으므로 일반 ApiProxy 경유
 - funding 서비스가 AI 모델 공급자 호출
 

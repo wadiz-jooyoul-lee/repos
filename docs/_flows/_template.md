@@ -14,8 +14,8 @@
 - **화면 파일**: `packages/ui/...` 또는 `apps/.../pages/...` (`path:line`)
 - **훅/서비스**: `packages/queries/src/...` 또는 `apps/.../hooks/...`
 - **호출 API**:
-  - `GET /web/apip/funding/...` → upstream `www.wadiz.kr` (com.wadiz.web)
-  - `GET /api/...` → upstream `app.wadiz.kr` 또는 `platform.wadiz.kr`
+  - `GET /web/apip/funding/...` → upstream `www.wadiz.io` (com.wadiz.web)
+  - `GET /api/...` → upstream `api.wadiz.io/app` 또는 `api.wadiz.io`
 - **상태·캐싱**: TanStack Query `queryKey`, stale time
 
 ### 1.2 `wadiz-android` / `wadiz-ios` (앱)

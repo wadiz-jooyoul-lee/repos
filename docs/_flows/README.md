@@ -3,6 +3,39 @@
 이 폴더는 **"Client(FE/앱) → com.wadiz.web → Service API → DB"** 전체 체인을 기능 단위로 추적한 문서입니다. 개별 repo 분석(`docs/<repo>/`) 은 단일 서비스 내부에 집중하고, 이 폴더는 **기능 하나가 실제로 어떤 시스템들을 거치는지** 보여줍니다.
 
 ## 목적
+> 🔍 **2026-09-22 도메인 일괄 정정**
+>
+> 본문의 `wadiz.kr` 표기를 `wadiz.io` 로 바꿨습니다. 근거는 두 곳입니다.
+>
+> | 출처 | 무엇 |
+> |---|---|
+> | `wadiz-frontend/packages/core/src/env/environments.ts` | `ENV_DOMAINS` — 도메인 단일 출처 |
+> | `wadiz-frontend/studio/startup/.env.production.clive` | 앱별 실제 환경변수 값 |
+>
+> 환경 이름도 바뀌었습니다. **`local` · `dev` · `rc4` · `stage` · `clive` 5개**입니다.
+> `rc` · `rc2` · `rc3` 는 없어졌습니다.
+>
+> 주요 대응입니다.
+>
+> | 종전 | 지금 |
+> |---|---|
+> | `www.wadiz.kr` | `https://www.wadiz.io` |
+> | `account.wadiz.kr` | `https://account.wadiz.io` |
+> | `platform.wadiz.kr` · `service.wadiz.kr` | **`https://api.wadiz.io`** (한곳으로 모임) |
+> | `app.wadiz.kr` | `https://api.wadiz.io/app` |
+> | `public-api.wadiz.kr` | `https://api.wadiz.io` |
+> | `static.wadiz.kr` | `https://cdn-static.wadiz.io` |
+> | `datasvc.wadiz.kr` | `https://datasvc.aidata.wadiz.io` |
+>
+> ⚠️ **확인하지 못해 그대로 둔 호스트**가 있습니다.
+> `cdn3.wadiz.kr` · `ws.ai.wadiz.kr` · `ad.wadiz.kr` · `studio.wadiz.kr` · `aidata.wadiz.kr` 입니다.
+> 프런트엔드 코드에서 대응하는 `wadiz.io` 주소를 찾지 못했습니다. **추측으로 바꾸지 않았습니다.**
+>
+> 변경 로그 블록(`>` 로 시작하는 과거 기록)은 그대로 두었습니다.
+>
+> ---
+>
+
 - 특정 페이지/화면을 수정할 때 영향받는 전체 레이어 파악
 - 장애 발생 시 호출 체인을 따라 원인 추적
 - 새 팀원이 핵심 플로우 하나를 따라가며 시스템 전체 구조 이해

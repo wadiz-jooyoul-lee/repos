@@ -96,7 +96,7 @@
 
 | 스크립트 | PROXY_TARGET | 도메인군 |
 |---|---|---|
-| `start:local` | `http://local.wadiz.kr:8090` | wadiz.kr (레거시) |
+| `start:local` | `http://local.wadiz.io:8090` | wadiz.kr (레거시) |
 | `start:dev` | `https://devadm.wadiz.kr` | wadiz.kr |
 | `start:rc` | `https://rcadm.wadiz.kr` | wadiz.kr |
 | `start:rc2` | `https://rc2adm.wadiz.kr` | wadiz.kr |
@@ -115,7 +115,7 @@
 
 - `http-proxy-middleware` v2 기반. context 는 `['/', '/web', '/resources', '/j_spring_security_check']` (`proxyInfo.js:81`). 즉 **루트부터 전부 proxyTarget 으로 보내되 `/static/admin` 같은 webpack-dev-server 에셋은 자동으로 먼저 가로챈다**.
 - `changeOrigin: true`, `selfHandleResponse: true`, `autoRewrite: true`, `logLevel: 'debug'` (`proxyInfo.js:73-79`).
-- `cookieDomainRewrite: { '*': 'local.wadiz.kr' 또는 '.local.wadiz.kr' }` — 포트/서브도메인 모드에 따라 다름. 원격 adm 서버가 `Set-Cookie: domain=.wadiz.kr` 을 내려도 브라우저가 로컬 도메인으로 저장하게 한다.
+- `cookieDomainRewrite: { '*': 'local.wadiz.io' 또는 '.local.wadiz.io' }` — 포트/서브도메인 모드에 따라 다름. 원격 adm 서버가 `Set-Cookie: domain=.wadiz.kr` 을 내려도 브라우저가 로컬 도메인으로 저장하게 한다.
 - `onProxyRes` (`proxyInfo.js:22-66`):
   - `Access-Control-Allow-Credentials: true` 강제.
   - 응답 `Set-Cookie` 에서 `Secure` 플래그를 제거 — 로컬 HTTPS 가 자가 서명이라 Secure 쿠키 거부 방지.
@@ -127,9 +127,9 @@
 
 `README.md:15-46` 에 세부 정리. 요약:
 
-- **서브도메인 모드(기본)**: `https://admin.local.wadiz.kr` / `https://adm.local.wadiz.co` 로 접속 → nginx(443)가 `127.0.0.1:9000`(webpack-dev-server)로 reverse proxy.
-- **포트 모드(`ADMIN_PORT_MODE=true`)**: `https://local.wadiz.kr:9000` 으로 직접 접속, nginx 불필요.
-- `/etc/hosts` 에 `127.0.0.1 local.wadiz.kr admin.local.wadiz.kr local.wadiz.co adm.local.wadiz.co` 등록 필요.
+- **서브도메인 모드(기본)**: `https://admin.local.wadiz.io` / `https://adm.local.wadiz.co` 로 접속 → nginx(443)가 `127.0.0.1:9000`(webpack-dev-server)로 reverse proxy.
+- **포트 모드(`ADMIN_PORT_MODE=true`)**: `https://local.wadiz.io:9000` 으로 직접 접속, nginx 불필요.
+- `/etc/hosts` 에 `127.0.0.1 local.wadiz.io admin.local.wadiz.io local.wadiz.co adm.local.wadiz.co` 등록 필요.
 - 자가 서명 인증서: `packages/cert/local.wadiz.{crt,key}` (`wadiz.kr` / `wadiz.co` 둘 다 SAN).
 
 ---
@@ -147,7 +147,7 @@
 | `fetchRewardApi` | `/web/reward/api` | 같은 파일:tail |
 | `fetchFundingApi` | `/web/apip/funding` | 같은 파일:tail |
 | `fetchStoreApi` | `/web/apip/store` | 같은 파일:tail |
-| `fetchMakerCenterApi` | `https://api.makercenter.wadiz.kr` | 같은 파일:tail |
+| `fetchMakerCenterApi` | `https://api.makercenter.wadiz.io` | 같은 파일:tail |
 | `@wadiz/api` (신규 TS) | 전용 `GET/POST/PUT/DELETE` (`packages/api/src/fetch.ts`) | `packages/api/src/admin/account.services.ts` |
 
 - 실패 시 `JsonParseError`, `FetchError` 를 throw (`fetchApi.js:20,89-100`).
@@ -184,7 +184,7 @@
 
 - `components/` — `BlockContainer`, `DatePicker`, `DateTimePickerCustomComponent`, `DepartmentSearchModal`, `EmployeeSearchModal`, `EnterIgnoreInput`, `ExpandToggle`, `FroalaEditor`, `HWPViewer`, `Page`, `PlusButton`, `ScrollTop`, `TagInput`, `TemporarySaveGuide`, `TagInput`, `ColorInput`.
 - `helpers/`:
-  - `wadizDomain.ts:1-23` — `getWadizBaseURL()` / `getAdminBaseURL()` 이 `process.env.ENVIRONMENT` (`local|live|dev|rc|...`) 로 분기해 링크 타겟 URL 생성. `live` 만 `www.wadiz.kr` / `adm.wadiz.kr` 고정.
+  - `wadizDomain.ts:1-23` — `getWadizBaseURL()` / `getAdminBaseURL()` 이 `process.env.ENVIRONMENT` (`local|live|dev|rc|...`) 로 분기해 링크 타겟 URL 생성. `live` 만 `www.wadiz.io` / `adm.wadiz.kr` 고정.
   - `notification.js:1-24` — antd `notification` 래핑 (우하단 배치).
   - `checkEmail.ts`, `checkEmoji.ts`, `comma.ts`, `fileDownloader.ts`, `arrayMove.ts`, `utils.ts`, `hooks/`.
 - `constants/api.js:1` — 딱 한 줄: `export const SUCCESS_CODE = 'SUSS000';` (백엔드 공통 응답 코드).
@@ -378,7 +378,7 @@
 - 수기 프로젝트 생성 (관리자 강제 생성):
   - `POST .../projects/set-up-without-funding` body `{project, maker}` (`api/project/project.ts:108-125`)
   - `POST .../projects/set-up-via-copy` body `{projectNo, qty, isJoined, isCopyProductRequired, maker}` (`api/project/project.ts:141-148`)
-- 카테고리 메타(원격 service 서버 호출): `GET https://{env}-service.wadiz.kr/api/search/categories` — `api/project/project.ts:38-67`
+- 카테고리 메타(원격 service 서버 호출): `GET https://{env}-api.wadiz.io/api/search/categories` — `api/project/project.ts:38-67`
 
 **주문/발송** (`/sales`, `/sales/:ORDER_NUMBER`)
 - `GET /web/apip/store/admin/orders?...` — 주문 목록 (20개 이상 필터)

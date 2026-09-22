@@ -33,7 +33,7 @@ const getMyFundingList = async (params) => {
 ```
 - **Query key**: `['/web/apip/funding/supporters/my/fundings', { filteringType, bizModel }]`
 - **page size 기본 20**, stale time 기본
-- **Host**: `https://www.wadiz.kr` (쿠키 세션 + Bearer 토큰 이중 지원)
+- **Host**: `https://www.wadiz.io` (쿠키 세션 + Bearer 토큰 이중 지원)
 
 ### 1.3 앱(Android/iOS)
 - Phase 2 미진행.
@@ -198,7 +198,7 @@ ORDER BY A.BackingPaymentId DESC
    │ GET /web/apip/funding/supporters/my/fundings?page=N&size=20&filteringType=...&bizModel=...
    │ (쿠키 세션 또는 Bearer 토큰)
    ▼
-[www.wadiz.kr]
+[www.wadiz.io]
    │
    ├─ bearerTokenAuthenticationFilter   (web.xml:123 특수 적용)
    │     └─ 토큰 검증 → Spring Security Context 주입
@@ -234,4 +234,4 @@ ORDER BY A.BackingPaymentId DESC
 3. **인증 이중 지원의 실제 동작** — Bearer vs 쿠키 분기 지점(서블릿 필터 체인 순서, 토큰 검증 실패 시 fallback 등) 은 SecurityConfig 차원 문서가 별도.
 4. **`TotalFundingAmount` 재계산 비용** — 한 페이지당 20 건 기준 20 회 서브쿼리. Campaign 통계가 별도 캐시/머테리얼라이즈되어 있는지 별도 확인.
 5. **상세/변경 엔드포인트** — `/my/fundings/{id}` 상세, `/shipping-address` 변경, `/pay-by` 변경은 본 문서 범위 밖 (각각 별도 flow 로 분화 가능).
-6. **앱에서의 Bearer 토큰 발급 경로** — OAuth2 access token 은 `kr.wadiz.account` 에서 발급되어 `www.wadiz.kr` 에 전달되는 흐름 (별도 flow: login).
+6. **앱에서의 Bearer 토큰 발급 경로** — OAuth2 access token 은 `kr.wadiz.account` 에서 발급되어 `www.wadiz.io` 에 전달되는 흐름 (별도 flow: login).

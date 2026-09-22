@@ -227,7 +227,7 @@
 
 | 이슈키 | 유형 | 제목 |
 |---|---|---|
-| CLIENT-104 | 작업 | GEO/SEO(www.wadiz.kr) robots noindex를 앱 설정 API 기반 구성 |
+| CLIENT-104 | 작업 | GEO/SEO(www.wadiz.io) robots noindex를 앱 설정 API 기반 구성 |
 | FE2-270 | 작업 | Stripe Connect 메이커 안내 이메일 템플릿 10종 제작 |
 | FE2-286 | 작업 | [광고센터-가부킹] 메일 템플릿 작업 |
 | FE2-317 | 작업 | [정산 어드민] 정산내역서 관련 메일템플릿 |
