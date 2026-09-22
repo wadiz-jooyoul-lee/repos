@@ -1,5 +1,12 @@
 # makercenter-fe-admin
 
+> 📅 **2026-09-22 cloud_live pull 보강** (1 커밋)
+>
+> ### FE2-1355 — `wadiz.kr` 잔재 제거
+>
+> `.env.production` 의 도메인과 기획전 고객관리 자동 검사의 주소를 `wadiz.io` 매핑으로 바꿨습니다.
+> [`makercenter-be`](./makercenter-be.md)·[`makercenter-fe`](./makercenter-fe.md) 의 같은 이슈와 짝입니다.
+
 > 📅 **2026-09-17 cloud_live pull 보강** (1 커밋)
 >
 > ### FE2-1300 — 사용자 서비스 주소를 통합 도메인으로 교체

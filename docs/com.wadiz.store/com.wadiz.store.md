@@ -9,6 +9,27 @@
 
 ---
 
+> 📅 **2026-09-22 cloud_live pull 보강** (2 커밋)
+>
+> ### RWD-6081 — 되돌아가지 않은 재고를 배치로 복구합니다
+>
+> 주문서는 결제 전 단계의 임시 데이터입니다. 만들 때 재고를 잡아 두고, 시간이 지나면 Redis 에서 사라지며 재고를 되돌립니다.
+> 그런데 **만료 이벤트가 유실되면 재고가 잡힌 채로 남습니다.**
+>
+> 직전 회차(RWD-6066)에서 그 경로에 로그를 넣었습니다. 이번에는 **복구 배치**를 만들었습니다.
+>
+> | 파일 | 역할 |
+> |---|---|
+> | `store-batch/.../job/leakedstock/RestoreLeakedStockJobConfig.java`(55줄) | 배치 잡 정의 |
+> | `store-batch/.../job/leakedstock/RestoreLeakedStockTasklet.java`(104줄) | 실행 본체 |
+> | `store-batch/.../job/leakedstock/LeakedStockRestorer.java`(44줄) | 복구 수행 |
+> | `store-service/.../application/product/InventoryService.java`(+49줄) | 재고 반영 |
+>
+> 두 번째 커밋에서 **복구를 주문 단위 트랜잭션으로 분리**했습니다.
+> 한 주문의 복구가 실패해도 다른 주문에 영향을 주지 않게 하려는 것으로 보입니다. 이 판단은 추측입니다.
+>
+> 검증 테스트가 함께 붙었습니다. `LeakedStockSqlTest`(290줄)와 `RestoreLeakedStockTaskletTest`(157줄)입니다.
+
 > 📅 **2026-09-17 cloud_live pull 보강** (2 커밋)
 >
 > ### RWD-6066 — 주문서 만료 이벤트 처리 로그 추가

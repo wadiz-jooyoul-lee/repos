@@ -1,0 +1,16 @@
+# 낡음 의심 표현 사전 — check-stale.py 가 읽습니다
+#
+# 형식:  표현<탭>왜 의심스러운지
+#
+# 주의: "틀린 말"이 아니라 "확인해 볼 말"입니다.
+#   예로 www.wadiz.kr 은 live 환경에서 지금도 유효합니다.
+#   다만 클라우드(clive) 기준 문서에 있으면 낡았을 가능성이 큽니다.
+#   판정은 사람이 합니다. 이 사전은 후보만 올립니다.
+#
+# 근거는 doc 경로와 함께 적어 둡니다. 나중에 되짚을 수 있어야 합니다.
+
+www.wadiz.kr	클라우드(clive)는 www.wadiz.io — com.wadiz.web 의 file-clive.properties 확인
+account.wadiz.kr	클라우드(clive)는 account.wadiz.io — web-test-automation-global.md 환경 표
+stage.wadiz.kr	2026-09-11 stage.wadiz.io 로 이전 — RWD-6044 및 CLIENT-258
+stage-account.wadiz.kr	2026-09-11 account.stage.wadiz.io 로 이전 — 같은 건
+dev.wadiz.kr	폐기된 주소. 클라우드는 dev.wadiz.io

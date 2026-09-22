@@ -9,6 +9,94 @@
 
 ---
 
+> 📅 **2026-09-17~22 main pull 보강** (25 커밋)
+>
+> 두 가지가 큽니다. **`rc1` 환경 전면 복원**과 **Istio 모드 값 제거**입니다.
+>
+> ### 🔄 `rc1` 환경이 전면 복원됐습니다
+>
+> 이 문서가 세 번 고쳐 쓴 주제입니다. 이번이 네 번째입니다.
+>
+> | 시점 | 무슨 일이 있었나 |
+> |---|---|
+> | 2026-09-03 | `values/{플랫폼}/rc1/` 57개 파일 삭제 |
+> | 2026-09-10 | 고아로 남은 `live.yaml`·`rc1.yaml`·`rc2.yaml` 삭제(`cb127a1`, SRECLOUD-700) |
+> | 2026-09-16 | `client/rc1/app-api.yaml` 만 시험 배포용으로 부활 |
+> | **2026-09-18~21** | **7개 플랫폼 전부에 `rc1` 이 생겼습니다** |
+>
+> 지금 `rc1` 에는 **서비스 값 파일 94개**가 있습니다. 시험용 한 건이 아니라 **정식 환경**입니다.
+>
+> | 플랫폼 | rc1 서비스 수 |
+> |---|---:|
+> | display-platform | 45 |
+> | core | 27 |
+> | user-platform | 9 |
+> | backoffice | 7 |
+> | web | 2 |
+> | client | 1 |
+> | sre | 1 |
+>
+> 통계: 서비스 값 파일 **309 → 403개**, 고유 서비스 이름 **110개 유지**.
+> 환경은 `clive` · `dev` · **`rc1`** · `rc4` 에 더해 `stage`(display-platform·user-platform·web)입니다.
+>
+> ### 🚩 Istio 모드 값 두 개가 사라졌습니다 — 게이트 조건이 바뀌었습니다
+>
+> **이 문서의 "게이트 조건" 표와 "죽은 기능" 표를 정정해야 합니다.**
+>
+> 2026-09-21 에 `ambientMode` 와 `ingressMode` 두 값이 `values.yaml` 에서 빠졌습니다.
+> 이 두 값을 조건으로 쓰던 자리도 함께 정리됐습니다.
+>
+> | 커밋 | 지운 것 |
+> |---|---|
+> | `d135976` ambientMode 밸류 제거 | `templates/authz-policy-sidecar-mode.yaml`(13줄) 파일째 삭제. `authz-policy.yaml` 의 조건에서 `ambientMode` 제거 |
+> | `a1406b6` ingressMode 밸류 제거 | `templates/httproute.yaml`(72줄) 파일째 삭제. `destinationrule.yaml`·`virtualservice.yaml` 의 조건에서 `ingressMode` 제거 |
+>
+> **바뀐 게이트 조건**
+>
+> | 리소스 | 이전 조건 | 지금 조건 |
+> |---|---|---|
+> | VirtualService | `ingressMode` AND `type == "api"` AND `template.virtualservice.enabled` | `type == "api"` AND `template.virtualservice.enabled` |
+> | DestinationRule | `ingressMode` AND `type == "api"` AND `template.destinationrule.enabled` | `type == "api"` AND `template.destinationrule.enabled` |
+> | AuthorizationPolicy | `ambientMode` AND `template.authPolicy` 가 비어 있지 않을 것 | **`template.authzPolicy.enabled`** |
+>
+> ### ✅ 오래 기록해 둔 불일치 하나가 해소됐습니다
+>
+> 이 문서는 아래처럼 적어 두었습니다.
+>
+> > `template.authzPolicy.enabled` 라는 값이 `values.yaml` 에 있지만, **AuthorizationPolicy 렌더 조건에는 쓰이지 않습니다.**
+>
+> **이제 쓰입니다.** `authz-policy.yaml` 의 첫 줄이 `{{ if .Values.template.authzPolicy.enabled }}` 입니다.
+> 값 이름과 실제 동작이 처음으로 맞았습니다.
+>
+> ### 새 템플릿 — 거부 규칙 전용 AuthorizationPolicy
+>
+> `templates/authz-policy-deny.yaml`(14줄)이 생겼습니다.
+> 게이트는 `template.authzPolicyDeny.enabled` 이고, 리소스 이름은 `{appLabel}-deny` 입니다.
+> 기존 `authz-policy.yaml` 이 허용 규칙을 다루므로, **허용과 거부를 두 리소스로 나눈 것**입니다.
+>
+> 템플릿은 여전히 17개입니다. 둘이 빠지고 하나가 들어왔습니다.
+>
+> ### ✅ 두 저장소의 어긋남이 거의 없어졌습니다
+>
+> 직전 회차에 기록한 어긋남을 다시 세었습니다.
+>
+> | 방향 | 이전 | 지금 |
+> |---|---|---|
+> | gitops 에만 있음 | 4개 (`community-agent` clive · `community-data-agent` 3환경) | **0개** |
+> | helm-charts 에만 있음 | 2개 | 2개 (`client/rc4/good-wave-anyone-can-challenge.yaml` · `sre/clive/service-admin.yaml`) |
+>
+> `22c244e` "clive community-agent 추가" 커밋으로 해소됐습니다.
+>
+> ### 그 밖에
+>
+> | 커밋 | 내용 |
+> |---|---|
+> | `e9f4e5d` | `crm-agent` 메모리를 1GB 에서 2GB 로 올렸습니다 |
+> | `4107548` | clive `good-wave-anyone-can-challenge` 메모리 상향 |
+> | `de83f17`·`b9f4af2` | dev 와 rc4 의 `admin-server`·`web-server` 에서 공유 볼륨 제거 |
+>
+> 나머지 12건은 제목이 전부 `small change` 입니다.
+
 > 📅 **2026-09-17 main pull 보강** (2 커밋)
 >
 > ### 🔄 `rc1` 환경이 되살아났습니다 — 다만 시험용 한 건뿐입니다
@@ -240,12 +328,13 @@ charts/service/
 |---|---|---|
 | Deployment | `deployment.yaml` (+`_tpl_deployment.yaml` 284줄) | `template.deployment.enabled` |
 | Service | `service.yaml` | `type == "api"` **AND** `template.service.enabled` |
-| VirtualService | `virtualservice.yaml` | `ingressMode` **AND** `type == "api"` **AND** `template.virtualservice.enabled` |
+| VirtualService | `virtualservice.yaml` | ~~`ingressMode` **AND**~~ `type == "api"` **AND** `template.virtualservice.enabled` (2026-09-21 에 `ingressMode` 조건 제거) |
 | VirtualService(delegate) | `virtualservice-delegate.yaml` | `ingressMode` **AND** `template.virtualserviceDelegate.enabled` |
-| DestinationRule | `destinationrule.yaml` | `ingressMode` **AND** `type == "api"` **AND** `template.destinationrule.enabled` |
-| AuthorizationPolicy | `authz-policy.yaml` | `ambientMode` **AND** `template.authPolicy` 가 비어 있지 않을 것 |
-| AuthorizationPolicy(sidecar) | `authz-policy-sidecar-mode.yaml` | `sidecarMode` (규칙은 `template.authPolicy` 를 순회해 생성) |
-| HTTPRoute (Gateway API) | `httproute.yaml` | `gatewayMode` **AND** `type == "api"` **AND** `template.httproute.enabled` |
+| DestinationRule | `destinationrule.yaml` | ~~`ingressMode` **AND**~~ `type == "api"` **AND** `template.destinationrule.enabled` (2026-09-21 에 `ingressMode` 조건 제거) |
+| AuthorizationPolicy | `authz-policy.yaml` | **`template.authzPolicy.enabled`** (2026-09-21 변경. 이전에는 `ambientMode` AND `template.authPolicy` 비어 있지 않을 것) |
+| AuthorizationPolicy(거부) | `authz-policy-deny.yaml` | **`template.authzPolicyDeny.enabled`** (2026-09-21 신설. 리소스 이름은 `{appLabel}-deny`) |
+| ~~AuthorizationPolicy(sidecar)~~ | ~~`authz-policy-sidecar-mode.yaml`~~ | **2026-09-21 파일째 삭제**(`d135976`) |
+| ~~HTTPRoute (Gateway API)~~ | ~~`httproute.yaml`~~ | **2026-09-21 파일째 삭제**(`a1406b6`) |
 | ConfigMap | `configmap.yaml` | `template.configmap.enabled` |
 | HPA | `hpa.yaml` | `template.hpa.enabled` |
 | Rollout (Argo Canary) | `rollout.yaml` | `template.rollout.enabled` |
