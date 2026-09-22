@@ -1,5 +1,17 @@
 # kr.wadiz.account 분석 문서
 
+> 📅 **2026-09-22 cloud_live pull 보강** (2 커밋)
+>
+> 두 커밋 모두 `BE3-969` 입니다.
+>
+> | 변경 | 내용 |
+> |---|---|
+> | rc1 트리거 | `aws_deploy_ecr_dev.yml` 에 `rc1` 브랜치를 추가했습니다 |
+> | 로컬 정적 자원 | 호스트를 `static.dev` 에서 **`cdn-static.dev`** 로 고쳤습니다 |
+>
+> [`helm-charts`](../helm-charts.md) 의 rc1 전면 복원에 맞춘 작업입니다.
+> `com.wadiz.wave.user`·`com.wadiz.api.startup` 에도 같은 변경이 들어갔습니다.
+
 > 📅 **2026-09-15 cloud_live pull 보강** (2 커밋)
 >
 > | 이슈 | 내용 |

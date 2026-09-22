@@ -9,6 +9,40 @@
 
 ---
 
+> 📅 **2026-09-22 main pull 보강** (88 커밋)
+>
+> 대부분 통합 검사 자동 이미지 태그 갱신입니다.
+> 소스 저장소 기준으로 `com.wadiz.web` 11건, `kr.wadiz.user.link` 9건, `kr.wadiz.account` 9건 순입니다.
+> 사람이 만든 커밋은 4건뿐입니다.
+>
+> ### ✅ 두 저장소의 어긋남이 사라졌습니다
+>
+> 직전 두 회차에 기록한 어긋남을 다시 세었습니다.
+>
+> | 방향 | 이전 | 지금 |
+> |---|---|---|
+> | 이 저장소에만 있음 | 4개 (`community-agent` clive · `community-data-agent` 3환경) | **0개** |
+> | [`helm-charts`](./helm-charts.md) 에만 있음 | 2개 | 2개 (그대로) |
+>
+> [`helm-charts`](./helm-charts.md) 쪽 커밋 `22c244e` "clive community-agent 추가" 로 해소됐습니다.
+> **"gitops 에 먼저 만들고 나중에 차트에 반영한다"는 순서가 사실로 확인된 셈**입니다.
+> 두 회차에 걸쳐 같은 방향으로 메워졌습니다.
+>
+> ### `rc1` 환경이 이 저장소에도 전면 생겼습니다
+>
+> [`helm-charts`](./helm-charts.md) 와 같은 7개 플랫폼에 `rc1` 디렉터리가 있습니다.
+> 두 저장소의 환경 집합이 완전히 일치합니다.
+>
+> ### 사람이 만든 커밋 4건
+>
+> | 커밋 | 내용 |
+> |---|---|
+> | FE1-1975 | `co.wadiz.adm` 의 dev·rc4·rc1 `admin-server` 의 `static_host` 를 `cdn-static` 주소로 맞췄습니다 |
+> | BE3-969 | **`link` 의 rc1 Kafka 소비를 껐습니다.** 변경 데이터 감지(CDC) 연결 전까지 막아 둔 것입니다 |
+> | — | `searcher-api` 에 와디즈 Discover 아이콘 CDN 주소를 등록했습니다 |
+>
+> 마지막 건은 [`com.wadiz.wave.searcher`](./com.wadiz.wave.searcher.md) 의 DISPLAY-1786(펀딩 홈 카테고리 추가)과 짝입니다.
+
 > 📅 **2026-09-17 main pull 보강** (96 커밋)
 >
 > 대부분은 통합 검사 자동 이미지 태그 갱신입니다.

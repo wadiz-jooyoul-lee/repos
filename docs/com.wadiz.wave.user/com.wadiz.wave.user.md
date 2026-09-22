@@ -1,3 +1,14 @@
+> 📅 **2026-09-22 cloud_live pull 보강** (2 커밋)
+>
+> 두 커밋 모두 `BE3-969` 이고, `kr.wadiz.account` 와 같은 내용입니다.
+>
+> | 변경 | 내용 |
+> |---|---|
+> | rc1 트리거 | `aws_deploy_ecr_dev.yml` 에 `rc1` 브랜치를 추가했습니다 |
+> | 로컬 정적 자원 | 호스트를 `static.dev` 에서 **`cdn-static.dev`** 로 고쳤습니다 |
+>
+> ---
+
 > 📅 **2026-09-10 cloud_live pull 보강** (2 커밋)
 >
 > ### BE3-784 — 멤버십 결제 유예(GRACE_PERIOD) 대응과 배지 축 정합

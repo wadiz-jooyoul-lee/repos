@@ -1,5 +1,13 @@
 # com.wadiz.api.startup 분석 문서
 
+> 📅 **2026-09-22 cloud_live pull 보강** (1 커밋)
+>
+> ### BE3-969 — `rc1` 브랜치 배포 트리거 추가
+>
+> `aws_deploy_ecr_dev.yml` 에 `rc1` 브랜치를 트리거로 넣었습니다(1줄).
+> [`helm-charts`](./helm-charts.md) 의 rc1 전면 복원에 맞춘 것입니다.
+> 같은 날 `kr.wadiz.account`·`com.wadiz.wave.user` 에도 같은 한 줄이 들어갔습니다.
+
 ## 개요
 - Wadiz의 **메이커(스타트업) 도메인** API 서버. 펀딩/스토어 "메이커" 기업 정보(기업/멤버/담당자), 메이커 프로필 스튜디오(사업기술, 투자이력, 피칭), 메이커 뉴스/댓글/반응, 메이커 팔로우/알림, 메이커 부스터(Wish), 메이커 클럽, 컬렉션(기획전), 만족도 요약, 컨퍼런스(투표/어워드), 기업 IR 문의 등을 담당한다.
 - org `com.wadiz.api`, Java package base `com.wadiz.api.startup.*`. Gradle 멀티 프로젝트(`startup-model`, `startup-client`, 루트가 API). 서버 포트 **9500**.

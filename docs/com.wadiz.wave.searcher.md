@@ -6,6 +6,18 @@
 
 ---
 
+> 📅 **2026-09-22 main pull 보강** (4 커밋)
+>
+> | 이슈 | 내용 |
+> |---|---|
+> | **DISPLAY-1786** | 펀딩 홈에 **'와디즈 Discover' 카테고리를 추가**했다가, 노출 이름을 **'새로운 발견'** 으로 바꿨습니다. 아이콘 주소는 [`helm-charts-gitops`](./helm-charts-gitops.md) 의 `searcher-api` 설정에 등록했습니다 |
+> | **DISPLAY-1777** | 검색 홈 피드의 노출 조건을 고쳤습니다. 검증 테스트 `SearchHomeFeedV2ServiceTest`(203줄)가 함께 붙었습니다 |
+> | 설정 이관 | **EKS ConfigMap 이관에 따라 프로파일별 설정 파일을 지웠습니다.** `application-live.yml`(146줄)·`application-rc.yml`(146줄)·`application-rc2.yml`·`application-rc3.yml`·`application-localrc.yml` 등 925줄이 빠졌습니다 |
+>
+> 설정 파일 삭제는 이 저장소만의 일이 아닙니다.
+> 앞선 회차에 [`com.wadiz.store`](./com.wadiz.store/com.wadiz.store.md) 도 `application-clive.yml` 을 helm-charts 로 옮겼습니다.
+> **설정을 저장소에서 쿠버네티스로 옮기는 흐름**이 이어지고 있습니다.
+
 > 📅 **2026-09-10 main pull 보강** (1 커밋)
 >
 > ### DISPLAY-1699 — 미사용 `MemberShipState` 제거

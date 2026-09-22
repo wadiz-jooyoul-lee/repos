@@ -1,3 +1,20 @@
+> 📅 **2026-09-22 main pull 보강** (4 커밋)
+>
+> ### FE1-1962 — 안드로이드 빌드 환경 수정
+>
+> | 변경 | 내용 |
+> |---|---|
+> | 설치 패키지 | 안드로이드 SDK 설치에서 **레거시 tools 를 뺐습니다** |
+> | 액션 버전 | `setup-android` 액션을 v4 로 올렸습니다 |
+> | 중복 제거 | `packages` 입력이 중복되던 것을 지웠습니다 |
+>
+> `wadiz-android` 의 `FE1-1921`(SDK tools 패키지 제거로 통합 검사 실패 수정)과 같은 원인입니다.
+>
+> 자동 변환으로 아이콘 4종이 안드로이드 drawable 로 들어왔습니다
+> (`ic_edition`·`ic_inquire__outline`·`ic_label_add`·`ic_label_add__outline`).
+>
+> ---
+
 > 📅 **2026-07-10 main pull 보강** (FE1-1026 1건 + Automated 동기화 다수)
 >
 > ### iOS artwork 동기화 대상을 ArtworkManifest 카탈로그로 변경 (FE1-1026)
