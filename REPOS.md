@@ -17,6 +17,7 @@
 | co.wadiz.api.community | https://github.com/wadiz-service/co.wadiz.api.community.git | wadiz-service |
 | com.wadiz.api.friends | https://github.com/wadiz-service/com.wadiz.api.friends.git | wadiz-service |
 | com.wadiz.store | https://github.com/wadiz-service/com.wadiz.store.git | wadiz-service |
+| io.wadiz.order | https://github.com/wadiz-service/io.wadiz.order.git | wadiz-service |
 | com.wadiz.startup.batch | https://github.com/wadiz-batch/com.wadiz.startup.batch.git | wadiz-batch |
 | kr.wadiz.backoffice.api | https://github.com/wadiz-backoffice/kr.wadiz.backoffice.api.git | wadiz-backoffice |
 | kr.wadiz.backoffice.indexer-cdc | https://github.com/wadiz-backoffice/kr.wadiz.backoffice.indexer-cdc.git | wadiz-backoffice |
