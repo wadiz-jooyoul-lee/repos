@@ -74,7 +74,7 @@
 | `VITE_SERVICE_API_URL` | `https://api.wadiz.io` | 서비스 API | 검색·친구 등 서비스 레이어 |
 | `VITE_STATIC_URL` | `https://cdn-static.wadiz.io` | 정적 리소스 | S3 CDN |
 | `VITE_WEB_URL` | `https://www.wadiz.io` | 레거시 웹 | `com.wadiz.web` (JSP) |
-| `VITE_ANALYTICS_URL` | `https://analytics.wadiz.io` | 분석 서버 | Analytics 서버 (내부 확인 불가) |
+| `VITE_ANALYTICS_URL` | `https://analytics.aidata.wadiz.io` | 분석 서버 | Analytics 서버 (내부 확인 불가) |
 | `VITE_BRAZE_API_KEY` / `VITE_BRAZE_BASE_URL` | `0c308381-...` / `https://sdk.iad-06.braze.com` | Braze SDK | Braze (외부 SaaS) |
 | `VITE_SENTRY_DSN` | `https://b3c9d2a629edc6779b9288616d5491eb@o194600.ingest.us.sentry.io/4506376215396352` | Sentry | Sentry Cloud |
 
@@ -99,8 +99,8 @@
 | `/[:lang]/social-signup` | `AuthSocialSignupPage` | 소셜 회원가입 |
 | `/[:lang]/login` | `AuthLoginPage` | 통합 로그인 |
 | `/[:lang]/signup` | `AuthSignupPage` | 이메일 회원가입 |
-| `/[:lang]/account/...` | `getAccountRoute()` | 구버전 **앱(모바일) 호환** 경로 (`apps/account/src/app/routes/account.tsx:13-45`) |
-| `/[:lang]/web/account/signup/completed` | `getWebRoute()` | 구버전 글로벌 **웹** 호환 경로 (`apps/account/src/app/routes/web.tsx`) |
+| `/[:lang]/account/...` | `getAccountRoute()` | 구버전 **앱(모바일) 호환** 경로 (**2026-09-23 확인 — 이 파일은 없습니다.** 지금 `apps/account/src/app/routes/` 에는 `AuthLayout.tsx` · `auth.tsx` · `index.ts` 만 있습니다) |
+| `/[:lang]/web/account/signup/completed` | `getWebRoute()` | 구버전 글로벌 **웹** 호환 경로 (`apps/account/src/app/` (같은 이유로 `routes/web.tsx` 도 없습니다)) |
 
 앱 호환 경로(`(auth-app)` 그룹):
 - `/account/delete` — 회원 탈퇴
@@ -191,7 +191,7 @@
 | 프레임워크 | React 18.2.0 + React Router 6.26 | `apps/global/package.json` |
 | 이중 엔트리 | `src/app/main.tsx` (글로벌), `src/app/korea-main.tsx` (국내용) | `vite.config.ts:25-28` |
 | Dev 서버 | `https://local.wadiz.io:5173` (origin) | `apps/global/vite.config.ts:167-179` |
-| CSS 번들 | `cssCodeSplit: false` → 단일 `main.css` | `:22`, `:41-43` |
+| CSS 번들 | `cssCodeSplit: false` → 단일 `main.scss` | `:22`, `:41-43` |
 | 상태 관리 | TanStack Query 5.66, Zustand 5.0 |  |
 | 헬멧 | `react-helmet-async` 2.0 |  |
 | Stripe | `@stripe/stripe-js`, `@stripe/react-stripe-js` |  |
@@ -217,7 +217,7 @@
 | `VITE_SERVICE_API_URL` | `https://api.wadiz.io` | 검색·친구 |
 | `VITE_STATIC_URL` | `https://cdn-static.wadiz.io` | 정적 자산 |
 | `VITE_WEB_URL` | `https://www.wadiz.io` | `com.wadiz.web` (JSP) |
-| `VITE_ANALYTICS_URL` | `https://analytics.wadiz.io` | 분석 |
+| `VITE_ANALYTICS_URL` | `https://analytics.aidata.wadiz.io` | 분석 |
 | `VITE_TOKEN_MARKETING` / `VITE_TOKEN_INBOX` / `TOKEN_KEYWORDS` | (32-byte hex) | 마케팅·인박스·키워드 서비스 인증 토큰 |
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | `https://joicppugmewvksclxfox.supabase.co` / (JWT) | Supabase (외부 BaaS) — 용도 관측 불가 |
 
@@ -637,7 +637,7 @@ Wadiz 내부 백엔드 호출 **0건**.
 | `VITE_SERVICE_API_URL` → `api.wadiz.io` | 서비스 레이어 (검색·친구) | ⚪ | ✅ (search v2/v3, friends) | ❌ | ❌ | ❌ | ❌ |
 | `VITE_PUBLIC_API_URL` → `api.wadiz.io` | 퍼블릭 API | ⚪ | ✅ (publicService, makerBanner) | ❌ | ❌ | ❌ | ❌ |
 | `VITE_DATA_API_URL` → `datasvc.aidata.wadiz.io` | Data/Analytics | ❌ | ✅ (support-share) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_ANALYTICS_URL` → `analytics.wadiz.io` | Analytics | ⚪ (global 변수) | ⚪ (global 변수) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_ANALYTICS_URL` → `analytics.aidata.wadiz.io` | Analytics | ⚪ (global 변수) | ⚪ (global 변수) | ❌ | ❌ | ❌ | ❌ |
 | `VITE_STATIC_URL` / `NEXT_PUBLIC_STATIC_URL` | S3/CloudFront | ⚪ (이미지 링크) | ✅ (이미지, 앱 링크 등) | ⚪ (자산) | ⚪ (자산) | ⚪ (자산) | ✅ (BASE_URL) |
 | `NEXT_PUBLIC_DATA_URL` → `cdn3.wadiz.kr/app` | CloudFront → Google Sheets Apps Script | ❌ | ❌ | ❌ | ✅ (IR JSON 14종) | ❌ | ❌ |
 | Zendesk API | Zendesk Cloud | ❌ | ❌ | ✅ (내장, ZAFClient) | ❌ | ❌ | ❌ |
@@ -814,7 +814,7 @@ Wadiz 내부 백엔드 호출 **0건**.
 
 → `apps/global` 검색 페이지/컴포넌트.
 
-### 4.15 `searcher/searcher.service.ts` (baseUrl = `SERVICE_API_URL`)
+### 4.15 ~~`searcher/searcher.service.ts`~~ — **삭제됐습니다**(`FE1-1826`, 2026-09-08 "검색 서버 찜 마감임박 호출 잔재 제거") (baseUrl = `SERVICE_API_URL`)
 
 관측 위치 1건 (`:42`) — `apps/global` 자동완성/검색 추천.
 

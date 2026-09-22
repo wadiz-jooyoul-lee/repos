@@ -43,7 +43,7 @@
 | `api.wadiz.io` | `VITE_PLATFORM_API_URL` | 플랫폼 서비스 군 |
 | **`api.wadiz.io`** ← | **`VITE_SERVICE_API_URL`** | **검색·카테고리·통합 조회 (Service API)** |
 | `api.wadiz.io` | `VITE_PUBLIC_API_URL` | 비로그인 공개 |
-| `analytics.wadiz.io` | — | 애널리틱스 |
+| `analytics.aidata.wadiz.io` | — | 애널리틱스 |
 
 환경별 prefix: live/stage → `https://api.wadiz.io`, rc/rc2/rc3 → `https://rc-api.wadiz.io`, dev → `https://dev-api.wadiz.io`.
 

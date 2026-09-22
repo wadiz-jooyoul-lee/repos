@@ -1,6 +1,6 @@
 # static/entries 레거시 호환 진입점 상세 스펙
 
-> **기록 범위**: `wadiz-frontend/static/entries/` 디렉터리 13개 엔트리(`account`, `analytics`, `assets`, `embed`, `floating-buttons`, `iam`, `landing`, `main`, `open-account`, `personal-message`, `reward`, `school`, `web`)의 `package.json` · `webpack.config.js` · `src/index.*` 등 빌드·부트스트랩 코드에서 직접 관측 가능한 것만 기록합니다. 각 엔트리가 불러오는 공통 패키지(`@wadiz/react-common`, `@wadiz/reward-simple-pay-app`, `@wadiz/equity-*`, …) 내부는 외부 모듈로 간주하고 진입점에서 import 되는 사실만 기록합니다. `entries/RENDERER_ID_SELECTORS.md` 에 2025-01-05 기준으로 정리된 selector 목록을 참고 자료로 활용하되, 본 문서는 현행 소스에서 다시 확인한 내용을 우선합니다. 실제 배포 파이프라인(Jenkins/S3/CDN 구성)은 이 repo 바깥에 있어 확인 불가이며, `cdnPurge.js` 와 `STATIC_DEPLOYMENT_ORIGIN` 환경 변수에서 드러나는 부분만 기록합니다.
+> **기록 범위**: `wadiz-frontend/static/entries/` 디렉터리 **12개** 엔트리(`account`, `analytics`, `assets`, `embed`, `floating-buttons`, `iam`, `landing`, `main`, `personal-message`, `reward`, `school`, `web`) — 2026-09-23 확인. `open-account` 는 `FE1-1366`(2026-08-05)로 삭제됐습니다의 `package.json` · `webpack.config.js` · `src/index.*` 등 빌드·부트스트랩 코드에서 직접 관측 가능한 것만 기록합니다. 각 엔트리가 불러오는 공통 패키지(`@wadiz/react-common`, `@wadiz/reward-simple-pay-app`, `@wadiz/equity-*`, …) 내부는 외부 모듈로 간주하고 진입점에서 import 되는 사실만 기록합니다. `entries/RENDERER_ID_SELECTORS.md` 에 2025-01-05 기준으로 정리된 selector 목록을 참고 자료로 활용하되, 본 문서는 현행 소스에서 다시 확인한 내용을 우선합니다. 실제 배포 파이프라인(Jenkins/S3/CDN 구성)은 이 repo 바깥에 있어 확인 불가이며, `cdnPurge.js` 와 `STATIC_DEPLOYMENT_ORIGIN` 환경 변수에서 드러나는 부분만 기록합니다.
 
 ---
 
@@ -57,7 +57,7 @@
   - `src/my/index.js:27` — `ImageBanner` → `my-equity-banner` (`@wadiz/react-promotion-banner`)
   - `src/my/index.js:30` — `EquityCloseNotice` → `account-equity-certification-face-certification`
   - `src/my/index.js:46` — `RegistAccountCompleteBox` → `my-equity--normal-member-app`
-  - `src/my/w9-info.js:7` — `W9MembershipInfo` → `my-w9-info-app` (`@wadiz/equity-w9-membership-app`)
+  - ~~`src/my/w9-info.js`~~ — **삭제됐습니다**(`FE1-1366`, 2026-08-05 투자 패키지·엔트리 제거)
   - `src/maker-profile/index.js:4` — `MakerProfileApp` → `maker-profile-app` (`@wadiz/maker-profile-app`)
   - `src/my-purchase-detail/index.jsx:8-9` — `MyRewardPurchaseDetail` → `myreward-purchase-detail` + `MyRewardPurchaseDetailFooter` → `myreward-purchase-detail-footer`
   - `src/follow/follow.js` — jQuery 기반, React 렌더 없음 (`.social-user-item[data-item-id="…"]` DOM 조작)
@@ -204,7 +204,7 @@
   - `src/startup-registration/landing.tsx:4-6` — `DOMContentLoaded` 후 `reactEmbedRendererWithInitialization(StartupRegistrationApp, '#startup-registration-app')` (jQuery 스타일 `#` 셀렉터).
   - `src/terms-confirm/terms-confirm.jsx:4` — `reactEmbedRendererWithInitialization(TermsConfirmApp, '#terms-confirm-app', { isOpen: true })` (`@wadiz/terms-confirm-modal`).
   - `src/supporter-club/index.js:4` — `SupporterClubIntro` → `supporter-club-intro`. 컴포넌트는 `../../../main/src/pages/landing/supporter-club-intro/SupporterClubIntro` 로 **`main` 엔트리의 소스 트리를 넘나들어 import** 하는 교차 참조가 존재.
-  - `src/w9/w9-landing.js` — `#w9` 페이지 (w9 비활성화 주석과 별개로 파일은 존재). `$('.w9-join-button-app').each(function … reactEmbedRendererWithInitialization(W9MembershipJoinButton, this))` 처럼 jQuery 각 DOM 요소 자체를 target 으로 넘김 (`w9-landing.js:42-56`). `@wadiz/equity-w9-membership-app` 을 **동적 import**.
+  - ~~`src/w9/w9-landing.js`~~ — **삭제됐습니다**(`FE1-1366`, 2026-08-05). 종전 서술: `#w9` 페이지 (w9 비활성화 주석과 별개로 파일은 존재). `$('.w9-join-button-app').each(function … reactEmbedRendererWithInitialization(W9MembershipJoinButton, this))` 처럼 jQuery 각 DOM 요소 자체를 target 으로 넘김 (`w9-landing.js:42-56`). `@wadiz/equity-w9-membership-app` 을 **동적 import**.
   - `src/apps/index.js` — 6개 서브 앱 번들(`welcomeMaker`, `wadizAwards`, `trend-report`, `line-friends`, `iplicense`, `fanz-maker`) 재수출.
   - `src/apps/welcomeMaker/index.js:5` — `WelcomeMakerApp` 를 `lazyWithPreload` 로 동적 import 후 `welcome-maker` id 에 임베드.
   - `src/apps/wadizAwards/wadiz-awards.jsx` — 연도별 컨테이너(2019~2025) 를 `lazyWithPreload` 로 모두 import 해두고 `document.querySelector` 로 존재 여부 확인 뒤 렌더:
@@ -262,26 +262,14 @@
 
 ---
 
-### 9. `open-account`
+### 9. ~~`open-account`~~ — 없어졌습니다
 
-- **패키지**: `@wadiz-static/open-account` (`entries/open-account/package.json:3`)
-- **publicPath**: `/static/open-account/` (`entries/open-account/package.json:5`)
-- **devServer.port**: 9102 (`entries/open-account/package.json:7`)
-- **책임**: 투자 서비스용 **계좌 개설(구 W9) 흐름** 전용 페이지.
-- **빌드 진입점** (`entries/open-account/webpack.config.js:8-14`):
-  - entry: `./src/index.jsx` (+ dev polyfill · hot client · waffle css)
-- **진입 코드** (`src/index.jsx` 전체):
-  ```js
-  import { reactRendererWithInitialization } from 'shared/reactRenderer';
-  import OpenAccountApp from './OpenAccountApp';
-  reactRendererWithInitialization(OpenAccountApp, 'open-account-app');
-  ```
-- **static.config.js** (`entries/open-account/static.config.js`): 한 줄 — `module.exports = require('shared/config/webpack.static.config')`. 이는 **SSG(static site generator)** 모드용 보조 설정(`static/packages/shared/config/webpack.static.config.js:53-55` 의 `StaticSiteGeneratorPlugin`) 을 import 하는 파일로, 정적 HTML 프리렌더 파이프라인이 일부 엔트리에 존재함을 시사합니다. 실행 스크립트는 이 repo 에서는 별도 정의되지 않음 — 사용 실태는 확인 불가.
-- **사용 라이브러리**: React 18.2, `react-redux`, `redux`, `redux-thunk` (Redux store 존재 — `src/store/` ), `react-router-dom 6`, `react-hook-form-deprecated@3.28.4` (레거시 react-hook-form 3 을 deprecated 별칭으로 사용), `@wadiz/validation-deprecated`, classnames, lodash-es, prop-types (`entries/open-account/package.json:16-34`).
-- **외부 패키지**: `@wadiz/react-common`, `@wadiz/web-root`, `@wadiz/web-redux-store`.
-- **API 호출**: 진입점에서 없음. 내부 `AccountWrapperApp.jsx` / `iam-open-account/` 서브 컴포넌트에서 처리.
+> ⚠️ **2026-09-23 확인 — 이 엔트리는 통째로 삭제됐습니다.**
+> `FE1-1366`(2026-08-05) "투자 패키지·엔트리 제거" 가 지웠습니다.
+> 증권형 계좌 개설 화면(완료·모바일 본인인증·1원 송금·주소·신분증)이 모두 사라졌습니다.
+> 같은 커밋이 `static/entries/account/src/my/w9-info.js` 와 `static/entries/landing/src/w9/w9-landing.js` 도 지웠습니다.
+> w9(증권형)는 지금 `packages/widgets/src/home/ui/W9StaticBanner/` 배너 하나로만 남아 있습니다.
 
----
 
 ### 10. `personal-message`
 
@@ -456,7 +444,7 @@
 
 - 대부분은 **bare id**: `'main-app'`, `'funding-detail-app'`, `'active-account'` 등.
 - 일부는 **jQuery 스타일 `#` 접두**: `'#startup-registration-app'`, `'#terms-confirm-app'`, `'#line-Friends'`, `'#trend-report-2022'`, `'#trend-report-202101'`, `'#reward-funding-complete-app'`.
-- 일부는 **동적 DOM 요소**: `reward/src/reward-product/index.js:12` 는 `querySelectorAll` 로 얻은 `element` 를 그대로 전달, `landing/src/w9/w9-landing.js:42-56` 은 jQuery `$(selector).each(function(){ …, this })` 로 `this` 전달, `web/src/layout/headerRenderer.jsx:9` 와 `footerRenderer.jsx:10` 는 호출자가 넘긴 `renderTarget` 을 그대로 전달.
+- 일부는 **동적 DOM 요소**: `reward/src/reward-product/index.js:12` 는 `querySelectorAll` 로 얻은 `element` 를 그대로 전달, ~~`landing/src/w9/w9-landing.js`~~(삭제됨) 은 jQuery `$(selector).each(function(){ …, this })` 로 `this` 전달, `web/src/layout/headerRenderer.jsx:9` 와 `footerRenderer.jsx:10` 는 호출자가 넘긴 `renderTarget` 을 그대로 전달.
 - 일부는 **env 변수**: `school/src/index.jsx:6` — `process.env.ROOT_ELEMENT_ID` (기본 `'root'`).
 
 ### 3. AppInitializer + Sentry 실패 처리

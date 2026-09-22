@@ -90,7 +90,7 @@
 
 | 기능 / 화면 문구 | 소스 위치 |
 |---|---|
-| **open-account** — 투자자 증권계좌 개설·신분증 인증 SPA("계좌 관리하기", "계좌 발급 대기 중", 투자 종료 공지) | `static/entries/open-account/src/OpenAccountApp.jsx` |
+| **open-account** — 투자자 증권계좌 개설·신분증 인증 SPA("계좌 관리하기", "계좌 발급 대기 중", 투자 종료 공지) | ~~`static/entries/open-account/`~~ — **엔트리 통째로 삭제됐습니다**(`FE1-1366`, 2026-08-05 "투자 패키지·엔트리 제거") |
 | **landing** — 정적 랜딩 모음(회사소개·게시판·약관·스타트업 등록·앱별 랜딩), 디렉터리별 독립 번들 | `static/entries/landing/entries.js`, `src/{about,board,terms,startup-registration,apps}/` |
 | **personal-message** — 1:1 메시지(대화 "메시지는 실시간 채팅이 아닙니다"·받은함), `@wadiz/app-initializer` 초기화 | `static/entries/personal-message/src/{ChatSpace,Inbox}.jsx` |
 | **school** — 와디즈 스쿨 SPA(강의 모집·영상, "곧 공개될 예정이에요") | `static/entries/school/src/routes/DesktopRouter.jsx` |

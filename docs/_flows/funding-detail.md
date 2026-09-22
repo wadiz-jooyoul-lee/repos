@@ -37,7 +37,7 @@
 ### 1.1 wadiz-frontend (웹)
 - **엔드포인트 패턴**: `GET /web/reward/api/campaigns/{campaignId}`
 - **실제 호출 위치**: Mock/테스트 데이터에서 명시 — `studio/funding/src/mocks/reward/fundingCampaignHandlers.ts:63`, `apps/global/src/features/rewards-selection/lib/testdata/rewardMockGenerator.js:20`
-- **Host**: `https://www.wadiz.io` (환경변수 `VITE_SERVICE_API_URL`, `com.wadiz.web` 레거시)
+- **Host**: **`https://api.wadiz.io`** (환경변수 `VITE_SERVICE_API_URL`, clive 기준). 종전에 `www.wadiz.kr` 로 적혀 있었으나 그 변수의 값이 아닙니다
 - **fetch 래퍼**: `packages/api/src/fetch.ts` (쿠키 세션, `wadiz-country`/`wadiz-language` 헤더 자동 첨부)
 - **사용처**: 상세 페이지, 리워드 선택 화면, 메이커 스튜디오 미리보기
 

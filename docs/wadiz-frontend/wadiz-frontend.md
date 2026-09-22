@@ -721,6 +721,7 @@
 | 앱 | 역할 | 호출 Upstream |
 |---|---|---|
 | `account` | 글로벌 회원 (로그인/회원가입/프로필) | `account.wadiz.io`, `api.wadiz.io/app` |
+| `global-e2e` | 글로벌 사이트 종단 시험 | n/a |
 | `global` | 글로벌 사이트 | `api.wadiz.io`, `api.wadiz.io/app` |
 | `partners` | 파트너 소개 | `api.wadiz.io` |
 | `partnerzone` | 파트너존 (입점·운영) | `api.wadiz.io/app`, `api.wadiz.io` |
@@ -731,22 +732,74 @@
 | `walink-generator` | 와링크(단축 URL) 생성기 | `api.wadiz.io/app/links` |
 | `devtools/*` | 개발자 도구 | n/a |
 
-### `studio/`
-- `funding`, `startup`, `store` — 메이커/스튜디오 작성 도구.
+### `studio/` (2026-09-23 확인 7개)
 
-### `static/entries/` (15개)
-- 레거시 호환용 정적 진입점들. 기존 `com.wadiz.web` 의 페이지 단위로 분리되어 점진 이관됨.
+| 폴더 | 역할 |
+|---|---|
+| `funding` · `startup` · `store` | 메이커/스튜디오 작성 도구 |
+| `studio-services` | 세 스튜디오가 공유하는 API 클라이언트 |
+| `funding-e2e` · `store-e2e` · `maker-e2e` | 각 스튜디오의 종단 시험 |
+
+### `static/entries/` (2026-09-23 확인 **12개**)
+
+`account` · `analytics` · `assets` · `embed` · `floating-buttons` · `iam` · `landing` · `main` · `personal-message` · `reward` · `school` · `web`
+
+레거시 호환용 정적 진입점들입니다. `com.wadiz.web` 의 페이지 단위로 분리되어 점진 이관됩니다.
+
+> ⚠️ 종전 기록은 15개였습니다. **세 개가 줄었습니다.**
 
 ### `static/services/`
-- `admin` — 와디즈 어드민 SPA(webpack 4). PROXY_TARGET 환경변수로 `devadm/rcadm/rc2adm.wadiz.kr` 또는 `adm.dev.wadiz.co` 로 프록시.
 
-### `packages/` / `libraries/`
-- 공통 UI, API 클라이언트, 디자인 토큰, 유틸 등.
+- `admin` 하나뿐입니다. 와디즈 어드민 SPA(webpack 4)이고 `PROXY_TARGET` 환경변수로 개발 서버 프록시 대상을 정합니다.
+- **2026-09-23 확인 대상**: `adm.local.wadiz.io` · `adm.dev.wadiz.io` · `adm.rc1.wadiz.io` · `adm.rc4.wadiz.io`
+
+  > ⚠️ 종전 기록의 `devadm/rcadm/rc2adm.wadiz.kr` 와 `adm.dev.wadiz.co` 는 지금 코드에 없습니다.
+
+### `packages/` / `libraries/` (2026-09-23 확인)
+
+공통 코드가 `packages/` 로 많이 옮겨 왔습니다. 파일 수 기준 상위입니다.
+
+| 패키지 | 파일 수 | 역할 |
+|---|---:|---|
+| `packages/features` | 1,668 | 기능 단위 코드 |
+| `packages/widgets` | 672 | 화면 조각 |
+| `packages/ui` | 309 | 공통 UI |
+| `packages/api` | 201 | API 클라이언트 |
+| `packages/core` | 197 | 환경·모델·유틸 (`ENV_DOMAINS` 가 여기) |
+
+그 밖에 `artworks` · `cert` · `event-tracker` · `format` · `i18n` · `queries` · `settings` · `tokens` · `waffle` · `waffle-icons` · `app-initializer` 가 있습니다.
+
+> 📌 **`apps/global` 과 `packages` 가 역할을 나눠 가졌습니다.**
+> `apps/global/src/` 에는 `pages`(1,684) · `features`(388) · `widgets`(130) · `entities` · `shared` 가 남아 있고,
+> 공용으로 뺄 수 있는 것은 `packages/features` · `packages/widgets` 로 옮기는 중입니다.
+> 그래서 이 문서와 하위 문서들이 예전에 `apps/global/src/features/...` 로 적어 둔 경로 일부가 지금은 `packages/` 아래에 있습니다.
+
 
 ## 서버 연결 설정 (핵심)
 
 ### 환경 변수 주입
-- 빌드: `env-cmd --environments {local|dev|rc|rc2|rc3|stage|live}` + `.env-cmdrc` → Vite `define` 에서 `process.env.*` 로 치환.
+- 빌드: `env-cmd --environments {환경}` + `.env-cmdrc` → Vite `define` 에서 `process.env.*` 로 치환.
+
+  **2026-09-23 확인 환경은 6개**입니다 — `local` · `dev` · **`rc1`** · `rc4` · `stage` · `clive`
+  (`apps/global/.env-cmdrc`, `apps/account/.env-cmdrc`).
+
+  > ⚠️ 종전 기록은 `{local|dev|rc|rc2|rc3|stage|live}` 였습니다.
+  > **`rc`·`rc2`·`rc3` 가 사라지고 `rc1`·`rc4` 가 들어왔으며 `live` 는 `clive` 가 됐습니다.**
+  > `rc1` 은 [`helm-charts`](../helm-charts.md) 에서 2026-09-18~21 에 전면 복원된 그 환경입니다.
+
+  `apps/global` 의 실제 값입니다.
+
+  | 변수 | clive | dev |
+  |---|---|---|
+  | `VITE_SERVICE_API_URL` | `https://api.wadiz.io` | `https://api.dev.wadiz.io` |
+  | `VITE_PUBLIC_API_URL` | `https://api.wadiz.io` | `https://api.dev.wadiz.io` |
+  | `VITE_PLATFORM_API_URL` | `https://api.wadiz.io` | `https://api.dev.wadiz.io` |
+  | `VITE_APP_API_URL` | `https://api.wadiz.io/app` | `https://api.dev.wadiz.io/app` |
+  | `VITE_ACCOUNT_URL` | `https://account.wadiz.io` | `https://account.dev.wadiz.io` |
+  | `VITE_ANALYTICS_URL` | `https://analytics.aidata.wadiz.io` | `https://analytics.dev.aidata.wadiz.io` |
+  | `VITE_CDN_STATIC_URL` | `https://cdn-static.wadiz.io` | `https://cdn-static.dev.wadiz.io` |
+
+  **서비스·공개·플랫폼 세 변수가 clive 에서 같은 값입니다.** 종전에는 서로 다른 호스트였습니다.
 - 주요 환경변수:
 
 | 변수 | 의미 |
@@ -755,7 +808,7 @@
 | `VITE_APP_API_URL` | NestJS BFF (`api.wadiz.io/app`) |
 | `VITE_PLATFORM_API_URL` | 플랫폼 API (쪽지/알림/Nicepay/share/marketing) |
 | `VITE_PUBLIC_API_URL` | 비로그인 공개 API (`api.wadiz.io`) |
-| `VITE_SERVICE_API_URL` | 레거시 서비스(`www.wadiz.io` `/web/*`, `/web/apip/funding/*`) |
+| `VITE_SERVICE_API_URL` | 서비스 API. clive 는 **`https://api.wadiz.io`** 입니다(`apps/global/.env-cmdrc`). 종전에 적힌 `www.wadiz.kr` 은 이 변수의 값이 아닙니다 |
 | `VITE_PLATFORM_GLOBAL_API_URL` | 플랫폼 글로벌 |
 
 ### Upstream 서버 매핑
@@ -767,7 +820,7 @@
 | `api.wadiz.io` | 플랫폼 서비스 군 (쪽지·알림·Nicepay·share·marketing) |
 | `api.wadiz.io` | 비로그인 공개 API |
 | `api.makercenter.wadiz.io` | `makercenter-be` (메이커센터 공지 임베드용) |
-| `analytics.wadiz.io` / `datasvc.aidata.wadiz.io` | 데이터/애널리틱스 |
+| `analytics.aidata.wadiz.io`(앱) · `analytics.wadiz.io`(스튜디오) / `datasvc.aidata.wadiz.io` | 데이터/애널리틱스. **앱과 스튜디오가 다른 호스트를 씁니다** |
 
 ### Fetch 래퍼
 - 위치: `packages/api/src/fetch.ts:22-105`

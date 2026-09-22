@@ -343,7 +343,7 @@ funding studio 전용 구조:
 | 비즈니스·기술 | GET/POST `/web/maker/studio/{corpNo}/businessTechnology` | `bizAndTech.js:3,6` |
 | 비즈니스 모델 | POST `/web/maker/studio/{corpNo}/businessModel` | `businessModel.js:4` |
 | KED 정보 | GET `/web/maker/studio/{corpNo}/ked`, GET/POST `/web/maker/studio/{corpNo}/ked/hidden` | `ked.js:4,8,23` |
-| 투자 이력 CRUD | GET/POST `/web/maker/studio/{corpNo}/investmentHistory(/{add,modify,remove,modifySeq})` | `investment.js:4-29` |
+| 투자 이력 CRUD | GET/POST `/web/maker/studio/{corpNo}/investmentHistory(/{add,modify,remove,modifySeq})` | ~~`investment.js`~~ — **삭제됨**(`FE2-1000`, 2026-08-14 "스튜디오 메이커페이지 투자유치 페이지 삭제") |
 | 투자 희망 | GET/POST `/web/startup/corporation/{corpNo}/investmentHope` | `attractInvest.js:4,8` |
 | 피칭 영상 | GET/POST/DELETE `/web/maker/studio/{corpNo}/(pitchingVideo|delete/pitchingVideo)` | `pitching.js:4-14` |
 | 배너 | GET `/web/startup/common/banners?sectionCode=IST` | `ads.js:4` |

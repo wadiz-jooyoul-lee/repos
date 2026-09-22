@@ -37,7 +37,7 @@ web.xml `/web/apip/funding/supporters/my/fundings` 같은 특정 URL만 다른 s
 - **간편결제**: `static/packages/reward-simple-pay-app/src/components/RewardPaymentCTA/RewardPaymentCTA.tsx:79, 342`
   - `fetchFundingApi('orders/sheet/{token}', ...)`
 - **fetch 래퍼**: `packages/api/src/fetch.ts` + 펀딩 전용 `fetchFundingApi` (내부에서 `/web/apip/funding/` prefix 부착)
-- **Host**: `https://www.wadiz.io` (VITE_SERVICE_API_URL)
+- **Host**: **`https://api.wadiz.io`** (`VITE_SERVICE_API_URL`, clive 기준)
 
 ### 1.2 wadiz-android / wadiz-ios
 - Phase 2 미진행. 동일 주문 세션/시트 경로를 호출할 것으로 추정되나 확인 필요.

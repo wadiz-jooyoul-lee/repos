@@ -13,7 +13,7 @@
 
 `static/services/admin` 은 **와디즈 전사 운영 어드민(백오피스)의 React SPA 번들** 이다. 엔트리는 단 한 개(`admin-app` DOM id)이고, **각 레거시 JSP 라우트가 같은 번들을 include 하여 해당 경로의 `<Route>` 만 렌더링**하는 "여러 경로 → 같은 번들 → React Router 분기" 모델이다.
 
-- 빌드 산출물은 `static/admin/main.js` + `static/admin/main.css`.
+- 빌드 산출물은 `static/admin/main.js` + `static/admin/` 빌드 산출물 (저장소에는 없습니다).
 - 레거시 JSP 쉘에서 다음과 같이 로드한다 — `com.wadiz.adm/web/WEB-INF/jsp/front/main.jsp:11-18`
   ```jsp
   <link rel="stylesheet" href="${static_host}/static/admin/main.css">
@@ -31,7 +31,16 @@
   ```
   `ERPModalApp` 과 `PreviewApp` 은 `App` 과 별개로 전역 `window.wadiz.*` 메서드를 노출하여 **JSP 쪽에서 호출되는 공통 모달**을 제공한다. 이 부분은 레거시 JSP 화면과 React SPA 화면이 공존하는 "혼합 상태" 를 보여주는 핵심 단서.
 - `App.jsx:1-27` — Redux `Provider` + `BrowserRouter` + `ErrorBoundary` 래핑. 전역 UI 테마로 `antd` CSS (`import 'antd/dist/antd.css'`) 를 먼저 로드하고 프로젝트 reset 을 위에 씌운다(`App.scss:1-40`).
-- 배포 도메인 (관찰 가능): 레거시 스택은 `https://{env}adm.wadiz.kr` 계열(`helpers/wadizDomain.ts:11-19`), 클라우드 스택은 `https://adm.{env}.wadiz.co`(`package.json:8-20` scripts + `proxyInfo.js:10-14`).
+- **배포 도메인 (2026-09-23 확인)**: `static/services/admin/package.json` 의 `start:*` 스크립트가 `PROXY_TARGET` 으로 정합니다.
+
+  | 환경 | 대상 |
+  |---|---|
+  | local | `http://local.wadiz.io:8090` |
+  | dev | `https://adm.dev.wadiz.io` |
+  | rc1 | `https://adm.rc1.wadiz.io` |
+  | rc4 | `https://adm.rc4.wadiz.io` |
+
+  > ⚠️ 종전 기록의 `{env}adm.wadiz.kr` 계열과 `adm.{env}.wadiz.co` 는 지금 코드에 없습니다. `helpers/wadizDomain.ts` 도 `CLIENT-259`(2026-09-15)로 삭제됐습니다. (`package.json:8-20` scripts + `proxyInfo.js:10-14`).
 
 ### `com.wadiz.adm`(레거시 JSP) 과의 관계
 
@@ -184,7 +193,7 @@
 
 - `components/` — `BlockContainer`, `DatePicker`, `DateTimePickerCustomComponent`, `DepartmentSearchModal`, `EmployeeSearchModal`, `EnterIgnoreInput`, `ExpandToggle`, `FroalaEditor`, `HWPViewer`, `Page`, `PlusButton`, `ScrollTop`, `TagInput`, `TemporarySaveGuide`, `TagInput`, `ColorInput`.
 - `helpers/`:
-  - `wadizDomain.ts:1-23` — `getWadizBaseURL()` / `getAdminBaseURL()` 이 `process.env.ENVIRONMENT` (`local|live|dev|rc|...`) 로 분기해 링크 타겟 URL 생성. `live` 만 `www.wadiz.io` / `adm.wadiz.kr` 고정.
+  - ~~`wadizDomain.ts`~~ — **삭제됐습니다**(`CLIENT-259`, 2026-09-15). 종전에는 `getWadizBaseURL()` / `getAdminBaseURL()` 이 `process.env.ENVIRONMENT` (`local|live|dev|rc|...`) 로 분기해 링크 타겟 URL 생성. `live` 만 `www.wadiz.io` / `adm.wadiz.kr` 고정.
   - `notification.js:1-24` — antd `notification` 래핑 (우하단 배치).
   - `checkEmail.ts`, `checkEmoji.ts`, `comma.ts`, `fileDownloader.ts`, `arrayMove.ts`, `utils.ts`, `hooks/`.
 - `constants/api.js:1` — 딱 한 줄: `export const SUCCESS_CODE = 'SUSS000';` (백엔드 공통 응답 코드).

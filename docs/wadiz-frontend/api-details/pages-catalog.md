@@ -299,25 +299,23 @@ Next.js App Router (`app/page.tsx`).
 | `InvestmentAndStartupNotificationSettingsPage` | `.../pages/...` |
 | `InviteFriendsReceptionUserPage.jsx` | `invite-friends/...` |
 | `InviteFriendsWadizUserPage.jsx` | 동상 |
-| `ContactListPage.jsx` | `startup-contact-list/...` |
+| ~~`ContactListPage`~~ | **없어졌습니다.** `FE1-1366`(2026-08-05) "스타트업 패키지·엔트리 제거" |
 
-### 10.3 `open-account` — 증권형 계좌 개설
-| 페이지 | 용도 |
-|---|---|
-| `OpenAccountCompletePage.jsx` | 완료 |
-| `OpenAccountMobileAuthPage.jsx` | 모바일 본인 인증 |
-| `OpenAccountOneCoinTransferPage.jsx` | 1원 송금 인증 |
-| `OpenAccountAddressPage.jsx` | 주소 입력 |
-| `OpenAccountIdCertificationPage.jsx` | 신분증 인증 |
+### 10.3 ~~`open-account` — 증권형 계좌 개설~~
+
+> ⚠️ **2026-09-23 확인 — 이 entry 는 통째로 없어졌습니다.**
+> `FE1-1366`(2026-08-05) "투자 패키지·엔트리 제거" 가 지웠습니다.
+> 완료·모바일 본인인증·1원 송금·주소 입력·신분증 인증 다섯 페이지가 모두 사라졌습니다.
+> `static/entries/` 가 15개에서 **12개**로 준 이유가 이것입니다(스타트업 엔트리와 함께).
 
 ### 10.4 `main` — 와디즈 메인 (가장 큰 entry)
 | 페이지 | 용도 |
 |---|---|
 | `FundingPage.tsx` (`reward-main/`) | 펀딩 리워드 메인 |
-| `StoryPage.jsx` (`funding/reward/.../Story/`) | 펀딩 스토리 |
-| `RewardCommunityPage.jsx` (`funding/reward/.../Community/`) | 리워드 커뮤니티 |
-| `ComingSoonCommunityPage.jsx` (`funding/comingsoon/.../Community/`) | 오픈예정 커뮤니티 |
-| `EventPage.tsx` (`pages/landing/event/`) | 이벤트 페이지 |
+| ~~`StoryPage`~~ | **없어졌습니다.** `FE1-688`(2026-05-27) store 마이그레이션 때 글로벌 SPA 라우터로 넘어갔습니다 |
+| ~~`RewardCommunityPage`~~ | **없어졌습니다.** `FE1-616`(2026-05-15) 코드 정리 |
+| ~~`ComingSoonCommunityPage`~~ | **없어졌습니다.** `FE1-616`(2026-05-15) 코드 정리 |
+| ~~`EventPage`~~ | **없어졌습니다.** `FE1-1112`(2026-07-06) "국내/해외 통합 후 미사용 레거시 코드 제거" |
 | `OrderListPage.tsx` (`my-wadiz/.../my-purchase/.../order/`) | 주문 목록 |
 | `OrderDetailPage.jsx` (동상) | 주문 상세 |
 | `MyWadizMakerPage` (`my-wadiz/.../legacy-makertab/`) | 레거시 메이커 탭 |
@@ -329,8 +327,8 @@ Next.js App Router (`app/page.tsx`).
 | `RecommendedFriendsPage.jsx` (`social/.../recommend/`) | 추천 친구 |
 | `RecommendedFriendsPage.jsx` (`feed/.../RecommendedFriends/`) | 피드 추천 |
 | `RecommendedFriendEmptyPage.jsx` (동상) | 빈 상태 |
-| `PaymentSuccessPage.jsx` (`store/.../paymentComplete/`) | 스토어 결제 성공 |
-| `PaymentFailurePage.jsx` (동상) | 결제 실패 |
+| `PaymentSuccessPage.tsx` | 스토어 결제 성공. **`packages/features/src/store/paymentComplete/ui/pages/` 로 옮겼습니다** |
+| `PaymentFailurePage.tsx` | 결제 실패. 같은 폴더 |
 
 > `static/entries/main` 은 **가장 큰 entry** — 마이와디즈·쿠폰·피드·소셜·결제 후속 페이지를 한 entry 가 모두 포함.
 

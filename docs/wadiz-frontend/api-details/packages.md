@@ -374,7 +374,7 @@
 
 **SCSS 주입**: app 의 `vite.config.ts` `css.preprocessorOptions.scss.additionalData` 에 `@use '~@wadiz/waffle/styles' as *;` 을 넣어 Waffle 변수/믹스인을 전역으로 쓸 수 있게 함(`apps/global/vite.config.ts:68-74`).
 
-**아이콘·아트웍 tree-shaking**: app alias 가 배럴 대신 `components/` 디렉터리를 직접 가리키므로, `import { WishIcon } from '@wadiz/waffle-icons'` 은 실제로 `packages/waffle-icons/src/components/WishIcon.tsx` 로 리졸브됨 → 개별 아이콘만 번들 포함.
+**아이콘·아트웍 tree-shaking**: app alias 가 배럴 대신 `components/` 디렉터리를 직접 가리키므로, `import { WishIcon } from '@wadiz/waffle-icons'` 은 실제로 `packages/waffle-icons/` (아이콘 구성이 바뀌어 `WishIcon.tsx` 는 지금 없습니다) 로 리졸브됨 → 개별 아이콘만 번들 포함.
 
 ### 4.4 features — 공통 feature 모듈
 
@@ -676,7 +676,7 @@ feature 들은 도메인 경계에 따라 app 의 FSD(`src/app`, `src/pages`, `s
 - `cardNumberValidator.ts` — Luhn 검증.
 - `processStoryHTML.ts` — 프로젝트 스토리 HTML 전처리(이미지 lazy-loading, script 제거 등).
 - `preloadImage.ts` — Image preload 헬퍼.
-- `getOptimizedURL.ts` — CDN 최적화 URL 생성(`getOptimizedURL`, `getOptimizedURLByWidth`, `getOptimizedIntroURL`).
+- `packages/core/src/image-optimization/buildOptimizedImageURL.ts` (**`FE1-1830`(2026-09-17)이 이미지 최적화 함수를 하나로 합치면서** `getOptimizedURL.ts` 는 삭제됐습니다) — CDN 최적화 URL 생성(`getOptimizedURL`, `getOptimizedURLByWidth`, `getOptimizedIntroURL`).
 - `getAppSchemeURL.ts` — 앱 스킴(`wadiz://...`) 생성.
 - `getURLS.ts` — `getAccountToWebURL` 등 공통 URL 생성.
 - `getWeglotClass.ts` — Weglot 번역 제외 클래스 부착(`isWebsite` 체크).
