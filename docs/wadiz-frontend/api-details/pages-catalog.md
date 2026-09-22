@@ -40,7 +40,7 @@
 
 ## 1. `apps/account` — 인증/회원
 
-배포: `account.wadiz.kr`. SPA 라우터 기반.
+배포: `account.wadiz.io`. SPA 라우터 기반.
 
 ### `(auth)` — 일반 인증
 | Route | 페이지 | 위치 |
@@ -69,7 +69,7 @@
 
 ## 2. `apps/global` — 메인 앱
 
-배포: `www.wadiz.kr` 의 SPA 영역. **마이와디즈·펀딩 상세 SPA·정책·이벤트** 등 핵심.
+배포: `www.wadiz.io` 의 SPA 영역. **마이와디즈·펀딩 상세 SPA·정책·이벤트** 등 핵심.
 
 ### 2.1 홈/검색
 | Route | 페이지 | 위치 |

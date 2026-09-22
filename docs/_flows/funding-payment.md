@@ -37,7 +37,7 @@ web.xml `/web/apip/funding/supporters/my/fundings` 같은 특정 URL만 다른 s
 - **간편결제**: `static/packages/reward-simple-pay-app/src/components/RewardPaymentCTA/RewardPaymentCTA.tsx:79, 342`
   - `fetchFundingApi('orders/sheet/{token}', ...)`
 - **fetch 래퍼**: `packages/api/src/fetch.ts` + 펀딩 전용 `fetchFundingApi` (내부에서 `/web/apip/funding/` prefix 부착)
-- **Host**: `https://www.wadiz.kr` (VITE_SERVICE_API_URL)
+- **Host**: `https://www.wadiz.io` (VITE_SERVICE_API_URL)
 
 ### 1.2 wadiz-android / wadiz-ios
 - Phase 2 미진행. 동일 주문 세션/시트 경로를 호출할 것으로 추정되나 확인 필요.
@@ -149,7 +149,7 @@ UPDATE BackingPayment SET Tid=?, Mid=?, PayStatus=?, ResultCode=?, Description=?
    │ 1) POST /web/apip/funding/orders/session             (시작)
    │ 2) POST /web/apip/funding/orders/sheet/{token}       (리워드/쿠폰 확정)
    ▼
-[www.wadiz.kr  — ApiProxyServlet (web.xml:202)]
+[www.wadiz.io  — ApiProxyServlet (web.xml:202)]
    │  투명 프록시 (비즈니스 로직 없음)
    ▼
 [com.wadiz.api.funding  — Order/OrderSheet Controllers]
@@ -159,7 +159,7 @@ UPDATE BackingPayment SET Tid=?, Mid=?, PayStatus=?, ResultCode=?, Description=?
 
 [FE 이동]  window.location = /web/wpurchase/reward/step20?token=...
 
-[www.wadiz.kr — WWEBPurchaseRewardController#step20 (:216)]
+[www.wadiz.io — WWEBPurchaseRewardController#step20 (:216)]
    │  JSP 렌더링: 결제수단 입력 폼 + SDK
    │
    │ AJAX: POST /web/wpurchase/reward/ajaxRequestNiceCreditPurchaseReservation (:335)
@@ -182,7 +182,7 @@ UPDATE BackingPayment SET Tid=?, Mid=?, PayStatus=?, ResultCode=?, Description=?
    │
    │  성공 → HTTP 302 redirect
    ▼
-[www.wadiz.kr — WWEBPurchaseRewardController#result10/{id} (:373)]
+[www.wadiz.io — WWEBPurchaseRewardController#result10/{id} (:373)]
    │  JSP: wpurchase/reward/result10  (결제 완료 페이지)
 ```
 

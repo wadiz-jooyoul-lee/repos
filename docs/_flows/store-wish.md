@@ -75,7 +75,7 @@ funding 서비스 내 `/api/wishes` 엔드포인트로 도달. 상세는 [docs/c
    │ POST /web/apip/funding/wishes
    │   body: { projectType: 'FUNDING', projectNo: 12345 }
    ▼
-[www.wadiz.kr — ApiProxyServlet 투명 프록시]
+[www.wadiz.io — ApiProxyServlet 투명 프록시]
    ▼
 [com.wadiz.api.funding — Wish 컨트롤러 (/api/wishes)]
    │

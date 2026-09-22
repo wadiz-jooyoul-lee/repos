@@ -74,7 +74,7 @@
   - `activities/`, `admin/`, `collection/`, `friends/`, `inbox/`, `keyword/`, `main2/`, `makercenter/`, `oauth/`, `public/`, `search/`, `searcher/`, `terms/`, `wadizad/`, `wai/`, `wish/`
   - `app/` (app-api; `app/funding/projects.service.ts`, `app/links.service.ts`, `app/settings.service.ts`, `app/support.service.ts`)
   - `platform/` (`nicepay.service.ts`, `marketingconsents.service.ts`, `notification.service.ts`, `share.service.ts`, `inbox.service.ts`, `global/exchange-rate.service.ts`, `global/translate.service.ts`)
-  - `web/` (web-api; 레거시 `www.wadiz.kr` 백엔드; 하위 `funding/`, `reward/`, `store/`, `event/`, `marketing/`, `membership/`, `term/`)
+  - `web/` (web-api; 레거시 `www.wadiz.io` 백엔드; 하위 `funding/`, `reward/`, `store/`, `event/`, `marketing/`, `membership/`, `term/`)
 - **의존 패턴**
   - `@wadiz/core` 의 `Locale` 을 읽어 기본 헤더 생성(`packages/api/src/fetch.ts:12-20`)
   - `@wadiz/request-api` 의 `JSONParseError`·`parseAkamaiErrorString` 을 재사용(`packages/api/src/fetch.ts:3`, `packages/api/src/FetchError.ts:1`)
@@ -329,7 +329,7 @@
      - queryKey 도 플래그에 따라 `/api/v1/funding/projects/{no}/story` vs `web/apip/funding/global/projects/{no}/story` 로 달라짐
 10. **Account 서버 업스트림 전환** (`packages/api/src/account/account.service.ts:9-43`)
     - `ACCOUNT_URL` = `{local, dev, rc, rc2, rc3, stage, live}` 도메인 매핑
-    - `location.origin` 이 `local-account.wadiz.kr` 이면 동일 origin 사용(서버팀 로컬 테스트), 아니면 `process.env.ENVIRONMENT === 'stage'` 일 때 stage 도메인, 그 외는 `process.env.ACCOUNT_URL` (Vite env)
+    - `location.origin` 이 `local-account.wadiz.io` 이면 동일 origin 사용(서버팀 로컬 테스트), 아니면 `process.env.ENVIRONMENT === 'stage'` 일 때 stage 도메인, 그 외는 `process.env.ACCOUNT_URL` (Vite env)
     - `credentials` 는 dev 환경에서만 `'include'` 로 쿠키 전송
     - 회원가입(`postUser`, `postSocialUser`)은 Location 헤더를 읽기 위해 원시 `fetch` 를 직접 호출하는 예외 케이스
 11. **Account Token 자동 갱신** — `withAccessTokenRefresh` (`packages/queries/src/accessTokenRefresh.ts`)
@@ -418,7 +418,7 @@ feature 들은 도메인 경계에 따라 app 의 FSD(`src/app`, `src/pages`, `s
 - `initializeI18n()` 은 Promise singleton. 이미 진행 중이면 기존 Promise 반환(`:22-33`).
 - `performInitialization()` 에서 `LocaleSettings.languageCode` 로 lng 결정, `i18next.use(initReactI18next).init({ fallbackLng: 'en', resources: { en, ja, ko, zh } })` 실행(`:63-77`).
 - `returnObjects: true` — 트리 값을 통째로 반환해 배열/객체 번역도 지원.
-- 주석 처리된 CDN 버전(`https://static-dev.wadiz.kr/test/i18n/supporter/{lng}.json`)이 남아 있어, 향후 JSON 을 CDN 에서 로드할 구조도 예정됨(`:41-61`).
+- 주석 처리된 CDN 버전(`https://static-dev.wadiz.io/test/i18n/supporter/{lng}.json`)이 남아 있어, 향후 JSON 을 CDN 에서 로드할 구조도 예정됨(`:41-61`).
 - TS 트릭: `export type TranslationKeys = RecursiveKeyOf<typeof en>;` 로 key 자동완성을 제공(`:94`).
 
 ### 5.4 훅·함수
@@ -507,7 +507,7 @@ feature 들은 도메인 경계에 따라 app 의 FSD(`src/app`, `src/pages`, `s
 
 각 서비스 파일의 관측 정보(배럴 이름, 베이스 URL 결정, 주요 endpoint). 서버 내부 동작은 **외부** 처리.
 
-### A.1 `web/` (레거시 www.wadiz.kr 백엔드)
+### A.1 `web/` (레거시 www.wadiz.io 백엔드)
 
 | 서비스 | 배럴 이름 | 주요 endpoint (prefix) | 비고 |
 |---|---|---|---|
@@ -555,7 +555,7 @@ feature 들은 도메인 경계에 따라 app 의 FSD(`src/app`, `src/pages`, `s
 
 ### A.2 `app/` (신규 app-api, `APP_API_DOMAIN` 환경별 분기)
 
-- `app/funding/projects.service.ts` — `getFundingStory(projectNo)`, `getLaunchingSoonStory(projectNo)`. 베이스 URL 은 `https://app.wadiz.kr` **고정**(local/dev/rc 의 경우 해당 endpoint 미확인 → 외부; `packages/api/src/app/funding/projects.service.ts:19-40`).
+- `app/funding/projects.service.ts` — `getFundingStory(projectNo)`, `getLaunchingSoonStory(projectNo)`. 베이스 URL 은 `https://api.wadiz.io/app` **고정**(local/dev/rc 의 경우 해당 endpoint 미확인 → 외부; `packages/api/src/app/funding/projects.service.ts:19-40`).
 - `app/links.service.ts` — `getShareSettings()` → `/2023/onelink/settings.json` (`process.env.STATIC_URL`), `postWalink(url)` → `/api/v1/links` (`process.env.APP_API_URL`), `postWalinks(targets)`/`postWalinksQuery(targets)` → `/api/v2/links` (`APP_API_DOMAIN[process.env.ENVIRONMENT]`). (`packages/api/src/app/links.service.ts:1-60`).
 - `app/settings.service.ts` — `getAppSettings()` Feature Flag 목록 반환. 타입 `AppSettingsFeature = 'app-install-promotion' | 'bnbStoreTab' | 'browser-reload' | 'funding-story-api' | 'global-only-project' | 'login-buttons-layout' | 'sample' | 'walink' | 'queue-enabled-projects'` (`packages/api/src/app/settings.service.ts:15-24`). 각 Feature 에 대응하는 세부 타입(`AppInstallPromotionSetting`, `BnbStoreTabSetting`, `FundingStoryApiSetting` 등)도 동일 파일에 정의.
 - `app/support.service.ts` — `getTicketsQuery(accessToken, params?)` 티켓 목록 (`/api/v1/support/tickets`, Bearer 인증). `APP_API_DOMAIN` 을 재선언해 환경별 분기.
@@ -731,7 +731,7 @@ feature 들은 도메인 경계에 따라 app 의 FSD(`src/app`, `src/pages`, `s
 | `process.env.DATA_API_URL`, `ANALYTICS_URL` | 분석/데이터 수집 |
 | `process.env.SENTRY_DSN`, `VITE_SENTRY_*` | Sentry 리포트 |
 | `process.env.STATIC_URL` | CDN(이미지/onelink 설정) |
-| `process.env.WEB_URL` | 레거시 www.wadiz.kr 리다이렉트 |
+| `process.env.WEB_URL` | 레거시 www.wadiz.io 리다이렉트 |
 | `process.env.TOKEN_MARKETING`, `TOKEN_INBOX`, `TOKEN_KEYWORDS` | platform 보조 토큰 |
 | `process.env.NODE_ENV` | mock 분기 |
 

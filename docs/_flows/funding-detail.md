@@ -23,7 +23,7 @@
 ## 기록 범위
 - **읽은 파일**:
   - `wadiz-frontend/studio/funding/src/mocks/reward/fundingCampaignHandlers.ts:63` (FE mock으로 실제 호출 패턴 확인)
-  - `wadiz-frontend/apps/global/src/features/rewards-selection/lib/testdata/rewardMockGenerator.js:20` (명시적 호스트: `https://www.wadiz.kr`)
+  - `wadiz-frontend/apps/global/src/features/rewards-selection/lib/testdata/rewardMockGenerator.js:20` (명시적 호스트: `https://www.wadiz.io`)
   - `com.wadiz.web/src/main/java/com/wadiz/web/reward/campaign/controller/CampaignApiController.java:1-45`
   - `com.wadiz.web/src/main/java/com/wadiz/web/reward/campaign/service/RewardCampaignService.java:144-165`
   - `com.wadiz.web/src/main/java/com/wadiz/web/reward/campaign/repository/CampaignRepository.java:30-44`
@@ -37,7 +37,7 @@
 ### 1.1 wadiz-frontend (웹)
 - **엔드포인트 패턴**: `GET /web/reward/api/campaigns/{campaignId}`
 - **실제 호출 위치**: Mock/테스트 데이터에서 명시 — `studio/funding/src/mocks/reward/fundingCampaignHandlers.ts:63`, `apps/global/src/features/rewards-selection/lib/testdata/rewardMockGenerator.js:20`
-- **Host**: `https://www.wadiz.kr` (환경변수 `VITE_SERVICE_API_URL`, `com.wadiz.web` 레거시)
+- **Host**: `https://www.wadiz.io` (환경변수 `VITE_SERVICE_API_URL`, `com.wadiz.web` 레거시)
 - **fetch 래퍼**: `packages/api/src/fetch.ts` (쿠키 세션, `wadiz-country`/`wadiz-language` 헤더 자동 첨부)
 - **사용처**: 상세 페이지, 리워드 선택 화면, 메이커 스튜디오 미리보기
 
@@ -180,7 +180,7 @@ public Campaign get(int campaignId) {
      │ fetch(`${VITE_SERVICE_API_URL}/web/reward/api/campaigns/${id}`)
      │ credentials: same-origin, headers: wadiz-country/language
      ▼
-[www.wadiz.kr  (com.wadiz.web, Spring 3.2)]
+[www.wadiz.io  (com.wadiz.web, Spring 3.2)]
      │
      ├─ CampaignApiController#get(campaignId)           [reward/campaign/controller/CampaignApiController.java:39]
      │

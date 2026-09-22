@@ -9,6 +9,54 @@
 
 ---
 
+> 📅 **2026-09-22 main pull 보강** (1 커밋)
+>
+> 2026-09-22 stage 회귀에서 깨진 시나리오 네 개를 고쳤습니다.
+>
+> ### 홈 스크롤 방식을 바꿔 타임아웃을 없앴습니다
+>
+> 가장 큰 변경입니다. `helpers/home/scrollUntilSectionVisible.ts` 입니다.
+>
+> | | 종전 | 지금 |
+> |---|---|---|
+> | 방식 | 처음부터 뷰포트(844px) 단위로 350ms 씩 내려감 | **바닥으로 한 번 점프**한 뒤, 못 찾으면 뷰포트 단위로 훑음 |
+> | 소요 | 50회 약 35초. 3워커 부하에선 50초 | 9회 약 3.5초 |
+>
+> 글로벌 모바일 홈은 무한 스크롤로 **약 39,000px** 까지 자랍니다.
+> 그래서 `TC_031`·`TC_032`·`TC_034` 가 60초 예산에서 타임아웃됐습니다. 단독 재실행은 통과했습니다.
+>
+> 커밋에 **실측값**이 적혀 있습니다. Best funding 이 19.1초에서 3.6초로, 한국 홈 실시간 베스트가 3.3초입니다.
+>
+> 2026-05 에 같은 점프 방식(`scrollToLazySection`)이 헤드리스에서 실패한 적이 있습니다.
+> **그때 원인은 점프가 아니라 앱 다운로드 배너였습니다.** PR #9 에서 이미 차단했습니다.
+> 다만 중간 섹션은 점프로 지나칠 수 있어 **종전 방식을 폴백으로 남겼습니다.**
+>
+> ### 영문 스토리가 두 경로로 만들어진다는 것을 반영했습니다
+>
+> `helpers/constants/storyCdn.ts` 가 새로 생겼습니다. 두 가지 URL 패턴을 담습니다.
+>
+> | 경로 | 어떻게 영문이 되나 | 이미지 주소 |
+> |---|---|---|
+> | ① AI 자동번역 | 시스템이 번역 | `ai-cdn.wadiz.(kr\|io)/EN/`. 한국어판과 파일 번호가 같음 |
+> | ② 메이커 직접 등록 | 메이커가 영문 원고를 올림 | 원본 CDN. 한국어판과 파일 번호가 다름 |
+>
+> ②는 **화면은 영어로 정상인데 `/EN/` 이미지가 한 장도 없습니다.** 그래서 `TC_053` 이 실패합니다.
+> `global-setup.ts` 가 홈 후보 **5개**까지 뒤져 ①에 해당하는 프로젝트를 따로 고릅니다.
+> 끝내 없으면 비워 두고 `TC_053` 은 실패시킵니다. **억지로 통과시키지 않겠다는 결정입니다**(2026-09-22).
+>
+> 원본 이미지 판정도 느슨하게 바꿨습니다.
+> `www.wadiz.kr/ft/images/` 처럼 **CDN 이 아닌 와디즈 호스트로 서빙되는 프로젝트**가 있기 때문입니다.
+> stage 417022 번 프로젝트의 PC 첫 이미지가 그렇습니다.
+>
+> ### 나머지 둘
+>
+> | 시나리오 | 내용 |
+> |---|---|
+> | `TC_064` | CTA 버튼 상태 판정 보완 (`page_objects/funding/FundingDetailPage.ts`) |
+> | `TC_078` | 찜 마감임박 시나리오 수정 (`test/wish/tc_078_wish_ending_soon.spec.ts`) |
+>
+> ---
+
 > 📅 **2026-09-17 main pull 보강** (2 커밋)
 >
 > ### 회귀 검사 실행기를 셸 스크립트에서 Node 로 바꿨습니다
@@ -66,7 +114,8 @@ global-setup.ts          # 로그인 + 테스트 대상 프로젝트 동적 수�
 storageState.json        # 인증 세션 (자동 생성)
 discoveredProjects.json  # 수집된 펀딩/오픈예정 URL (자동 생성)
 fixtures/                # 테스트 계정
-helpers/                 # auth · payment · funding · wish · mywadiz · home · maker · gmail · reporters · constants
+helpers/                 # auth · payment · funding · wish · mywadiz · home · maker · gmail · reporters
+└── constants/          # className · env · timeouts · storyCdn(2026-09-22 신규)
 page_objects/            # Page Object Model — home · funding · launching-soon · search · wish · mywadiz · account · payment · layout
 docs/                    # page-object-guide.md · scenario-writing-guide.md · ai-context/
 test/                    # 8개 카테고리 · 90 스펙

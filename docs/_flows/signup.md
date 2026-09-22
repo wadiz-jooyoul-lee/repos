@@ -30,16 +30,16 @@
 
 ### 1.2 이메일 코드 발송·검증
 ```http
-POST https://account.wadiz.kr/api/v1/authentication-code
+POST https://account.wadiz.io/api/v1/authentication-code
 Content-Type: application/json
 { "email": "user@example.com", "language": "ko", ... }
 
-GET  https://account.wadiz.kr/api/v1/authentication-code/{code}/valid?email=...
+GET  https://account.wadiz.io/api/v1/authentication-code/{code}/valid?email=...
 ```
 
 ### 1.3 가입 제출
 ```http
-POST https://account.wadiz.kr/api/v1/users
+POST https://account.wadiz.io/api/v1/users
 Content-Type: application/json
 {
   "email": "...", "password": "...", "nickname": "...",

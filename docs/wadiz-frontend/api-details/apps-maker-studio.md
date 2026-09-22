@@ -25,12 +25,12 @@
 
 | 앱 | 대상 사용자 | 배포 형태 | 인증 | 핵심 upstream |
 |---|---|---|---|---|
-| `studio/funding` | 외부 메이커 (리워드 펀딩 개설자) | SPA (`/studio/reward/*`) | 쿠키 + 401→웹 리다이렉트 | `www.wadiz.kr` (web) + `/web/apip/funding/*` + `/web/reward/api/*` |
+| `studio/funding` | 외부 메이커 (리워드 펀딩 개설자) | SPA (`/studio/reward/*`) | 쿠키 + 401→웹 리다이렉트 | `www.wadiz.io` (web) + `/web/apip/funding/*` + `/web/reward/api/*` |
 | `studio/startup` | 외부 메이커 (투자형/증권형 발행사) | SPA (`/studio/startup/*`) | Redux + `/web/account/isLoggedIn` | `/web/maker/studio/*`, `/web/startup/*`, `/web/maker-proxy/*` |
 | `studio/store` | 외부 메이커 (스토어 판매자) | SPA (`/studio/store/:projectNo`) | Axios `withCredentials: true` | `/web/apip/store/studio/*`, `/web/reward/api/*`, `/web/apip/funding/*` |
 | `studio/studio-services` | (shared library) | 빌드 산출물 없음 (TS 소스) | n/a | 공통 fetch 래퍼 + 13 개 서버 모듈 |
 | `apps/wai-ai-agent-launcher` | **내부 + 외부** (와디즈 사이트 전반 로더 스크립트) | UMD lib (`main.js`) | 호스트 페이지 세션 상속 | WAi 페이지 (`https://{env}.wadiz.kr/web/wai`) — `iframe` 임베드 |
-| `apps/walink-generator` | **내부 도구** (와디즈 URL 단축) | SPA | (토큰 없음) | `POST /api/v2/links` → `app.wadiz.kr` / `api.dev.wadiz.co/app` |
+| `apps/walink-generator` | **내부 도구** (와디즈 URL 단축) | SPA | (토큰 없음) | `POST /api/v2/links` → `api.wadiz.io/app` / `api.dev.wadiz.co/app` |
 | `apps/mail-template` | **내부 도구** (마케팅/시스템 메일 템플릿 빌더) | 정적 HTML (S3) | n/a | — (빌드 타임에 Handlebars→HTML 변환) |
 | `apps/devtools/app-settings-console` | **내부 도구** (관리자용 App Settings) | 개발 서버 (Express + Vite) | 하드코딩 Bearer Token / env | `{env}.app-api` `/api/{env}/v1/settings` 프록시 |
 | `apps/devtools/component-playground` | **내부 도구** (waffle 컴포넌트 시연) | SPA | n/a | — |
@@ -45,7 +45,7 @@
 |---|---|
 | 패키지명 | `wadiz-maker-studio` (`studio/funding/package.json:3`) |
 | 제목 | "와디즈 메이커 스튜디오" |
-| Homepage | `https://www.wadiz.kr/studio/` (`package.json:5`) |
+| Homepage | `https://www.wadiz.io/studio/` (`package.json:5`) |
 | 빌드 도구 | Vite 6 (`vite.config.ts:47`) |
 | 개발 서버 포트 | 3000 (`vite.config.ts:242`) — 호스트 `studio.wadiz.kr` (HMR) |
 | 번들 outDir | `build/` (`vite.config.ts:61`) |
@@ -68,23 +68,23 @@
 | 변수 | live 값 (`.env.production.live:1-27`) | dev 값 (`.env.development.dev:1-25`) |
 |---|---|---|
 | `VITE_ENVIRONMENT` | `live` | `dev` |
-| `VITE_ANALYTICS_HOST` | `https://analytics.wadiz.kr` | `https://dev-analytics.wadiz.kr` |
-| `VITE_PUBLIC_API_HOST` | `https://public-api.wadiz.kr` | `https://public-api-dev.wadiz.kr` |
-| `VITE_SERVICE_API_HOST` | `https://service.wadiz.kr` | `https://dev-service.wadiz.kr` |
-| `VITE_AI_WADIZDATA_HOST` | `https://genai.wadiz.kr` | `https://dev-gen.ai.wadizdata.com` |
+| `VITE_ANALYTICS_HOST` | `https://analytics.wadiz.io` | `https://dev-analytics.wadiz.io` |
+| `VITE_PUBLIC_API_HOST` | `https://api.wadiz.io` | `https://public-api-dev.wadiz.io` |
+| `VITE_SERVICE_API_HOST` | `https://api.wadiz.io` | `https://dev-api.wadiz.io` |
+| `VITE_AI_WADIZDATA_HOST` | `https://genai.aidata.wadiz.io` | `https://dev-gen.ai.wadizdata.com` |
 | `VITE_AI_CHATDATA_HOST` | `wss://ws.ai.wadiz.kr` | `wss://dev-ws.ai.wadiz.kr` |
 | `VITE_BIZ_CENTER_HOST` | `https://biz.wadiz.kr` | `https://dev.biz.wadiz.11h11m.net` |
 | `VITE_AD_CENTER_HOST` | `https://ad.wadiz.kr` | `https://dev-ad.wadiz.kr` |
 | `VITE_PLATFORM_CLOUDFRONT_HOST` | `https://cdn3.wadiz.kr` | `https://d1ruwxjthziwe4.cloudfront.net` |
-| `VITE_FE_CLOUDFRONT_HOST` | `https://static.wadiz.kr` | `https://static-dev.wadiz.kr` |
-| `VITE_APP_API_HOST` | `https://app.wadiz.kr` | `https://api.dev.wadiz.co/app` |
-| `VITE_PLATFORM_API_URL` | `https://platform.wadiz.kr` | `/main2` (dev proxy) |
-| `VITE_PLATFORM_MAIN2_API_URL` | `https://platform.wadiz.kr/main2` | `/main2` |
-| `VITE_PLATFORM_GLOBAL_API_URL` | `https://platform.wadiz.kr/global` | `/global` |
+| `VITE_FE_CLOUDFRONT_HOST` | `https://cdn-static.wadiz.io` | `https://static-dev.wadiz.io` |
+| `VITE_APP_API_HOST` | `https://api.wadiz.io/app` | `https://api.dev.wadiz.co/app` |
+| `VITE_PLATFORM_API_URL` | `https://api.wadiz.io` | `/main2` (dev proxy) |
+| `VITE_PLATFORM_MAIN2_API_URL` | `https://api.wadiz.io/main2` | `/main2` |
+| `VITE_PLATFORM_GLOBAL_API_URL` | `https://api.wadiz.io/global` | `/global` |
 | `VITE_PLATFORM_GLOBAL_API_TOKEN` | `38DC62...` (Bearer) | `27906F...` (dev Bearer) |
 | `VITE_STATIC_WEB_URL` | `https://$STATIC_DEPLOYMENT_HOST/web` | (unset) |
-| `DEV_SERVER_PROXY` | — | `https://dev.wadiz.kr` |
-| `DEV_AUTH_SERVER_PROXY` | — | `https://dev-account.wadiz.kr` |
+| `DEV_SERVER_PROXY` | — | `https://dev.wadiz.io` |
+| `DEV_AUTH_SERVER_PROXY` | — | `https://account.dev.wadiz.io` |
 | `DEV_PLATFORM_MAIN2_API_PROXY` | — | `https://dev-platform.wadizcorp.net` |
 | `DEV_PLATFORM_GLOBAL_API_PROXY` | — | `https://dev-platform.wadizcorp.net` |
 
@@ -105,10 +105,10 @@
 
 | prefix | target | 목적 |
 |---|---|---|
-| `/web`, `/resources` | `DEV_SERVER_PROXY` = `dev.wadiz.kr` | com.wadiz.web 레거시 (세션·WAR 리소스) |
+| `/web`, `/resources` | `DEV_SERVER_PROXY` = `dev.wadiz.io` | com.wadiz.web 레거시 (세션·WAR 리소스) |
 | `/global`, `/noti-channel` | `DEV_PLATFORM_GLOBAL_API_PROXY` = `dev-platform.wadizcorp.net` | 플랫폼 (환율·번역·마케팅) |
 | `/main2` | `DEV_PLATFORM_MAIN2_API_PROXY` = `dev-platform.wadizcorp.net` | 플랫폼 main2 API |
-| `/oauth`, `/login`, `/signup`, `/social-signup`, `/social-link`, `/connect` | `DEV_AUTH_SERVER_PROXY` = `dev-account.wadiz.kr` | kr.wadiz.account OAuth2 IdP |
+| `/oauth`, `/login`, `/signup`, `/social-signup`, `/social-link`, `/connect` | `DEV_AUTH_SERVER_PROXY` = `account.dev.wadiz.io` | kr.wadiz.account OAuth2 IdP |
 
 응답의 `Set-Cookie` 에서 `secure` 플래그를 제거(`vite.config.ts:29-34`), `Location` 헤더를 `http://studio.wadiz.kr:3000` 으로 리라이트(`vite.config.ts:21-27`).
 
@@ -282,16 +282,16 @@ funding studio 전용 구조:
 
 - `VITE_ENVIRONMENT=live`
 - `VITE_AD_CENTER_HOST=https://ad.wadiz.kr`
-- `VITE_ANALYTICS_HOST=https://analytics.wadiz.kr`
-- `VITE_PUBLIC_API_HOST=https://public-api.wadiz.kr`
-- `VITE_SERVICE_API_HOST=https://service.wadiz.kr`
+- `VITE_ANALYTICS_HOST=https://analytics.wadiz.io`
+- `VITE_PUBLIC_API_HOST=https://api.wadiz.io`
+- `VITE_SERVICE_API_HOST=https://api.wadiz.io`
 - `VITE_STATIC_WEB_URL=https://$STATIC_DEPLOYMENT_HOST/web`
 - `VITE_SENTRY_*`
 
 `.env.development.dev`
 
-- `DEV_SERVER_PROXY=https://dev.wadiz.kr`
-- `DEV_AUTH_SERVER_PROXY=https://dev-account.wadiz.kr`
+- `DEV_SERVER_PROXY=https://dev.wadiz.io`
+- `DEV_AUTH_SERVER_PROXY=https://account.dev.wadiz.io`
 
 > startup 은 funding 과 달리 `PLATFORM_*` / `AI_*` 환경변수가 없습니다. **레거시 `com.wadiz.web` (`/web/maker/*`, `/web/startup/*`) 를 강하게 바라봅니다.**
 
@@ -379,7 +379,7 @@ funding studio 전용 구조:
 ### 환경변수 (store)
 
 - `VITE_APP_API_HOST`, `VITE_PLATFORM_CLOUDFRONT_HOST` 등이 `.env.*` 에 정의됨 (`src/helpers/image.ts:149,166` 에서 사용).
-- axios `baseURL` 은 `/web/apip/store/studio` 상대 경로 → 동일 도메인(`www.wadiz.kr`) 에 프록시됨.
+- axios `baseURL` 은 `/web/apip/store/studio` 상대 경로 → 동일 도메인(`www.wadiz.io`) 에 프록시됨.
 
 ### 라우트 구조 (store)
 
@@ -503,10 +503,10 @@ axios baseURL prefix `/web/apip/store/studio` 가 모든 상대 경로에 자동
 | `fetchStoreStudioAPI(url)` | `/web/apip/store/studio` | 동일 도메인 | `fetch.ts:140` |
 | `fetchWebAPI(url)` | `fetchUrl(url)` (절대) | 동일 도메인 | `fetch.ts:145` |
 | `fetchPlatformAPI(url)` | `fetchUrl(url, PLATFORM_API_URL)` | `process.env.PLATFORM_API_URL` | `fetch.ts:149` |
-| `fetchPublicAPI(url)` | `fetchUrl(url, REACT_APP_PUBLIC_API_HOST)` | `public-api.wadiz.kr` | `fetch.ts:154` |
-| `fetchServiceAPI(url)` | `fetchUrl(url, REACT_APP_SERVICE_API_HOST)` | `service.wadiz.kr` | `fetch.ts:159` |
-| `fetchAIDataAPI(url)` | `fetchUrl(url, REACT_APP_AI_WADIZDATA_HOST)` | `genai.wadiz.kr` | `fetch.ts:164` |
-| `fetchMakerCenterAPI(url)` | `fetchUrl(url, 'https://api.makercenter.wadiz.kr')` | **하드코딩** (`fetch.ts:170`) |
+| `fetchPublicAPI(url)` | `fetchUrl(url, REACT_APP_PUBLIC_API_HOST)` | `api.wadiz.io` | `fetch.ts:154` |
+| `fetchServiceAPI(url)` | `fetchUrl(url, REACT_APP_SERVICE_API_HOST)` | `api.wadiz.io` | `fetch.ts:159` |
+| `fetchAIDataAPI(url)` | `fetchUrl(url, REACT_APP_AI_WADIZDATA_HOST)` | `genai.aidata.wadiz.io` | `fetch.ts:164` |
+| `fetchMakerCenterAPI(url)` | `fetchUrl(url, 'https://api.makercenter.wadiz.io')` | **하드코딩** (`fetch.ts:170`) |
 | `fetchGlobalAPI(url)` | `{PLATFORM_GLOBAL_API_URL}{url}` + `Authorization: Bearer {PLATFORM_GLOBAL_API_TOKEN}` | platform global | `fetch.ts:174-186` |
 | `fetchMain2API(url)` | `{PLATFORM_MAIN2_API_URL}{url}` | platform main2 | `fetch.ts:188-196` |
 
@@ -558,11 +558,11 @@ axios baseURL prefix `/web/apip/store/studio` 가 모든 상대 경로에 자동
 
 | env | 도메인 |
 |---|---|
-| `local` | `https://local.wadiz.kr` |
-| `dev` | `https://dev.wadiz.kr` |
+| `local` | `https://local.wadiz.io` |
+| `dev` | `https://dev.wadiz.io` |
 | `rc` | `https://rc.wadiz.kr` |
 | `rc2` | `https://rc2.wadiz.kr` |
-| `stage` | `https://stage.wadiz.kr` |
+| `stage` | `https://stage.wadiz.io` |
 | `live` | `https://wadiz.kr` |
 
 결정 순서(`getBaseURL`, `useWAiAIAgentWindowOpen.tsx:65-86`):
@@ -633,7 +633,7 @@ WAi 런처는 자체 라우트가 없고, **WAi 페이지를 새 창/모달/앱 
     "VITE_ENVIRONMENT": "local"
   },
   "dev": {
-    "VITE_APP_API_URL": "https://app.wadiz.kr",
+    "VITE_APP_API_URL": "https://api.wadiz.io/app",
     "VITE_ENVIRONMENT": "live"
   }
 }
@@ -678,7 +678,7 @@ POST('/api/v2/links', targets, {
 
 **`APP_API_DOMAIN`** (`packages/api/src/app/links.service.ts:7-14`):
 
-- `live` → `https://app.wadiz.kr`
+- `live` → `https://api.wadiz.io/app`
 - `local` / `dev` → `https://api.dev.wadiz.co/app`
 - `rc` → `https://app-rc.wadizcorp.net`
 - `rc2` → `https://app-rc2.wadizcorp.net`
@@ -777,12 +777,12 @@ POST('/api/v2/links', targets, {
 
 | env | host | token (Bearer, 하드코딩) |
 |---|---|---|
-| `local` | `https://local.wadiz.kr:3000` | (TLS 검증 비활성) |
+| `local` | `https://local.wadiz.io:3000` | (TLS 검증 비활성) |
 | `dev` | `https://api.dev.wadiz.co/app` | `E3F8C93FBC4F...` |
 | `rc1` | `https://app-rc.wadizcorp.net` | `B392E653945...` |
 | `rc2` | `https://app-rc2.wadizcorp.net` | `61638487...` |
 | `rc3` | `https://app-rc3.wadizcorp.net` | `DA59737D...` |
-| `live` | `https://app.wadiz.kr` | `FCB942B7...` |
+| `live` | `https://api.wadiz.io/app` | `FCB942B7...` |
 
 > `local` 환경에 한해 자체 서명 인증서 요청의 TLS 검증(`rejectUnauthorized`)을 비활성화.
 
@@ -933,21 +933,21 @@ GET /                             → 안내 JSON
 
 | 도메인 | 어떤 앱이 호출 | 주요 경로 (prefix) | 환경변수 (live) |
 |---|---|---|---|
-| `www.wadiz.kr` (com.wadiz.web 레거시 WAR) | funding (거의 전량), startup (거의 전량), store, devtools(proxy 대상 아님) | `/web/*` (account, reward/api, apip/funding, apip/store, maker/*, startup/*, maker-proxy/*, v1, v2, v3, waccount, backoffice, progress) | (동일 도메인 호출 — VITE_SERVER_PROXY 는 dev) |
-| `account.wadiz.kr` (kr.wadiz.account) | 3 스튜디오 모두 (OAuth 리다이렉트) | `/oauth`, `/login`, `/signup`, `/social-signup`, `/social-link`, `/connect` (Vite proxy target) | `DEV_AUTH_SERVER_PROXY` (dev) |
-| `platform.wadiz.kr` | funding (글로벌 환율·번역·마케팅), startup 미사용, store 미사용 | `/exchange-rates`, `/translate/*`, `/noti-channel/v2/marketingconsents`, `/main2`, `/global` | `VITE_PLATFORM_API_URL`, `VITE_PLATFORM_MAIN2_API_URL`, `VITE_PLATFORM_GLOBAL_API_URL` + Bearer `PLATFORM_GLOBAL_API_TOKEN` |
-| `public-api.wadiz.kr` | funding (`/main/info/RA1`) | `/main/*` | `VITE_PUBLIC_API_HOST` |
-| `service.wadiz.kr` | funding, store (search categories) | `/api/search/v2/categories`, `/api/search/categories` | `VITE_SERVICE_API_HOST` |
-| `app.wadiz.kr` (NestJS `app-api`) | walink-generator, devtools/app-settings-console (live), WAi (iframe 간접) | walink: `/api/v2/links`; devtools: `/api/v1/settings` | `VITE_APP_API_URL` / hardcoded `APP_API_DOMAIN.live` |
+| `www.wadiz.io` (com.wadiz.web 레거시 WAR) | funding (거의 전량), startup (거의 전량), store, devtools(proxy 대상 아님) | `/web/*` (account, reward/api, apip/funding, apip/store, maker/*, startup/*, maker-proxy/*, v1, v2, v3, waccount, backoffice, progress) | (동일 도메인 호출 — VITE_SERVER_PROXY 는 dev) |
+| `account.wadiz.io` (kr.wadiz.account) | 3 스튜디오 모두 (OAuth 리다이렉트) | `/oauth`, `/login`, `/signup`, `/social-signup`, `/social-link`, `/connect` (Vite proxy target) | `DEV_AUTH_SERVER_PROXY` (dev) |
+| `api.wadiz.io` | funding (글로벌 환율·번역·마케팅), startup 미사용, store 미사용 | `/exchange-rates`, `/translate/*`, `/noti-channel/v2/marketingconsents`, `/main2`, `/global` | `VITE_PLATFORM_API_URL`, `VITE_PLATFORM_MAIN2_API_URL`, `VITE_PLATFORM_GLOBAL_API_URL` + Bearer `PLATFORM_GLOBAL_API_TOKEN` |
+| `api.wadiz.io` | funding (`/main/info/RA1`) | `/main/*` | `VITE_PUBLIC_API_HOST` |
+| `api.wadiz.io` | funding, store (search categories) | `/api/search/v2/categories`, `/api/search/categories` | `VITE_SERVICE_API_HOST` |
+| `api.wadiz.io/app` (NestJS `app-api`) | walink-generator, devtools/app-settings-console (live), WAi (iframe 간접) | walink: `/api/v2/links`; devtools: `/api/v1/settings` | `VITE_APP_API_URL` / hardcoded `APP_API_DOMAIN.live` |
 | `api.dev.wadiz.co/app` | walink-generator (local), devtools (dev) | walink: `/api/v2/links`; devtools: `/api/dev/v1/settings` | `APP_API_DOMAIN.dev` (하드코딩 in `links.service.ts:10`, `devtools/app-settings-console/server.ts:17`) |
 | `app-rc.wadizcorp.net`, `app-rc2.wadizcorp.net`, `app-rc3.wadizcorp.net` | devtools(app-settings-console) RC 환경 | `/api/*/v1/settings` | `devtools/app-settings-console/server.ts:21~30` 하드코딩 Bearer |
-| `genai.wadiz.kr` (AI wadizdata) | funding (메이커 가이드 AI) | `/maker/guide` | `VITE_AI_WADIZDATA_HOST` → `REACT_APP_AI_WADIZDATA_HOST` |
+| `genai.aidata.wadiz.io` (AI wadizdata) | funding (메이커 가이드 AI) | `/maker/guide` | `VITE_AI_WADIZDATA_HOST` → `REACT_APP_AI_WADIZDATA_HOST` |
 | `ws.ai.wadiz.kr` (WebSocket) | funding (정의되어 있음, 실제 사용 확인 필요) | ws:// | `VITE_AI_CHATDATA_HOST` |
-| `analytics.wadiz.kr` / `dev-analytics.wadiz.kr` | 3 스튜디오 (env 정의만 존재, 이벤트 트래킹 용) | (분석 트래킹) | `VITE_ANALYTICS_HOST` |
+| `analytics.wadiz.io` / `dev-analytics.wadiz.io` | 3 스튜디오 (env 정의만 존재, 이벤트 트래킹 용) | (분석 트래킹) | `VITE_ANALYTICS_HOST` |
 | `biz.wadiz.kr`, `ad.wadiz.kr` | funding env 정의 (메이커 센터 간 크로스 링크) | — | `VITE_BIZ_CENTER_HOST`, `VITE_AD_CENTER_HOST` |
 | `cdn3.wadiz.kr` (Platform CloudFront) | 3 스튜디오 이미지 호스트 | — | `VITE_PLATFORM_CLOUDFRONT_HOST` |
-| `static.wadiz.kr` / `static-dev.wadiz.kr` | 3 스튜디오 정적 자원 | — | `VITE_FE_CLOUDFRONT_HOST` |
-| `api.makercenter.wadiz.kr` | studio-services `fetchMakerCenterAPI` (하드코딩, `fetch.ts:170`) — funding 범위에서는 직접 호출 없음 | — | 하드코딩 |
+| `cdn-static.wadiz.io` / `static-dev.wadiz.io` | 3 스튜디오 정적 자원 | — | `VITE_FE_CLOUDFRONT_HOST` |
+| `api.makercenter.wadiz.io` | studio-services `fetchMakerCenterAPI` (하드코딩, `fetch.ts:170`) — funding 범위에서는 직접 호출 없음 | — | 하드코딩 |
 | `{env}.wadiz.kr/web/wai` | WAi launcher 가 iframe/새창으로 열기만 함 | `/web/wai?agent=&view=...` | launcher 가 `ENV_DOMAIN_MAP` 으로 판별 |
 | S3 (mail-template 배포, presign PUT in store) | mail-template (빌드 산출물 업로드), store (`services/external.ts` presigned PUT) | — | GitHub Actions + `VITE_PLATFORM_CLOUDFRONT_HOST` |
 | Braze (`js.appboycdn.com`, `sdk.iad-06.braze.com`) | 3 스튜디오 (InApp 메시지) | Braze Web SDK | `VITE_BRAZE_API_ENDPOINT`, `VITE_BRAZE_SCRIPT` (inline) |

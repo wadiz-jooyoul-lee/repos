@@ -6,6 +6,49 @@
 
 ---
 
+> 🔍 **2026-09-22 본문 전면 점검** — `main`(`9063ca3`, 2026-09-18) 기준
+>
+> 본문이 2026-07-31 이후 53일 멈춰 있는 동안 저장소에 350 커밋이 들어왔습니다.
+> 인용한 파일 107개 중 35개가 사라진 상태였습니다. 코드와 하나씩 대조해 정정했습니다.
+>
+> | # | 어디가 | 무엇이 틀렸나 |
+> |---|---|---|
+> | 1 | 환경별 URL 전체 표 | **전면 교체.** `wadiz.kr` 기준이었고 `RC2`·`Dev` 환경이었습니다. 지금은 대부분 `api.wadiz.io` 하나로 모였습니다 |
+> | 2 | `ServerMode` | `local/cdev/rc/rc2/rc3/stage/live` 7개로 적혀 있었습니다. **실제는 `local/cdev/rc4/stage/live` 5개**입니다 |
+> | 3 | `APIDomain` | `.ad` 가 있다고 했지만 **없어졌습니다.** `.crm`·`.cdn2`·`.cdn3`·`.cdn4`·`.staticCdn` 이 새로 생겼습니다 |
+> | 4 | `Projects/API` | 26 타겟이라고 했지만 **27개**입니다. `SmsAuthAPI` 가 빠지고 `CRMAPI`·`RecentSearchAPI` 가 들어왔습니다 |
+> | 5 | 기능별 API 매핑 표 | **57줄의 파일 인용을 새 모듈로 다시 연결했습니다.** `IOS-4193`(2026-05-12)이 기능 폴더의 API 파일을 `Projects/API/Sources/` 로 모았습니다 |
+> | 6 | 기술 스택 | `IGListKit 5.0.0` 과 `PIPKit 1.1.0` 이 남아 있었습니다. **둘 다 제거된 의존성**입니다 |
+> | 7 | Remote Config | `remote_config_defaults.plist` 로 라우팅한다고 했는데 그 파일은 `FE1-1297`(2026-08-03)로 지워졌습니다. **지금은 `AppSettingAPI` 가 내려 줍니다** |
+> | 8 | Associated Domains | `io` 도메인 4개가 빠져 있었습니다. `kr` 은 그대로 유효합니다 |
+> | 9 | 찜 추가 중복 구현 | "두 곳에 있다"고 기록돼 있었으나 **해소됐습니다.** 지금은 `FundingAPI` 한 곳입니다 |
+>
+> ### 큰 줄기 두 개
+>
+> **하나.** `IOS-4193`(2026-05-12, 725파일)이 API 계층을 재편했습니다.
+> 기능 폴더에 흩어져 있던 **`XxxAPI` 파일들**이 `Projects/API/Sources/{도메인}API/` 로 모였고,
+> 각 모듈이 `Interface/`(프로토콜·DTO)와 `Feature/`(구현)로 나뉩니다.
+> 앱 쪽에 남은 프로토콜은 **`XxxRepository`** 로 이름이 바뀌었습니다(`*Repository.swift` 67개).
+>
+> **둘.** `FE1-1762` 가 `kr` 도메인 코드를 걷어냈습니다.
+> 경로 접두사도 문자열에서 빠져 `APIDomain` 의 서비스 열거형이 갖게 됐습니다.
+> 그래서 문서의 옛 엔드포인트 표기와 코드의 지금 표기가 다릅니다.
+> 예로 `GET /main/display-ads/event` 는 지금 `GET /display-ads/event` 이고 `/main` 은 `.publicApi(.main1)` 이 붙입니다.
+>
+> ### 확인하지 못한 것
+>
+> 아래는 **엔드포인트가 코드에서 아예 사라졌고** 대체 경로를 찾지 못했습니다.
+> 기능이 없어진 것인지 경로만 바뀐 것인지는 코드만으로 판단할 수 없어 표에 "확인 필요"로 남겼습니다.
+>
+> | 기능 | 사라진 경로 |
+> |---|---|
+> | 광고 키비주얼·섹션 | `GET /keyvisual` · `GET /wad/sections/{code}` (`.ad` 도메인 자체가 없어짐) |
+> | 찜 검색 | `GET /api/activities/wishes/search` |
+> | 프리오더 검색 | `POST api/search/v2/preorder` |
+> | SMS 본인확인 | `POST /api/ftaccountConfirm/…` (`SmsAuthAPI` 타겟도 사라짐) |
+>
+> ---
+>
 > 📅 **2026-09-22 main pull 보강** (91 커밋, 26.37.0.12 → **26.38.0.16**)
 >
 > **막펀잡기 카드 레이아웃 A/B 실험(FE1-1848, 32커밋)** 이 최대 덩어리입니다.
@@ -291,7 +334,7 @@
 | 배포 채널 | **App Store (Release)** / **TestFlight (QA)** / Fastlane develop / Adhoc | `fastlane/Fastfile:27-55`, `.github/workflows/` |
 | Schemes | `wadiz-dev` (Debug), `wadiz-qa` (QA), `wadiz-release` (Release) | `Projects/App/Project.swift:393-441` |
 | Development Team | `PN5T77486L` | `Projects/App/SupportingFiles/Configuration/Release.xcconfig:12`, `Environment.swift:8` |
-| Associated Domains | `applinks:www.wadiz.kr`, `applinks:www.wadiz.ai`, `applinks:link.wadiz.kr`, `webcredentials:wadiz.kr` | `Projects/App/SupportingFiles/wadiz.entitlements:14-18` |
+| Associated Domains | **2026-09-22 확인 9개** — `applinks:` 로 `wadiz.page.link`·`wadiz.onelink.me`·`link.wadiz.kr`·`www.wadiz.kr`·`www.wadiz.ai`·**`www.wadiz.io`**·**`link.wadiz.io`**, `webcredentials:` 로 `wadiz.kr`·**`wadiz.io`**. `kr` 항목은 그대로 살아 있습니다 — 앱이 들어오는 옛 주소를 계속 받기 때문입니다 | `Projects/App/SupportingFiles/wadiz.entitlements:14-18` |
 
 ---
 
@@ -303,7 +346,11 @@
 - **Strict Concurrency 진행 중** — 각 Project 에 `STRICT_CONCURRENCY_GUIDE.md`, `nonisolated(unsafe)` 패턴 다수 (`WadizRequestInterceptorImpl.swift:19,20,23,24`). `Service/USERSERVICE_ACTOR_MIGRATION_GUIDE.md` 로 actor 전환 가이드.
 - **네트워킹**: **Alamofire 5.10.2** + 자체 `HTTPClient`/`RequestBuilder`/`WadizRequestInterceptor`. 로그 수집 **Pulse 2.1.5** + `pulseUI`, `pulseLogHandler`. 로깅 어댑터 `CocoaLumberjack 3.8.5`. 디버그 `OHHTTPStubs 9.1.0` (테스트). (`Tuist/Package.swift:26,50,54,73`)
 - **이미지**: **Kingfisher 8.6.2**, `SDWebImage 5.21.3`, `SVGKit 3.0.0`. (`Tuist/Package.swift:32,37,36`)
-- **UI 컴포넌트**: **SnapKit 5.7.1** (AutoLayout), **Lottie 4.6.0**, **FloatingPanel 2.0.1**, **FSPagerView**, **IGListKit 5.0.0**, **PIPKit 1.1.0**. (`Tuist/Package.swift:33-41`)
+- **UI 컴포넌트**(2026-09-22 `Tuist/Package.swift` 확인, 전체 28개 패키지): **SnapKit 5.7.1**, **Lottie 4.6.0**, **FloatingPanel 2.0.1**, **FSPagerView**, **Kingfisher 8.6.2**, **SVGKit 3.0.0**, **SDWebImage 5.21.3**.
+
+  > ⚠️ **`IGListKit` 과 `PIPKit` 은 빠졌습니다.** `PIPKit` 은 `FE1-961`(2026-06-19)로 `Core/UI` 의 `FloatingViewKit` 자체 구현으로 교체했습니다. `IGListKit` 은 소스에 남아 있지 않고 일부 아키텍처 문서에만 이름이 남아 있습니다.
+
+- **그 밖의 의존성**: `Swinject 2.9.1`(의존성 주입) · `ZMarkupParser 1.11.0` · `PhoneNumberKit 4.0.2` · `AcknowList 3.3.0` · `keychain-swift 20.0.0` · `Pulse 2.1.5`(네트워크 로깅) · `CocoaLumberjack 3.8.5` · `AppsFlyerFramework 6.17.7` · `firebase-ios-sdk 12.14.0`.
 - **DI**: **Swinject 2.9.1** (`DIContainer.shared.resolver`), 각 레이어 `…Assembly.swift`. (`APIDomain.swift:35-46`, `Tuist/Package.swift:44`)
 - **영속화**: 자체 `Projects/Core/Sources/Persistence` (Interface/Feature 분리) + `Projects/Core/Sources/Preference` + **KeychainSwift 20.0.0** (토큰/자격증명 저장). Core Data/Realm 사용 X, App Group `UserDefaults` 로 Widget/Intents 와 공유 (`Projects/App/Sources/Common/UserDefaults+AppGroup.swift`).
 - **Firebase 12.7.0**: Analytics / Crashlytics / Messaging / RemoteConfig / Performance (`Tuist/Package.swift:29`, `Projects/App/Project.swift:252-256`).
@@ -361,7 +408,21 @@
 비즈니스 로직 서비스. `Sources/{Activity, Analytics, AppSecurity, Braze, ContactSync, DeviceSetting, FloatingButtons, FriendActivity, KeywordAlarm, LiveCommerce, Locale, MyWadizMode, Notification, RecentCategory, RecentKeyword, RecentProject, RefererURL, RemoteConfig, ScreenKeyParser, SearchBarDayMarketing, Share, SmsAuth, SocialLogin, Spotlight, User, Zendesk}` — 각 폴더에 Feature/Interface 분리. 주요: `Activity` (찜 API), `SmsAuth` (SMS 인증), `Analytics` (Waditag), `KeywordAlarm`, `SocialLogin`. **`LiveCommerce`(FE1-809, 2026-06-02)** 는 App 내부에 있던 라이브커머스 모델/유스케이스를 Service 모듈로 분리한 것으로, Remote Config(`liveCommercePip`)의 노출 ON/URL 을 읽어 JSON 이벤트 목록(`LiveCommerceServiceImpl.currentEvent(isLocal:)`)을 받아 UTC 기간·우선순위로 현재 노출 이벤트를 고른다.
 
 ### `Projects/API` (REST Client)
-하나의 Project 에 다수의 Framework 타겟 (현재 26개: `AccountAPI, ActivityAPI, AnalyticsAPI, AppAPI, AppSettingAPI, CatchUpAPI, CommonAPI, FriendsAPI, FundingAPI, GlobalAPI, InboxAPI, KeywordAPI, LoginAPI, Main1API, Main2API, SearchAIAPI, SearchAPI, SignUpAPI, SmsAuthAPI, SocialAPI, StartupAPI, StoreAPI, TermsAPI, UserAPI, WebAPI, WishAPI`). 엔드포인트는 `RequestBuilder(apiURLSource: APIURLSource(domain:path:), method:)` 형태로 구성. 주요 타겟:
+하나의 Project 에 다수의 Framework 타겟 (**2026-09-22 확인 27개**):
+
+`AccountAPI` `ActivityAPI` `AnalyticsAPI` `AppAPI` `AppSettingAPI` `CRMAPI` `CatchUpAPI` `CommonAPI` `FriendsAPI` `FundingAPI` `GlobalAPI` `InboxAPI` `KeywordAPI` `LoginAPI` `Main1API` `Main2API` `RecentSearchAPI` `SearchAIAPI` `SearchAPI` `SignUpAPI` `SocialAPI` `StartupAPI` `StoreAPI` `TermsAPI` `UserAPI` `WebAPI` `WishAPI`
+
+> 📌 **2026-05-12 `IOS-4193` 로 구조가 크게 바뀌었습니다.** 세 가지입니다.
+>
+> | 무엇이 | 어떻게 |
+> |---|---|
+> | 흩어져 있던 API 파일 | 기능 폴더 안의 **`XxxAPI` 파일들**이 이 모듈들로 모였습니다. 예로 `CheckAPI`·`ModifyEmailAPI`·`PasswordSettingAPI`·`SettingAPI`·`EditNicknameAPI`·`PhoneNumberAPI` 가 전부 `AccountAPI` 로 들어갔습니다 |
+> | 모듈 내부 | `Interface/`(프로토콜·DTO)와 `Feature/`(구현·Assembly)로 나뉩니다. 예: `Projects/API/Sources/WishAPI/Interface/WishAPI.swift` 와 `Feature/WishAPIImpl.swift` |
+> | 앱 쪽 프로토콜 | **`XxxAPI` 가 `XxxRepository` 로 이름이 바뀌었습니다**(`*Repository.swift`, 2026-09-22 기준 67개) |
+>
+> `SmsAuthAPI` 타겟은 없어졌습니다. SMS 인증은 `Projects/Service/Sources/SmsAuth/` 로 옮겼습니다.
+
+엔드포인트는 `RequestBuilder(apiURLSource: APIURLSource(domain:path:), method:)` 형태로 구성. 주요 타겟:
 | 타겟 | 역할 |
 | --- | --- |
 | `AccountAPI` | 계정 조회/갱신/SNS 링크 |
@@ -372,7 +433,7 @@
 | `SignUpAPI` | 회원가입/이메일 코드 |
 | `SocialAPI` | 카카오 친구/다중 팔로우 |
 
-> 참고: 위 26개 타겟 구조는 본 분석 범위(2026-06-19) 이전 리팩토링으로 이미 정착돼 있었다. 구 `MainAPI`는 `Main1API`(`.publicApi(.main1)` 도메인) + `Main2API`(`.platform(.main2)` 도메인, base path `/main2`)로 분리됐고, 본 문서의 "기능별 API 호출 매핑" 표 경로도 신규 타겟명으로 갱신 완료했다.
+> 참고: 타겟 구조 자체는 본 분석 범위(2026-06-19) 이전 리팩토링으로 이미 정착돼 있었다. 구 `MainAPI`는 `Main1API`(`.publicApi(.main1)` 도메인) + `Main2API`(`.platform(.main2)` 도메인, base path `/main2`)로 분리됐고, 본 문서의 "기능별 API 호출 매핑" 표 경로도 신규 타겟명으로 갱신 완료했다.
 
 ### `Projects/Core`
 하나의 Project 에 4 개 Framework 타겟 (`CLAUDE.md:109`): **`Networking`** (HTTPClient, RequestBuilder, APIDomain, Interceptor, WadizSession), **`Persistence`** (Macro 의존), **`Preference`** (AppPreference, ServerMode), **`UI`** (공통 UI + i18n.json).
@@ -385,10 +446,10 @@
 | iOS | Android 등가 | 메모 |
 | --- | --- | --- |
 | `Projects/Core/Networking` | `core/network` | 거의 동일 역할 (HTTPClient ↔ BaseWadizAPIProvider) |
-| `Projects/Core/Preference` (+ ServerMode) | `core/legacy/wadiz-common/util/ServerMode.kt` + `core/datastore` (HiddenPrefs) | 동일 8개 환경 모델 |
+| `Projects/Core/Preference` (+ ServerMode) | `core/legacy/wadiz-common/util/ServerMode.kt` + `core/datastore` (HiddenPrefs) | **iOS 는 2026-09-22 기준 5개**(`local`·`cdev`·`rc4`·`stage`·`live`). 종전의 "동일 8개" 서술은 `rc`·`rc2`·`rc3` 제거로 맞지 않습니다 |
 | `Projects/Core/Persistence` | `core/database` (Room) | iOS 는 Core Data 대신 자체 Persistence + Macro |
 | `Projects/Core/UI` + `i18n.json` | `core:design-system` + `core:i18n` | 동일한 i18n.json 포맷 공유 |
-| `Projects/API/*` (26 타겟) | `core/network/service/**` (17 ApiService) | Android 는 `ServerMode.xxxUrl` 속성을 baseUrl 분기 키로 쓰는 반면 iOS 는 `APIDomain` enum |
+| `Projects/API/*` (27 타겟) | `core/network/service/**` (17 ApiService) | Android 는 `ServerMode.xxxUrl` 속성을 baseUrl 분기 키로 쓰는 반면 iOS 는 `APIDomain` enum |
 | `Projects/Service/*` | `core/data/repository/**` (+일부 feature 내부) | iOS 는 Service 레이어가 Android Repository + UseCase 일부 역할 |
 | `Features/Home` | `feature:main-tab` | 1:1 |
 | `Features/CreditCardOCR` | `feature:ocr` | 1:1, 둘 다 온디바이스 |
@@ -404,7 +465,16 @@
 
 iOS 는 Android 와 달리 **xcconfig / Info.plist 에 URL 을 심지 않는다.** 대신:
 
-1. **`Projects/Core/Sources/Preference/Interface/ServerMode.swift`** 의 `enum ServerMode` (`local/cdev/rc/rc2/rc3/stage/live`) 가 런타임에 `AppPreference` 로부터 설정됨. (`ServerMode.swift:8-17`) — **FE1-854(2026-06-05)** 로 `dev = "DEV"` 케이스를 제거하고 DEV 전용 URL 을 CDEV URL 로 통합했다. Widget/UITests/ExampleEnvironment 기본값도 `.cdev` 로 일원화.
+1. **`Projects/Core/Sources/Preference/Interface/ServerMode.swift`** 의 `enum ServerMode` 가 런타임에 `AppPreference` 로부터 설정됨 (`ServerMode.swift:8-14`).
+
+   **2026-09-22 확인 5개입니다** — `local` · `cdev` · `rc4` · `stage` · `live`.
+
+   | 시점 | 무슨 일 |
+   |---|---|
+   | FE1-854(2026-06-05) | `dev = "DEV"` 제거. DEV 전용 URL 을 CDEV 로 통합 |
+   | **FE1-1762(2026-09 무렵)** | **`rc`·`rc2`·`rc3` 세 케이스가 사라지고 `rc4` 하나로 대체됐습니다** |
+
+   Widget/UITests/ExampleEnvironment 기본값도 `.cdev` 로 일원화.
 2. **`Projects/Core/Sources/Networking/Interface/APIDomain.swift`** 의 `enum APIDomain` (`publicApi / api / startupCommon / ad / analytics / service / platform(PlatformAPI) / searchAI / webOrigin / app`) 가 `preference.serverMode` 를 switch 해서 URL 을 반환한다 (`APIDomain.swift:48-191`).
 3. `RequestBuilder(domain: .api, path: ..., method: ...)` 가 `APIDomain.urlString` 으로 baseURL 을 결정하고 `HTTPClient` 가 Alamofire `Session.request` 를 호출한다.
 
@@ -412,20 +482,74 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 
 ### 환경별 URL 전체 표 (iOS)
 
-출처: `Projects/Core/Sources/Networking/Interface/APIDomain.swift:48-191`
+출처: `Projects/Core/Sources/Networking/Interface/APIDomain.swift`(166줄) · `Projects/Core/Sources/Preference/Feature/AppPreferenceImpl.swift:99-126`
 
-| `APIDomain` | Live | Stage | RC2 | Dev | 용도 (upstream) |
-| --- | --- | --- | --- | --- | --- |
-| `.api` / `.startupCommon` | `preference.getDomain()` (= `https://www.wadiz.kr` 등) | 동일 | `https://rc2.wadiz.kr` | `https://dev.wadiz.kr` | **메인 모놀리식 `api.wadiz.kr`** (계정/로그인/찜/알림/CatchUp/주소록/쿠폰/스타트업 전부) |
-| `.publicApi` | `https://public-api.wadiz.kr` | 동일 | `https://public-api-rc.wadiz.kr` | `https://public-api-dev.wadiz.kr` | public-api (배너/디스플레이 광고/featured) |
-| `.ad` | `https://service.wadiz.kr/api/v1/ad/host` | 동일 | `https://rc2-service.wadiz.kr/api/v1/ad/host` | `https://dev-service.wadiz.kr/api/v1/ad/host` | 홈 KeyVisual/Wad Sections |
-| `.analytics` | `https://analytics.wadiz.kr` (KR) / `https://analytics.wadiz.ai` (글로벌) | 동일 | `https://rc-analytics.{domain}` | `https://dev-analytics.{domain}` | **와디태그(Waditag) V1/V2** |
-| `.service` | `https://service.wadiz.kr` | 동일 | `https://rc2-service.wadiz.kr` | `https://dev-service.wadiz.kr` | 검색/펀딩소프트/프리오더/카테고리/스토어 검색 |
-| `.platform(.main2)` | `https://platform.wadiz.kr` | `https://stage-platform.wadiz.kr` (**main만**) | `https://rc2-platform.wadizcorp.net` | `https://dev-platform.wadizcorp.net` | `/main2/…` 홈/퀵메뉴/랭킹/추천 |
-| `.platform(.inbox)` / `.keyword` / `.notiChannel` / `.push` / `.wish` / `.activities` / `.global` | 동일 (stage 에서도 `platform.wadiz.kr`) | 동일 | RC 계열 `wadizcorp.net` | Dev 계열 | 각 플랫폼 MSA |
-| `.searchAI` | `https://searchai.wadiz.kr` | 동일 | `https://rc-api.dev-searchai.wadizdata.team` | `https://api.dev-searchai.wadizdata.team` | 연관 키워드 AI |
-| `.webOrigin` | `https://www.wadiz.kr` / `.ai` | `https://stage.wadiz.kr` | `https://rc2.wadiz.kr` | `https://dev.wadiz.kr` | 분석 이벤트 `Origin` 헤더용 |
-| `.app` | `https://app.wadiz.kr` | 동일 | `https://app-rc2.wadizcorp.net` | `https://app-dev.wadizcorp.net` | **앱 전용 BFF** (설정 탭 Server-Driven 등) |
+> ⚠️ **2026-09-22 전면 교체했습니다.** 종전 표는 `wadiz.kr` 기준이었고 환경도 `RC2`·`Dev` 였습니다.
+> `FE1-1762` 로 **`kr` 도메인 코드가 제거**되면서 주소 체계가 통째로 바뀌었습니다.
+> 대부분의 도메인이 **`api.wadiz.io` 하나로 모였습니다.**
+
+| `APIDomain` | Live · Stage | RC4 | CDEV | 용도 |
+| --- | --- | --- | --- | --- |
+| `.api` / `.startupCommon` | `preference.getDomain()` — 아래 표 참조 | 동일 | 동일 | 메인 모놀리식 |
+| `.publicApi` | `https://api.wadiz.io` | `https://api.rc4.wadiz.io` | `https://api.dev.wadiz.io` | 배너·기획전. `.main1` 은 base path `/main` |
+| `.service` | `https://api.wadiz.io` | `https://api.rc4.wadiz.io` | `https://api.dev.wadiz.io` | 검색·친구 |
+| `.platform` | `https://api.wadiz.io` | `https://api.rc4.wadiz.io` | `https://api.dev.wadiz.io` | 플랫폼 MSA |
+| `.app` | `https://api.wadiz.io` | `https://api.rc4.wadiz.io` | `https://api.dev.wadiz.io` | 앱 전용 BFF |
+| `.crm` | `https://api.wadiz.io` | `https://api.rc4.wadiz.io` | `https://api.dev.wadiz.io` | **신규**. CRM |
+| `.analytics` | `https://analytics.aidata.wadiz.io` | `https://analytics.rc4.aidata.wadiz.io` | `https://analytics.dev.aidata.wadiz.io` | 와디태그 |
+| `.searchAI` | `https://searchai.aidata.wadiz.io` | `https://api.dev-searchai.wadizdata.team` | 동일 | 연관 키워드 AI |
+| `.webOrigin` | live `https://www.wadiz.io` · stage `https://stage.wadiz.io` | `https://rc4.wadiz.io` | `https://dev.wadiz.io` | 분석 이벤트 `Origin` 헤더 |
+| `.cdn2` · `.cdn3` · `.cdn4` · `.staticCdn` | 환경 구분 없음 (아래 참조) | 동일 | 동일 | **신규**. 이미지·정적 자원 |
+
+`.platform` 에는 예외가 하나 있습니다.
+**stage 에서는 `main2` 만 `https://api.stage.wadiz.io` 를 봅니다.** 나머지는 live 호스트를 그대로 씁니다.
+코드 주석에 이유가 적혀 있습니다 — *"stage 클러스터에 뜬 플랫폼 구획은 main2뿐"* 입니다.
+
+CDN 네 개는 **환경과 무관하게 고정**입니다.
+
+| case | 주소 |
+| --- | --- |
+| `.cdn2` | `https://cdn-store.wadiz.io` |
+| `.cdn3` | `https://cdn-funding-public.wadiz.io` |
+| `.cdn4` | `https://cdn-display.wadiz.io` |
+| `.staticCdn` | `https://cdn-static.wadiz.io` |
+
+> ⚠️ **`.ad` case 는 없어졌습니다.** 종전 표의 `service.wadiz.kr/api/v1/ad/host` 경로도 코드에 없습니다.
+
+#### 기본 도메인 세 가지 (`AppPreferenceImpl.swift:99-140`)
+
+`.api` 가 쓰는 `getDomain()` 외에 계정·메이커센터용 도메인이 따로 있습니다.
+
+| 함수 | Live | Stage | RC4 | CDEV |
+| --- | --- | --- | --- | --- |
+| `getDomain()` | `https://www.wadiz.io` | `https://stage.wadiz.io` | `https://rc4.wadiz.io` | `https://dev.wadiz.io` |
+| `accountDomain()` | `https://account.wadiz.io` | `https://account.stage.wadiz.io` | `https://account.rc4.wadiz.io` | `https://account.dev.wadiz.io` |
+| `makercenterDomain()` | `https://makercenter.wadiz.io` | 동일 | `https://makercenter.dev.wadiz.io` | 동일 |
+
+`makercenterDomain()` 은 `local` 에서도 운영 호스트를 가리킵니다.
+코드 주석에 이유가 있습니다 — *"로컬 서버에는 메이커센터가 없어"* 입니다.
+
+#### base path 가 도메인 쪽으로 옮겨졌습니다
+
+종전에는 경로 문자열에 접두사가 붙어 있었습니다. 지금은 `APIDomain` 의 서비스 열거형이 갖습니다
+(`Projects/Core/Sources/Networking/Interface/APIService.swift`).
+
+| 서비스 | base path |
+| --- | --- |
+| `.publicApi(.main1)` | `/main` |
+| `.service(.friends)` | `/friends/api/friends` |
+| `.service(.search)` | `/search/api/search` |
+| `.service(.searcher)` | `/search` |
+| `.platform(.main2)` | `/main2` |
+| `.platform(.inbox)` | `/inbox` |
+| `.platform(.wish)` | `/wish/api` |
+| `.platform(.activities)` | `/user-activity/api` |
+| `.platform(.global)` | `/global` |
+| `.platform(.projectMetric)` | `/project-metric/api` |
+
+그래서 아래 "기능별 API 호출 매핑" 표의 엔드포인트 중 일부는
+**지금 코드에서 접두사가 빠진 형태로 적혀 있습니다.**
+예로 `GET /main/display-ads/event` 는 지금 `Main1API` 에 `GET /display-ads/event` 로 있습니다.
 
 > Android 와 완전히 동일한 백엔드 구성. 단지 iOS 는 `.webOrigin` / `.startupCommon` / `.app` 의 네이밍이 다르고, `.publicApi` 를 분리한 점이 차이.
 
@@ -479,11 +603,11 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `SignUpAPI` | `POST /api/v4/sign-up/email` | `.api` | 이메일 회원가입 | 회원가입 submit. `SignUpAPIImpl.swift:72,89` |
 | `SignUpAPI` | `POST /api/v4/sign-up/email/code` / `/verification` | `.api` | 이메일 코드 발급/검증 | 회원가입 이메일 확인. `SignUpAPIImpl.swift:109,133` |
 | `SignUpAPI` | `GET /web/v3/terms/signup` | `.api` | 약관 리스트 | 회원가입 약관 단계. `SignUpAPIImpl.swift:157,158` |
-| `Login/Common` | `POST /api/v4/check/email` | `.api` | 이메일 존재 여부 | 로그인 1단계. `CheckAPI.swift:24,27` |
-| `Features/Email` | `POST /api/v3/account/email/code` | `.api` | 이메일 변경 인증코드 | 이메일 수정 화면. `ModifyEmailAPI.swift:21,25` |
-| `Features/Email` | `PUT /api/v3/account/email` | `.api` | 이메일 변경 | 동일. `ModifyEmailAPI.swift:49,52` |
-| `PasswordSetting` | `POST /api/v3/account/password` / `PUT /api/v3/account/password` | `.api` | 비밀번호 설정/변경 | 비밀번호 설정 화면. `PasswordSettingAPI.swift:25,55` |
-| `ConfirmPassword` | `POST /api/v3/account/password/verification` | `.api` | 비밀번호 확인 | 민감 작업 전 모달. `ConfirmPasswordAPI.swift:26` |
+| `Login/Common` | `POST /api/v4/check/email` | `.api` | 이메일 존재 여부 | 로그인 1단계. `API/AccountAPI` |
+| `Features/Email` | `POST /api/v3/account/email/code` | `.api` | 이메일 변경 인증코드 | 이메일 수정 화면. `API/AccountAPI` |
+| `Features/Email` | `PUT /api/v3/account/email` | `.api` | 이메일 변경 | 동일. `API/AccountAPI` |
+| `PasswordSetting` | `POST /api/v3/account/password` / `PUT /api/v3/account/password` | `.api` | 비밀번호 설정/변경 | 비밀번호 설정 화면. `API/AccountAPI` |
+| `ConfirmPassword` | `POST /api/v3/account/password/verification` | `.api` | 비밀번호 확인 | 민감 작업 전 모달. `API/AccountAPI` |
 
 ### 계정 / 설정 (`Features/Setting`, `API/AccountAPI`, `Features/ChangeTimeZone`, `Service/User`)
 
@@ -494,16 +618,16 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `AccountAPI` | `POST /api/v3/account/sns-links/{provider}` | `.api` | SNS 연동 | 설정 > SNS 연동. `AccountAPIImpl.swift:56,59` |
 | `AccountAPI` | `PUT /api/v3/account/sns-links/{provider}` | `.api` | SNS 재연동 | 설정 > SNS. `AccountAPIImpl.swift:71,74` |
 | `AccountAPI` | `DELETE /api/v3/account/sns-links/{provider}` | `.api` | SNS 연동 해제 | 설정 > SNS. `AccountAPIImpl.swift:86,88` |
-| `Features/Setting/SettingHome` | `GET /api/v3/account` | `.api` | 내 계정 정보 | 설정 홈 진입. `SettingAPI.swift:25,30` |
-| `Features/Setting/SettingHome` | `GET /api/v3/account/sns-links` | `.api` | 연동된 SNS 목록 | 설정 홈. `SettingAPI.swift:36,41` |
-| `Features/Setting/SettingHome` | `POST /api/v3/account/profile-image` / `DELETE /api/v3/account/profile-image` | `.api` | 프로필 이미지 업/다운 | 프로필 편집. `SettingAPI.swift:50,62,71,77` |
-| `Features/Setting/Nickname` | `PUT /api/v3/account/nickname` | `.api` | 닉네임 변경 | 설정 > 닉네임. `EditNicknameAPI.swift:24,29` |
-| `Features/Setting/PhoneNumber` | `GET /api/v3/account/phone-number`, `PUT /api/v3/account/phone-number`, `POST /api/v3/account/phone-number/code` | `.api` | 전화번호 조회/변경/인증코드 | 설정 > 전화번호. `PhoneNumberAPI.swift:26,38,66` |
-| `Features/ChangeTimeZone` | `GET /api/v3/time-zones`, `GET/PUT /api/v3/user/time-zone`, `PUT /api/v3/user/time-zone/auto` | `.api` | 타임존 조회/변경/자동설정 | 설정 > 타임존. `TimeZoneAPI.swift:25,48,71,96` |
+| `Features/Setting/SettingHome` | `GET /api/v3/account` | `.api` | 내 계정 정보 | 설정 홈 진입. `API/AccountAPI` |
+| `Features/Setting/SettingHome` | `GET /api/v3/account/sns-links` | `.api` | 연동된 SNS 목록 | 설정 홈. `API/AccountAPI` |
+| `Features/Setting/SettingHome` | `POST /api/v3/account/profile-image` / `DELETE /api/v3/account/profile-image` | `.api` | 프로필 이미지 업/다운 | 프로필 편집. `API/AccountAPI` |
+| `Features/Setting/Nickname` | `PUT /api/v3/account/nickname` | `.api` | 닉네임 변경 | 설정 > 닉네임. `API/AccountAPI` |
+| `Features/Setting/PhoneNumber` | `GET /api/v3/account/phone-number`, `PUT /api/v3/account/phone-number`, `POST /api/v3/account/phone-number/code` | `.api` | 전화번호 조회/변경/인증코드 | 설정 > 전화번호. `API/AccountAPI` |
+| `Features/ChangeTimeZone` | `GET /api/v3/time-zones`, `GET/PUT /api/v3/user/time-zone`, `PUT /api/v3/user/time-zone/auto` | `.api` | 타임존 조회/변경/자동설정 | 설정 > 타임존. `API/CommonAPI` |
 | `Service/User` | `GET /api/v3/user/location`, `PUT /api/v3/user/location` | `.api` | 국가/지역 조회/변경 | 나라/지역 변경. `UserAPI.swift:22,29` |
-| `Features/Setting/NotificationSetting` | `GET /api/v3/user/settings/terms/service/{code}`, `GET/PUT /api/v3/user/settings/terms/marketing/{code}` | `.api` | 서비스/마케팅 약관 동의 | 알림 설정. `NotificationAPI.swift:26,34,42` |
-| `App/Account/SetMarketingAlarm` | `POST api/v2/terms/marketing/consent/services`, `PUT api/v2/terms/marketing/consent/services/{service}` | `.api` | 통합 마케팅 동의 | 알림 수신 동의 화면. `SetAlarmAPI.swift:42,92` |
-| `App/Account/SetMarketingAlarm` + `Features/Setting/NotificationSetting` | `POST noti-channel/v2/marketingconsents`, `GET noti-channel/v2/marketingconsents` | `.platform(.notiChannel)` | 채널별 마케팅 동의 | 동일. `SetAlarmAPI.swift:66,119`, `NotificationAPI.swift:58,87` |
+| `Features/Setting/NotificationSetting` | `GET /api/v3/user/settings/terms/service/{code}`, `GET/PUT /api/v3/user/settings/terms/marketing/{code}` | `.api` | 서비스/마케팅 약관 동의 | 알림 설정. `API/UserAPI` |
+| `App/Account/SetMarketingAlarm` | `POST api/v2/terms/marketing/consent/services`, `PUT api/v2/terms/marketing/consent/services/{service}` | `.api` | 통합 마케팅 동의 | 알림 수신 동의 화면. `API/TermsAPI` |
+| `App/Account/SetMarketingAlarm` + `Features/Setting/NotificationSetting` | `POST noti-channel/v2/marketingconsents`, `GET noti-channel/v2/marketingconsents` | `.platform(.notiChannel)` | 채널별 마케팅 동의 | 동일. `API/CommonAPI`, `API/CommonAPI` |
 | `App/Account/TermsAPI` | `GET api/v2/terms/accepter` | `.api` | 약관 동의자 조회 | 설정 > 약관. `TermsAPI.swift:63` |
 
 ### 홈 / 서비스홈 (`Features/Home`, `API/Main2API`, `Features/ServiceHome`, `App/Sources/Banner`, `App/Sources/AD`, `App/Sources/Exhibition`)
@@ -516,13 +640,13 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `Main2API` | `GET /main2/api/v1/quickmenu?id={id}` | `.platform(.main2)` | 퀵메뉴 | 홈 진입. `Main2APIImpl.swift:59-66` |
 | `Main2API` | `GET /main2/api/v1/pc/ranking/store` | `.platform(.main2)` | 스토어 랭킹 | 서비스홈/홈. `Main2APIImpl.swift:70-73` |
 | `Main2API` | `GET /main2/api/v1/banner/key-visual/{type}` | `.platform(.main2)` | 홈 키비주얼 배너 | 홈 상단. `Main2APIImpl.swift:77-80` |
-| `App/Banner` | `GET /main/display-ads/event`, `GET /main/display-ads/marketing` | `.publicApi` | 디스플레이 배너 | 홈/이벤트 섹션. `BannerAPI.swift:50,63` |
-| `App/Exhibition` | `GET /main/featured/reward` | `.publicApi` | 리워드 기획전 | 기획전 탭. `ExhibitionAPI.swift:25,28` |
-| `App/AD/AdService` | `GET /keyvisual`, `GET /wad/sections/{code}`, `GET /event` | `.ad` / `.service` / `.ad` | 광고 키비주얼 / 섹션 / 이벤트 | 홈/서비스홈. `AdService.swift:89,101,113` |
-| `Features/ServiceHome/ServiceHomeAdBanner` | `GET /keyvisual`, `GET /wad/sections/{sectionCode}` | `.ad` | 서비스홈 배너 | 리워드 홈 섹션. `ServiceHomeAdBannerAPI.swift:20,30` |
+| `App/Banner` | `GET /main/display-ads/event`, `GET /main/display-ads/marketing` | `.publicApi` | 디스플레이 배너 | 홈/이벤트 섹션. `API/Main1API` — 지금 경로는 `GET /display-ads/event`(접두사 `/main` 은 도메인 쪽) |
+| `App/Exhibition` | `GET /main/featured/reward` | `.publicApi` | 리워드 기획전 | 기획전 탭. `API/Main1API` — 지금 경로는 `GET /featured/reward` |
+| `App/AD/AdService` | `GET /keyvisual`, `GET /wad/sections/{code}`, `GET /event` | `.ad` / `.service` / `.ad` | 광고 키비주얼 / 섹션 / 이벤트 | 홈/서비스홈. **⚠️ 확인 필요** — `.ad` 도메인 case 자체가 없어졌고 이 경로들도 코드에 없습니다 |
+| `Features/ServiceHome/ServiceHomeAdBanner` | `GET /keyvisual`, `GET /wad/sections/{sectionCode}` | `.ad` | 서비스홈 배너 | 리워드 홈 섹션. **⚠️ 확인 필요** — 위와 같은 건 |
 | `Features/ServiceHome/Store` | `GET /wish/api/v1/wish/discount` | `.platform(.wish)` | 찜 할인 프로젝트 | 스토어 홈 섹션. `StoreAPI.swift:22` |
-| `App/ServiceHome/Preorder` | `POST api/search/v2/preorder` | `.service` | 프리오더 검색 | 프리오더 탭. `PreorderAPI.swift:26,35` |
-| `App/Protocol/CategoryAPI` | `GET api/search/categories`, `GET api/search/v3/categories/service-home` | `.service` | 카테고리 | 카테고리 탭. `CategoryAPI.swift:29,68` |
+| `App/ServiceHome/Preorder` | `POST api/search/v2/preorder` | `.service` | 프리오더 검색 | 프리오더 탭. **⚠️ 확인 필요** — `api/search/v2/preorder` 가 코드에 없습니다 |
+| `App/Protocol/CategoryAPI` | `GET api/search/categories`, `GET api/search/v3/categories/service-home` | `.service` | 카테고리 | 카테고리 탭. `API/SearchAPI` |
 
 ### 검색 (`API/SearchAPI`, `Features/Search`)
 
@@ -536,8 +660,8 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `SearchAPI` | `GET api/search/categories`, `GET api/search/v3/categories/service-home` | `.service` | 카테고리 | 카테고리 탭. `SearchAPIImpl.swift:64,79` |
 | `SearchAPI` | `POST api/search/store` | `.service` | 스토어 검색 | 스토어 검색 탭. `SearchAPIImpl.swift:99` |
 | `Features/Search/Result` | `GET /related-keyword` | `.searchAI` | 연관 검색어 AI | 검색어 입력 중. `SearchResultRepositoryImpl.swift:144,146` |
-| `Features/Search/Result/CouponAPI` | `GET /web/reward/api/coupons/templates/types/download` | `.api` | 쿠폰 리스트 | 결과 내 쿠폰 섹션. `CouponAPI.swift:21` |
-| `Features/Search/Result/CouponAPI` | `POST /web/reward/api/coupons/transactions/types/redeem/issue-types/download` | `.api` | 쿠폰 발급 | 쿠폰 받기. `CouponAPI.swift:37` |
+| `Features/Search/Result/CouponAPI` | `GET /web/reward/api/coupons/templates/types/download` | `.api` | 쿠폰 리스트 | 결과 내 쿠폰 섹션. `API/WebAPI` |
+| `Features/Search/Result/CouponAPI` | `POST /web/reward/api/coupons/transactions/types/redeem/issue-types/download` | `.api` | 쿠폰 발급 | 쿠폰 받기. `API/WebAPI` |
 
 ### 찜 / 활동 / 마이와디즈 (`Service/Activity`, `App/Wish`, `App/Benefit`, `Features/MyActivity`)
 
@@ -547,37 +671,37 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `Service/Activity` | `GET /web/apip/funding/campaigns/{id}/pre-reservation-info` | `.api` | 오픈예정 사전예약 정보 | 상세. `ActivityAPI.swift:70` |
 | `Service/Activity` | `POST /user-activity/api/v1/wish/projects` | `.platform(.activities)` | 찜 프로젝트 플랫폼 동기화 | 찜 리스트 새로고침. `ActivityAPI.swift:93` |
 | `Service/Activity` | `POST /api/funding/comingsoons/{id}/applicants`, `DELETE /api/funding/comingsoons/{id}/applicants` | `.api` | 오픈예정 알림 신청/해제 | "알림받기" 토글. `ActivityAPI.swift:119,137` |
-| `App/Wish/WishesAPI` | `POST /api/funding/wishes`, `DELETE /api/funding/wishes` | `.api` | 찜 (App 레이어 중복) | 홈/리스트 하트. `WishesAPI.swift:33,49` |
-| `App/Wish/WishesAPI` | `POST /api/wcampaign/comingsoon/applicant`, `POST /api/wcampaign/comingsoon/applicant-cancel` | `.api` | 오픈예정 알림 (레거시) | 레거시 화면. `WishesAPI.swift:78,94` |
-| `App/Wish/WishesAPI` | `GET /api/v1/searcher/wish/project/endingsoon` | `.service` | 찜 마감임박 | GNB 뱃지. `WishesAPI.swift:106,109` |
-| `App/Wish/WishesAPI` | `GET /api/funding/wishes/my/qty` | `.api` | 내 찜 개수 | 탭 뱃지. `WishesAPI.swift:120,123` |
-| `App/Wish/WishesAPI` | `GET /web/apip/funding/campaigns/{id}/pre-reservation-info` | `.api` | 사전예약 정보 (레거시 위치) | 상세. `WishesAPI.swift:132` |
-| `Features/MyActivity/Wish` | `GET /api/activities/wishes/search` | `.api` | 내 찜 검색 | 내 활동 > 찜 > 검색. `WishSearchAPI.swift:21` |
-| `App/Benefit/BenefitAPI` | `GET /api/mywadiz/account/supporter` | `.api` | 마이와디즈 서포터 요약 | 마이와디즈 진입. `BenefitAPI.swift:238,241` |
-| `App/Benefit/BenefitAPI` | `GET /api/v2/membership` | `.api` | 내 멤버십 | 마이와디즈. `BenefitAPI.swift:269,271` |
+| `App/Wish/WishesAPI` | `POST /api/funding/wishes`, `DELETE /api/funding/wishes` | `.api` | 찜 (App 레이어 중복) | 홈/리스트 하트. `API/FundingAPI` |
+| `App/Wish/WishesAPI` | `POST /api/wcampaign/comingsoon/applicant`, `POST /api/wcampaign/comingsoon/applicant-cancel` | `.api` | 오픈예정 알림 (레거시) | 레거시 화면. `API/CommonAPI` |
+| `App/Wish/WishesAPI` | `GET /api/v1/searcher/wish/project/endingsoon` | `.service` | 찜 마감임박 | GNB 뱃지. `API/WishAPI` |
+| `App/Wish/WishesAPI` | `GET /api/funding/wishes/my/qty` | `.api` | 내 찜 개수 | 탭 뱃지. `API/FundingAPI` |
+| `App/Wish/WishesAPI` | `GET /web/apip/funding/campaigns/{id}/pre-reservation-info` | `.api` | 사전예약 정보 (레거시 위치) | 상세. `API/WebAPI` |
+| `Features/MyActivity/Wish` | `GET /api/activities/wishes/search` | `.api` | 내 찜 검색 | 내 활동 > 찜 > 검색. **⚠️ 확인 필요** — `wishes/search` 가 코드에 없습니다 |
+| `App/Benefit/BenefitAPI` | `GET /api/mywadiz/account/supporter` | `.api` | 마이와디즈 서포터 요약 | 마이와디즈 진입. `API/CommonAPI` |
+| `App/Benefit/BenefitAPI` | `GET /api/v2/membership` | `.api` | 내 멤버십 | 마이와디즈. `API/CommonAPI` |
 
 ### 혜택 / 쿠폰 (`App/Benefit`)
 
 | 모듈 | 엔드포인트 | APIDomain | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| `App/Benefit/BenefitAPI` | `GET /web/apip/funding/event/{couponName}/participant` | `.api` | 쿠폰 발급 여부 | 쿠폰 페이지 진입. `BenefitAPI.swift:63,65` |
-| `App/Benefit/BenefitAPI` | `POST /web/apip/funding/event/{couponType}/{path}` | `.api` | 쿠폰 발급 | "쿠폰 받기". `BenefitAPI.swift:202,204` |
-| `App/Benefit/BenefitAPI` | `GET /web/reward/api/comingsoons` | `.api` | 체험단 리스트 | 체험단 탭. `BenefitAPI.swift:90,92` |
-| `App/Benefit/BenefitAPI` | `GET api/search/funding/categories` | `.service` | 펀딩 카테고리 | 혜택 필터. `BenefitAPI.swift:108,109` |
-| `App/Benefit/BenefitAPI` | `POST /web/reward/api/coupons/transactions/types/redeem/issue-types/download` | `.api` | 한정 쿠폰 발급 | 한정 쿠폰 받기. `BenefitAPI.swift:124,127` |
-| `App/Benefit/BenefitAPI` | `GET /web/reward/api/coupons/templates/types/download` (2곳) | `.api` | 쿠폰 템플릿 리스트 | 혜택홈. `BenefitAPI.swift:140,178` |
+| `App/Benefit/BenefitAPI` | `GET /web/apip/funding/event/{couponName}/participant` | `.api` | 쿠폰 발급 여부 | 쿠폰 페이지 진입. `API/WebAPI` |
+| `App/Benefit/BenefitAPI` | `POST /web/apip/funding/event/{couponType}/{path}` | `.api` | 쿠폰 발급 | "쿠폰 받기". `API/WebAPI` |
+| `App/Benefit/BenefitAPI` | `GET /web/reward/api/comingsoons` | `.api` | 체험단 리스트 | 체험단 탭. `API/WebAPI` |
+| `App/Benefit/BenefitRepository` | `GET api/search/funding/categories` | `.service` | 펀딩 카테고리 | 혜택 필터. `API/SearchAPI` |
+| `App/Benefit/BenefitAPI` | `POST /web/reward/api/coupons/transactions/types/redeem/issue-types/download` | `.api` | 한정 쿠폰 발급 | 한정 쿠폰 받기. `API/WebAPI` |
+| `App/Benefit/BenefitAPI` | `GET /web/reward/api/coupons/templates/types/download` (2곳) | `.api` | 쿠폰 템플릿 리스트 | 혜택홈. `API/WebAPI` |
 
 ### 알림 / 키워드 알람 (`Features/NotificationCenter`, `Features/SetKeywordAlarm`, `Service/KeywordAlarm`)
 
 | 모듈 | 엔드포인트 | APIDomain | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| `Features/NotificationCenter` | `GET inbox/v6/messages/` | `.platform(.inbox)` | 알림 목록 | 알림 탭. `NotificationCenterAPI.swift:37` |
-| `Features/NotificationCenter` | `PUT inbox/v4/messages/read-all` | `.platform(.inbox)` | 전체 읽음 | "모두 읽음". `NotificationCenterAPI.swift:61` |
-| `Features/NotificationCenter` | `GET inbox/v4/messages/count-unread` | `.platform(.inbox)` | 미확인 카운트 | GNB 벨. `NotificationCenterAPI.swift:76` |
+| `Features/NotificationCenter` | `GET inbox/v6/messages/` | `.platform(.inbox)` | 알림 목록 | 알림 탭. `API/InboxAPI` — 지금 경로는 접두사 `/inbox` 가 빠진 형태 |
+| `Features/NotificationCenter` | `PUT inbox/v4/messages/read-all` | `.platform(.inbox)` | 전체 읽음 | "모두 읽음". `API/InboxAPI` — 지금 경로는 접두사 `/inbox` 가 빠진 형태 |
+| `Features/NotificationCenter` | `GET inbox/v4/messages/count-unread` | `.platform(.inbox)` | 미확인 카운트 | GNB 벨. `API/InboxAPI` — 지금 경로는 접두사 `/inbox` 가 빠진 형태 |
 | `App/Protocol/ProtocolNotification` | `GET inbox/v4/messages/count-unread` | `.platform(.inbox)` | 미확인 카운트 (레거시) | 동일. `ProtocolNotification.swift:25,32` |
-| `Features/NotificationCenter` | `GET /api/app/updateApp` | `.api` | 강제 업데이트 체크 | 앱 시작/알림 탭 (중복). `NotificationCenterAPI.swift:125` |
-| `Features/SetKeywordAlarm` / `Service/KeywordAlarm` | `GET/POST/DELETE /keyword/api/v1/info-keywords` | `.platform(.keyword)` | 키워드 알람 CRUD | 키워드 알람 설정. `SetKeywordAlarmAPI.swift:62,74,90`, `KeywordAlarmRepositoryImpl.swift:35,47,80` |
-| `Features/SetKeywordAlarm` | `GET/POST /keyword/api/v1/info-keywords/push-toggle` | `.platform(.keyword)` | 키워드 알람 푸시 토글 | 스위치 토글. `SetKeywordAlarmAPI.swift:42,50` |
+| `Features/NotificationCenter` | `GET /api/app/updateApp` | `.api` | 강제 업데이트 체크 | 앱 시작/알림 탭 (중복). `API/AppAPI` |
+| `Features/SetKeywordAlarm` / `Service/KeywordAlarm` | `GET/POST/DELETE /keyword/api/v1/info-keywords` | `.platform(.keyword)` | 키워드 알람 CRUD | 키워드 알람 설정. `API/RecentSearchAPI`, `KeywordAlarmRepositoryImpl.swift:35,47,80` |
+| `Features/SetKeywordAlarm` | `GET/POST /keyword/api/v1/info-keywords/push-toggle` | `.platform(.keyword)` | 키워드 알람 푸시 토글 | 스위치 토글. `API/KeywordAPI` |
 | `Service/RecentKeyword` | `POST /keyword/api/v1/keywords` | `.platform(.keyword)` | 최근 검색어 플랫폼 저장 | 검색 submit. `RecentKeywordRepositoryImpl.swift:55` |
 
 ### CatchUp (`Features/CatchUp`)
@@ -594,14 +718,14 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | `App/ServiceHome/Store` | `GET api/store/orders/my/qty` | `.api` | 내 스토어 주문 수 | 스토어 홈. `StoreAPI.swift:26,28` |
 | `Extensions/WadizWidget/StoreProjectAPI` | `GET /api/store/projects/my` | `.api` | 내 스토어 프로젝트 (위젯) | 홈스크린 위젯. `StoreProjectAPI.swift:13` |
 | `Extensions/WadizWidget/StoreProjectAPI` | `GET /api/store/studio/orders/aggregation` | `.api` | 스토어 스튜디오 주문 집계 (위젯) | 홈스크린 위젯. `StoreProjectAPI.swift:23` |
-| `App/Plus/NewProjectOpenAPI` | `GET /api/maker/mywadiz/pages` | `.api` | 메이커 마이와디즈 페이지 | 메이커 홈. `NewProjectOpenAPI.swift:27,28` |
-| `App/Plus/NewProjectOpenAPI` | `GET /web/apip/funding/v2/bottom-sheet/data` | `.api` | 메이커 모드 바텀시트 데이터 | 메이커 모드 진입. `NewProjectOpenAPI.swift:34,35` |
-| `App/NewOpen/ProjectOpenAPI` | `GET /web/apip/funding/v2/bottom-sheet/data` | `.api` | (중복) 프로젝트 오픈 바텀시트 | "프로젝트 열기". `ProjectOpenAPI.swift:24,27` |
-| `Features/MyWadizModeSelect` | `GET /web/apip/funding/v2/bottom-sheet/data` | `.api` | 서포터/메이커 모드 전환 데이터 | MyWadiz 모드 선택 모달. `MyWadizModeAPI.swift:25` |
+| `App/Plus/NewProjectOpenAPI` | `GET /api/maker/mywadiz/pages` | `.api` | 메이커 마이와디즈 페이지 | 메이커 홈. `API/CommonAPI` |
+| `App/Plus/NewProjectOpenAPI` | `GET /web/apip/funding/v2/bottom-sheet/data` | `.api` | 메이커 모드 바텀시트 데이터 | 메이커 모드 진입. `API/WebAPI` |
+| `App/NewOpen/ProjectOpenAPI` | `GET /web/apip/funding/v2/bottom-sheet/data` | `.api` | (중복) 프로젝트 오픈 바텀시트 | "프로젝트 열기". `API/WebAPI` |
+| `Features/MyWadizModeSelect` | `GET /web/apip/funding/v2/bottom-sheet/data` | `.api` | 서포터/메이커 모드 전환 데이터 | MyWadiz 모드 선택 모달. `API/WebAPI` |
 | `App/Startup/StartupAPI` | `POST /api/startup/main` | `.startupCommon` | 스타트업 메인 | 스타트업 탭. `StartupAPI.swift:37,119` |
 | `App/Startup/StartupAPI` | `GET /api/startup/collection/bannerList` | `.startupCommon` | 스타트업 배너 | 스타트업 탭. `StartupAPI.swift:128,131` |
 | `App/Startup/StartupAPI` | `GET /api/startup/corporation/connect` | `.startupCommon` | 법인 연결 | 법인 설정. `StartupAPI.swift:139,160` |
-| `App/Startup/StartupCommonAPI` | `GET /api/startup/common/codeMap`, `GET /api/startup/common/questionExampleList`, `GET /api/startup/common/currentBannerList` | `.startupCommon` | 공통 코드/예시/현재 배너 | 스타트업 탭 초기. `StartupCommonAPI.swift:28,44,61` |
+| `App/Startup/StartupCommonAPI` | `GET /api/startup/common/codeMap`, `GET /api/startup/common/questionExampleList`, `GET /api/startup/common/currentBannerList` | `.startupCommon` | 공통 코드/예시/현재 배너 | 스타트업 탭 초기. `API/StartupAPI` |
 
 ### 소셜 / 주소록 / 팔로우 (`API/SocialAPI`, `App/Contacts`, `App/NativeBase/Friend`)
 
@@ -609,26 +733,26 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 | --- | --- | --- | --- | --- |
 | `SocialAPI` | `GET /api/v3/social/recommendation/kakao` | `.api` | 카카오 친구 추천 | 팔로우 추천. `SocialAPIImpl.swift:22` |
 | `SocialAPI` | `POST /api/v3/social/follows` | `.api` | 다중 팔로우 | "모두 팔로우". `SocialAPIImpl.swift:44` |
-| `Service/FriendActivity` | `GET /api/v2/social/recommendation/user/kakao/has-user` | `.api` | 카카오 친구 유저 존재 여부 | 친구 추천 진입. `FriendAPI.swift:21,23` |
-| `App/NativeBase/Friend` | `GET /api/friends/activities` | `.service` | 친구 활동 피드 | GNB 배지/친구탭. `FriendAPI.swift:17,19` |
-| `App/Contacts/ContactsAPI` | `GET /api/v2/social/contacts/information` | `.api` | 주소록 정보 | 주소록 동의 전 화면. `ContactsAPI.swift:20` |
-| `App/Contacts/ContactsAPI` | `PUT /api/v2/social/contacts/sync-allow` | `.api` | 주소록 동기화 동의 | 동의 토글. `ContactsAPI.swift:40` |
-| `App/Contacts/ContactsAPI` | `PUT /api/v2/social/contacts`, `DELETE /api/v2/social/contacts` | `.api` | 주소록 업로드/삭제 | 동기화/해제. `ContactsAPI.swift:98,124` |
-| `App/Contacts/ContactsAPI` | `GET /api/v2/social/recommendation/user/contacts/count`, `GET /api/v2/social/recommendation/user/contacts/user-info` | `.api` | 주소록 기반 추천 | 친구 추천. `ContactsAPI.swift:145,167` |
-| `App/Contacts/ContactsAPI` | `PUT /api/v2/social/recommendation/user/allow-info`, `GET /api/v2/social/recommendation/user/allow-info` | `.api` | 추천 허용 정보 | 설정. `ContactsAPI.swift:62,79` |
-| `App/Contacts/ContactsAPI` | `POST /api/v2/social/follower/follow/multi` | `.api` | 다중 팔로우 (레거시 경로) | 친구 추천 "전체 팔로우". `ContactsAPI.swift:178` |
+| `Service/FriendActivity` | `GET /api/v2/social/recommendation/user/kakao/has-user` | `.api` | 카카오 친구 유저 존재 여부 | 친구 추천 진입. `API/SocialAPI` |
+| `App/NativeBase/Friend` | `GET /api/friends/activities` | `.service` | 친구 활동 피드 | GNB 배지/친구탭. `API/FriendsAPI` — 지금 경로는 `GET /activities`(접두사 `/friends/api/friends`) |
+| `App/Contacts/ContactsAPI` | `GET /api/v2/social/contacts/information` | `.api` | 주소록 정보 | 주소록 동의 전 화면. `API/SocialAPI` |
+| `App/Contacts/ContactsAPI` | `PUT /api/v2/social/contacts/sync-allow` | `.api` | 주소록 동기화 동의 | 동의 토글. `API/SocialAPI` |
+| `App/Contacts/ContactsAPI` | `PUT /api/v2/social/contacts`, `DELETE /api/v2/social/contacts` | `.api` | 주소록 업로드/삭제 | 동기화/해제. `API/SocialAPI` |
+| `App/Contacts/ContactsAPI` | `GET /api/v2/social/recommendation/user/contacts/count`, `GET /api/v2/social/recommendation/user/contacts/user-info` | `.api` | 주소록 기반 추천 | 친구 추천. `API/SocialAPI` |
+| `App/Contacts/ContactsAPI` | `PUT /api/v2/social/recommendation/user/allow-info`, `GET /api/v2/social/recommendation/user/allow-info` | `.api` | 추천 허용 정보 | 설정. `API/SocialAPI` |
+| `App/Contacts/ContactsAPI` | `POST /api/v2/social/follower/follow/multi` | `.api` | 다중 팔로우 (레거시 경로) | 친구 추천 "전체 팔로우". `API/SocialAPI` |
 
 ### 앱 공통 / SMS / 로케일 / 분석 / 설정 탭
 
 | 모듈 | 엔드포인트 | APIDomain | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| `Service/SmsAuth` / `App/Protocol/ProtocolFTAccountConfirm` | `POST /api/ftaccountConfirm/requestSendUserAuthSms`, `POST /api/ftaccountConfirm/requestUserSmsConfirm` | `.api` | SMS 인증 요청/확인 | 법인 인증/계정 보호. `SmsAuthAPI.swift:21,41`, `ProtocolFTAccountConfirm.swift:45,81` |
+| `Service/SmsAuth` / `App/Protocol/ProtocolFTAccountConfirm` | `POST /api/ftaccountConfirm/requestSendUserAuthSms`, `POST /api/ftaccountConfirm/requestUserSmsConfirm` | `.api` | SMS 인증 요청/확인 | 법인 인증/계정 보호. **⚠️ 확인 필요** — `api/ftaccountConfirm` 경로가 코드에 없고 `SmsAuthAPI` 타겟도 사라졌습니다, **⚠️ 확인 필요** — `api/ftaccountConfirm` 경로가 코드에 없고 `SmsAuthAPI` 타겟도 사라졌습니다 |
 | `App/Protocol/AppAPI` | `POST /api/app/updateApp` | `.api` | 앱 업데이트 체크/보고 | 앱 시작. `AppAPI.swift:43,47` |
 | `Service/Locale` | `GET /web/v1/countries` | `.api` | 국가 리스트 | 국가 설정. `LocaleRepositoryImpl.swift:58,78` |
 | `Service/Locale` | `GET /global/exchange-rates/{country}` | `.platform(.global)` | 환율 | 글로벌 결제 화면. `LocaleRepositoryImpl.swift:95` |
 | `Service/Analytics/Waditag` | `GET /v2/add`, `POST /v2/add`, `GET /add`, `POST /add` | `.analytics` | **와디태그** V1/V2 (ScreenView/Click) | 스크린 진입/이벤트. `WaditagAnalyticsServiceImpl.swift:53,89,148,206` |
 | `AppSettingAPI` | `GET /api/v1/settings` | `.app` | **설정 탭 Server-Driven 구성** | 설정 탭 진입. `AppSettingAPIImpl.swift:15,16` |
-| `Features/FloatingButtons` | `GET /api/maker/mywadiz/pages` | `.api` | 플로팅 메이커 버튼 표시 조건 | 화면 공통 floating. `FloatingButtonAPIImpl.swift:15` |
+| `Features/FloatingButtons` | `GET /api/maker/mywadiz/pages` | `.api` | 플로팅 메이커 버튼 표시 조건 | 화면 공통 floating. `API/CommonAPI` |
 | `App/AppCoordinator/Setting` | `GET /web/mywadiz/settings/birthday` (웹뷰) | `.webOrigin` | 생년월일 설정 페이지 URL | 설정 > 생년월일. `AppCoordinator+Setting.swift:117` |
 
 ---
@@ -646,7 +770,7 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 ### 2) 프로젝트 상세 / 결제 (서포팅)
 - iOS 도 **상세/결제 페이지는 네이티브가 아닌 WKWebView**. 진입 시 `AccountAPI.requestToken()` (`POST /api/waccount/auth/request/token`) → 쿠키 동기화 → `webOrigin + /web/campaign/detail/{id}` 로 `WKWebView` 로드.
 - JS ↔ Native 브릿지: 결제 완료, 찜 토글, 카드 OCR 요청 등. 네이티브 복귀 시 `WishesAPI.add/delete`, `Service/Activity.fetchWishList()` 로 동기화.
-- Remote Config 로 URL 패턴 가드 (`Projects/App/SupportingFiles/remote_config_defaults.plist` 에 `wadiz.kr/web/campaign/detail/{arg_0}` 등 정의).
+- URL 패턴 가드는 **서버가 내려 줍니다**. 종전에는 `Projects/App/SupportingFiles/remote_config_defaults.plist` 에 `wadiz.kr/web/campaign/detail/{arg_0}` 같은 패턴을 심어 뒀는데, `FE1-1297`(2026-08-03)로 그 파일을 지우고 `AppSettingAPI` 응답으로 옮겼습니다.
 - **공통 웹뷰 → 네이티브 상세 랜딩 (FE1-735, 2026-05-27)**: 일반 웹뷰(`BaseWebViewController`) 내에서 펀딩/오픈예정 상세 URL 로 이동하면, 웹으로 띄우지 않고 `ProjectDetailViewController`(펀딩/오픈예정) 또는 `ProjectWebViewController`(스토어) 네이티브 화면으로 랜딩. URL 판별은 `ProjectDetailURLMatcher` + `tryRouteDetailURLToNative` 헬퍼, `WebViewDependency` 에 `navigator` 주입.
 - **스토어 → 펀딩 진입 일관성 (FE1-781, 2026-05-29)**: 스토어 통합 `projectId` Matcher 를 `ProjectDetailURLMatcher` 에 추가하고, 스토어 상세 URL 진입도 `ProjectDetailViewController` 로 게이트(`NavigationMap+WebView`)해 펀딩/스토어 양쪽이 동일한 네이티브 헤더 상태·검증 경로를 타도록 통일.
 
@@ -716,17 +840,25 @@ xcconfig 는 **PROVISIONING_PROFILE_SPECIFIER, DEBUG 플래그, AppIcon 세트 �
 - **Swift Macro Packages** — `/Packages/Macro` 가 로컬 SPM 패키지 (Macros/Macro/MacroClient 타겟). `Core/Persistence` 가 Macro 의존하여 컴파일 타임 매크로 활용. Swift 5.9 필수.
 - **Strict Concurrency** — Swift 6 strict concurrency 대응 진행. 각 Project 루트에 `STRICT_CONCURRENCY_GUIDE.md`. `WadizRequestInterceptorImpl.swift:19,20,23,24` 처럼 `nonisolated(unsafe)` 로 임시 대응. `Projects/Service/Sources/USERSERVICE_ACTOR_MIGRATION_GUIDE.md` 는 UserService actor 마이그레이션 가이드.
 - **App Extensions 3개** — `WadizWidget` (홈스크린 위젯, 스토어 프로젝트 요약), `MakerStoreProjectIntents` (Siri/Spotlight intent), `NotificationService` (Braze rich notification service extension). 모두 별도 entitlement/xcconfig.
-- **Associated Domains** — `link.wadiz.kr` 단축링크 + `www.wadiz.kr` + `www.wadiz.ai` universal link.
+- **Associated Domains** — 단축링크 `link.wadiz.kr`·`link.wadiz.io` 와 `wadiz.page.link`·`wadiz.onelink.me`, 그리고 `www.wadiz.kr`·`www.wadiz.ai`·`www.wadiz.io` universal link. **`io` 쪽이 나중에 추가됐고 `kr` 은 그대로 둡니다.**
 - **i18n 런타임 JSON 공유** — `Projects/Core/Sources/UI/Resources/i18n.json` 하나의 파일로 한국어 기본 + 영어/일본어/중국어 지원 (`CLAUDE.md:131-135`). Android 와 동일 JSON 스키마로 동기화.
 - **InfoPlist 다국어화** — 권한 문구(NSCameraUsageDescription 등 13개 키)를 4개 `{ko,en,ja,zh}.lproj/InfoPlist.strings` 로 자동 생성 (`CLAUDE.md:137-167`, `transform_i18n_strings.py`).
-- **Remote Config 스킴 네비게이션** — `remote_config_defaults.plist` 에 `wadiz.kr/web/…` 경로 → 네이티브 화면 매핑 정의. `Service/ScreenKeyParser` 가 이를 해석해 `Navigator` 로 라우팅.
+- **스킴 네비게이션은 서버 주도로 바뀌었습니다** — 웹 경로를 네이티브 화면에 대응시키는 표가 앱 안에서 서버로 옮겼습니다.
+
+  | 시점 | 어디에 있었나 |
+  |---|---|
+  | 종전 | `Projects/App/SupportingFiles/remote_config_defaults.plist` (앱 번들 안) |
+  | **지금** | `AppSettingAPI` 의 `ScreenKeyMap.routes` (`Projects/API/Sources/AppSettingAPI/Interface/DTO/ScreenKeyMap.swift:11-14`) |
+
+  해석하는 쪽은 그대로입니다. `Projects/Service/Sources/ScreenKeyParser/` 가 받아 `Navigator` 로 라우팅합니다.
+  `FE1-1297`(2026-08-03) 커밋 제목은 "Firebase RemoteConfig 이관 및 A/B 테스트 작업" 입니다.
 - **Pulse 네트워크 디버거** — Debug 빌드에서 shake 제스처로 모든 HTTP 요청/응답 시각화 (Alamofire `EventMonitor` 로 연동).
 - **OHHTTPStubs** — UI 테스트에서 API mocking. `fastlane/sources/uitest_env_injector.rb` 가 스텁 설정 주입.
 - **서포팅 결제 전량 웹뷰** — Android 와 동일하게 펀딩/스토어 상세 + 결제는 모두 WKWebView. 네이티브 Alamofire 결제 엔드포인트 없음.
 - **위젯 전용 API** — `Extensions/WadizWidget/Sources/Maker/StoreProject/API/StoreProjectAPI.swift` 는 **메인 앱과 독립된 API 클라이언트**. 메인 앱의 `Core/Networking` 일부(`RequestBuilder`) 를 sources 공유로 재사용 (`Projects/App/Project.swift:329-334`).
 - **Crashlytics DSYM 업로드** — post-build script `Tuist/.build/checkouts/firebase-ios-sdk/Crashlytics/run` 자동 실행 (`Projects/App/Project.swift:130-136`).
 - **OSS License** — `Tuist/Package.resolved` 를 빌드 전 `Projects/App/Resources` 로 복사 → `AcknowList` 가 런타임에 표시 (`Projects/App/Project.swift:107-113`).
-- **중복 구현 주의** — `/api/funding/wishes` 찜 추가는 `Service/Activity/ActivityAPI.swift:29` 와 `App/Wish/WishesAPI.swift:33` 두 곳에 존재 (Service 레이어로 이주 중). `/api/ftaccountConfirm/*` 역시 `Service/SmsAuth` 와 `App/Protocol/ProtocolFTAccountConfirm.swift` 중복. 마이그레이션 잔재.
+- **중복 구현이 해소됐습니다** — 종전에는 `/api/funding/wishes` 찜 추가가 **`Service/Activity/ActivityAPI`** 와 **`App/Wish/WishesAPI`** 두 곳에 있었습니다(둘 다 지금은 없는 파일입니다). **2026-09-22 확인 결과 `Projects/API/Sources/FundingAPI/` 한 곳뿐입니다.** `IOS-4193` 의 API 모듈 통합 때 정리된 것으로 보입니다(추정 — 커밋에 명시는 없고 결과로 판단).
 - **라이브커머스 PIP (FE1-809, 2026-06-02)** — 메이커 모드 웹뷰(`MakerWebViewController`)에서 Picture-in-Picture 라이브커머스 영상을 띄운다. (**FE1-961, 2026-06-19 이후**: 외부 `PIPKit` SPM 을 제거하고 `Core/UI` 자체 구현 `FloatingViewKit` 으로 교체 — 아래 최상단 보강 블록 참조.) 노출 여부·URL 은 `Service/LiveCommerce` 가 Remote Config `liveCommercePip` 로 게이트. **FE1-865(2026-06-11)** 로 SceneDelegate 환경에서 PIP 최초 노출 시 `safeAreaInsets` 가 0 인 채 프레임이 계산돼 `UITabBar` 를 가리던 버그를 다음 runloop 의 `setNeedsUpdatePIPFrame()` 재계산으로 보정 (`PIPKit+Extension.swift`).
 - **HWP/HWPX 웹뷰 첨부 (QA-22250, 2026-06-15)** — iOS 가 hwp/hwpx 를 기본 인식하지 못해 웹 `accept` 에 내려도 파일 선택기에서 비활성화되던 문제를, `Info.plist`/`Info_Dev.plist` 에 `UTImportedTypeDeclarations` 로 확장자(hwp/hwpx) ↔ MIME(`application/x-hwp`, `application/haansofthwpx`) 매핑을 선언해 해결.
 - **WADIZChannelIO 스킴 제거 (FE1-796, 2026-05-29)** — `More` 모듈의 `WADIZChannelIO` 커스텀 스킴 핸들러 제거.

@@ -13,7 +13,7 @@
   - `com.wadiz.wave.user/.../push/PushTargetController.java` (푸시 대상 조회)
   - `com.wadiz.wave.user/.../message/MessageController.java` (알림톡 수신자 관리)
   - `wadiz-frontend/apps/global/src/pages/my-wadiz/settings/notification/` (설정 UI)
-- **외부 경계**: 플랫폼 알림 서비스(`platform.wadiz.kr` 의 notification 부분) 내부 로직, 실 FCM/APNs/Kakao/메일 게이트웨이.
+- **외부 경계**: 플랫폼 알림 서비스(`api.wadiz.io` 의 notification 부분) 내부 로직, 실 FCM/APNs/Kakao/메일 게이트웨이.
 
 ---
 
@@ -28,7 +28,7 @@
                      │ 또는 Kafka publish
                      ▼
 ┌───────────────────────────────────────────────────────────────────┐
-│  플랫폼 알림 서비스 (platform.wadiz.kr)                              │
+│  플랫폼 알림 서비스 (api.wadiz.io)                              │
 │  - 수신자 토큰·설정 조회                                              │
 │  - 채널별 라우팅 (push / alimtalk / email / inbox)                   │
 │  - 템플릿 렌더링 + i18n                                              │
@@ -93,7 +93,7 @@ oauth2/adapters/outbound/externalservice/
 - `MarketingNotificationSettingsContainer.jsx` — 마케팅 동의 별도
 
 ### 3.2 설정 저장 경로 (추정)
-사용자 알림 설정은 플랫폼 알림 서비스에 저장 (`platform.wadiz.kr` API). wave.user 의 `UserSettings` 와 구분.
+사용자 알림 설정은 플랫폼 알림 서비스에 저장 (`api.wadiz.io` API). wave.user 의 `UserSettings` 와 구분.
 
 ---
 
@@ -169,7 +169,7 @@ oauth2/adapters/outbound/externalservice/
    │ PUT /platform/notification/settings
    │   body: { category: 'marketing-funding', enabled: true }
    ▼
-[platform.wadiz.kr]
+[api.wadiz.io]
    └─ 사용자 구독 설정 업데이트 → 이후 발행 시 반영
 ```
 

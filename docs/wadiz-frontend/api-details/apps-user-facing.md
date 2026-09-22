@@ -17,12 +17,12 @@
 
 | 앱 | 빌드 도구 | 타겟 사용자 | 주된 역할 | 배포 도메인 (live) |
 |---|---|---|---|---|
-| `account` | Vite 6 + React 18 | 일반 사용자 (글로벌+국내) | 통합 로그인/회원가입/비밀번호/소셜연동/탈퇴 | `https://account.wadiz.kr` |
-| `global` | Vite 6 + React 18 (SPA) | 글로벌 사용자 (및 국내 일부 재사용) | 글로벌 펀딩/홈/마이와디즈/결제/고객센터 통합 | `https://www.wadiz.kr` (live 기준 `VITE_WEB_URL`) |
-| `help-center` | **Zendesk Guide 테마** (Handlebars) | 고객센터 방문자 | FAQ, 문의 티켓 — Zendesk 플랫폼 위에서 동작 | `https://helpcenter.wadiz.kr` |
+| `account` | Vite 6 + React 18 | 일반 사용자 (글로벌+국내) | 통합 로그인/회원가입/비밀번호/소셜연동/탈퇴 | `https://account.wadiz.io` |
+| `global` | Vite 6 + React 18 (SPA) | 글로벌 사용자 (및 국내 일부 재사용) | 글로벌 펀딩/홈/마이와디즈/결제/고객센터 통합 | `https://www.wadiz.io` (live 기준 `VITE_WEB_URL`) |
+| `help-center` | **Zendesk Guide 테마** (Handlebars) | 고객센터 방문자 | FAQ, 문의 티켓 — Zendesk 플랫폼 위에서 동작 | `https://helpcenter.wadiz.io` |
 | `ir` | Next.js 16 (export static) + Webpack | 투자자/주주 | 회사 소개·IR 공시·재무정보 정적 사이트 | `https://www.wadizcorp.com` |
-| `partners` | Next.js 14 (export static) | 잠재 파트너 기업 | "와디즈파트너스" 브랜드 랜딩 | `https://partners.wadiz.kr` |
-| `partnerzone` | Vite 5 + React 18 (SPA → WordPress 임베드) | 파트너존 방문자 | 파트너존 서비스 소개 iframe 콘텐츠 | `https://static.wadiz.kr/partnerzone` (WordPress 내 임베드 `https://partnerzone.wadiz.kr`) |
+| `partners` | Next.js 14 (export static) | 잠재 파트너 기업 | "와디즈파트너스" 브랜드 랜딩 | `https://partners.wadiz.io` |
+| `partnerzone` | Vite 5 + React 18 (SPA → WordPress 임베드) | 파트너존 방문자 | 파트너존 서비스 소개 iframe 콘텐츠 | `https://cdn-static.wadiz.io/partnerzone` (WordPress 내 임베드 `https://partnerzone.wadiz.kr`) |
 
 ### 공통점
 - 6개 모두 **SPA 또는 정적 사이트 출력 (`output: 'export'` / `vite build`)** 이며, `AWS S3` 로 배포합니다 (각 README 의 "배포" 섹션 참조).
@@ -50,7 +50,7 @@
 | 언어/모듈 | TypeScript 5.6, ESM (`"type": "module"`) | `apps/account/package.json:5` |
 | 진입 HTML | `apps/account/index.html` |  |
 | 진입 TS | `src/app/main.tsx` | Vite rollup input 설정 |
-| Dev 서버 | `https://local.wadiz.kr:5174` | `apps/account/vite.config.ts:159-166` |
+| Dev 서버 | `https://local.wadiz.io:5174` | `apps/account/vite.config.ts:159-166` |
 | Dev 인증서 | `apps/account/cert/local.wadiz.{crt,key}` |  |
 | 상태 관리 | TanStack Query 5.66, Zustand 5.0 |  |
 | 폼/검증 | react-hook-form 7.54, yup 1, @hookform/resolvers |  |
@@ -58,7 +58,7 @@
 | 지도/전화 | `@googlemaps/js-api-loader`, `libphonenumber-js`, `react-phone-number-input` | 가입/정보 입력 시 국가·전화 |
 | Sentry | `@sentry/vite-plugin` 3.3 | `apps/account/vite.config.ts:117-122` |
 | 배포 | S3 `wadiz.static/global-account` (live) | `apps/account/README.md:51-55` |
-| 배포 도메인 | `https://account.wadiz.kr` (live), `https://dev-account.wadiz.kr`, `rc/rc2/rc3-account.wadiz.kr`, `stage-account.wadiz.kr` |  |
+| 배포 도메인 | `https://account.wadiz.io` (live), `https://account.dev.wadiz.io`, `rc/rc2/rc3-account.wadiz.io`, `account.stage.wadiz.io` |  |
 
 #### 환경변수 · upstream 매핑
 
@@ -66,22 +66,22 @@
 
 | VITE 환경변수 | live | 용도 | 매핑된 wadiz 서비스 |
 |---|---|---|---|
-| `VITE_ACCOUNT_URL` | `https://account.wadiz.kr` | **계정 서버 (Auth 2.0)** | 실제로 계정 자신이면서 동시에 `@wadiz/api/account/account.service.ts` 의 `BASE_URL` | `kr.wadiz.account` |
-| `VITE_APP_API_URL` | `https://app.wadiz.kr` | App BFF | `app-api` (NestJS) |
-| `VITE_PLATFORM_API_URL` | `https://platform.wadiz.kr` | 플랫폼 API | (레거시 플랫폼 게이트웨이, `com.wadiz.*` 도메인) |
-| `VITE_PLATFORM_GLOBAL_API_URL` | `https://platform.wadiz.kr/global` | 플랫폼 글로벌 서브패스 | (상동) |
-| `VITE_PUBLIC_API_URL` | `https://public-api.wadiz.kr` | 공용 퍼블릭 API | (내부 퍼블릭 API) |
-| `VITE_SERVICE_API_URL` | `https://service.wadiz.kr` | 서비스 API | 검색·친구 등 서비스 레이어 |
-| `VITE_STATIC_URL` | `https://static.wadiz.kr` | 정적 리소스 | S3 CDN |
-| `VITE_WEB_URL` | `https://www.wadiz.kr` | 레거시 웹 | `com.wadiz.web` (JSP) |
-| `VITE_ANALYTICS_URL` | `https://analytics.wadiz.kr` | 분석 서버 | Analytics 서버 (내부 확인 불가) |
+| `VITE_ACCOUNT_URL` | `https://account.wadiz.io` | **계정 서버 (Auth 2.0)** | 실제로 계정 자신이면서 동시에 `@wadiz/api/account/account.service.ts` 의 `BASE_URL` | `kr.wadiz.account` |
+| `VITE_APP_API_URL` | `https://api.wadiz.io/app` | App BFF | `app-api` (NestJS) |
+| `VITE_PLATFORM_API_URL` | `https://api.wadiz.io` | 플랫폼 API | (레거시 플랫폼 게이트웨이, `com.wadiz.*` 도메인) |
+| `VITE_PLATFORM_GLOBAL_API_URL` | `https://api.wadiz.io/global` | 플랫폼 글로벌 서브패스 | (상동) |
+| `VITE_PUBLIC_API_URL` | `https://api.wadiz.io` | 공용 퍼블릭 API | (내부 퍼블릭 API) |
+| `VITE_SERVICE_API_URL` | `https://api.wadiz.io` | 서비스 API | 검색·친구 등 서비스 레이어 |
+| `VITE_STATIC_URL` | `https://cdn-static.wadiz.io` | 정적 리소스 | S3 CDN |
+| `VITE_WEB_URL` | `https://www.wadiz.io` | 레거시 웹 | `com.wadiz.web` (JSP) |
+| `VITE_ANALYTICS_URL` | `https://analytics.wadiz.io` | 분석 서버 | Analytics 서버 (내부 확인 불가) |
 | `VITE_BRAZE_API_KEY` / `VITE_BRAZE_BASE_URL` | `0c308381-...` / `https://sdk.iad-06.braze.com` | Braze SDK | Braze (외부 SaaS) |
 | `VITE_SENTRY_DSN` | `https://b3c9d2a629edc6779b9288616d5491eb@o194600.ingest.us.sentry.io/4506376215396352` | Sentry | Sentry Cloud |
 
 `vite.config.ts` 의 `define` 블록이 **`process.env.ACCOUNT_URL`, `process.env.WEB_URL` 등** 으로 재-export 합니다 (`apps/account/vite.config.ts:70-85`). 따라서 `@wadiz/api/account/account.service.ts:43` 의 `process.env.ACCOUNT_URL` 는 실행 시점에 위 값으로 치환됩니다.
 
 특이사항:
-- `account.service.ts:39-43` 는 `location.origin.includes('local-account.wadiz.kr')` 인 경우 `window.location.origin` 을 `BASE_URL` 로 채택합니다 → 회원팀이 자체 로컬 서버를 띄울 때 테스트 용.
+- `account.service.ts:39-43` 는 `location.origin.includes('local-account.wadiz.io')` 인 경우 `window.location.origin` 을 `BASE_URL` 로 채택합니다 → 회원팀이 자체 로컬 서버를 띄울 때 테스트 용.
 - `process.env.ENVIRONMENT === 'stage'` 인 경우 stage 도메인 강제 (`ACCOUNT_URL.stage`) — `stage`는 `VITE_ENVIRONMENT=live` 로 세팅되기 때문에 별도 분기.
 
 #### 라우트 구조
@@ -156,7 +156,7 @@
 - `POST /api/v1/password-reset/confirm` — `apps/account/src/pages/(auth)/reset-password/_ui/ResetPassword.tsx:32`
 - `POST /api/v1/find-id` (상대경로 fetch) — `apps/account/src/pages/(auth)/(find)/_ui/FindPassword.tsx:39`
 - `POST /api/v1/password-reset/request` — `:59`
-  → 모두 같은 도메인 상대경로 fetch. 브라우저 관점에서 `account.wadiz.kr` 본인(= `VITE_ACCOUNT_URL`) 이므로 동일 upstream(`kr.wadiz.account`).
+  → 모두 같은 도메인 상대경로 fetch. 브라우저 관점에서 `account.wadiz.io` 본인(= `VITE_ACCOUNT_URL`) 이므로 동일 upstream(`kr.wadiz.account`).
 
 **국가 목록 (레거시 web)**
 - `GET /web/v1/countries` — `apps/account/src/pages/(auth-app)/_api/country.ts:12` (host = `process.env.WEB_URL`)
@@ -190,13 +190,13 @@
 | 빌드 도구 | Vite 6 | `apps/global/vite.config.ts` |
 | 프레임워크 | React 18.2.0 + React Router 6.26 | `apps/global/package.json` |
 | 이중 엔트리 | `src/app/main.tsx` (글로벌), `src/app/korea-main.tsx` (국내용) | `vite.config.ts:25-28` |
-| Dev 서버 | `https://local.wadiz.kr:5173` (origin) | `apps/global/vite.config.ts:167-179` |
+| Dev 서버 | `https://local.wadiz.io:5173` (origin) | `apps/global/vite.config.ts:167-179` |
 | CSS 번들 | `cssCodeSplit: false` → 단일 `main.css` | `:22`, `:41-43` |
 | 상태 관리 | TanStack Query 5.66, Zustand 5.0 |  |
 | 헬멧 | `react-helmet-async` 2.0 |  |
 | Stripe | `@stripe/stripe-js`, `@stripe/react-stripe-js` |  |
 | 배포 | S3 `wadiz.static/global` (live), `wadiz.static.dev/global` (dev) | `apps/global/README.md:52-55` |
-| 배포 도메인 | `VITE_WEB_URL` 와 동일 (`www.wadiz.kr` / `dev.wadiz.kr`) — 사실상 `com.wadiz.web` 이 HTML 호스팅, SPA 자산은 S3 | `apps/global/README.md:18-22` |
+| 배포 도메인 | `VITE_WEB_URL` 와 동일 (`www.wadiz.io` / `dev.wadiz.io`) — 사실상 `com.wadiz.web` 이 HTML 호스팅, SPA 자산은 S3 | `apps/global/README.md:18-22` |
 
 **중요**: `com.wadiz.web` (JSP) 이 HTML 메타데이터·세션·전역변수를 제공하고, `global` SPA는 그 위에 삽입되는 구조 (`README.md:18`). 글로벌용(`main.tsx`) / 국내 재사용(`korea-main.tsx`) 두 엔트리로 분기.
 
@@ -206,18 +206,18 @@
 
 | VITE 환경변수 | live 값 | 매핑 wadiz 서비스 / 외부 |
 |---|---|---|
-| `VITE_ACCOUNT_URL` | `https://account.wadiz.kr` | `kr.wadiz.account` |
-| `VITE_APP_API_URL` | `https://app.wadiz.kr` | `app-api` (NestJS) |
-| `VITE_DATA_API_URL` | `https://datasvc.wadiz.kr` | 데이터/분석 서비스 (`support-share` 등) |
-| `VITE_PLATFORM_API_URL` | `https://platform.wadiz.kr` | 플랫폼 게이트웨이 |
-| `VITE_PLATFORM_GLOBAL_API_URL` | `https://platform.wadiz.kr/global` | 글로벌 서브패스 (번역/환율) |
+| `VITE_ACCOUNT_URL` | `https://account.wadiz.io` | `kr.wadiz.account` |
+| `VITE_APP_API_URL` | `https://api.wadiz.io/app` | `app-api` (NestJS) |
+| `VITE_DATA_API_URL` | `https://datasvc.aidata.wadiz.io` | 데이터/분석 서비스 (`support-share` 등) |
+| `VITE_PLATFORM_API_URL` | `https://api.wadiz.io` | 플랫폼 게이트웨이 |
+| `VITE_PLATFORM_GLOBAL_API_URL` | `https://api.wadiz.io/global` | 글로벌 서브패스 (번역/환율) |
 | `VITE_PLATFORM_GLOBAL_API_TOKEN` | `38DC62EE...` | 글로벌 API Bearer 토큰 |
-| `VITE_PLATFORM_MAIN2_API_URL` | `https://platform.wadiz.kr` | `main2/api/v*` 네임스페이스 (홈·랭킹) |
-| `VITE_PUBLIC_API_URL` | `https://public-api.wadiz.kr` | 퍼블릭 |
-| `VITE_SERVICE_API_URL` | `https://service.wadiz.kr` | 검색·친구 |
-| `VITE_STATIC_URL` | `https://static.wadiz.kr` | 정적 자산 |
-| `VITE_WEB_URL` | `https://www.wadiz.kr` | `com.wadiz.web` (JSP) |
-| `VITE_ANALYTICS_URL` | `https://analytics.wadiz.kr` | 분석 |
+| `VITE_PLATFORM_MAIN2_API_URL` | `https://api.wadiz.io` | `main2/api/v*` 네임스페이스 (홈·랭킹) |
+| `VITE_PUBLIC_API_URL` | `https://api.wadiz.io` | 퍼블릭 |
+| `VITE_SERVICE_API_URL` | `https://api.wadiz.io` | 검색·친구 |
+| `VITE_STATIC_URL` | `https://cdn-static.wadiz.io` | 정적 자산 |
+| `VITE_WEB_URL` | `https://www.wadiz.io` | `com.wadiz.web` (JSP) |
+| `VITE_ANALYTICS_URL` | `https://analytics.wadiz.io` | 분석 |
 | `VITE_TOKEN_MARKETING` / `VITE_TOKEN_INBOX` / `TOKEN_KEYWORDS` | (32-byte hex) | 마케팅·인박스·키워드 서비스 인증 토큰 |
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | `https://joicppugmewvksclxfox.supabase.co` / (JWT) | Supabase (외부 BaaS) — 용도 관측 불가 |
 
@@ -263,7 +263,7 @@
 
 | 화면/기능 (경로) | 호출 서비스.메서드 | 관측된 HTTP + URL | Upstream baseUrl (env 기반) |
 |---|---|---|---|
-| 홈 키비주얼 배너 (`/home`) | `main2Service.getKeyVisualBannersQuery` | `GET /main2/api/v1/pc/main/key-visual` | `PLATFORM_MAIN2_API_URL` (`platform.wadiz.kr`) |
+| 홈 키비주얼 배너 (`/home`) | `main2Service.getKeyVisualBannersQuery` | `GET /main2/api/v1/pc/main/key-visual` | `PLATFORM_MAIN2_API_URL` (`api.wadiz.io`) |
 | 홈 메트릭 오버뷰 | `main2Service.getMetricsOverviewQuery` | `GET /main2/api/v1/pc/main/metrics` | `PLATFORM_MAIN2_API_URL` |
 | 홈 퀵메뉴 | (main2) | `GET /main2/api/v1/quickmenu?id=...` | `PLATFORM_MAIN2_API_URL` |
 | 홈 최근 본 | (main2) | `GET /main2/api/v1/recentview` | `PLATFORM_MAIN2_API_URL` |
@@ -298,8 +298,8 @@
 | 커뮤니티·리뷰 | `commentsService.*`, `satisfactionService.*`, `issueReportService.*` | `@wadiz/api/web/reward/*` | `WEB_URL` |
 | 신고 (ProjectReport) | `issueReportService.*` | — | `WEB_URL` |
 | 환불 | `refundService.*`, `backingPaymentService.*`, `shipmentService.*`, `deliveryService.*` | `@wadiz/api/web/reward/*` | `WEB_URL` |
-| 결제 전/후 보내기(`support-share`) | `supportShareService.*` | `@wadiz/api/web/support-share.service.ts` | `DATA_API_URL` (`datasvc.wadiz.kr`) — baseUrl fallback `DATA_DOMAIN_URL[ENVIRONMENT]` |
-| 고객센터 티켓 목록 (`/support/requests`) | `supportService.getTickets` | `GET /api/v1/support/tickets` (Bearer accessToken) | `APP_API_URL` (`app.wadiz.kr` = `app-api`) |
+| 결제 전/후 보내기(`support-share`) | `supportShareService.*` | `@wadiz/api/web/support-share.service.ts` | `DATA_API_URL` (`datasvc.aidata.wadiz.io`) — baseUrl fallback `DATA_DOMAIN_URL[ENVIRONMENT]` |
+| 고객센터 티켓 목록 (`/support/requests`) | `supportService.getTickets` | `GET /api/v1/support/tickets` (Bearer accessToken) | `APP_API_URL` (`api.wadiz.io/app` = `app-api`) |
 | 고객센터 티켓 상세 (`/support/requests/[requestId]`) | `supportService.getTicket`, `putTicket`, `uploads`, `postTicket` | `/api/v1/support/tickets/*` | `APP_API_URL` |
 | 고객센터 신규 티켓 (폼·업로드) | `supportService.getTicketForms`, `postUploads` | — | `APP_API_URL` |
 | 고객센터 — 내 펀딩/스토어 리스트 | `fundingService.*` (myfunding) | `@wadiz/api/web/myfunding.service.ts` | `WEB_URL` |
@@ -352,7 +352,7 @@
 | 스크립트 | `src/script.js` — Zendesk DOM 헬퍼, ZAFClient, Messenger 위젯 (266 lines) |  |
 | 스타일 | `src/style.css` (SCSS 혼용 허용) |  |
 | manifest | `src/manifest.json` — 테마 설정 schema |  |
-| 배포 도메인 | `https://helpcenter.wadiz.kr` (live) |  |
+| 배포 도메인 | `https://helpcenter.wadiz.io` (live) |  |
 
 #### 환경변수 · upstream 매핑
 
@@ -370,8 +370,8 @@
 **upstream 매핑**:
 - **Zendesk 내부 API**: 티켓, FAQ, 아티클은 Zendesk Guide/Support 가 자체 엔드포인트 제공. 이 repo 에서 직접 호출하는 JS는 없으며, `ZAFClient.init()` + `client.get('ticket.ticket_form_id')` 형태로 Zendesk 앱 프레임워크를 사용 (`apps/help-center/src/script.js:105-122`).
 - **와디즈 본체로의 링크**: `manifest.json` 안에 하드코딩된 URL들:
-  - `https://helpcenter.wadiz.kr/hc/ko/categories/6459500660889-서포터` (`:1434`)
-  - `https://www.wadiz.kr/web/main` (`:1455`, `:1476`)
+  - `https://helpcenter.wadiz.io/hc/ko/categories/6459500660889-서포터` (`:1434`)
+  - `https://www.wadiz.io/web/main` (`:1455`, `:1476`)
   - `https://www.facebook.com/wadiz.funding` (`:2670`)
   - `https://www.instagram.com/wadiz_official/` (`:2691`)
 
@@ -435,9 +435,9 @@ Zendesk Guide 템플릿 시스템 — 라우팅은 Zendesk 가 처리. 이 repo�
 | 이미지 최적화 | `unoptimized: true` (CF 앞단 없음) | `:17` |
 | 타입체크 | `ignoreBuildErrors: true` (강제 빌드) | `:27` |
 | 진입 | `src/app/layout.tsx`, `src/app/(home)/page.tsx` | App Router |
-| Dev | `next dev --hostname local.wadiz.kr --webpack --port 3000` | `package.json:11` |
+| Dev | `next dev --hostname local.wadiz.io --webpack --port 3000` | `package.json:11` |
 | 배포 | S3 `wadiz.ir.dev` / `wadiz.ir.live` + CloudFront Function (`frontend-rewrite-html-route`) | `README.md:59-65` |
-| 배포 도메인 | dev: `https://ir-dev.wadiz.kr`, live: `https://www.wadizcorp.com` |  |
+| 배포 도메인 | dev: `https://ir-dev.wadiz.io`, live: `https://www.wadizcorp.com` |  |
 
 #### 환경변수 · upstream 매핑
 
@@ -524,15 +524,15 @@ tsconfig paths / jest.config 은 더 상세하나 실제 소스에서 쓰는 imp
 | 이미지 최적화 | `unoptimized: true` |  |
 | 타입체크 | `ignoreBuildErrors: true` |  |
 | 진입 | `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/template.tsx` |  |
-| Dev | `next dev --hostname local.wadiz.kr` (포트 기본 3000) | `package.json:10` |
-| 배포 도메인 | dev: `https://partners-dev.wadiz.kr`, live: `https://partners.wadiz.kr` |  |
+| Dev | `next dev --hostname local.wadiz.io` (포트 기본 3000) | `package.json:10` |
+| 배포 도메인 | dev: `https://partners-dev.wadiz.io`, live: `https://partners.wadiz.io` |  |
 
 #### 환경변수 · upstream 매핑
 
 | 환경변수 | live | 용도 |
 |---|---|---|
-| `NEXT_CONFIG_ASSET_PREFIX` | `https://partners.wadiz.kr` | Next assetPrefix |
-| `NEXT_PUBLIC_STATIC_URL` | `https://partners.wadiz.kr` | OG 메타 |
+| `NEXT_CONFIG_ASSET_PREFIX` | `https://partners.wadiz.io` | Next assetPrefix |
+| `NEXT_PUBLIC_STATIC_URL` | `https://partners.wadiz.io` | OG 메타 |
 | `ENVIRONMENT` | `live` | env-cmd |
 
 → **wadiz 백엔드 호출 없음**. 단일 페이지 정적 랜딩.
@@ -578,8 +578,8 @@ App Router 단일 페이지:
 | 프레임워크 | React 18.2, React Router 6.26, react-query 3.34 (legacy v3) | `:15-30` |
 | 진입 | `index.html` → `src/pages/main/index.tsx` → `Main.tsx` |  |
 | Base URL | `process.env.BASE_URL \|\| './'` | `vite.config.ts:10` |
-| 배포 도메인 | dev: `https://static-dev.wadiz.kr/partnerzone` live: `https://static.wadiz.kr/partnerzone` (배포는 S3) |  |
-| 공개 경로 | WordPress 임베드 `https://partnerzone.wadiz.kr/wp-admin` → 콘텐츠 영역에 `{{https://static.wadiz.kr/partnerzone/index.html}}` 임베드 (`README.md:59-62`) |  |
+| 배포 도메인 | dev: `https://static-dev.wadiz.io/partnerzone` live: `https://cdn-static.wadiz.io/partnerzone` (배포는 S3) |  |
+| 공개 경로 | WordPress 임베드 `https://partnerzone.wadiz.kr/wp-admin` → 콘텐츠 영역에 `{{https://cdn-static.wadiz.io/partnerzone/index.html}}` 임베드 (`README.md:59-62`) |  |
 
 특이: `fetchApi: link:@wadiz/fetch-api/src/fetchApi` 의존성(`package.json:18`) 이 있지만 실제 소스에서 import 한 흔적은 없음. 빌드에서 external 처리 (`vite.config.ts:31` — `@wadiz/request-api/errors/JsonParseError` 등 external).
 
@@ -587,7 +587,7 @@ App Router 단일 페이지:
 
 | 환경변수 | live |
 |---|---|
-| `BASE_URL` | `https://static.wadiz.kr/partnerzone` |
+| `BASE_URL` | `https://cdn-static.wadiz.io/partnerzone` |
 | `ENVIRONMENT` | `live` |
 
 → wadiz 백엔드 호출 없음. Vite 번들을 S3 에 올리고 WordPress 가 iframe/임베드.
@@ -628,16 +628,16 @@ Wadiz 내부 백엔드 호출 **0건**.
 
 | Upstream (env 기준) | 매핑 서비스 repo | `account` | `global` | `help-center` | `ir` | `partners` | `partnerzone` |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|
-| `VITE_ACCOUNT_URL` → `account.wadiz.kr` | `kr.wadiz.account` | ✅ 메인 | ⚪ (로그인 링크) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_WEB_URL` → `www.wadiz.kr` | `com.wadiz.web` (JSP) | ✅ (탈퇴, 약관, 리턴URL, countries, SMS) | ✅ (대부분 — 펀딩/마이/고객센터 일부/쿠폰/포인트/약관/정책/국가/소셜) | ⚪ (링크만) | ❌ | ❌ | ❌ |
-| `VITE_APP_API_URL` → `app.wadiz.kr` | `app-api` (NestJS) | ⚪ | ✅ (고객센터 `/api/v1/support/tickets` 등) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_PLATFORM_API_URL` → `platform.wadiz.kr` | 플랫폼 게이트웨이 | ⚪ | ✅ (위시, 알림, 인박스, 마케팅동의, 컬렉션, nicepay, keyword, activities) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_PLATFORM_MAIN2_API_URL` → `platform.wadiz.kr` (main2/*) | main2 서비스 | ❌ | ✅ (홈, 랭킹, 큐레이션, 카테고리, mywadiz) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_PLATFORM_GLOBAL_API_URL` → `platform.wadiz.kr/global` | 글로벌 번역/환율 | ⚪ | ✅ (번역, 환율 — Bearer Token) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_SERVICE_API_URL` → `service.wadiz.kr` | 서비스 레이어 (검색·친구) | ⚪ | ✅ (search v2/v3, friends) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_PUBLIC_API_URL` → `public-api.wadiz.kr` | 퍼블릭 API | ⚪ | ✅ (publicService, makerBanner) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_DATA_API_URL` → `datasvc.wadiz.kr` | Data/Analytics | ❌ | ✅ (support-share) | ❌ | ❌ | ❌ | ❌ |
-| `VITE_ANALYTICS_URL` → `analytics.wadiz.kr` | Analytics | ⚪ (global 변수) | ⚪ (global 변수) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_ACCOUNT_URL` → `account.wadiz.io` | `kr.wadiz.account` | ✅ 메인 | ⚪ (로그인 링크) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_WEB_URL` → `www.wadiz.io` | `com.wadiz.web` (JSP) | ✅ (탈퇴, 약관, 리턴URL, countries, SMS) | ✅ (대부분 — 펀딩/마이/고객센터 일부/쿠폰/포인트/약관/정책/국가/소셜) | ⚪ (링크만) | ❌ | ❌ | ❌ |
+| `VITE_APP_API_URL` → `api.wadiz.io/app` | `app-api` (NestJS) | ⚪ | ✅ (고객센터 `/api/v1/support/tickets` 등) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_PLATFORM_API_URL` → `api.wadiz.io` | 플랫폼 게이트웨이 | ⚪ | ✅ (위시, 알림, 인박스, 마케팅동의, 컬렉션, nicepay, keyword, activities) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_PLATFORM_MAIN2_API_URL` → `api.wadiz.io` (main2/*) | main2 서비스 | ❌ | ✅ (홈, 랭킹, 큐레이션, 카테고리, mywadiz) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_PLATFORM_GLOBAL_API_URL` → `api.wadiz.io/global` | 글로벌 번역/환율 | ⚪ | ✅ (번역, 환율 — Bearer Token) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_SERVICE_API_URL` → `api.wadiz.io` | 서비스 레이어 (검색·친구) | ⚪ | ✅ (search v2/v3, friends) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_PUBLIC_API_URL` → `api.wadiz.io` | 퍼블릭 API | ⚪ | ✅ (publicService, makerBanner) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_DATA_API_URL` → `datasvc.aidata.wadiz.io` | Data/Analytics | ❌ | ✅ (support-share) | ❌ | ❌ | ❌ | ❌ |
+| `VITE_ANALYTICS_URL` → `analytics.wadiz.io` | Analytics | ⚪ (global 변수) | ⚪ (global 변수) | ❌ | ❌ | ❌ | ❌ |
 | `VITE_STATIC_URL` / `NEXT_PUBLIC_STATIC_URL` | S3/CloudFront | ⚪ (이미지 링크) | ✅ (이미지, 앱 링크 등) | ⚪ (자산) | ⚪ (자산) | ⚪ (자산) | ✅ (BASE_URL) |
 | `NEXT_PUBLIC_DATA_URL` → `cdn3.wadiz.kr/app` | CloudFront → Google Sheets Apps Script | ❌ | ❌ | ❌ | ✅ (IR JSON 14종) | ❌ | ❌ |
 | Zendesk API | Zendesk Cloud | ❌ | ❌ | ✅ (내장, ZAFClient) | ❌ | ❌ | ❌ |
@@ -892,7 +892,7 @@ Fallback 로직: `getBaseUrl()` 이 env 없으면 live/dev 도메인 분기.
 
 관측 위치 3건 (`:18, :32, :50`). 앱 링크 / 와링크.
 
-### 4.25 `app/funding/projects.service.ts` (baseUrl = **하드코딩** `https://app.wadiz.kr`)
+### 4.25 `app/funding/projects.service.ts` (baseUrl = **하드코딩** `https://api.wadiz.io/app`)
 
 관측 위치 2건 (`:21, :35`). app-api 호출이지만 환경 변수 미사용 (live 도메인 하드코딩 — dev/rc 환경에서 동작 확인 불가).
 
@@ -915,7 +915,7 @@ Fallback 로직: `getBaseUrl()` 이 env 없으면 live/dev 도메인 분기.
 
 ### 4.28 `web/support-share.service.ts` (baseUrl = `DATA_API_URL`)
 
-관측 위치 2건 (`:576, :593`). `datasvc.wadiz.kr`. `apps/global` 서포트·공유 지표.
+관측 위치 2건 (`:576, :593`). `datasvc.aidata.wadiz.io`. `apps/global` 서포트·공유 지표.
 
 ### 4.29 `web/reward/*` (baseUrl = `WEB_URL` 기본, `SERVICE_API_URL` 일부)
 
@@ -985,7 +985,7 @@ Fallback 로직: `getBaseUrl()` 이 env 없으면 live/dev 도메인 분기.
 
 ### 확인 불가로 표시한 사항
 - `packages/api/src/wai/chatHistory.service.ts` 의 `getBaseUrl()` 반환값: 파일 내부 로직 미확인.
-- `VITE_PLATFORM_MAIN2_API_URL` 가 live 에서 `platform.wadiz.kr` 로 `PLATFORM_API_URL` 과 동일하게 세팅되는 이유: env 상 동일값이지만 서비스 레이어에서 경로 prefix 로 구분(`/main2/...` vs 기타).
+- `VITE_PLATFORM_MAIN2_API_URL` 가 live 에서 `api.wadiz.io` 로 `PLATFORM_API_URL` 과 동일하게 세팅되는 이유: env 상 동일값이지만 서비스 레이어에서 경로 prefix 로 구분(`/main2/...` vs 기타).
 - `apps/global` 의 `VITE_PLATFORM_GLOBAL_API_TOKEN` Bearer 토큰이 stage/live/dev 에서 다른 이유 및 발급 주체: 관측 불가 (32-byte hex 값만 제공).
 - `apps/partnerzone` 의 `fetchApi: link:@wadiz/fetch-api/src/fetchApi` 가 실제로 무엇을 link 하는지 (`@wadiz/fetch-api` 패키지 경로 미관측) — 의존성 선언만 있고 import 흔적은 없음.
 - Help Center 의 `.env.live` 에 `ZENDESK_API_TOKEN` 이 평문으로 dev 와 동일하게 적혀있는 것: secret 관리 이슈 가능성. (관찰 사실만 기록)
