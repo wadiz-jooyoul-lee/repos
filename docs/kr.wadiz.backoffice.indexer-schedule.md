@@ -10,6 +10,31 @@
 
 ---
 
+> 📅 **2026-09-17 main pull 보강** (2 커밋)
+>
+> ### SCOUT-186 — 스트라이프 법인명·대표자명 누락 건을 채우는 스케줄러 추가
+>
+> 스트라이프(Stripe)는 해외 결제를 처리하는 결제대행사입니다.
+> 색인해 둔 펀딩 데이터에 **법인명과 대표자명이 비어 있는 건**이 있었습니다. 그 값을 스트라이프에서 받아 채웁니다.
+>
+> 신규 파일이 여럿 들어왔습니다.
+>
+> | 파일 | 역할 |
+> |---|---|
+> | `domain/stripe/StripeAccountCompany.java` | 스트라이프 계정의 법인 정보 |
+> | `domain/stripe/StripeAccountPerson.java` · `StripeAccountPersons.java`(43줄) | 대표자 정보와 그 목록 |
+> | `domain/stripe/StripeMakerInfo.java` | 메이커 정보로 합친 형태 |
+> | `exception/StripeAccountInquiryException.java` | 스트라이프 조회 실패 예외 |
+> | `es_client/indices/FundingStripeAccountRecord.java`(30줄) · `FundingStripeMakerInfo.java`(32줄) | 색인 문서 구조 |
+> | `funding/port/out/SearchStripeAccountPort.java` | 스트라이프 조회 창구 |
+>
+> 두 번째 커밋에서 **문서 단위 건너뛰기 로그를 지우고 실행 요약만 남겼습니다.**
+> 채울 것이 없는 문서마다 로그를 남기면 양이 너무 많아지기 때문으로 보입니다(추정입니다. 커밋 제목의 "문서 단위 skip 로그를 제거하고 실행 요약만 남김" 에서 판단했습니다).
+>
+> 이로써 이 저장소의 `@Scheduled` 는 **37개에서 38개**가 됐습니다.
+> 새 스케줄러는 클래스를 따로 만들지 않고 기존 `adapter/funding/port/in/RestoreFundingSchedule.java` 안에 들어갔습니다.
+> 그래서 스케줄러 클래스 수는 20개 그대로입니다.
+
 ## 개요
 
 - **CDC(변경 데이터 캡처)가 아니라 스케줄(cron)** 로 도는 색인기입니다. 짝이 되는 `indexer-cdc` 가 실시간 변경을 잡고, 이쪽은 **주기적으로 모아서 넣는 쪽**입니다(추정 — 이름과 역할 분담 기준).

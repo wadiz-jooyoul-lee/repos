@@ -1,5 +1,35 @@
 # makercenter-fe
 
+> 📅 **2026-09-17 cloud_live pull 보강** (7 커밋)
+>
+> ### FE2-1231 — 메이커센터가 별도 도메인에서 와디즈 하위 경로로 옮겨집니다
+>
+> 종전 주소는 `makercenter.wadiz.io` 였습니다. 앞으로는 **`wadiz.io/web/maker/makercenter`** 를 씁니다.
+> 도메인이 아니라 경로로 들어가게 되므로, 앱 안에서 쓰는 주소 체계를 전부 바꿔야 합니다.
+>
+> | 변경 | 내용 |
+> |---|---|
+> | 서빙 경로 접두 | Next.js 의 `basePath` 를 적용해 앱 전체가 `/web/maker/makercenter` 아래에서 동작합니다 |
+> | 정적 자산 경로 | `_next` 로 시작하는 정적 자산 요청에도 **외부 서빙 경로 접두**를 붙입니다 |
+> | 정적 자산 오리진 분리 | `assetPrefix` 로 정적 자산만 다른 주소에서 받는 옵션을 넣었다가 **다시 제거**했습니다 |
+> | 외부 링크 | 와디즈 본 사이트로 나가는 주소를 **언어별 경로 접두** 체계로 바꿨습니다 |
+>
+> 영향 범위가 넓습니다. 헤더·사이드바·빵부스러기 내비게이션·기획전 신청 화면 등 70개 파일이 바뀌었습니다.
+>
+> ### FE2-1300 — 자동 검사(E2E)를 이전 후 주소에 맞췄습니다
+>
+> - E2E 의 clive 오리진을 **이전 후 주소**로 맞췄습니다.
+> - E2E 전체를 **접두 경로 체계**에 맞게 고쳤습니다.
+>
+> ### 짝이 되는 저장소
+>
+> | 저장소 | 이 이슈에서 한 일 |
+> |---|---|
+> | [`makercenter-be`](./makercenter-be.md) | 백엔드의 경로 설정 변경 |
+> | [`com.wadiz.web`](./com.wadiz.web.md) | 와디즈 본 사이트에서 새 경로로 넘기는 설정 |
+> | [`helm-charts-gitops`](./helm-charts-gitops.md) | clive `makercenter-api` 의 OAuth 콜백 주소를 `www.wadiz.io` + `/web/maker/makercenter` 로 변경 |
+> | [`makercenter-fe-admin`](./makercenter-fe-admin.md) | FE2-1300 으로 사용자 서비스 주소를 통합 도메인(`ko` 접두)으로 교체 |
+
 > 📅 **2026-09-03 cloud_live pull 보강** (1 커밋)
 >
 > ### FE2-966 — 홈 About 섹션을 와디즈 스쿨 보드로 전환
