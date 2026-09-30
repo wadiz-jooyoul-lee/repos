@@ -6,6 +6,32 @@
 
 ---
 
+> 📅 **2026-09-29 본문 전면 점검** — `master` 브랜치 `a9fac634f` 기준
+>
+> 직전 본문 점검이 2026-04-20 이었고, 그 사이 504개 커밋이 들어왔습니다.
+> 설정 파일 인벤토리(4장)와 외부 클라이언트 접두사 목록(12장)을 코드에서 다시 세어 고쳤습니다.
+>
+> | 고친 곳 | 예전 | 지금 |
+> |---|---|---|
+> | 서비스 이름 | `funding` | **`funding-api`** (Consul 등록명만 `funding` 유지) |
+> | `application-dev.yml` | 있음 | **삭제됨** — 값이 쿠버네티스 ConfigMap 으로 이동 |
+> | `application-rc3.yml` | 있음 | **삭제됨** — rc3 환경 폐기 |
+> | 자동설정 제외 | 3개 | **4개** (Elasticsearch 추가) |
+> | SQS 큐 | 1개 | **2개** (Stripe 계정 변경 큐 추가) |
+> | 외부 클라이언트 접두사 | 31개(허수 2개 포함) | **37개** |
+> | 라이브 API 문서 | 언급 없음 | **차단됨** (2026-08-05 결정) |
+>
+> 뿌리가 된 커밋은 넷입니다.
+>
+> | 이슈키 | 날짜 | 무엇이 바뀌었나 |
+> |---|---|---|
+> | `RWD-5535` | 2026-05-07 | 설정 파일 정리. `application-infrastructure.yml` 을 58줄로 줄임 |
+> | `RWD-5766` | 2026-07-01 | 도메인 `io` 적용. `application-dev.yml` 삭제 |
+> | `RWD-5785` | 2026-07-09~13 | rc3 폐기. Elasticsearch 자동설정 제외 |
+> | `RWD-5875` | 2026-08-05 | OpenAPI 스펙 개편. 라이브에서 API 문서 차단 |
+
+---
+
 ## 1. 모듈 구조
 
 ```
@@ -128,23 +154,42 @@ public class BatchBootstrap {
 
 | 파일 | 활성 조건 | 주요 설정 그룹 |
 |---|---|---|
-| `application.yml` | 항상 로드 | server(port:9070/관리:9071), spring.application.name(funding), autoconfigure exclude(Hateoas·H2·DataSource), Hazelcast(port:9072), Resilience4j CircuitBreaker/TimeLimiter, logging |
-| `application-dev.yml` | `spring.profiles.active=dev` | Redis cluster, MongoDB URI, 외부 클라이언트 URL(dev 환경), wadizdb master/slave URL, AWS SQS queue명 |
-| `application-rc.yml` | `spring.profiles.active=rc` | Redis cluster, MongoDB URI, 외부 클라이언트 URL(rc 환경), wadizdb master/slave URL |
-| `application-rc2.yml` | `spring.profiles.active=rc2` | Redis cluster, MongoDB URI, 외부 클라이언트 URL(rc2 환경), wadizdb master/slave URL |
-| `application-rc3.yml` | `spring.profiles.active=rc3` | Redis cluster, MongoDB URI, 외부 클라이언트 URL(rc3 환경), wadizdb master/slave URL |
-| `application-live.yml` | `spring.profiles.active=live` | Redis cluster(3노드), MongoDB URI(ReplicaSet 3노드), 외부 클라이언트 URL(운영), AWS S3 bucket, AWS SQS queue명, logging(root:warn) |
-| `application-deploy.yml` | `spring.profiles.active=deploy` | 프로파일 그룹 정의(`dev-deploy`, `rc-deploy`, `rc2-deploy`, `rc3-deploy`, `live-deploy`), consul enabled, banner-mode:log, lazy-initialization:true, 로그 파일 경로(`/app/com.wadiz.api.funding/logs/`) |
-| `bootstrap.yml` | Spring Cloud Config bootstrap | `spring.application.name: funding` |
-| `bootstrap-dev.yml` | bootstrap (dev) | 내용 없음 (파일 존재만 확인됨) |
-| `bootstrap-live.yml` | bootstrap (live) | 내용 없음 (파일 존재만 확인됨) |
-| `bootstrap-rc.yml` | bootstrap (rc) | 내용 없음 (파일 존재만 확인됨) |
-| `bootstrap-rc2.yml` | bootstrap (rc2) | 내용 없음 (파일 존재만 확인됨) |
+| `application.yml` | 항상 로드 | 서버 포트 9070 / 관리 포트 9071, `spring.application.name: funding-api`, 자동설정 제외 4종, Hazelcast 포트 9072, Resilience4j, 환경 무관 외부 API 기본값 |
+| `application-local.yml` | `local` (기본값) | **클라우드 개발 인프라를 바라봅니다.** Redis·MongoDB·MySQL 호스트, 외부 클라이언트 URL, AWS SQS 큐 이름 |
+| `application-rc.yml` | `rc` | 사내(온프렘) rc 환경. Redis 클러스터, MongoDB, ERP URL, MySQL |
+| `application-rc2.yml` | `rc2` | 사내(온프렘) rc2 환경 |
+| `application-live.yml` | `live` | 사내(온프렘) 운영. Redis 클러스터, MongoDB 3노드, `www.wadiz.kr`·`platform.wadiz.kr` 계열 URL, S3 버킷, SQS 큐 |
+| `application-deploy.yml` | `deploy` | 프로파일 묶음 정의, Consul 등록, 배너 로그 출력, 로그 파일 경로 |
+| `bootstrap.yml` | 항상 | `spring.application.name: funding-api`, 쿠버네티스 설정 읽기 끔, AWS 비밀관리자 옛 방식 끔 |
+| `bootstrap-kubernetes.yml` | `kubernetes` | **클라우드 환경 전용.** ConfigMap `common-config` 와 `funding-api` 를 읽습니다 |
+| `bootstrap-dev.yml` · `bootstrap-rc.yml` · `bootstrap-rc2.yml` · `bootstrap-live.yml` | 각 프로파일 | **네 파일 모두 내용이 비어 있습니다** |
 
-**프로파일 활성화 방식**: `application-deploy.yml`의 `spring.profiles.group` 으로 복합 프로파일 그룹 정의.
-배포 시 `spring.profiles.active=dev-deploy` (또는 `rc-deploy`, `live-deploy` 등)를 지정하면 해당 환경 YML + `deploy` YML이 동시에 활성화된다.
+> ⚠️ **`application-dev.yml` 과 `application-rc3.yml` 이 사라졌습니다.**
+> `RWD-5766`(2026-07-01, `3dfb6a6bf`)이 dev 설정을 지웠습니다. 커밋 제목이 "도메인 io 적용 및 dev profile 설정삭제(helmchart 대체)" 입니다.
+> `RWD-5785`(2026-07-09, `2823633ba`)가 rc3 환경을 폐기했습니다.
+> **개발 환경 값은 이제 저장소가 아니라 쿠버네티스 ConfigMap 에 있습니다.**
 
-**`application.yml` 주요 키 구조** (값은 민감하지 않은 구조만):
+**프로파일 묶음 정의** (`application-deploy.yml`)
+
+```yaml
+spring:
+  profiles:
+    group:
+      dev-deploy: dev, deploy
+      rc-deploy: rc, deploy
+      rc2-deploy: rc2, deploy
+      live-deploy: live, deploy
+```
+
+배포할 때 `spring.profiles.active=rc-deploy` 처럼 지정하면 그 환경 파일과 `deploy` 파일이 함께 켜집니다.
+
+> 🔎 **확인 필요 — `dev-deploy` 묶음이 남아 있습니다.**
+> 그런데 그 묶음이 가리키는 `dev` 프로파일 파일(`application-dev.yml`)은 삭제됐습니다.
+> 지금 `dev-deploy` 로 띄우면 `application.yml` 기본값과 `application-deploy.yml` 만 적용됩니다.
+> 클라우드에서는 ConfigMap 이 값을 채워 주므로 문제가 안 되는 구조로 보입니다(추정).
+> 코드에 그 의도가 적혀 있지는 않습니다.
+
+**`application.yml` 에서 눈여겨볼 값**
 
 ```yaml
 server:
@@ -155,15 +200,26 @@ management:
   server.port: 9071
   endpoints.web.exposure.include: health, info, prometheus, circuitbreakers
 spring:
-  cache.type: hazelcast
-  lifecycle.timeout-per-shutdown-phase: 30s
-  mvc.pathmatch.matching-strategy: ant_path_matcher
-application:
-  jwt:
-    secret: {{secret}}
-  hazelcast:
-    port: 9072
+  application.name: funding-api
+  profiles:
+    default: local          # active 를 안 주면 local 로 뜹니다
+    include: infrastructure
+  autoconfigure.exclude:
+    - HypermediaAutoConfiguration
+    - H2ConsoleAutoConfiguration
+    - DataSourceAutoConfiguration
+    - ElasticsearchRestClientAutoConfiguration
 ```
+
+> **이름이 `funding` 에서 `funding-api` 로 바뀌었습니다.** 예전 문서가 `funding` 이라고 적었습니다.
+> 다만 Consul 에 등록하는 이름은 여전히 `funding` 입니다.
+> `application-deploy.yml` 이 `spring.cloud.consul.discovery.service-name: funding` 으로 명시해 덮어씁니다.
+> 코드 주석이 이유를 적어 뒀습니다 — 온프렘 Consul 에 기존 `funding` 서비스 아이디로 등록돼 있기 때문입니다.
+>
+> **Elasticsearch 자동설정을 끈 것도 새로 들어왔습니다**(`RWD-5785`, 2026-07-13, `33dc44a88`).
+> 켜 두면 스프링이 `localhost:9200` 을 기본으로 잡고 상태 점검에 끼워 넣습니다.
+> Elasticsearch 가 없는 환경에서 상태 점검이 실패해 배포가 막혔습니다.
+> 지금은 `DpSearchClient` 가 연결을 직접 관리합니다.
 
 ### 4-2. Batch (adapter/batch)
 
@@ -171,24 +227,51 @@ application:
 
 | 파일 | 활성 조건 | 주요 설정 그룹 |
 |---|---|---|
-| `application.yml` | 항상 로드 | `spring.profiles.include: infrastructure`, Slack webhook URL(`application.slack-webhook-client.webhook-url`), batch DataSource(hikari 파라미터) |
-| `application-dev.yml` | `dev` 프로파일 | wadizdb master/slave URL, batch DB URL |
-| `application-rc.yml` | `rc` 프로파일 | wadizdb master/slave URL, batch DB URL |
-| `application-rc2.yml` | `rc2` 프로파일 | wadizdb master/slave URL, batch DB URL |
-| `application-rc3.yml` | `rc3` 프로파일 | wadizdb master/slave URL, batch DB URL |
-| `application-live.yml` | `live` 프로파일 | wadizdb master/slave URL, batch DB URL, Redis cluster, MongoDB URI, 알림/번역/결제 클라이언트 URL, logging |
-| `application-deploy.yml` | (파일 존재 확인됨) | 내용 미확인 |
+| `application.yml` | 항상 로드 | `spring.profiles.include: infrastructure`, 슬랙 웹훅, 배치 등록자 userId, **스팸 차단 배치 3종 설정** |
+| `application-local.yml` | `local` (기본값) | 클라우드 개발 인프라의 MySQL·Redis·MongoDB |
+| `application-rc.yml` · `application-rc2.yml` | 각 프로파일 | 사내(온프렘) 검증 환경 |
+| `application-live.yml` | `live` | 사내(온프렘) 운영 |
+| `application-deploy.yml` | `deploy` | 프로파일 묶음 4종, 지연 초기화 켜짐, 로그 파일 경로 |
+| `bootstrap.yml` | 항상 | `spring.application.name: funding-batch` |
+| `bootstrap-kubernetes.yml` | `kubernetes` | ConfigMap `common-config` 와 `funding-batch` 를 읽습니다 |
 
-**Batch `application.yml` 특이사항**:
-- `spring.profiles.include: infrastructure` — `adapter/infrastructure`의 `application-infrastructure.yml`을 자동 포함
-- batch 전용 DataSource (`application.datasource.batch.*`) 는 `application.yml`에 hikari 설정 기본값 포함; URL/username/password는 각 프로파일 YML에서 override
+**배치 `application.yml` 에서 새로 생긴 것 — 스팸 차단 배치 3종**
+
+| 설정 키 | 배치 작업 | 무엇을 하나 |
+|---|---|---|
+| `application.mini-board-spam-guard` | `miniBoardSpamGuardJob` | 미니보드의 피싱·스팸 글을 찾아 지웁니다 |
+| `application.personal-message-spam-guard` | `personalMessageSpamGuardJob` | 1:1 메신저의 피싱 메시지를 찾아 지웁니다 |
+| `application.signature-spam-guard` | `signatureSpamGuardJob` | 지지서명의 피싱 봇을 찾아 지웁니다 |
+
+세 배치 모두 같은 항목을 가집니다.
+
+| 항목 | 뜻 |
+|---|---|
+| `enabled` | `false` 면 배치를 건너뜁니다 |
+| `dry-run` | `true` 면 찾아서 슬랙으로 알리기만 하고 실제로 지우지는 않습니다 |
+| `scan-window-minutes` | 최근 몇 분 안에 들어온 글만 봅니다 (기본 10분) |
+| `max-scan` | 한 번에 조회할 상한 (기본 1000건) |
+
+> 미니보드와 지지서명은 `Del=1` 로 표시만 하고, 1:1 메신저는 줄을 실제로 지웁니다.
+> 주석에 그렇게 구분해 적혀 있습니다.
+
+**배치 `application.yml` 의 나머지 특이사항**
+- `spring.profiles.include: infrastructure` — `adapter/infrastructure` 의 `application-infrastructure.yml` 을 자동으로 붙입니다
+- `application.batch.register-user-id: 3890` — 배치가 외부 API 를 부를 때 쓰는 등록자 번호입니다. 주석에 `info@wadiz.kr` 계정이라고 적혀 있습니다
+- 배치 전용 데이터소스(`application.datasource.batch.*`)의 접속 옵션 기본값은 `application-infrastructure.yml` 에 있고, 주소·계정·비밀번호는 환경 파일에서 덮어씁니다
 
 ### 4-3. Infrastructure 공통 (adapter/infrastructure)
 
 | 파일 | 활성 조건 | 주요 설정 그룹 |
 |---|---|---|
-| `application-infrastructure.yml` | `spring.profiles.include: infrastructure` | `mybatis.mapper-locations: classpath:mapper/**/*.xml`, `mybatis.configuration-properties.DAMO_ENC_KEY`, Redis cluster 기본값, MongoDB URI 기본값, 외부 클라이언트 기본 URL 그룹 |
+| `application-infrastructure.yml` | `spring.profiles.include: infrastructure` | `mybatis.mapper-locations`, `mybatis.configuration-properties.DAMO_ENC_KEY`, 데이터소스 접속 옵션 기본값 |
 | `application-test.yml` | `test` 프로파일 | 테스트 전용 (기록 범위 밖) |
+
+> ⚠️ **`application-infrastructure.yml` 이 크게 줄었습니다.**
+> 예전 문서는 여기에 "Redis 클러스터 기본값, MongoDB URI 기본값, 외부 클라이언트 기본 URL 그룹"이 있다고 적었습니다.
+> 지금은 **58줄뿐이고 그 셋 모두 없습니다.** MyBatis 설정과 데이터베이스 연결 풀 옵션만 남았습니다.
+> `RWD-5535`(2026-05-07, `b5128f9d2`)가 정리했습니다. 커밋 제목이 "설정 파일 리팩토링 - 환경 무관 공통값 추출 + infrastructure.yml 슬림화" 입니다.
+> 외부 클라이언트 기본값은 `adapter/application/.../application.yml` 로 옮겨 갔습니다.
 
 ---
 
@@ -203,9 +286,40 @@ Spring Boot 2.x 방식: `WebSecurityConfigurerAdapter` 상속.
 
 | 순서 | 패턴 | 요구 권한 |
 |---|---|---|
-| 1 | `/api/internal/**`, `/api/global/internal/**` | `hasRole("SYSTEM")` — JWT `rol` 클레임에 `SYSTEM` 역할 필요 |
-| 2 | `/api/studio/**`, `/api/global/studio/**`, `/api/admin/**`, `/api/global/admin/**`, `/**/preview**` | `authenticated()` — JWT 토큰 인증만 필요 |
-| 3 | 나머지 모든 요청 | `permitAll()` — 공개 접근 허용 |
+| 0 | `/static/scalar.html` | `denyAll()` — **API 문서를 끈 환경에서만 걸립니다** |
+| 1 | `/api/internal/**`, `/api/global/internal/**` | `hasRole("SYSTEM")` — JWT `rol` 클레임에 `SYSTEM` 역할이 있어야 합니다 |
+| 2 | `/api/studio/**`, `/api/global/studio/**`, `/api/admin/**`, `/api/global/admin/**`, **`/api/maker-home/**`**, `/**/preview**` | `authenticated()` — 토큰 인증만 있으면 됩니다 |
+| 3 | 나머지 모든 요청 | `permitAll()` — 누구나 접근할 수 있습니다 |
+
+> **`/api/maker-home/**` 가 인증 필요 목록에 새로 들어왔습니다.**
+
+> ⚠️ **라이브에서는 API 문서를 노출하지 않습니다** (`RWD-5875`, 2026-08-05).
+> `application-live.yml:169-175` 의 주석이 이유를 적어 뒀습니다 —
+> *"admin/internal 경로·스키마가 공개되는 보안 문제"* 때문입니다.
+>
+> ```yaml
+> springdoc:
+>   api-docs:
+>     enabled: false
+>   swagger-ui:
+>     enabled: false
+> ```
+>
+> 그런데 정적 뷰어 파일 `static/scalar.html` 은 springdoc 스위치 밖에 있습니다.
+> 그래서 `WebSecurityConfig.java:56-59` 가 따로 막습니다.
+>
+> ```java
+> @Value("${springdoc.api-docs.enabled:true}")
+> private boolean apiDocsEnabled;
+> ...
+> if (!apiDocsEnabled) {
+>   http.authorizeRequests().antMatchers("/static/scalar.html").denyAll();
+> }
+> ```
+>
+> 이 설정은 **같은 jar 가 배포되는 온프렘 IDC 용**입니다.
+> 클라우드(`clive`)는 차트 설정맵에서 똑같이 막는다고 주석이 밝히고 있습니다.
+> 차트 쪽 값은 이 저장소에 없어 확인하지 못했습니다.
 
 **WebSecurity ignore 패턴** (`configure(WebSecurity web)`):
 
@@ -226,7 +340,8 @@ Spring Boot 2.x 방식: `WebSecurityConfigurerAdapter` 상속.
 - 알고리즘: `HS256` (HMAC-SHA-256)
 - 구현체: `NimbusJwtDecoder.withSecretKey(...)` → `NimbusJwtDecoder` 빈
 - 키 소스: `application.jwt.secret` 프로퍼티 (`JwtProperties` `@ConfigurationProperties` 클래스, `@ConstructorBinding`)
-- 프로파일별 secret 값: dev/rc/rc2/rc3 공통 `{{secret-non-prod}}`, live 전용 `{{secret-prod}}`
+- 프로파일별 비밀값: `application.yml` 기본값을 `rc`·`rc2` 가 그대로 쓰고, `live` 만 덮어씁니다.
+  `rc3` 은 폐기됐고 `dev` 는 쿠버네티스 ConfigMap 이 값을 넣습니다
 
 ### 5-3. JWT 인증 컨버터
 
@@ -363,9 +478,13 @@ GlobalMethodSecurityConfig (내부 static 클래스)
 
 `spring.autoconfigure.exclude` 에 명시적으로 제외된 자동 설정:
 
-- `HypermediaAutoConfiguration` — Spring HATEOAS 비활성화
-- `H2ConsoleAutoConfiguration` — H2 콘솔 비활성화
-- `DataSourceAutoConfiguration` — Spring Boot 기본 DataSource 자동 설정 비활성화 (수동 `JdbcConfig`로 대체)
+- `HypermediaAutoConfiguration` — Spring HATEOAS 를 끕니다
+- `H2ConsoleAutoConfiguration` — H2 콘솔을 끕니다
+- `DataSourceAutoConfiguration` — 스프링 기본 데이터소스 설정을 끄고 `JdbcConfig` 로 직접 만듭니다
+- `ElasticsearchRestClientAutoConfiguration` — **신규**(`RWD-5785`, 2026-07-13, `33dc44a88`).
+  켜 두면 스프링이 `localhost:9200` 을 기본으로 잡고 상태 점검에 끼워 넣습니다.
+  Elasticsearch 가 없는 환경에서 상태 점검이 실패해 rc 배포가 막혔습니다.
+  지금은 `DpSearchClient` 가 연결을 직접 관리합니다. 배치 모듈도 같은 항목을 제외합니다
 
 ---
 
@@ -408,7 +527,16 @@ GlobalMethodSecurityConfig (내부 static 클래스)
 | `SimpleMessageListenerContainerFactory` | `waitTimeOut: 20s`, `visibilityTimeout: 30s`, pool: core=20/max=50/queue=200 |
 | `BeanPostProcessor` | `SimpleMessageListenerContainer`의 phase를 `Integer.MAX_VALUE - 1` 로 설정 — Tomcat보다 먼저 종료 |
 
-Queue 이름: `application.aws-sqs.queue-name` (프로파일별 상이, e.g. `pay-webhook-funding-api.fifo`)
+**큐가 둘입니다.**
+
+| 설정 키 | local 값 | 받는 리스너 |
+|---|---|---|
+| `application.aws-sqs.queue-name` | `pay-webhook-funding-api-dev.fifo` | `OrderPaymentSqsListener` — PG 결제 웹훅 |
+| `application.aws-sqs.stripe-account-updated-queue-name` | `dev-stripe-account-updated-webhook.fifo` | `StripeAccountUpdatedSqsListener` — Stripe 계정 상태 변경 (**신규**, `RWD-5311`) |
+
+두 리스너 모두 `application.aws-sqs.listener.enabled` 하나로 함께 켜지고 꺼집니다.
+설정이 없으면 켜진 것으로 봅니다. `application-local.yml` 만 `false` 로 둡니다.
+로컬에서 AWS 자격증명이 없어도 부팅이 실패하지 않게 하려는 장치입니다.
 
 ---
 
@@ -434,43 +562,59 @@ Queue 이름: `application.aws-sqs.queue-name` (프로파일별 상이, e.g. `pa
 
 ---
 
-## 12. 외부 클라이언트 인벤토리
+## 12. 외부 클라이언트 설정 접두사
 
-`adapter/infrastructure/src/main/java/.../client/` 하위에 정의된 `*ClientConfig.java` 목록:
+`adapter/infrastructure/.../client/` 아래 설정 클래스가 **37개**입니다.
+각 클라이언트가 읽는 `application.*` 접두사는 이렇습니다.
 
-| 클라이언트 설정 클래스 | `application.*` 프로퍼티 prefix |
+| 설정 접두사 | 설정/속성 클래스 |
 |---|---|
-| `RewardClientConfig` | `application.reward-client` |
-| `RewardBridgeClientConfig` | `application.reward-bridge-client` |
-| `StoreClientConfig` | `application.store-client` |
-| `UserClientConfig` | `application.user-client` |
-| `MembershipClientConfig` | `application.membership-client` |
-| `SettlementClientConfig` | `application.settlement-client` |
-| `PointClientConfig` | `application.point-client` |
-| `PayClientConfig` | `application.pay-client` |
-| `NotificationClientConfig` | `application.notification-client` |
-| `InboxClientConfig` | `application.inbox-client` |
-| `AlimtalkV2ClientConfig` | `application.alimtalk-client-v2` |
-| `SmsV2ClientConfig` | `application.sms-client-v2` |
-| `FriendtalkClientConfig` | `application.friend-talk-client` |
-| `BrazeClientConfig` | `application.braze-client` |
-| `SlackClientConfig` / `SlackWebhookClientConfig` | `application.slack-client` / `application.slack-webhook-client` |
-| `OCRClientConfig` | `application.ocr-client` |
-| `BankAccountConfig` | `application.bank-account-client` |
-| `BusinessClientConfig` | `application.business-client` |
-| `StartupClientConfig` | `application.startup-client` |
-| `CategorySearchClientConfig` | `application.searcher-client` |
-| `AIReviewClientConfig` | `application.ai-review-client` |
-| `DataplusClientConfig` | `application.dataplus-client` |
-| `ErpClientConfig` | `application.erp-client` |
-| `CountryClientConfig` | `application.country-client` |
-| `AdPaymentClientConfig` | `application.ad-payment-client` |
-| `TranslateClientConfig` | `application.translate-client` |
-| `ExchangeRateClientConfig` | `application.exchange-rate-client` |
-| `TranslateAiClientConfig` | `application.translate-ai-client` |
-| `ProjectAiSummaryClientConfig` | `application.project-ai-summary-client` |
-| `KCertificationConfig` | `application.kc-certification` |
-| `SafeNumberClientConfig` | `application.safe-number` |
-| `AttachConfig` | — |
+| `application.ad-payment-client` | `AdPaymentClientConfig` |
+| `application.ai-review-client` | `AIReviewClientConfig` |
+| `application.alimtalk-client-v2` | `AlimtalkV2ClientConfig` |
+| `application.aws-s3` | `AttachConfig` |
+| `application.bank-account-client` | `BankAccountConfig` |
+| `application.braze-client` | `BrazeClientConfig` |
+| `application.business-client` | `BusinessClientConfig` |
+| `application.community-client` | `CommunityClientConfig` — **신규** |
+| `application.country-client` | `CountryClientConfig` |
+| `application.crypto-client` | `CryptoClientConfig` — **신규** (`RWD-5415`) |
+| `application.currency-exchange-client` | `CurrencyExchangeClientConfig` — **신규** (`RWD-5375`) |
+| `application.dataplus-client` | `DataplusClientConfig` |
+| `application.dp-search` | `DpSearchConfig` — **신규** (`RWD-5785`) |
+| `application.erp-client` | `ErpClientConfig` |
+| `application.exchange-rate-client` | `ExchangeRateClientConfig` |
+| `application.friend-talk-client` | `FriendtalkClientConfig` |
+| `application.kc-certification` | `KCertificationConfig` |
+| `application.mail-normal-client` | `MailNormalClientProperties` (설정 클래스 없이 속성만) |
+| `application.membership-client` | `MembershipClientConfig` |
+| `application.ocr-client` | `OCRClientConfig` |
+| `application.pay-client` | `PayClientConfig` |
+| `application.point-client` | `PointClientConfig` |
+| `application.project-ai-summary-client` | `ProjectAiSummaryClientConfig` |
+| `application.push-client` | `PushClientProperties` (설정 클래스 없이 속성만) |
+| `application.reward-bridge-client` | `RewardBridgeClientConfig` |
+| `application.reward-client` | `RewardClientConfig` |
+| `application.safe-number` | `SafeNumberClientConfig` |
+| `application.searcher-client` | `CategorySearchClientConfig` |
+| `application.settlement-client` | `SettlementClientConfig` |
+| `application.slack-client` | `SlackClientConfig` |
+| `application.slack-webhook-client` | `SlackWebhookClientConfig` |
+| `application.sms-client-v2` | `SmsV2ClientConfig` |
+| `application.startup-client` | `StartupClientConfig` |
+| `application.store-client` | `StoreClientConfig` |
+| `application.stripe-client` | `StripeClientConfig` — **신규** (`RWD-5311`) |
+| `application.translate-ai-client` | `TranslateAiClientConfig` |
+| `application.translate-client` | `TranslateClientConfig` |
+| `application.user-client` | `UserClientConfig` |
 
-내부 구현 (RestTemplate / WebClient 여부, timeout 설정 등)은 각 `*ClientConfig.java` 별도 확인 필요.
+> ⚠️ **예전 문서가 적어 둔 두 항목을 지웠습니다.**
+>
+> | 지운 항목 | 이유 |
+> |---|---|
+> | `InboxClientConfig` (`application.inbox-client`) | 그런 클래스가 없습니다. 알림함 발송은 `NotificationClient` 가 맡습니다 |
+> | `NotificationClientConfig` (`application.notification-client`) | 클래스는 있지만 **안이 비어 있습니다.** `@Configuration` 선언만 있고 읽는 설정이 없습니다 |
+>
+> `NotificationClient` 가 실제로 읽는 값은 `application.mail-normal-client` 와 `application.push-client` 입니다.
+
+> 클라이언트별 실제 주소와 엔드포인트는 [`infrastructure.md`](./infrastructure.md) 의 3장을 봅니다.
