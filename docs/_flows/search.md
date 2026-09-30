@@ -23,7 +23,7 @@
   - `com.wadiz.web/src/main/java/.../searcher/adapter/SearcherApiAdapter.java:20-45`
   - `com.wadiz.web/src/main/java/.../reward/category/external/SearcherGateway.java` (SearcherGateway — 내부 용도)
   - `com.wadiz.web/web/WEB-INF/web.xml:190-193` (`/api/*` Jersey Spring Servlet 매핑)
-  - `com.wadiz.wave.searcher/src/main/resources/application.yml`, `application-dev.yml` (ES host, MySQL master/slave, port 9120)
+  - `com.wadiz.wave.searcher/src/main/resources/application.yml` (111줄. 예전에 함께 읽던 `application-dev.yml` 은 2026-09-21 에 삭제됨 — `695b27e1`)
   - `com.wadiz.wave.searcher/src/main/java/.../web/rest/category/CategoryController.java:30-119`
   - `com.wadiz.wave.searcher/src/main/java/.../core/category/service/CategorySearchService.java:314-362`
   - `com.wadiz.wave.searcher/src/main/java/.../config/JdbcConfig.java:17-50` (master/slave RoutingDataSource)
@@ -321,4 +321,6 @@ CategorySearchService / IntegrateCampaignServiceImpl / TotalSearchServiceImpl
 5. **개인화** — 로그인 시 유저 관심사 기반 재랭킹이 Searcher 내부에서 이뤄지는지(`SupporterContentsService`, `FeedFilterService` 단서), 아니면 FE 가 별도 personalization API 를 호출하는지.
 6. **`/api/search/v2/*` vs `/api/search/v3/*` vs `/api/search/v4/*` 공존** — `CategoryController` 에 v0/v2/v3/v4 가 모두 살아있음. v4 만 country 헤더 지원 → 글로벌 대응 진행 중. v0/v2 service-home 은 `@Deprecated`. v2 → v4 이관이 진행 중인 것으로 보임.
 7. **검색 이벤트 로깅** — 검색어 로그가 ES `search_keyword-{yyyyMM}` 인덱스에 10분 단위 bulk 적재됨 (`ScheduledHandler.timerBulkSearchKeyword`). 클릭 로그·외부 analytics 적재 여부는 별도.
-8. **`search-ai` 외부 API** — `application-dev.yml:151` 의 `https://api.dev-searchai.wadizdata.team` 가 무엇을 반환하는지(임베딩·시맨틱 검색?), 어느 엔드포인트가 의존하는지 별도 추적.
+8. **`search-ai` 외부 API** — `https://api.dev-searchai.wadizdata.team` 가 무엇을 돌려주는지(임베딩·시맨틱 검색?), 어느 엔드포인트가 쓰는지 별도 추적이 필요합니다.
+   ⚠️ 근거였던 `application-dev.yml:151` 은 **2026-09-21 에 삭제**됐습니다(`695b27e1`, EKS 설정맵 이관).
+   주소 값을 다시 확인하려면 쿠버네티스 설정맵을 봐야 합니다. 호출하는 자바 코드는 그대로 남아 있습니다.

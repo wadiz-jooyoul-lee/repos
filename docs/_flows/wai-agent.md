@@ -31,6 +31,42 @@
 > - 정확한 path: `POST /api/v1/ai-review/story/request/{campaignId}` (앞에 `/web/apip/funding/` proxy)
 > - Internal callback: `POST /api/internal/story/response/{campaignId}` (AI 서비스 → funding)
 
+> 📅 **2026-09-29 본문 점검** — `com.wadiz.api.funding` `master` `a9fac634f` 기준
+>
+> **위 2026-04-26 보강 블록의 경로 2개는 지금도 그대로입니다.**
+>
+> | 경로 | 현재 위치 |
+> |---|---|
+> | `POST /api/v1/ai-review/story/request/{campaignId}` | `AIReviewController.java:28` |
+> | `POST /api/internal/story/response/{campaignId}` | `AIReviewInternalController.java:27` |
+>
+> 다만 2026-08~09 에 **`RWD-5901`·`RWD-5975` 두 갈래로 AI 심사 알림이 크게 손질됐습니다.**
+> 조회 계층(`AIReviewQueryGatewayImpl.java`)이 102줄, 쿼리 XML(`mapper/aireview/AIReviewMapper.xml`)이 70줄 바뀌었습니다.
+>
+> | 이슈키 | 날짜 | 무엇이 바뀌었나 |
+> |---|---|---|
+> | `RWD-5901` | 2026-08-26 | 심사 카테고리 조회를 `ScreeningRewardItemCategoryLanguage`(한국어) 조인으로 바꿨습니다 |
+> | `RWD-5975` | 2026-09-02 | AI 심사 결과를 **사후심사 이력에 기록**하기 시작했습니다 |
+> | `RWD-5975` | 2026-09-03 | 심사 이력에서 스토리 버전 기록을 뺐습니다 |
+> | `RWD-5975` | 2026-09-03 | 오픈예정을 적용하지 않은 프로젝트는 심사 요청에서 오픈예정 스토리를 뺍니다 |
+> | `RWD-5975` | 2026-09-04 | **비노출 알림을 관리자 알림과 분리**했습니다 (메일 템플릿 1542, 언어별 링크) |
+> | `RWD-5975` | 2026-09-07 | 비노출 알림톡을 **신규 템플릿 3231** 로 분리했습니다 |
+> | `RWD-5975` | 2026-09-10 | 슬랙 알림의 스튜디오 링크에 심사 언어를 반영했습니다 |
+> | `RWD-5975` | 2026-09-15 | 알림톡 앱 링크를 **스킴 없는 경로로 통일**했습니다 |
+>
+> **알림이 세 갈래로 나뉜 것이 이번 변화의 핵심입니다.**
+> 예전에는 심사 결과 알림 하나로 처리하던 것을 지금은 이렇게 나눕니다.
+>
+> | 갈래 | 받는 사람 | 수단 |
+> |---|---|---|
+> | 심사 결과 | 메이커 | 알림톡 |
+> | 비노출 처리 | 메이커 | 알림톡 템플릿 3231 |
+> | 관리자 통보 | 운영자 | 메일 템플릿 1542, 슬랙 |
+>
+> 앱 링크에서 `wadiz://` 스킴을 뺀 점도 눈에 띕니다.
+> 알림톡이 여는 경로를 앱과 웹이 같은 형태로 받게 하려는 것으로 보입니다(추정).
+> 커밋에 그 이유가 적혀 있지는 않습니다.
+
 ## 기록 범위
 - **읽은 파일**:
   - `wadiz-frontend/apps/wai-ai-agent-launcher/` (앱 존재 확인, 세부 코드 미탐색)

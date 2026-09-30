@@ -1,6 +1,18 @@
 # Batch 모듈 상세 스펙
 
-Spring Batch 기반 **28개 Job** (24개 도메인; 2026-06 스팸가드 3종·`stripeConnectReminderJob` 추가). 별도 `bootstrap/batch` 모듈로 독립 실행 JAR를 생성하며(`BatchBootstrap.main`), `adapter/batch`에 모든 Job/Step/Tasklet이 정의된다.
+Spring Batch 기반 **29개 Job**입니다. 별도 `bootstrap/batch` 모듈로 독립 실행 JAR 를 만들고(`BatchBootstrap.main`), `adapter/batch` 에 모든 Job·Step·Tasklet 을 정의합니다.
+
+> 📅 **2026-09-29 본문 점검** — `master` `a9fac634f` 기준. 세 가지를 고쳤습니다.
+>
+> | 고친 곳 | 내용 |
+> |---|---|
+> | `pendingNotificationJob` 제거 | **2026-03-23 에 삭제된 배치입니다** (`RWD-5400`, `e6e1e23ab`). 구 알림 라이브러리를 걷어내면서 함께 사라졌습니다 |
+> | `rrnDestructionJob` 추가 | 메이커 주민등록번호 보관기간 경과 파기 (`RWD-5725`, 2026-07-06) |
+> | `collectionAutomationJob` 추가 | 컬렉션 자동화 (`RWD-5585`, 2026-05-21) |
+>
+> ⚠️ 문서 갱신 도구가 `PendingNotificationJobConfig.java` 를 `RrnDestructionJobConfig.java` 로 **이름이 바뀐 것으로 보고했는데 잘못된 판정입니다.**
+> git 이 Spring Batch 보일러플레이트의 유사도만 보고 둘을 짝지었습니다.
+> 실제로는 삭제 하나와 신규 하나이고, 두 배치는 하는 일이 전혀 다릅니다.
 
 > **기록 범위**: 이 레포의 Tasklet · Reader/Writer 클래스와 MyBatis Mapper XML에서 직접 관찰 가능한 호출만 기록. UseCase 구현체(`StoryTranslationUseCase`, `LanguageExpansionUseCase`, `MakerClubUseCase`, `AIReviewUseCase`, `TranslationQualityMonitorUseCase` 등)는 외부 jar(`funding-core`) 또는 `core/domain` 내부에 있어 내부 호출 순서·SQL은 확인 불가. Gateway 포트를 경유하는 내부 로직은 **"UseCase 호출 (core 내부)"** 로 표시.
 >
@@ -26,7 +38,6 @@ Spring Batch 기반 **28개 Job** (24개 도메인; 2026-06 스팸가드 3종·`
 | **알림** | `newsNotificationJob` | Reader-Processor-Writer (chunk=500) |
 | **알림** | `deliveredNotificationJob` | Reader-Processor-Writer (chunk=1000) |
 | **알림** | `firstFundingDeliveredNotificationJob` | Tasklet |
-| **알림** | `pendingNotificationJob` | Tasklet |
 | **알림** | `pendingStandbyJob` | Tasklet |
 | **알림** | `encoreOpenNotificationJob` | Tasklet |
 | **알림** | `billkeyVerifyRemindJob` | Reader-Writer (chunk=1000, skip) |
@@ -47,6 +58,8 @@ Spring Batch 기반 **28개 Job** (24개 도메인; 2026-06 스팸가드 3종·`
 | **운영/인프라** | `safeNumberReleaseJob` | Tasklet |
 | **운영/인프라** | `collectionCampaignGradeJob` | Tasklet |
 | **운영/인프라** | `migrationOngoingStoryJob` | Tasklet |
+| **운영/인프라** | `collectionAutomationJob` | SplitFlow (전략별 Tasklet) |
+| **개인정보** | `rrnDestructionJob` | Tasklet |
 | **스팸가드** | `signatureSpamGuardJob` | Tasklet |
 | **스팸가드** | `personalMessageSpamGuardJob` | Tasklet |
 | **스팸가드** | `miniBoardSpamGuardJob` | Tasklet |
@@ -153,21 +166,14 @@ Listener: `DeliveredNotificationJobSkipListener`, `DeliveredNotificationJobLoggi
 
 ---
 
-### 1-4. `pendingNotificationJob`
+### 1-4. `pendingNotificationJob` — **삭제됨**
 
-**설정 파일**: `domain/pendingnotification/PendingNotificationJobConfig.java`
+`domain/pendingnotification/` 폴더가 저장소에 없습니다.
+`RWD-5400`(2026-03-23, `e6e1e23ab`)이 지웠습니다.
+커밋 제목이 "구 노티피케이션 알림톡 → AlimtalkV2Client 전환 + SNAPSHOT 라이브러리 제거" 입니다.
 
-**트리거**: 외부 실행 (cron 없음)
-
-**Job 흐름**: Tasklet (`PendingNotificationTasklet`)
-
-#### 관측 가능한 DB/외부호출
-
-**Tasklet**:
-1. `campaignQueryGateway.campaignWhenHoldToSearch(21)` — 종료 21일 경과 보류(HOLD) 캠페인 목록 조회
-2. `pendingNotificationQueryGateway.searchPendingUsers(query)` — 캠페인별 미배송(`PENDING`) + 결제완료(`C10/Z11`) 서포터 userId 조회
-3. `userGateway.findAllUserByIdAndUserStatus(ids, NM)` — 활성 유저 필터
-4. `notificationClient.sendBizMessages(req)` — 알림톡 발송 (template no: **3009**)
+종료 21일 경과 보류 프로젝트의 미배송 서포터에게 알림톡(template 3009)을 보내던 배치였습니다.
+**대체 배치는 확인되지 않았습니다.** 기능이 없어진 것인지 다른 서비스로 옮겨 간 것인지는 이 저장소만으로 알 수 없습니다.
 
 ---
 
@@ -646,6 +652,99 @@ StepExecutionContext 공유: `ExecutionContextPromotionListener` — `PAID_BENEF
 
 ---
 
+## 8-2. `collectionAutomationJob` — 컬렉션 자동화
+
+**설정 파일**: `domain/collectionautomation/CollectionAutomationJobConfig.java`
+**Tasklet**: `domain/collectionautomation/CollectionAutomationTasklet.java`
+**도입**: `RWD-5585`(2026-05-21, `a466fd988`) "글로벌 진행 프로젝트 노출 컬렉션 자동화"
+
+키워드마다 전략 클래스가 하나씩 있고, 그 전략이 뽑은 프로젝트 번호로
+reward 서비스의 컬렉션 매핑을 **통째로 비우고 다시 채웁니다**.
+
+**전략을 자동으로 모으는 구조입니다.**
+전략 클래스에 `@Helper` 를 붙이면 `List<AutomatedCollection>` 으로 자동 수집돼 흐름에 합류합니다.
+그래서 새 전략을 넣어도 `CollectionAutomationJobConfig.java` 는 건드리지 않습니다.
+
+**실행 파라미터**
+
+| 파라미터 | 뜻 |
+|---|---|
+| `run.step.keywords` | 콤마로 구분한 키워드 슬러그. 예: `8globaldom` |
+| (미지정·빈 값) | 모든 전략을 건너뜁니다 |
+| (모르는 키워드) | 잡 시작 시점에 바로 실패합니다 (`JobParametersInvalidException`) |
+
+**키워드 14종** (`core/domain/.../collection/automation/CollectionKeyword.java`)
+
+| 슬러그 | 표시 이름 |
+|---|---|
+| `8globaldom` | 글로벌 진행 PJ |
+| `EveryNookandCorner` | 푸드 산지직송·로컬맛집 |
+| `RookieBox` | 신규 메이커 |
+| `whatsnext` | 글로벌(미국) 본펀딩 |
+| `whatsnextkorea` | 글로벌(미국) 오픈예정 |
+| `whatsnextjp` | 일본 본펀딩 |
+| `whatsnextkoreajp` | 일본 오픈예정 |
+| `whatsnextcn` | 중화권 본펀딩 |
+| `whatsnextkoreacn` | 중화권 오픈예정 |
+| `supportfandom` | 후원·팬덤 |
+| `localfunding` | 로컬 |
+| `bookmarks` | 글로벌 전자책·클래스 |
+| `crowdedproject` | 급상승 프로젝트 (`RWD-5785`, 2026-07-09) |
+| `AiCenter` | AI 컬렉션 |
+
+전략 구현체는 `core/domain/.../collection/automation/strategy/` 아래 **14개**입니다.
+SQL 은 `mapper/AutomatedCollectionMapper.xml` 에 있습니다.
+
+---
+
+## 8-3. `rrnDestructionJob` — 주민등록번호 파기
+
+**설정 파일**: `domain/rrndestruction/RrnDestructionJobConfig.java`
+**Tasklet**: `domain/rrndestruction/RrnDestructionTasklet.java`
+**도입**: `RWD-5725`(2026-07-06, `3a2084597`)
+
+보관기간 **5년**이 지난 메이커 주민등록번호를 지웁니다.
+
+**흐름**
+
+1. `findRrnDestructionTargetCampaignIds` — 파기 대상 조회
+   ```sql
+   SELECT CampaignId
+   FROM CampaignContractInfo
+   WHERE ResidentRegistrationNumber IS NOT NULL
+     AND DATE(Registered) < (CURDATE() - INTERVAL 5 YEAR)
+   ```
+2. 500건씩 나눠 `destroyResidentRegistrationNumbers` 실행 — 해당 칼럼을 `NULL` 로 바꿉니다
+3. `personalDataDestructionLogGateway.save(auditLog)` — MongoDB `personal_data_destruction_log` 에 파기 이력을 남깁니다
+
+**남기는 파기 이력**
+
+| 필드 | 값 |
+|---|---|
+| `taskType` | `maker_info` |
+| `taskSummary` | `보관 기간(5년)이 경과한 메이커 주민등록번호 파기 완료` |
+| `taskCount` | 파기한 건수 |
+| `taskDetail.table` | `wadiz_db.CampaignContractInfo` |
+| `taskDetail.columns` | `["ResidentRegistrationNumber"]` |
+| `taskDetail.pk` / `pkValue` | `CampaignId` 와 그 값 목록 |
+| `registeredBy` | `funding-batch` |
+| `registeredIp` | 배치가 도는 장비의 IP |
+
+> 🔎 **트랜잭션을 일부러 특이하게 걸었습니다.**
+> 이 스텝만 기본값(배치 메타 데이터베이스)이 아니라 **서비스 데이터베이스(`wadizdb`)** 로 트랜잭션을 잡습니다.
+> 파기 `UPDATE` 가 아직 확정되지 않은 상태에서 MongoDB 이력 저장까지 성공해야 확정됩니다.
+> 이력 저장이 실패하면 예외가 퍼져 `UPDATE` 도 함께 취소됩니다.
+> 그러면 대상이 그대로 남아 있으므로 다음 실행에서 파기와 이력을 처음부터 다시 시도합니다.
+>
+> **"지웠는데 기록이 없는 상태"를 원천적으로 막으려는 설계입니다.**
+
+> ⚠️ **시각 저장에 함정이 있어 코드가 주석으로 경고하고 있습니다.**
+> `registeredAt` 에 `LocalDateTime.now()` 를 그대로 넣습니다.
+> `now(ZoneOffset.UTC)` 를 쓰면 스프링 변환기가 그 값을 다시 시스템 기본 시간대로 해석해
+> **9시간이 어긋납니다.**
+
+---
+
 ## 9. 참고 — Job 요약 테이블
 
 | Job명 | 방식 | 목적 |
@@ -653,7 +752,6 @@ StepExecutionContext 공유: `ExecutionContextPromotionListener` — `PAID_BENEF
 | `newsNotificationJob` | Reader-Processor-Writer (chunk=500) | PENDING 상태 새소식 알림 발송 (이메일/앱 푸시) |
 | `deliveredNotificationJob` | Reader-Processor-Writer (chunk=1000) | 전일 배송완료 건 배송완료 알림 발송 |
 | `firstFundingDeliveredNotificationJob` | Tasklet | 최초 펀딩 배송완료 서포터 알림톡 발송 (template 3006) |
-| `pendingNotificationJob` | Tasklet | 종료 21일 경과 HOLD 프로젝트 배송미완료 서포터 알림 (template 3009) |
 | `pendingStandbyJob` | Tasklet | 3일 내 마감 승인대기 캠페인 메이커 알림톡 (template 3106) |
 | `encoreOpenNotificationJob` | Tasklet | 앵콜 신청 기준 초과 메이커 앱 푸시+인박스 발송 |
 | `billkeyVerifyRemindJob` | Reader-Writer (chunk=1000) | 빌키 검증 실패/만료 서포터 결제수단 확인 알림톡 (template 3158) |
@@ -674,3 +772,7 @@ StepExecutionContext 공유: `ExecutionContextPromotionListener` — `PAID_BENEF
 | `safeNumberReleaseJob` | Tasklet | 최종정산 7일 경과 캠페인 안심번호 해제 및 삭제 |
 | `collectionCampaignGradeJob` | Tasklet | 컬렉션 캠페인 등급 산정 및 업데이트 |
 | `migrationOngoingStoryJob` | Tasklet | 영어 번역 완료 진행중 프로젝트를 OngoingStoryManagement로 일회성 마이그레이션 |
+| `collectionAutomationJob` | SplitFlow | 키워드별 전략이 뽑은 프로젝트로 컬렉션을 통째로 갈아끼움 |
+| `rrnDestructionJob` | Tasklet | 보관기간이 지난 메이커 주민등록번호를 지우고 파기 이력을 MongoDB 에 남김 |
+| `stripeConnectReminderJob` | Step 4개 (순차) | Stripe 연결 미완료 메이커 독촉 |
+| `signatureSpamGuardJob` · `personalMessageSpamGuardJob` · `miniBoardSpamGuardJob` | Tasklet | 게시판 피싱 봇 자동 감지·삭제 |

@@ -7,8 +7,8 @@
   - `wadiz-frontend/packages/api/src/web/funding.service.ts:1160-1170` (결제 수단 변경 FE)
   - `wadiz-frontend/packages/api/src/web/funding/supporters.service.ts:43` (최근 결제 수단)
   - `com.wadiz.api.funding/adapter/application/.../simplepay/SimplePayController.java:17-70`
-  - `com.wadiz.api.funding/adapter/application/.../billkey/BillkeyInternalController.java:13-25`
-  - `com.wadiz.api.funding/adapter/application/.../supporter/SupporterController.java:104` (`PUT /my/fundings/{id}/pay-by`)
+  - `com.wadiz.api.funding/adapter/application/.../billkey/BillkeyInternalController.java:1-53`
+  - `com.wadiz.api.funding/adapter/application/.../supporter/SupporterController.java:109` (`PUT /my/fundings/{id}/pay-by`)
   - `com.wadiz.api.funding/adapter/application/.../paymentprogress/PaymentProgressController.java:13-26`
   - `com.wadiz.api.funding/adapter/batch/.../billkeyverifyremind/BillkeyVerifyRemindJobConfig.java:1-75`
   - `docs/nicepay-api.md` (BillingController `/api/{apiVersion}/approval`)
@@ -104,16 +104,43 @@ public class SimplePayController {
 }
 ```
 
-### 3.2 `BillkeyInternalController` — 카드 만료 사전 검증
+### 3.2 `BillkeyInternalController` — 카드 만료 확인 (엔드포인트 2개)
+
 ```java
-// adapter/application/.../billkey/BillkeyInternalController.java:13
+// adapter/application/.../billkey/BillkeyInternalController.java:23
 @RequestMapping("/api/internal/billkey")
 public class BillkeyInternalController {
-    @PostMapping("/card-expire-verification")              // :20
-    ...
+    @PostMapping("/card-expire-verification")   // :30 — 만료 임박 빌키 검출
+    @PostMapping("/card-expires")               // :44 — 빌키별 카드 유효기간 조회 (신규)
 }
 ```
-내부(운영/배치) 호출용. 카드 유효기간 만료 임박 빌키 검출.
+
+내부(운영·배치) 호출용입니다. `hasRole("SYSTEM")` 이 필요합니다.
+
+**`POST /api/internal/billkey/card-expires` 가 새로 생겼습니다.**
+빌키 목록을 넘기면 카드 유효기간을 한꺼번에 돌려줍니다.
+코드 주석이 쓰는 쪽에서 헷갈릴 만한 점 셋을 미리 적어 뒀습니다.
+
+| 주의할 점 | 내용 |
+|---|---|
+| 없는 빌키 | 행이 없는 빌키는 **응답 목록에 아예 안 들어갑니다.** 요청 수와 응답 수가 다를 수 있습니다 |
+| 유효기간이 `null` | **만료가 아니라 "유효기간 미등록"** 입니다. 구분해서 처리해야 합니다 |
+| 연도 표기 | 저장 원본 그대로 **2자리(YY)** 로 줍니다. 4자리로 바꿔 주지 않습니다 |
+
+해지된 빌키도 함께 조회됩니다. 한 번에 최대 **5,000건**입니다.
+
+### 3.2-1 `SimplePayInternalController` — 내부 빌키 사용·검증
+
+```java
+// adapter/application/.../simplepay/SimplePayInternalController.java:19
+@RequestMapping("/api/internal/simple-pay")
+public class SimplePayInternalController {
+    @PostMapping("/billkey")   // :26 — 빌키 사용
+    @PostMapping("/verify")    // :39 — 빌키 검증
+}
+```
+
+예약결제를 실행하는 쪽이 부르는 경로입니다. 예전 문서에 빠져 있었습니다.
 
 ### 3.3 `SupporterController#modifyPayBy` — 주문 결제 수단 변경
 ```java

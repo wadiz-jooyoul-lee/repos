@@ -8,6 +8,33 @@
 
 ---
 
+> 📅 **2026-09-29 전수 재대조** — `master` `a9fac634f` 기준
+>
+> 코드의 `@*Mapping` 을 전부 다시 뽑아 이 문서와 양방향으로 맞춰 봤습니다.
+>
+> | 항목 | 예전 문서 | 실제 |
+> |---|---:|---:|
+> | 컨트롤러 파일 | 약 70+개 | **125개** |
+> | 엔드포인트 | 약 200개 | **379개** |
+>
+> **빠져 있던 65개를 아래 15장에 넣었습니다.**
+> 가장 큰 덩어리는 스튜디오 대시보드(28개)와 Stripe 연동(12개)입니다.
+> 둘 다 **문서가 처음 작성될 때부터 빠져 있던 영역**입니다.
+> 스튜디오 오픈예정 대시보드는 2025-07-31(`RWD-4908`)부터 있었습니다.
+>
+> **사라진 엔드포인트는 3개였고 모두 정정했습니다.**
+>
+> | 사라진 경로 | 대체 |
+> |---|---|
+> | `PUT /api/internal/additional-services/{projectNo}/services/{serviceCode}/approve` | 없음 |
+> | `PUT /api/internal/additional-services/{projectNo}/services/{serviceCode}/reject` | 없음 |
+> | `PUT /api/internal/additional-services/{projectNo}/services/pd-consulting/manual-request` | `.../pd-consulting/apply`·`/unapply` |
+>
+> `RWD-5594`(2026-05-27, `4e9997083`)가 바꿨습니다.
+> 자세한 내용은 [`api-details/iplicense-catalog-additional.md`](./api-details/iplicense-catalog-additional.md) 16~17장을 봅니다.
+
+---
+
 ## 1. 주문 · 결제
 
 ### Order — `order/OrderController` (`/api/orders`)
@@ -546,9 +573,8 @@
 | POST | `/api/additional-services/{projectNo}` |
 | GET | `/api/additional-services/{projectNo}` |
 | GET | `/api/additional-services` |
-| PUT | `/api/internal/additional-services/{projectNo}/services/{serviceCode}/approve` |
-| PUT | `/api/internal/additional-services/{projectNo}/services/{serviceCode}/reject` |
-| PUT | `/api/internal/additional-services/{projectNo}/services/pd-consulting/manual-request` |
+| PUT | `/api/internal/additional-services/{projectNo}/services/pd-consulting/apply` |
+| PUT | `/api/internal/additional-services/{projectNo}/services/pd-consulting/unapply` |
 
 ---
 
@@ -636,10 +662,128 @@
 
 ---
 
+## 15. 2026-09-29 전수 대조로 새로 넣은 엔드포인트 (65개)
+
+아래는 코드에 있는데 이 문서에 없던 것들입니다.
+기존 장 구성을 흐트러뜨리지 않으려고 한곳에 모았습니다.
+
+### 15-1. 스튜디오 대시보드 — 오픈예정 (`StudioComingSoonDashBoardController`, 15개)
+
+오픈예정 프로젝트의 메이커용 통계 화면입니다. 2025-07-31 `RWD-4908` 부터 있었습니다.
+`/data` 는 화면에 그릴 값, `/download` 는 파일로 내려받는 경로입니다.
+
+| Method | Path |
+|---|---|
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/acquisitions/cards/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/acquisitions/charts/trend-by-source/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/acquisitions/tables/by-source/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/acquisitions/tables/by-source/download` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/engagements/cards/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/engagements/charts/open-notify-subscriber-count/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/engagements/charts/open-notify-subscriber-count/download` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/engagements/q1/cards/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/engagements/q2/cards/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/open-notify-subscribers/cards/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/open-notify-subscribers/charts/age-gender-count/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/open-notify-subscribers/country-ranking` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/open-notify-subscribers/q3/cards/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/open-notify-subscribers/tables/items/data` |
+| GET | `/api/studio/dashboard/coming-soons/{projectNo}/open-notify-subscribers/tables/items/download` |
+
+### 15-2. 스튜디오 대시보드 — 본펀딩 (13개)
+
+| 컨트롤러 | Method | Path |
+|---|---|---|
+| `StudioProjectAcquisitionDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/acquisitions/cards/data` |
+| `StudioProjectAcquisitionDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/acquisitions/charts/trend-by-source/data` |
+| `StudioProjectAcquisitionDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/acquisitions/tables/by-source/data` |
+| `StudioProjectAcquisitionDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/acquisitions/tables/by-source/download` |
+| `StudioProjectEngagementDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/engagements/cards/data` |
+| `StudioProjectEngagementDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/engagements/charts/payment-trend/data` |
+| `StudioProjectEngagementDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/engagements/charts/payment-trend/download` |
+| `StudioProjectEngagementDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/engagements/tables/reward-ranking/data` |
+| `StudioProjectEngagementDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/engagements/tables/reward-ranking/download` |
+| `StudioProjectSupporterDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/supporters/cards/data` |
+| `StudioProjectSupporterDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/supporters/charts/age-gender-count/data` |
+| `StudioProjectSupporterDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/supporters/tables/items/data` |
+| `StudioProjectSupporterDashBoardController` | GET | `/api/studio/dashboard/projects/{projectNo}/supporters/tables/items/download` |
+
+### 15-3. Stripe 연동 (11개)
+
+해외 메이커 정산을 위한 Stripe Connect 계정 관리입니다. `RWD-5311`(2026-03-24)부터입니다.
+
+| 컨트롤러 | Method | Path |
+|---|---|---|
+| `StripeAccountController` | POST | `/api/studio/stripe/accounts/{projectNo}/create` |
+| `StripeAccountController` | GET | `/api/studio/stripe/accounts/{projectNo}/detail` |
+| `StripeAccountController` | GET | `/api/studio/stripe/accounts/{projectNo}/find` |
+| `StripeAccountController` | GET | `/api/studio/stripe/accounts/{projectNo}/status` |
+| `StripeAccountController` | POST | `/api/studio/stripe/accounts/{projectNo}/{accountId}/link` |
+| `StripeAccountController` | GET | `/api/studio/stripe/accounts/{projectNo}/{accountId}/payout-info` |
+| `StripeAccountController` | GET | `/api/studio/stripe/accounts/{projectNo}/{accountId}/persons` |
+| `StripeAccountController` | GET | `/api/studio/stripe/accounts/{projectNo}/{accountId}/status` |
+| `StripeAccountController` | GET | `/api/studio/stripe/accounts/{projectNo}/{accountId}/status/realtime` |
+| `StripeInternalAccountController` | GET | `/api/internal/stripe/accounts/projects/{projectNo}/status` |
+| `StripeInternalAccountController` | GET | `/api/internal/stripe/accounts/{accountId}/history` |
+
+`/status` 와 `/status/realtime` 이 따로 있습니다.
+앞은 저장해 둔 상태, 뒤는 Stripe 에 직접 물어보는 상태로 보입니다(추정).
+`/history` 는 MongoDB `stripeAccountHistory` 컬렉션을 읽습니다.
+
+### 15-4. v2 주문 · 결제 (9개)
+
+`PRODUCT-627`(2026-03-05) "국내, 글로벌 통합 결제 플로우" 로 들어왔습니다.
+
+| 컨트롤러 | Method | Path |
+|---|---|---|
+| `OrderV2Controller` | POST | `/api/v2/orders/sheet/{token}` |
+| `OrderPaymentV2Controller` | POST | `/api/v2/order-payment/{payType}/{campaignId}/{token}` |
+| `OrderPaymentV2Controller` | POST | `/api/v2/order-payment/{payType}/{campaignId}/{token}/billkey` |
+| `OrderPaymentV2Controller` | GET | `/api/v2/order-payment/{payType}/{token}/pay-via-stripe` |
+| `OrderPaymentV2Controller` | POST | `/api/v2/order-payment/{token}/pay-direct` |
+| `OrderPaymentV2Controller` | POST | `/api/v2/order-payment/{token}/pay-simple` |
+| `OrderPaymentV2Controller` | POST | `/api/v2/order-payment/{token}/pay-zero` |
+| `OrderPaymentV2Controller` | GET | `/api/v2/order-payment/{token}/approve-status` |
+| `OrderPaymentV2Controller` | POST | `/api/v2/order-payment/alipay/{token}/callback-bypass` |
+
+결제 수단별로 경로가 나뉜 점이 v1 과 다릅니다.
+
+| 경로 | 언제 |
+|---|---|
+| `/pay-direct` | 카드 정보를 바로 넣어 결제할 때 |
+| `/pay-simple` | 저장해 둔 빌키로 간편결제할 때 |
+| `/pay-zero` | 결제 금액이 0원일 때 (전액 쿠폰·포인트) |
+| `/pay-via-stripe` | 해외 결제를 Stripe 로 보낼 때 |
+| `/alipay/{token}/callback-bypass` | 알리페이가 돌려보내는 응답을 받을 때 |
+
+### 15-5. 나머지 (17개)
+
+| 컨트롤러 | Method | Path | 비고 |
+|---|---|---|---|
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects` | `RWD-5497`(2026-04-29) 메이커홈 |
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/{projectNo}/metrics` | 같은 건 |
+| `CacheInternalController` | GET | `/api/internal/cache` | `RWD-5543`(2026-05-08) 캐시 목록 |
+| `CacheInternalController` | DELETE | `/api/internal/cache/{cacheName}` | 캐시 이름 단위로 비우기 |
+| `StudioRegionController` | GET | `/api/studio/regions` | `RWD-5675`(2026-06-16) 메이커 소재지 시도 목록 |
+| `BillkeyInternalController` | POST | `/api/internal/billkey/card-expires` | 빌키별 카드 유효기간 묶음 조회 |
+| `CampaignAgreementController` | POST | `/api/studio/agreement/{projectNo}` | 약정 |
+| `CampaignSubmissionStudioController` | GET | `/api/studio/campaigns/{projectNo}/submission` | 제출 현황 |
+| `CampaignMarkerController` | GET | `/api/campaign-markers/{campaignId}/indemand-funding` | 인디맨드 펀딩 표식 |
+| `CatalogController` | GET | `/api/v1/catalog/edition-preorders/naver-shopping` | 네이버쇼핑 피드 |
+| `GlobalProjectController` | GET | `/api/global/projects/{projectNo}/partners` | 파트너 |
+| `GlobalProjectController` | GET | `/api/global/projects/{projectNo}/review-import-settings` | 리뷰 가져오기 설정 |
+| `MakerProfileApiController` | POST | `/api/maker-profile/{projectNo}/register` | 메이커 프로필 등록 |
+| `MakerProfileInternalApiController` | POST | `/api/internal/maker-profile/{projectNo}/register` | 내부용 등록 |
+| `NewsInternalController` | GET | `/api/internal/news/campaign-updates` | 새소식 내부 조회 |
+| `OrderController` | POST | `/api/orders/sheet/{token}/billing-previews` | 결제 예상 금액 미리보기 |
+| `ScreeningNotificationInternalController` | POST | `/api/internal/campaigns/{campaignId}/screening/notifications` | 심사 알림 발송 |
+
+---
+
 ## 14. 요약 통계
 
-- **총 컨트롤러 파일**: 약 70+개
-- **총 엔드포인트**: 약 200개
+- **총 컨트롤러 파일**: **125개** (2026-09-29 실측)
+- **총 엔드포인트**: **379개** (2026-09-29 실측)
 - **경로 그룹별 분포**:
   - Public(`/api/...`): 펀딩 참여자/게스트가 쓰는 조회·액션 API
   - Internal(`/api/internal/...`): 사내 서비스 간 통신용
@@ -649,4 +793,14 @@
   - Native(`/api/native/v1/...`): 네이티브 앱 전용
   - v1/v2 접두 및 복수 base path 어노테이션으로 버전/호환 경로 병존
 
-> 이 목록은 `@RequestMapping` / `@GetMapping` / `@PostMapping` / `@PutMapping` / `@DeleteMapping` / `@PatchMapping` 전수 그렙 결과를 파싱한 것이며, 동적 라우팅(필터·서블릿)이나 WebFlux 라우팅은 포함되지 않을 수 있다.
+> 이 목록은 `@RequestMapping`·`@GetMapping`·`@PostMapping`·`@PutMapping`·`@DeleteMapping`·`@PatchMapping` 을 전수로 뽑아 만들었습니다.
+> 필터나 서블릿으로 도는 동적 경로, WebFlux 경로는 들어 있지 않을 수 있습니다.
+>
+> 🔎 **전수를 뽑을 때 빠지기 쉬운 두 가지가 있습니다.** 다음에 다시 셀 때 주의합니다.
+>
+> | 함정 | 내용 |
+> |---|---|
+> | 파일 이름 | `BottomSheetControllerV2.java` 처럼 **`Controller.java` 로 끝나지 않는** 컨트롤러가 있습니다 |
+> | 배열 표기 | `@RequestMapping({"/api/bottom-sheet", "/api/v1/bottom-sheet"})` 처럼 **중괄호로 여러 경로**를 다는 클래스가 있습니다 |
+>
+> 이번 대조에서 두 함정 모두 실제로 한 번씩 오판을 냈습니다.
