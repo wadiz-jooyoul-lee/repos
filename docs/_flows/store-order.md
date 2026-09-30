@@ -90,7 +90,7 @@ web.xml `/web/apip/*` 매핑 → Store API 서비스(외부) 로 직행.
    │ GET /web/apip/store/orders/my?page=0&size=20
    │   (쿠키 세션 or Bearer 토큰)
    ▼
-[www.wadiz.kr]
+[www.wadiz.io]
    ├─ bearerTokenAuthenticationFilter           (web.xml:128 특수)
    └─ ApiProxyServlet → 외부 Store API
         ▼
@@ -103,7 +103,7 @@ web.xml `/web/apip/*` 매핑 → Store API 서비스(외부) 로 직행.
 [메이커 스튜디오]
    │ POST /orders/{orderNo}/shipping  body: { trackingNo, carrier }
    ▼
-[www.wadiz.kr — ApiProxy → Store API]
+[www.wadiz.io — ApiProxy → Store API]
    │
    └─ Store API: UPDATE StoreShipping SET TrackingNo=?, Status='SHIPPED'
          → 알림 발송 (구매자에게 배송 시작)

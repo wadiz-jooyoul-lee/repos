@@ -5,6 +5,34 @@
 
 ---
 
+> 🔍 **2026-09-22 본문 전면 점검** — `main`(`9b492a0b`, 2026-09-21) 기준
+>
+> 본문이 2026-07-10 이후 74일 멈춘 사이 저장소에 943 커밋이 들어왔습니다.
+>
+> ### 정정 8건
+>
+> | # | 어디가 | 무엇이 틀렸나 |
+> |---|---|---|
+> | 1 | **환경별 URL 전체 표** | **전면 교체.** `wadiz.kr` 기준에 `RC2`·`Dev` 환경이었습니다. `FE1-1760` 으로 `kr` 도메인 코드가 제거돼 전부 `wadiz.io` 가 됐습니다 |
+> | 2 | 환경 개수 | "8개 환경 중 선택"으로 적혀 있었습니다. **실제는 `LOCAL`·`DEV`·`STAGE`·`RC4`·`LIVE` 5개**입니다 |
+> | 3 | `advertiseUrl`·`aiDomainUrl` | 표에 있었으나 **인터페이스에서 사라진 키**입니다 |
+> | 4 | `ServerMode` 위치 | `core:legacy` 에 있다고 했으나 `core/network/.../server/ServerMode.kt` 로 옮겨졌습니다 |
+> | 5 | **스타트업(투자) 절** | `FE1-1349`(2026-07-23)가 **스타트업 코드를 통째로 지웠습니다.** 아이콘 몇 개와 테스트 하나만 남았습니다 |
+> | 6 | 혜택홈·CDN 설정 | CDN JSON 을 직접 읽는다고 했으나 `FE1-1169`(2026-07)로 **앱 설정 API 로 이관**됐습니다 |
+> | 7 | 비디오 홈 | `VideoDataSource.kt` 가 2026-05-21 삭제됐습니다. 지금은 재생기 기반 코드만 남았습니다 |
+> | 8 | 웹뷰 주소 | 상세·결제 웹뷰를 `www.wadiz.kr` 로 적었습니다. **live 는 `www.wadiz.io`** 입니다 |
+>
+> ### 큰 줄기
+>
+> 종전에는 서버가 여섯 갈래였습니다(`api`·`public-api`·`service`·`platform`·`analytics`·`app`).
+> 지금은 **`api.wadiz.io` 하나로 거의 모였습니다.**
+> iOS 도 같은 시기에 같은 방향으로 바뀌었습니다(`FE1-1762`).
+>
+> STAGE 환경에는 예외가 있습니다. **웹·API·계정·플랫폼 넷만 stage 호스트**이고 나머지는 live 를 봅니다.
+> 코드 주석에 이유가 있습니다 — stage 클러스터에 올라간 플랫폼 구획이 `main2` 뿐이기 때문입니다.
+>
+> ---
+>
 > 📅 **2026-09-22 main pull 보강** (120 커밋, v26.37.0 build 595 → **v26.38.0 build 596**)
 >
 > **`kr` 도메인 코드 제거(FE1-1760, 13커밋)** 와 **막펀잡기 화면 개선(FE1-1850, 19커밋)** 이 두 축입니다.
@@ -335,7 +363,7 @@ Gradle 서브프로젝트 전수 (`settings.gradle.kts:31-69`). 각 모듈 한 �
 - `build-config` — 버전/bearer 토큰 등 `buildConfigField` 주입 담당. `BuildConfig` 를 공유하기 위한 라이브러리 모듈. (`build-config/build.gradle.kts:19-36`)
 
 ### `scripts` (codegen 전용 JVM 모듈)
-- `scripts` — 디자인 토큰 codegen 전용 순수 Kotlin/JVM 모듈 (`application` 플러그인, JVM 11). `JsonToColorGenerator` 가 `wadiz-client/design-tokens` 의 `color.normalized.tokens.json` 을 읽어 `Color.kt` / `GradationColor.kt` / `ExtraColor.kt` 를 생성. `./gradlew :scripts:generateColors` 태스크. (`scripts/build.gradle.kts`, `scripts/src/main/java/com/wadiz/scripts/JsonToColorGenerator.kt`) — i18n 동기화 워크플로(i18n-scheduler/worker)와 동일 패턴의 컬러 동기화(colors-scheduler/worker) 자동 PR 봇.
+- `scripts` — 디자인 토큰 codegen 전용 순수 Kotlin/JVM 모듈 (`application` 플러그인, JVM 11). `scripts/src/main/java/com/wadiz/scripts/JsonToColorGenerator.kt` 가 별도 저장소 `design-tokens` 의 `tokens/color.normalized.tokens.json`(이 저장소에는 없습니다) 을 읽어 `Color.kt` / `GradationColor.kt` / `Color.kt`·`GradationColor.kt`(`core/design-system/src/main/java/com/markmount/wadiz/designsystem/theme/`). 종전에 적혀 있던 `ExtraColor` 파일은 지금 없습니다 를 생성. `./gradlew :scripts:generateColors` 태스크. (`scripts/build.gradle.kts`, `scripts/src/main/java/com/wadiz/scripts/JsonToColorGenerator.kt`) — i18n 동기화 워크플로(i18n-scheduler/worker)와 동일 패턴의 컬러 동기화(colors-scheduler/worker) 자동 PR 봇.
 
 ### `core/*`
 | 모듈 | 역할 |
@@ -348,7 +376,7 @@ Gradle 서브프로젝트 전수 (`settings.gradle.kts:31-69`). 각 모듈 한 �
 | `core:design-system` | WDS 컴포넌트, Compose UI 토큰, drawable |
 | `core:domain` | UseCase, 도메인 모델(+`CardValidator` 등) |
 | `core:i18n` | `Localization` 객체, 다국어 런타임 문자열(`core/i18n/src/main/kotlin/com/wadiz/i18n/…`) |
-| `core:legacy`, `core:legacy:wadiz-common`, `core:legacy:wadiz-dialog` | 점진 제거 대상 레거시 공용 코드 (`ServerMode` 가 여기에 있음) |
+| `core:legacy`, `core:legacy:wadiz-common`, `core:legacy:wadiz-dialog` | 점진 제거 대상 레거시 공용 코드. **`ServerMode` 는 여기가 아니라 `core/network/src/main/java/com/wadiz/network/server/ServerMode.kt` 로 옮겨졌습니다**(2026-09-22 확인) |
 | `core:model` | 순수 Kotlin 도메인 모델, 네비게이션 Key/Route |
 | `core:network` | **Retrofit ApiService 전체 + OkHttp Provider/Interceptor** (핵심) |
 | `core:security` | 루팅/바이오메트릭/세션 관련 보안 |
@@ -404,30 +432,40 @@ Gradle 서브프로젝트 전수 (`settings.gradle.kts:31-69`). 각 모듈 한 �
 Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `ServerMode.Server` 라는 Kotlin 인터페이스를 런타임에 **`WadizHiddenMenu.getServerMode()`** 가 반환하고, 이 인스턴스를 Hilt 로 주입해 `apiUrl`, `platformUrl`, `appApiUrl` 등 속성을 Retrofit `baseUrl()` 에 전달한다. (`core/legacy/wadiz-common/src/main/java/com/markmount/wadiz/util/ServerMode.kt:6-72`)
 
 - `release` 빌드 타입 → `feature/src/release/java/.../WadizServerSelector.kt:41-54` 가 **고정 Live URL** 반환. 히든 메뉴 없음 (`hasMenu()=false`).
-- `debug` / `qa` 빌드 타입 → `feature/src/debug/java/.../WadizServerSelector.kt` 가 히든 메뉴(`AlertDialog`) 로 `cdev | rc | rc2 | rc3 | stage | live | local` 중 선택, `HiddenPreferenceHelper` 에 저장 후 `exitProcess(0)` 재시작. (FE1-764: CDEV 실사용 정착에 따라 기존 `dev` 환경 제거됨. `ANDROID-3037` 으로 도입된 cdev 는 서버/앱 배포 후 전환되는 리모트 환경)
+- `debug` / `qa` 빌드 타입 → 히든 메뉴로 **`LOCAL`·`DEV`·`STAGE`·`RC4`·`LIVE` 5개** 중 선택합니다. 목록의 단일 출처는 `core/network/src/debug/java/com/wadiz/network/server/DevServer.kt` 입니다. 종전 기록의 `cdev | rc | rc2 | rc3 | stage | live | local` 중 선택, `HiddenPreferenceHelper` 에 저장 후 `exitProcess(0)` 재시작. (FE1-764: CDEV 실사용 정착에 따라 기존 `dev` 환경 제거됨. `ANDROID-3037` 으로 도입된 cdev 는 서버/앱 배포 후 전환되는 리모트 환경)
 - `core:build-config` 는 URL 이 아닌 **외부 파트너 bearer token** 과 `SERVER_MODE` 문자열만 `buildConfigField` 로 노출 (`build-config/build.gradle.kts:23-36,47,57,68`).
 
 ### 환경별 URL 전체 표
 
-출처: `feature/src/debug/java/com/markmount/wadiz/hidden/WadizServerSelector.kt:202-346` + `feature/src/release/java/com/markmount/wadiz/hidden/WadizServerSelector.kt:41-55`
+출처: `core/network/src/debug/java/com/wadiz/network/server/DevServer.kt:48-110` · `core/network/src/main/java/com/wadiz/network/server/ServerMode.kt`
 
-| 키 (`ServerMode.Server`) | Live | Stage | RC2 (debug 기본) | Dev | 용도 (upstream) |
-| --- | --- | --- | --- | --- | --- |
-| `apiUrl` | `https://www.wadiz.kr/api/` | `https://stage.wadiz.kr/api/` | `https://rc2.wadiz.kr/api/` | `https://dev.wadiz.kr/api/` | **메인 모놀리식 `api.wadiz.kr` (v2~v4 + 레거시)** — Retrofit `WadizAppAPILegacyService`, `AppV3APIService`, `WadizMakerPageAPIService` 등 최다 엔드포인트 |
-| `domainUrl` | `https://www.wadiz.kr` | `https://stage.wadiz.kr` | `https://rc2.wadiz.kr` | `https://dev.wadiz.kr` | 웹뷰 (프로젝트 상세, 결제, 약관 등) + `WadizDomainAPIService` (`/web/…`) 쿠폰·체험단·국가 리스트 |
-| `mainUrl` | `https://public-api.wadiz.kr/` | `https://public-api.wadiz.kr/` | `https://public-api-rc.wadiz.kr/` | `https://public-api-dev.wadiz.kr/` | `public-api` (비회원/배너/메인 디스플레이 광고) — `WadizMainAPIService` (`/main/...`) |
-| `advertiseUrl` | `https://service.wadiz.kr/api/v1/ad/host/` | 동일 | `https://rc2-service.wadiz.kr/...` | `https://dev-service.wadiz.kr/...` | 광고 (KeyVisual) — `WadizAdvertiseAPIService` |
-| `analyticsUrl` | `https://analytics.wadiz.kr/` | 동일 | `https://rc-analytics.wadiz.kr/` | `https://dev-analytics.wadiz.kr/` | **와디태그(Waditag)** V1/V2 — `WadizAnalyticsAPIService` |
-| `serviceUrl` | `https://service.wadiz.kr` | 동일 | `https://rc2-service.wadiz.kr` | `https://dev-service.wadiz.kr` | `service` (검색, 펀딩소프트, 스토어 검색, activities) — `WadizServiceAPIService`, `WadizStoreServiceAPIService`, `SearchApiInterface` |
-| `platformUrl` | `https://platform.wadiz.kr/` | `main` 은 `https://stage-platform.wadiz.kr/`, 나머지 `https://platform.wadiz.kr/` | `https://rc2-platform.wadizcorp.net/` | `https://dev-platform.wadizcorp.net/` | **플랫폼 팀 MSA** (main2/wish/inbox/noti-channel/keyword/video/global/push) — `PlatformEndpoint` enum 으로 path-prefix 구분 |
-| `searchAiUrl` | `https://searchai.wadiz.kr` | 동일 | `https://rc-api.dev-searchai.wadizdata.team` | `https://api.dev-searchai.wadizdata.team` | 검색 AI 연관 키워드 — `SearchAiDatasource` (`/related-keyword`) |
-| `accountUrl` | `https://account.wadiz.kr` | 동일 | `https://rc2-account.wadiz.kr` | `https://dev-account.wadiz.kr` | **Accounts (SSO / OAuth 소셜 계정)** — 현재 Retrofit `baseUrl` 은 아님. 웹뷰 로그인 및 리다이렉트 처리 도메인. 링크 생성용 |
-| `appApiUrl` | `https://app.wadiz.kr/` | 동일 | `https://app-rc2.wadizcorp.net/` | `https://app-dev.wadizcorp.net/` | **앱 전용 BFF** — `ClientAppApiService` (`/api/v1/settings` 등 설정 Tab Server-Driven) |
-| `aiDomainUrl` | `https://www.wadiz.ai` | `https://stage.wadiz.ai` | `https://rc2.wadiz.ai` | `https://dev.wadiz.ai` | 글로벌(한국 외) 도메인. `feature:wai` 에서 사용 |
-| `cdn3` (하드코딩) | `https://cdn3.wadiz.kr/` | 동일 | 동일 | 동일 | 정적 JSON (video_v4, web-benefit-main, scratch_coupon 등) — `WadizCdnAPIService`, `VideoDataSource`, `BenefitHomeDataSource` |
-| `maker center` (하드코딩) | `https://api.makercenter.wadiz.kr/…` | 동일 | 동일 | 동일 | 메이커센터 board (기획전 리스트) — `StudioDataSource` (`wadiz-android/core/network/…/service/domain/studio/StudioDataSource.kt:19`) |
+> ⚠️ **2026-09-22 전면 교체했습니다.** 종전 표는 `wadiz.kr` 기준이었고 `RC2`·`Dev` 환경이었습니다.
+> `FE1-1760` 으로 **`kr` 도메인 코드가 제거**되면서 주소 체계가 통째로 바뀌었습니다.
+> 환경도 **`LOCAL`·`DEV`·`STAGE`·`RC4`·`LIVE` 5개**로 줄었습니다(`ServerMode.Mode`).
 
-**요약**: Live 빌드는 6개 주요 서버 (`api.wadiz.kr`, `public-api.wadiz.kr`, `service.wadiz.kr`, `platform.wadiz.kr`, `analytics.wadiz.kr`, `app.wadiz.kr`) + CDN + Accounts(웹뷰) + SearchAI + MakerCenter(하드코딩) 로 분산되어 있다.
+| 키 (`ServerMode.Server`) | LIVE | STAGE | RC4 | DEV |
+| --- | --- | --- | --- | --- |
+| `apiUrl` | `https://www.wadiz.io/api/` | `https://stage.wadiz.io/api/` | `https://rc4.wadiz.io/api/` | `https://dev.wadiz.io/api/` |
+| `domainUrl` | `https://www.wadiz.io` | `https://stage.wadiz.io` | `https://rc4.wadiz.io` | `https://dev.wadiz.io` |
+| `mainUrl` | `https://api.wadiz.io/` | LIVE 와 동일 | `https://api.rc4.wadiz.io/` | `https://api.dev.wadiz.io/` |
+| `serviceUrl` | `https://api.wadiz.io` | LIVE 와 동일 | `https://api.rc4.wadiz.io` | `https://api.dev.wadiz.io` |
+| `platformUrl` | `https://api.wadiz.io/` | **`https://api.stage.wadiz.io/`** | `https://api.rc4.wadiz.io/` | `https://api.dev.wadiz.io/` |
+| `appApiUrl` | `https://api.wadiz.io/` | LIVE 와 동일 | `https://api.rc4.wadiz.io/` | `https://api.dev.wadiz.io/` |
+| `analyticsUrl` | `https://analytics.aidata.wadiz.io/` | LIVE 와 동일 | `https://analytics.rc4.aidata.wadiz.io/` | `https://analytics.dev.aidata.wadiz.io/` |
+| `searchAiUrl` | `https://searchai.aidata.wadiz.io` | LIVE 와 동일 | `https://searchai.rc4.aidata.wadiz.io` | `https://searchai.dev.aidata.wadiz.io` |
+| `accountUrl` | `https://account.wadiz.io` | `https://account.stage.wadiz.io` | `https://account.rc4.wadiz.io` | `https://account.dev.wadiz.io` |
+
+> ⚠️ **`advertiseUrl` 과 `aiDomainUrl` 키는 없어졌습니다.**
+> `advertiseUrl` 이 가리키던 `WadizAdvertiseAPIService.kt` 는 `FE-196`(2026-04-16)로 지워졌습니다.
+
+**STAGE 에는 예외가 있습니다.** `domainUrl`·`apiUrl`·`accountUrl`·`platformUrl` 넷만 stage 호스트입니다.
+나머지는 **live 를 그대로 봅니다.** 코드 주석에 이유가 적혀 있습니다.
+
+> stage 클러스터에 올라간 플랫폼 구획은 main2뿐이라, 인박스·키워드·알림채널은 `PlatformEndpoint` 가 live 로 되돌린다.
+> 나머지 API 는 stage 배포 대상이 아니라 live 호스트를 그대로 쓴다.
+
+**요약**: 종전에는 서버가 여섯 갈래였습니다. 지금은 **`api.wadiz.io` 하나로 거의 모였습니다.**
+남은 별도 호스트는 웹 도메인(`www.wadiz.io`), 계정(`account.wadiz.io`), 분석·검색AI(`aidata.wadiz.io`) 정도입니다.
 
 ### Retrofit Provider 구조 (Hilt `@Singleton` 묶음)
 
@@ -435,7 +473,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 
 | Provider | baseUrl 키 | 실제 Retrofit 대상 |
 | --- | --- | --- |
-| `WadizAppAPIProvider` | `serverMode.apiUrl` | `WadizAppAPILegacyService` (`www.wadiz.kr/api/...`) |
+| `WadizAppAPIProvider` | `serverMode.apiUrl` | `WadizAppAPILegacyService` (live 기준 `www.wadiz.io/api/...`) |
 | `AppV3ApiProvider` | `serverMode.apiUrl` | `AppV3APIService` (v3/v4 REST, 계정/소셜/SNS/타임존) |
 | `ClientAppAPIProvider` | `serverMode.appApiUrl` | `ClientAppApiService` (BFF) |
 | `WadizStartupAPIProvider` | `serverMode.apiUrl` | `WadizStartupAPIService` (스타트업 탭) |
@@ -551,7 +589,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | `feature:main-tab` | `GET /main/earlybird/coming-soon`, `/main/earlybird/popular`, `/main/featured/reward`, `/main/featured/equity`, `/main/display-ads/event`, `/main/display-ads/marketing`, `/main/info/{sectionCode}`, `/main/display-ads/MPB`, `/main/display-ads/{bannerList}` | `mainUrl` | public-api 홈 섹션/배너/EB | 홈 섹션별 로드. `WadizMainAPIService.kt:17-52` |
 | `feature:main-tab` | `POST /main/campaign/rate` | `mainUrl` | 캠페인 만족도 | 종료 후 팝업. `WadizMainAPIService.kt:23` |
 | `feature:main-tab` | `POST /main/v1/store/participants` | `mainUrl` | 스토어 참여 | 스토어 홈 배너 이벤트. `WadizMainAPIService.kt:67` |
-| `feature:main-tab` | `GET keyvisual` | `advertiseUrl` | 홈 최상단 키비주얼 광고 | 홈 최초 렌더. `WadizAdvertiseAPIService.kt:9` |
+| ~~`feature:main-tab`~~ | ~~`GET keyvisual`~~ | — | **없어졌습니다.** `WadizAdvertiseAPIService.kt` 는 `FE-196`(2026-04-16)로 삭제됐고 `advertiseUrl` 키도 사라졌습니다 | — |
 
 ### 검색 / 카테고리 (`feature:search`, `feature:category`)
 
@@ -613,7 +651,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | `feature:benefit` | `POST /web/reward/api/coupons/transactions/types/redeem/issue-types/download` | `domainUrl` | 한정 쿠폰 발급 요청 | 동일. `WadizDomainAPIService.kt:60` |
 | `feature:benefit` | `POST /web/reward/api/coupons/transactions/types/redeem/issue-types/download/bulk/by-project/{projectId}` | `domainUrl` | 프로젝트 단위 쿠폰 일괄 발급 | 상세 쿠폰 "전체 받기". `WadizDomainAPIService.kt:87` |
 | `feature:benefit` | `GET /web/reward/api/comingsoons?collectionKeyword=preview21` | `domainUrl` | 펀딩 체험단(preview21) | 혜택/체험단 탭. `WadizDomainAPIService.kt:68` |
-| `feature:benefit` | `GET https://cdn3.wadiz.kr/app/web-benefit-main.json` | CDN | 혜택홈 Server-Driven UI JSON | 혜택홈. `BenefitHomeDataSource.kt:17` |
+| `feature:benefit` | 혜택홈 Server-Driven UI 설정 | 앱 설정 API | 혜택홈. **CDN JSON 직접 읽기에서 앱 설정 API 로 옮겼습니다**(`FE1-1169`, 2026-07-08). 지금은 `core/data/src/main/java/com/wadiz/data/repository/BenefitHomeRepository.kt` 와 `ClientAppSettingsRepository.kt` | 혜택홈 진입 |
 
 ### 스토어 / 프로젝트 / 메이커 페이지
 
@@ -632,10 +670,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 
 | Feature 모듈 | 엔드포인트 | 도메인 | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| `feature:service-home` (startup) | `GET /api/startup/common/codeMap` | `apiUrl` | 코드맵 캐시 | 스타트업 탭 초기화. `WadizStartupAPIService.kt:22` |
-| `feature:service-home` | `POST /api/startup/main` | `apiUrl` | 스타트업 메인 리스트 | 스타트업 탭. `WadizStartupAPIService.kt:26` |
-| `feature:service-home` | `GET /api/startup/corporation/connect`, `POST /api/startup/corporation/{corpNo}/interested`, `GET /api/startup/corporation/my` | `apiUrl` | 법인 연결/관심 기업 | 법인 설정. `WadizStartupAPIService.kt:29-36` |
-| `feature:service-home` | `GET /api/startup/collection/bannerList` | `apiUrl` | 스타트업 배너 컬렉션 | 스타트업 탭. `WadizStartupAPIService.kt:40` |
+| ~~`feature:service-home` (startup)~~ | — | — | **스타트업 기능이 통째로 제거됐습니다.** `FE1-1349`(2026-07-23) "스타트업 코드 제거". `WadizStartupAPIService.kt` 도 함께 사라졌고 지금은 아이콘 drawable 몇 개와 테스트 하나만 남아 있습니다 | — |
 
 ### 소셜 팔로우 / 주소록 (`feature:account`, `feature:mypage`)
 
@@ -662,9 +697,8 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | 분석 | `POST /add` (multipart `action`, `actions`) | `analyticsUrl` | 와디태그 클릭/멀티태그 | 버튼 탭/배치 로그. `WadizAnalyticsAPIService.kt:32` |
 | 글로벌 | `GET /global/exchange-rates/{country}` | `platformUrl` | 환율 | 글로벌(일본/중국) 결제 조회. `WadizPlatformAPIService.kt:41` |
 | 글로벌 | `GET /web/v1/countries`, `GET /web/v1/countries/{code}` | `domainUrl` | 국가 리스트 / 단건 | 회원가입/배송 국가 선택. `WadizDomainAPIService.kt:76,82` |
-| 비디오 홈 | `GET /video/v1/shorts` | `platformUrl` | 비디오 숏츠 | 비디오 홈. `VideoDataSource.kt:19` |
-| 비디오 홈 | `GET https://cdn3.wadiz.kr/app/video_v4.json`, `http://cdn3.wadiz.kr/app/videoHome.json` | CDN | 비디오 홈 SDUI JSON | 비디오 홈 렌더. `VideoDataSource.kt:24,27` |
-| CDN 구성 | (Url 주입) | CDN3 | SearchBar 마케팅/Home Swipe Lottie/Intro/LiveCommerce/Inbox config 등 JSON 로드 | 여러 화면. `WadizCdnAPIService.kt:11-27` |
+| ~~비디오 홈 SDUI~~ | — | — | **없어졌습니다.** `VideoDataSource.kt` 는 2026-05-21 삭제됐고 지금은 재생기 기반 코드(`core:video-player`)만 남아 있습니다 | — |
+| 앱 설정 | (앱 설정 API) | `appApiUrl` | SearchBar 마케팅·Home Swipe Lottie·Intro·LiveCommerce·Inbox 설정 등 | **CDN JSON 직접 읽기에서 앱 설정 API 로 이관**(`FE1-1169`, 2026-07-09). `WadizCdnAPIService.kt` 삭제, 지금은 `core/data/src/main/java/com/wadiz/data/repository/ClientAppSettingsRepository.kt` 와 `core/datastore/.../ClientAppSettingsDiskStore.kt` |
 
 ---
 
@@ -679,7 +713,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 - 부속 호출 병렬: `getQuickMenu` (platform), `getMain` (platform), `keyvisual` (advertise), `getMyWadiz` (platform), `/main/earlybird/*` (public-api `mainUrl`)
 
 ### 2) 프로젝트 상세 / 결제 (펀딩 리워드)
-- 프로젝트 상세는 **네이티브가 아닌 WebView** 로 `https://www.wadiz.kr/web/campaign/detail/{id}` 를 로드 (`feature/src/main/java/com/markmount/wadiz/view/main/web/WebFragmentModule.kt`, `ReuseWebView*`).
+- 프로젝트 상세는 **네이티브가 아닌 WebView** 로 `https://www.wadiz.io/web/campaign/detail/{id}` 를 로드 (`feature/src/main/java/com/markmount/wadiz/view/main/web/WebFragmentModule.kt`, `ReuseWebView*`).
 - `SessionSyncManager` (`feature/src/main/java/com/markmount/wadiz/webview/SessionSyncManager.kt`) 가 앱 진입 시 `POST waccount/auth/request/token` 으로 세션토큰 발급 → 웹뷰 쿠키 동기화
 - `RewardJavascriptInterface` / `InvestJavascriptInterface` 로 결제 완료/닫기 이벤트 수신 → 네이티브 복귀
 - 찜 버튼만 네이티브: `POST /api/funding/wishes` / `DELETE /api/funding/wishes`
@@ -693,7 +727,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 - 오류: v4 응답이 `preconditionRequired` 면 `SessionInterceptor` 가 user refresh 수행
 
 ### 4) 서포팅(결제)
-- 결제는 전부 **웹뷰** (`https://www.wadiz.kr/…/order/...`) 에서 진행. 네이티브 Retrofit 경로 없음.
+- 결제는 전부 **웹뷰** (live 기준 `https://www.wadiz.io/…/order/...`) 에서 진행. 네이티브 Retrofit 경로 없음.
 - 사전 체크: 오픈예정인 경우 `POST /api/funding/comingsoons/{projectNo}/applicants` 로 알림 신청 → 오픈 시 FCM 푸시. 상세는 `GET /api/funding/campaigns/{campaignId}/pre-reservation-info`.
 - 결제 완료 후 웹뷰 → 네이티브 브릿지 → 홈 리프레시
 
@@ -735,8 +769,8 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 ## 특이사항
 
 ### Android 고유
-- **Server-Driven UI 모듈 (`core:server-driven-ui`)** — `ServerAction`, `ServerImageComponent`, `ServerMargin`, `ServerGravity` 등 서버가 내려준 JSON 으로 레이아웃 조립. Benefit 홈(`cdn3/app/web-benefit-main.json`), 비디오홈(`video_v4.json`) 에서 활용. iOS 보다 범위가 훨씬 넓다.
-- **히든 메뉴 서버 전환** — debug/qa 빌드에서 3회 탭 등의 제스처로 `WadizServerSelector` 다이얼로그 → 8개 환경 중 선택 + `local` 커스텀 URL. 변경 시 `exitProcess(0)` 로 앱 강제 재시작.
+- **Server-Driven UI 모듈 (`core:server-driven-ui`)** — `ServerAction`, `ServerImageComponent`, `ServerMargin`, `ServerGravity` 등 서버가 내려준 JSON 으로 레이아웃 조립. 혜택 홈이 대표 사용처였는데, **CDN JSON 직접 읽기는 `FE1-1169`(2026-07) 로 앱 설정 API 로 옮겼습니다.** 종전에 적혀 있던 `cdn3/app/web-benefit-main.json` 과 `video_v4.json` 은 더 이상 쓰지 않습니다. (`cdn3/app/web-benefit-main.json`), 비디오홈(`video_v4.json`) 에서 활용. iOS 보다 범위가 훨씬 넓다.
+- **히든 메뉴 서버 전환** — debug/qa 빌드에서 3회 탭 등의 제스처로 다이얼로그를 띄워 **5개 환경**(`LOCAL`·`DEV`·`STAGE`·`RC4`·`LIVE`) 중 선택 + `local` 커스텀 URL. 변경 시 `exitProcess(0)` 로 앱 강제 재시작.
 - **한글 i18n 런타임 JSON** — `core:i18n` 이 문자열을 런타임 JSON 번들(`i18n.json`) 로 관리(`Localization.ApiCode.Common.ERROR.text` 식 접근). 하드코딩 금지, 모든 UI 문자열은 `Localization` 통과.
 - **OCR (`feature:ocr`)** — **신용카드 스캔 전용** (신분증 OCR 아님). 서버 호출 없음, 순수 온디바이스 ML Kit. 결제 편의 UX.
 - **Wadiz AI (`feature:wai`)** — `wadiz.ai` 도메인 진입용 네이티브 래퍼. 별도 `aiDomainUrl`.

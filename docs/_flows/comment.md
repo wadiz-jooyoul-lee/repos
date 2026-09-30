@@ -237,7 +237,7 @@ public CommentVo modify(CommentModify modify, int userId, boolean isLocaleKorea)
    │    body: { campaignId, body, depth: 0, commentType: 'COMMENT', images: [...] }
    │    (쿠키 세션)
    ▼
-[www.wadiz.kr — com.wadiz.web]
+[www.wadiz.io — com.wadiz.web]
    │
    ├─ CommentApiController#createComment                [reward/comment/controller/:52]
    │     @RequiredLogin

@@ -85,7 +85,7 @@ func projectMakerInfo(with projectNo: Int) async throws -> ... {
 }
 
 func projectCollectionBanner() async -> ... {
-    let path = "/api/search/v2/funding"                              // service.wadiz.kr
+    let path = "/api/search/v2/funding"                              // api.wadiz.io
 }
 
 func adultVerification() async throws -> String? {
@@ -252,14 +252,14 @@ export const withNativeHeaderSpec = async <T extends Record<string, unknown>>(
 ### 4.2 BE 위치
 이 레포 내에서는 controller 미관측. 추정:
 - `com.wadiz.api.funding` 의 신규 `native` 패키지 (Phase 2 funding 분석에서 미커버 시점)
-- 또는 별도 mobile-api 서비스 (app.wadiz.kr 또는 별도 host)
+- 또는 별도 mobile-api 서비스 (api.wadiz.io/app 또는 별도 host)
 
 본 분석 범위 외. 별도 추적 권장.
 
 ### 4.3 연관 데이터 호출
 iOS API 파일 기준, 네이티브 상세는 위 통합 API 외에:
 - `/web/maker/REWARD/{projectNo}` — 메이커 정보 (com.wadiz.web 경유)
-- `/api/search/v2/funding` — 컬렉션 배너 (service.wadiz.kr)
+- `/api/search/v2/funding` — 컬렉션 배너 (api.wadiz.io)
 - `/api/v3/account/adult-verification/my` — 성인 인증 상태
 
 도 호출함.
@@ -322,7 +322,7 @@ iOS API 파일 기준, 네이티브 상세는 위 통합 API 외에:
     │   iOS: FundingDetailHeaderView + 8개 SwiftUI View
     │   Android: NativeAreaWebFragment + Compose 9개 Section
     │
-    └─ 하단 영역 (WebView, www.wadiz.kr/.../funding/{projectNo}/story)
+    └─ 하단 영역 (WebView, www.wadiz.io/.../funding/{projectNo}/story)
          │
          │ 웹뷰 로드 → 페이지 데이터 로더
          ▼

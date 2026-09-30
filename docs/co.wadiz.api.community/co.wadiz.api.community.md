@@ -1,5 +1,19 @@
 # co.wadiz.api.community
 
+> 📅 **2026-09-30 본문 점검** — `cloud_live` 브랜치 `268c0f5`(2026-09-21) 기준
+>
+> 본문에서 코드와 어긋난 곳 세 군데를 고쳤습니다.
+>
+> | 고친 곳 | 내용 |
+> |---|---|
+> | `HttpClientConfig.java` 절 | **2026-04-20 에 삭제된 파일**입니다(`1c15adb`). `ExternalApiConfig.java` 로 바뀌었고 Bean 도 3개에서 10개로 늘었습니다 |
+> | QMT 표기 | `836887e`(2026-08-24)가 **`qmt` 를 `cmt` 로 전면 전환**했습니다. 파일 이름만 22건 바뀌었습니다 |
+> | `SpamDuplicateDeleter.java` | 2026-08-21 에 `SpamCleanupComponent` 로 통합되며 사라졌습니다(`7f68060`) |
+>
+> 이번 pull 로 들어온 커밋은 하나입니다 — `248b127`(2026-09-21) "ci: rc1 배포 워크플로 추가".
+> **`aws_deploy_ecr_rc1.yml`(45줄)이 생겼습니다.**
+> `wadiz-frontend` 와 `helm-charts` 에서 관측한 **rc1 환경 복원**과 같은 흐름입니다.
+
 > 📅 **2026-09-10 cloud_live pull 보강** (1 커밋)
 >
 > ### RWD-5951 — 멤버십 응답 판정을 `isAvailable` → `hasMembership` 으로 전환
@@ -79,9 +93,42 @@
 > ⚠️ **기준 브랜치가 `master` → `cloud_live` 로 바뀌었습니다.** 내용은 master 와 거의 같고(클라우드 전용 커밋은 설정 재정렬 2건뿐), **QMT(2차 콘텐츠 심사) 파이프라인 신설(RWD-5823)** 과 **어드민 '실시간 콘텐츠 검사' 조회 API 신설(RWD-5823·RWD-5879)** 이 핵심입니다. 신규 REST 컨트롤러 1개(`RealtimeContentAdminController`, endpoint 3) + 기존 `SupporterSignatureAdminController` 에 endpoint 1개 추가.
 >
 > ### RWD-5823 — QMT(콘텐츠 심사) 트리거·발행·결과 저장
-> - 1차 프로파일링 결과의 메타 점수로 2차 심사(QMT) 후보를 거르는 파이프라인 신설. 신규 `config/properties/QmtProperties.java`(record) — 트리거는 **OR 조건**(`sentiment <= maxSentiment` OR `toxicity >= minToxicity` OR `riskScore >= minRiskScore`)이고 운영값 단일 출처는 `application.yml` 의 `qmt.trigger.*`(3축 모두 **0.5**). 클래스 상수 `DEFAULT_THRESHOLD`(0.5)는 yml 키 누락 시에만 쓰는 방어 기본값이라 운영값과 별개입니다.
-> - 감정(sentiment) 임계는 0.5 → 0.60 으로 올렸다가 rc 피드백으로 **0.5 로 원복**(2026-08-11)했습니다.
-> - 신규 Kafka 배선: `QmtRequestProducer`(요청 발행) · `QmtResultConsumer`(결과 수신) · `QmtScreenDispatcher`(발화 판정·디스패치), 결과 저장 매퍼 `mapper/content_profiler/QmtScreenMapper.xml`, DTO `dto/QmtRequest.java`·`dto/QmtResult.java`, 심각도 enum `model/constant/CmtSeverity.java`. 발행 on/off 는 `middleware.kafka.qmt-publish-enabled` 이며 **live 를 `true` 로 활성**했습니다(`application-live.yml`).
+> - 1차 프로파일링 결과의 메타 점수로 2차 심사 후보를 거르는 파이프라인 신설. 트리거는 **OR 조건**입니다 —
+>   `sentiment <= maxSentiment` 이거나 `toxicity >= minToxicity` 이거나 `riskScore >= minRiskScore`.
+> - 감정(sentiment) 임계는 0.5 에서 0.60 으로 올렸다가 rc 피드백으로 **0.5 로 원복**(2026-08-11)했습니다.
+>
+> ⚠️ **2026-09-30 정정 — 이름이 `qmt` 에서 `cmt` 로 전면 전환됐습니다.**
+> `836887e`(2026-08-24) "refactor: qmt→cmt 표기 전환 — 내부 전면 정정 + 와이어·설정 전환기 이중화" 입니다.
+> 커밋 설명이 이유를 적고 있습니다 — *"DB 는 이미 cmt(profile_cmt_screen·cmt_code)였고 Java 이름·설정 키·토픽 값만 갈려 있었다"*.
+> **파일 이름 바꾸기만 22건**입니다.
+>
+> | 예전 이름 | 지금 |
+> |---|---|
+> | `QmtProperties.java` | `config/properties/CmtProperties.java` |
+> | `QmtRequestProducer` | `module/content_profiler/integration/kafka/CmtRequestProducer.java` |
+> | `QmtResultConsumer` | `module/content_profiler/listener/CmtResultConsumer.java` |
+> | `QmtScreenDispatcher` | `module/content_profiler/usecase/CmtScreenDispatcher.java` |
+> | `dto/QmtRequest.java`·`dto/QmtResult.java` | `module/content_profiler/model/wire/CmtRequest.java`·`CmtResult.java` |
+> | `mapper/content_profiler/QmtScreenMapper.xml` | `mapper/wadiz_community/CmtScreenMapper.xml` |
+> | `model/constant/CmtSeverity.java` | `shared/domain/content_profiler/CmtSeverity.java` |
+> | `qmt.trigger.*` | **`cmt.trigger.*`** (세 축 모두 0.5, `application.yml:451-455`) |
+> | `middleware.kafka.qmt-publish-enabled` | **`cmt-publish-enabled`** (live 는 `true`) |
+> | 요청 토픽 `…-content-qmt-requested-v1` | **`…-content-cmt-requested-v1`** |
+> | 결과 토픽 `…-community-qmt-result-v1` | **`…-community-cmt-result-v1`** |
+>
+> 🔎 **전환기 이중화가 걸려 있습니다. 아직 걷어내지 않았습니다.**
+>
+> | 무엇 | 왜 |
+> |---|---|
+> | 결과 토픽을 **신·구 둘 다 수신** | 배포 직전에 나간 요청이 `replyTo=구 토픽` 을 물고 있습니다. 구 리스너가 없으면 그 구간 결과가 조용히 사라집니다 |
+> | `cmt-publish-enabled` 가 **구 키를 폴백으로 읽음** | `cmt-publish-enabled: ${middleware.kafka.qmt-publish-enabled:false}`. 설정이 gitops 별도 저장소에 있어 한 번에 못 바꿉니다 |
+> | `qmt-result-topic-legacy` 키 존속 | 구 결과 토픽 이름을 그대로 들고 있습니다 |
+> | `CmtResult.promptVersion()` 신설 | 신 필드를 먼저 보고 없으면 구 필드로 폴백합니다. 없으면 구 엔진이 떠 있는 동안 재발행 방어가 느슨해집니다 |
+>
+> **요청 토픽 전환에는 선행 조건이 있고, 커밋 시점에 그것이 안 끝나 있었습니다.**
+> 커밋 설명이 이렇게 경고합니다 — *"★엔진 dual-listen 실배포가 선행 조건이다(현재 미이행 — 엔진 18커밋 원격 미push).
+> 역순 배포는 발행 성공·소비자 0 의 무음 단절"*.
+> **확인 필요**입니다. 엔진 쪽 배포가 끝났는지 이 저장소만으로는 알 수 없습니다.
 > - 위협탐지 웹훅을 신뢰안전팀 채널로 교체(live). 프로파일 테이블에 `is_maker` 컬럼 추가 및 reuse 판정을 sha·화자·promptVersion 조합으로 강화. 새소식 댓글의 `campaignId` 해석을 단건에서 **bulk 2-hop** 으로 바꿔 단건↔bulk 불일치를 해소하고, 캠페인 단위 조회에 새소식 댓글을 편입했습니다.
 >
 > ### RWD-5823 / RWD-5879 — 어드민 '실시간 콘텐츠 검사' 조회 API 신설
@@ -162,7 +209,13 @@
 > ### RWD-5731 — 1:1 문의(PERSONAL_MESSAGE) 위협 탐지 추가 + ContentType rename
 > - **`shared/contentrule/model/ContentType.java:24`** `PERSONAL_MESSAGE`(1:1 메신저형 게시판, 메시지 단위 단일 타입) 추가.
 > - **`shared/contentrule/model/ContentType.java:22`** `SIGNATURE`/`SIGNATURE_COMMENT` → `SUPPORTER_SIGNATURE`/`SUPPORTER_SIGNATURE_COMMENT` 리네임(in-process 전용이라 REST/wire 영향 없음). 호출부(`SupporterSignatureUserService`, `SupporterSignatureCommunicationUserService`)·테스트·코퍼스 JSON 동기화.
-> - **`module/content_rule/repository/crossdb/SpamCleanupMapper.java` / `cleanup/SpamDuplicateDeleter.java`** 도배 정리에 1:1 문의 추가. soft-delete 컬럼 부재로 **hard delete**(root=`UpperMessageNo -1` 보존, child 만).
+> - **`persistence/wadiz_db/mapper/SpamCleanupMapper.java`** 도배 정리에 1:1 문의 추가.
+>   soft-delete 컬럼이 없어 **실제로 지웁니다**(root=`UpperMessageNo -1` 은 남기고 child 만).
+>
+>   ⚠️ **2026-09-30 정정** — `cleanup/SpamDuplicateDeleter.java` 는 2026-08-21 에 사라졌습니다
+>   (`7f68060`, "cleanup 3종을 SpamCleanupComponent 로 통합 — 축③ 폐쇄").
+>   매퍼 경로도 `module/content_rule/repository/crossdb/` 에서
+>   **`persistence/wadiz_db/mapper/`** 로 옮겨졌습니다.
 >
 > ### RWD-5762 — 1:1 문의 메이커 발신 메시지 URL 평판 평가 bypass (오탐 완화)
 > - **`module/content_profiler/integration/kafka/dto/PersonalMessageData.java:47`** `isFromMaker()` 추가 — 작성자(`RegisterUserId`)가 대화방 주인(`ClientUserId`)과 다르면 메이커 발신(null 가드 fail-safe).
@@ -264,14 +317,39 @@ src/test/java/co/wadiz/community/
 
 ## 주요 설정 분석
 
-### `HttpClientConfig.java`
-3개의 `RestClient` Bean — community 가 외부 점수/캠페인 서비스를 호출하는 구조 사전 정의:
+### `ExternalApiConfig.java` — 외부 연동 호출 설정
 
-| Bean | connect / read | 용도 |
+> ⚠️ **2026-09-30 정정** — 예전 문서가 적어 둔 `HttpClientConfig.java` 는 **2026-04-20 에 사라졌습니다**
+> (`1c15adb`, `[RWD-5445] Phase 4: 비즈니스 기반 레이어 + 설정/예외/이벤트/i18n 체계화`).
+> 지금은 `config/ExternalApiConfig.java` 가 그 자리를 대신합니다.
+> Bean 도 3개에서 **10개**로 늘었습니다.
+
+| Bean | 연결 / 읽기 제한시간 | 용도 |
 |---|---|---|
-| `campaignRestClient` | 5s / 10s | 캠페인 일반 호출 |
-| `campaignShortRestClient` | 1s / 2s | 캠페인 빠른 응답용 (two-tier SLA) |
-| `pointRestClient` | 5s / 10s | 포인트 적립/차감 호출 |
+| `campaignApiRestClient` | 5초 / 10초 | 캠페인 일반 호출 |
+| `campaignApiShortRestClient` | **1초 / 2초** | 캠페인 빠른 응답용 |
+| `pointApiRestClient` | 5초 / 10초 | 포인트 적립·차감 |
+| `mailApiRestClient` | 5초 / 10초 | 메일 발송 |
+| `pushApiRestClient` | 5초 / 10초 | 푸시 발송 |
+| `userApiRestClient` | 5초 / 10초 | 유저 조회 |
+| `membershipApiRestClient` | 5초 / 10초 | 멤버십 조회 |
+| `startupApiRestClient` | 5초 / 10초 | 메이커 법인번호 조회 (`RWD-5818`) |
+| `alimTalkApiRestClient` | 5초 / 10초 | 카카오 알림톡 (`RWD-5754`) |
+| `ipqsRestClient` | 5초 / **12초** | IP 평판 조회 (`RWD-5713`) |
+| `webRiskRestClient` | 5초 / 10초 | 웹 위험도 조회 (보조) |
+
+**연결 풀을 하나만 두고 모두 나눠 씁니다.**
+Apache HttpClient 5 의 `PoolingHttpClientConnectionManager` 를 공용 Bean 으로 둡니다.
+코드 주석이 그래도 괜찮은 이유를 적고 있습니다 —
+*"풀은 host:port 단위로 자동 분리되며 maxPerRoute 상한으로 한 호스트가 풀을 점유해도 다른 호스트는 영향 없음"*.
+
+> 🔎 **`ipqsRestClient` 만 읽기 제한시간이 12초입니다.**
+> 주석의 표현은 *"IPQS(주, 느린 꼬리 대비 read 12s)"* 입니다.
+> 응답이 늦게 오는 경우가 있어 넉넉히 잡은 것으로 보입니다.
+
+> 🔎 **`alimTalkApiRestClient` 는 주소가 비어 있어도 뜹니다.**
+> 주석이 이유를 적어 뒀습니다 —
+> *"base-url 미설정(빈 문자열)이어도 빈 생성은 성공 (RestClient.baseUrl 은 호출 시점에만 의미) — local/test 등 미발송 환경 기동 무영향"*.
 
 ### `RabbitMqConfig.java`
 - DirectExchange: `community.signature.exchange` (레거시 `userApiExchange` 와 명시적으로 단절 — 새 네이밍 채택).

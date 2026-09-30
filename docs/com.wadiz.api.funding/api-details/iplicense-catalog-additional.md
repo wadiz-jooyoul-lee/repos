@@ -311,35 +311,51 @@ SELECT * FROM AdditionalService WHERE IsActive = TRUE
 
 ---
 
-## 16. PUT `/api/internal/additional-services/{projectNo}/services/{serviceCode}/approve` — 승인 (Admin)
+## 16~18. 관리자 부가서비스 엔드포인트 — **3개가 사라지고 2개가 들어왔습니다**
 
-- **Method**: `AdditionalInternalServiceController.approveService`
+> 📅 **2026-09-29 본문 점검** — `master` `a9fac634f` 기준
+>
+> `RWD-5594`(2026-05-27, `4e9997083`)가 바꿨습니다.
+> 커밋 제목이 "PD컨설팅 수동신청 기능 삭제 및 PD 컨설팅 적용/미적용 기능 추가" 입니다.
+>
+> | 예전 경로 | 지금 |
+> |---|---|
+> | `PUT /api/internal/additional-services/{projectNo}/services/{serviceCode}/approve` | **없어졌습니다** |
+> | `PUT /api/internal/additional-services/{projectNo}/services/{serviceCode}/reject` | **없어졌습니다** |
+> | `PUT /api/internal/additional-services/{projectNo}/services/pd-consulting/manual-request` | **없어졌습니다** |
+>
+> 지금 `AdditionalInternalServiceController` 에 남은 엔드포인트는 **둘뿐**입니다.
 
-### Request Body — `AdminServiceRequest{adminUserId}`
+### 16. PUT `/api/internal/additional-services/{projectNo}/services/pd-consulting/apply` — PD 컨설팅 적용
 
-### Response — `ServiceOperationResponse`
-- `AdditionalServiceNotFoundException` → `SERVICE_NOT_FOUND`
-- `AdditionalServiceStateException` → `INVALID_SERVICE_STATE`
-- 기타 → `INTERNAL_ERROR`
+- **메서드**: `AdditionalInternalServiceController.applyPdConsulting` (`:32`)
+- 관리자가 PD 컨설팅을 **미적용에서 적용**으로 바꿉니다.
 
-### DB 호출
-`CampaignAdditionalService.Status` UPDATE (예: `REQUESTED` → `APPROVED`).
+**요청 본문** — `AdminServiceRequest{adminUserId}`
 
----
+**응답** — `ServiceOperationResponse`
 
-## 17. PUT `/api/internal/additional-services/{projectNo}/services/{serviceCode}/reject` — 반려 (Admin)
+| 상황 | 응답 |
+|---|---|
+| 성공 | `PD 컨설팅 적용이 완료되었습니다.` |
+| 대상 없음 (`AdditionalServiceNotFoundException`) | 코드 `SERVICE_NOT_FOUND` |
+| 그 밖의 오류 | 코드 `INTERNAL_ERROR` |
 
-16번과 동일 패턴. `Status` → `REJECTED`.
+### 17. PUT `/api/internal/additional-services/{projectNo}/services/pd-consulting/unapply` — PD 컨설팅 미적용
 
----
+- **메서드**: `AdditionalInternalServiceController.unapplyPdConsulting` (`:50`)
+- 관리자가 PD 컨설팅을 **적용에서 미적용**으로 되돌립니다.
+- 요청 본문과 오류 코드는 16번과 같습니다.
 
-## 18. PUT `/api/internal/additional-services/{projectNo}/services/pd-consulting/manual-request` — PD 컨설팅 수동 신청
+> 🔎 **오류가 나도 HTTP 상태는 200 입니다.**
+> 두 엔드포인트 모두 예외를 잡아 `ResponseWrapper.ok(...)` 안에 오류 코드를 담아 돌려줍니다.
+> 부르는 쪽은 HTTP 상태가 아니라 **응답 본문의 코드**를 봐야 성공·실패를 알 수 있습니다.
 
-- **Method**: `AdditionalInternalServiceController.requestService`
-
-관리자가 PD 컨설팅 부가서비스를 수동으로 신청. 13번과 동일한 UPSERT 패턴이나 `serviceCode`는 `PD_CONSULTING` 고정.
-
-### Request Body — `AdminServiceRequest{adminUserId, additionalServiceData}`
+> ⚠️ **상태 모델이 단순해졌습니다.**
+> 예전에는 "신청 → 승인/반려"라는 결재 흐름이 있었습니다(`REQUESTED` → `APPROVED`/`REJECTED`).
+> 지금은 관리자가 **적용·미적용 두 상태를 직접 토글**합니다.
+> `serviceCode` 를 경로로 받던 범용 승인·반려도 사라지고 PD 컨설팅 전용만 남았습니다.
+> 다른 부가서비스의 승인 절차가 어디로 갔는지는 **이 저장소만으로는 확인되지 않습니다.**
 
 ---
 

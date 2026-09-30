@@ -27,7 +27,7 @@
 두 경로가 공존하는 이유는 본 문서 범위 외. 레거시 UI 영역(static/entries)과 신규 pnpm 모노레포(packages/api)가 각각 다른 백엔드 경로를 쓰는 것으로 관측.
 
 - **fetch 래퍼**: 레거시는 `fetchRewardApi` (static/packages/fetch-api), 신규는 `packages/api/src/fetch.ts` 기반 `GET` 헬퍼
-- **Host**: `https://www.wadiz.kr`
+- **Host**: `https://www.wadiz.io`
 
 ### 1.2 wadiz-android / wadiz-ios
 - Phase 2 미진행.
@@ -180,7 +180,7 @@ ORDER BY A.displayOrder
 [FE: reward-product/services/rewardProduct.js]
    │ GET /web/reward/api/campaigns/{id}/reward-items/supporter
    ▼
-[www.wadiz.kr — com.wadiz.web]
+[www.wadiz.io — com.wadiz.web]
    │
    ├─ RewardItemApiController#getRewardInfo                 [controller/RewardItemApiController.java:39]
    │

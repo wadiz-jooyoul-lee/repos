@@ -7,7 +7,8 @@
   - `wadiz-frontend/packages/api/src/web/funding.service.ts:475-494` (정책·내 환불 정보 조회)
   - `com.wadiz.api.funding/adapter/application/src/main/java/com/wadiz/api/funding/domain/refund/RefundController.java:1-40`
   - `com.wadiz.api.funding/adapter/application/src/main/java/com/wadiz/api/funding/domain/refundpolicy/RewardRefundPolicyController.java:14-25`
-  - `com.wadiz.api.funding/adapter/application/src/main/java/com/wadiz/api/funding/domain/paymentcancel/CancelPaymentController.java:1-35`
+  - `com.wadiz.api.funding/adapter/application/src/main/java/com/wadiz/api/funding/domain/paymentcancel/CancelPaymentController.java:1-41`
+  - `com.wadiz.api.funding/adapter/application/src/main/java/com/wadiz/api/funding/domain/paymentcancel/CancelPaymentInternalController.java:1-45`
   - `com.wadiz.api.funding/adapter/infrastructure/src/main/resources/mapper/RewardRefundMapper.xml` (전체 ≈ 30 줄)
   - `com.wadiz.web/src/main/java/com/wadiz/web/reward/refund/controller/RefundCommandController.java:1-110`
 - **외부 경계**: `refundProxy`, `cancelPaymentProxy`, `refundCommandService`, `refundApplicationService`, `refundService` 는 funding-core / com.wadiz.web 내부 service. 실제 PG 환불 호출(`nicepay-api` 위임)은 이 레포에서 관측 불가.
@@ -19,7 +20,19 @@
 | 구분 | 시점 | 주요 엔드포인트 | 서비스 |
 |---|---|---|---|
 | **A. 결제 취소** (결제 중/직후) | 마감 이전 단일 결제 취소 | `POST /api/cancel-payment` | funding `CancelPaymentController` |
+| **A-2. 내부 일괄 취소** | 운영·배치가 여러 건을 한 번에 | `POST /api/internal/cancel-payment/bulk`, `POST /api/internal/cancel-payment/bulk/payment-gateway` | funding `CancelPaymentInternalController` |
 | **B. 리워드 환불 신청·승인** (배송 단계) | 배송 지연/하자 → 신청 → 승인/거절 | `POST /web/reward/api/refunds/{id}/apply-by-(defect\|delay)`, `approve`, `reject`, `hold` | com.wadiz.web `RefundCommandController` |
+
+> 📅 **2026-09-29 본문 점검** — `master` `a9fac634f` 기준.
+> 본문에 적힌 엔드포인트 4개는 지금도 그대로입니다. 경로·메서드 모두 일치합니다.
+> 빠져 있던 **내부 일괄 취소 경로 2개**를 새로 넣었습니다.
+>
+> | 경로 | 하는 일 |
+> |---|---|
+> | `POST /api/internal/cancel-payment/bulk` | 여러 건을 한 번에 취소합니다 |
+> | `POST /api/internal/cancel-payment/bulk/payment-gateway` | 결제대행사 쪽 취소까지 함께 처리합니다 |
+>
+> 둘 다 `/api/internal/**` 이라 `hasRole("SYSTEM")` 권한이 필요합니다.
 
 읽기 경로는 두 모드 공통:
 - `GET /api/refund-policy/campaigns/{id}/detail` (정책)

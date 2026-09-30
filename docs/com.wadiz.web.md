@@ -6,6 +6,48 @@
 
 ---
 
+> 🔍 **2026-09-22 본문 전면 점검** — `cloud_live`(`ac28913e`, 2026-09-22) 기준
+>
+> 본문이 2026-07-10 이후 74일 멈춘 사이 저장소에 390 커밋이 들어왔습니다.
+> 인용 파일 221개 중 36개가 사라진 상태였습니다.
+>
+> ### 큰 줄기 — JSP 지면이 대거 걷혔습니다
+>
+> | 이슈 | 시점 | 무엇을 지웠나 |
+> |---|---|---|
+> | `FE1-1359` | 2026-08-04 | **투자 지면**과 **스타트업 지면** |
+> | `CLIENT-238` | 2026-09-03 | 통합으로 참조를 잃은 **펀딩 상세 JSP** |
+> | `CLIENT-239` | 2026-09-04 | **wmain 지면 JSP** 와 공통 include JSP |
+>
+> ### 정정 9건
+>
+> | # | 어디가 | 무엇이 틀렸나 |
+> |---|---|---|
+> | 1 | 개요·브랜치 전략 | 운영 주소를 `www.wadiz.kr` 로 적었습니다. **클라우드 운영은 `www.wadiz.io`** 입니다 |
+> | 2 | 4.2 JSP 그룹 | 43개로 적혀 있었으나 **40개**입니다. 네 그룹이 사라지고 `studio` 가 생겼습니다 |
+> | 3 | 4.2 `wlayout` | `wRewardDetailSPA.jsp` 가 목록에 있었으나 삭제됐습니다. 지금 16개입니다 |
+> | 4 | **6.1 리워드 상세** | **전면 교체.** 전용 JSP 를 쓴다고 했으나 지금은 `GlobalKoreaFundingDetailController` 가 `global-korea/index` React 셸 하나를 돌려줍니다 |
+> | 5 | **6.2 결제 체크아웃** | **전면 교체.** `WPaymentController` 가 813줄에서 **699줄**로 줄었고 **지면을 그리지 않습니다.** AJAX·JSON 전용입니다 |
+> | 6 | 6.6 통합 메인 | `WStartupMainController` 가 사라졌고 JSP 는 `wmain/main.jsp` 하나만 남았습니다 |
+> | 7 | 9.2 청크 맵 | `equity`·`open-account`·`coming` 세 청크가 사라지고 `landing-static` 이 생겼습니다. 지금 11개입니다 |
+> | 8 | **9.3 JSP 로 강하게 남은 영역** | 목록 맨 앞의 "리워드 결제 체크아웃"이 **더 이상 해당하지 않습니다** |
+> | 9 | 9.5 배포 산출물 | `_assetVersions.jsp` 가 아니라 `winclude/assetVersions.jsp` 입니다 |
+>
+> ### 방향이 한 줄로 보입니다
+>
+> `wpayment/` 폴더에는 이제 **`equity/` 하위만** 남았습니다.
+> `campaign/` 폴더에는 **`include/` 하위만** 남았습니다.
+> 지면 렌더링은 `global-korea/index` 셸을 쓰는 컨트롤러 9개로 모이고 있고,
+> 레거시 컨트롤러들은 **AJAX 만 남기고 껍데기를 벗는 중**입니다.
+>
+> ### 확인하지 못한 것
+>
+> 저장소 `README.md` 가 낡았습니다. `dev.wadiz.kr` · `stg.wadiz.kr` · `www.wadiz.kr` 로 적혀 있습니다.
+> 파일이 EUC-KR 이라 UTF-8 환경에서 한글도 깨집니다.
+> **원본 저장소는 읽기 전용이라 고치지 않고 여기 기록만 남깁니다.**
+>
+> ---
+>
 > 📅 **2026-09-22 cloud_live pull 보강** (15 커밋, −154,862줄)
 >
 > **참조 없는 정적 자원 1,814건 삭제**로 15만 줄이 빠졌습니다.
@@ -576,13 +618,23 @@
 
 ## 1. 개요
 
-`com.wadiz.web` 는 `https://www.wadiz.kr` 본체를 구성하는 Spring 3.2 + JSP 레거시 WAR 프로젝트입니다. 리워드/투자(증권형) 펀딩 상세·청약·결제·마이페이지·커뮤니티 등 **와디즈 유저 사이드 거의 전 기능을 담고 있는 모놀리식 웹 서버**입니다.
+`com.wadiz.web` 는 와디즈 본체 웹을 구성하는 Spring 3.2 + JSP 레거시 WAR 프로젝트입니다. **운영 기준은 클라우드(`clive`)이고 주소는 `https://www.wadiz.io` 입니다**(`src/main/resources/properties/file-clive.properties` 의 `site_url`). 온프레미스 `real` 환경은 `https://www.wadiz.kr` 로 남아 있습니다. 리워드/투자(증권형) 펀딩 상세·청약·결제·마이페이지·커뮤니티 등 **와디즈 유저 사이드 거의 전 기능을 담고 있는 모놀리식 웹 서버**입니다.
 
-- 브랜치 전략(README.md:5-9): `dev` → dev.wadiz.kr, `rc` → stg.wadiz.kr, `master` → www.wadiz.kr.
+- 브랜치 전략 — **저장소 `README.md` 는 낡았습니다.** 거기에는 `dev` → `dev.wadiz.kr`, `rc` → `stg.wadiz.kr`, `master` → `www.wadiz.kr` 로 적혀 있습니다.
+  실제 운영은 **`cloud_live` 브랜치와 `clive` 환경**입니다. 환경별 주소는 `src/main/resources/properties/file-{env}.properties` 가 정본입니다.
+
+  | 환경 | `site_url` | `static_host` |
+  |---|---|---|
+  | **`clive`**(운영) | `https://www.wadiz.io` | `https://cdn-static.wadiz.io` |
+  | `real`(온프레미스) | `https://www.wadiz.kr` | `https://static.wadiz.kr` |
+  | `dev` | — | `https://cdn-static.dev.wadiz.io` |
+
+  > ⚠️ `README.md` 는 EUC-KR 로 저장돼 있어 UTF-8 환경에서 한글이 깨집니다. **원본 저장소라 고치지 않고 여기 기록만 남깁니다.**
 - Tomcat 서블릿 2.5 기반(`web/WEB-INF/web.xml:4`), `urlrewrite3.0` 필터로 레거시 URL을 신규 URL로 리다이렉트.
-- `.frontend/` 에 별도 Node 워크스페이스가 존재하며, 일부 화면(iam, open-account, floating-buttons, personal-message, school, embed 등)은 `static-dev.wadiz.kr / static.wadiz.kr` 에 배포되는 React 번들을 JSP가 얇게 껴서 불러오는 **SPA 쉘 JSP** 구조입니다 (`com.wadiz.web/.frontend/chunks.config.js:1`, `web/WEB-INF/jsp/react/entries/iam.jsp:29-33`).
+- `.frontend/` 에 별도 Node 워크스페이스가 존재하며, 일부 화면(iam, floating-buttons, personal-message, school, embed 등)은 정적 호스트(clive 는 `cdn-static.wadiz.io`)에서 받아 오는 React 번들입니다. 종전에 적혀 있던 `open-account` 청크는 지금 없습니다. `static-dev.wadiz.kr / static.wadiz.kr` 에 배포되는 React 번들을 JSP가 얇게 껴서 불러오는 **SPA 쉘 JSP** 구조입니다 (`com.wadiz.web/.frontend/chunks.config.js:1`, `web/WEB-INF/jsp/react/entries/iam.jsp:29-33`).
 - 이미 이관 완료된 화면: React 앱으로 재개발된 iam(로그인/회원가입), open-account, floating-buttons, iam, school, personal-message, 일부 landing(about, wadiz2017, partners 등). 또한 `/studio/reward/**` 로 리다이렉트되는 스튜디오(`web/WEB-INF/urlrewrite.xml:53-54, 227-232`) 및 `makercenter.wadiz.kr` / `helpcenter.wadiz.kr` 로 완전 이관된 커뮤니티·헬프센터(`web/WEB-INF/urlrewrite.xml:112-130, 189-191`).
-- 아직 남아있는 핵심: 리워드/투자 **펀딩 상세(`/web/campaign/detail/**`)**, **결제/청약(`/web/wpayment/*`, `/web/wpayment/equity/*`)**, **이벤트 기획전(`/web/wevent/**`)**, **wpartner / wcomingsoon / wevent / wpremium / 글로벌 커뮤니티** 등 SEO·상거래 흐름을 직접 렌더링하는 JSP. 특히 SNS 공유/봇 크롤링을 위한 서버 사이드 OG/JSON-LD 생성은 전부 JSP 로직(`wRewardDetailSPA.jsp:50-146`)에 그대로 살아 있습니다.
+- 아직 JSP 로 직접 렌더링하는 핵심 영역: **증권형 청약**(`/web/wpayment/equity/*`), **이벤트 기획전**(`/web/wevent/**`), **wpartner**, **wiplicense**, **글로벌 커뮤니티**.
+- SNS 공유·봇 크롤링용 서버 사이드 OG/JSON-LD 생성은 **펀딩 상세에서는 더 이상 JSP 가 하지 않습니다.** `CLIENT-238`(2026-09-03)로 상세 JSP 가 사라지고 `GlobalKoreaFundingDetailController` 가 맡습니다. 남은 영역의 JSP 는 여전히 직접 생성합니다.
 - 커밋 활동도는 저장소 자체에 .git 이 없어 간접 추정이 필요한데, jasypt / funding-core 1.0.137-SNAPSHOT / reward-http-client 0.4.10-SNAPSHOT / payment-log-client / ksd-client 등 자체 마이크로서비스 클라이언트 의존성은 계속 bumping 되고 있어 **"코드는 동결 안 했지만 화면은 React 로 뽑아내는 중"** 이라는 이관 중간상태입니다.
 
 규모 지표 (기준: Java `*Controller.java` + mapper + JSP):
@@ -614,7 +666,7 @@
 - 결제/인증 SDK: `nicepay-lite 0.9.24`, `inicis inipay 5.0`, `ExecureCrypto`, `KSFCclient`(한국증권금융 증권형), `NiceID.Check`.
 - 기타: ehcache 2.10.6, jasypt-spring31 1.9.2 (`encKey=!wadiz@` 프로퍼티 암복호화 키, `pom.xml:14`), jjwt 0.10.7 + nimbus-jose-jwt 9.31, bouncycastle 1.60 (Apple Sign In), googlecode/libphonenumber 8.12.57, emoji-java 5.1.1, jsoup 1.7.2, scala-library 2.10.4 (이상한 혼종 의존성), Spring mobile-device 1.1.3 (디바이스 감지).
 - Swagger: `springfox-swagger2` 2.6.1 (UI 포함).
-- 프런트 번들: webpack(4.x, `optionalDependencies`) 로 `.frontend` 워크스페이스 빌드 → `static-dev.wadiz.kr` / `static.wadiz.kr` 에 업로드. 구성: `.frontend/chunks.config.js` 에서 web/main/account/equity/reward/iam/personal-message/school/open-account/floating-buttons/landing/embed/sentry 청크 정의.
+- 프런트 번들: webpack(4.x, `optionalDependencies`) 로 `.frontend` 워크스페이스 빌드 후 정적 호스트에 업로드. **clive 는 `cdn-static.wadiz.io`**, 온프레미스 real 은 `static.wadiz.kr` 입니다. 구성: `.frontend/chunks.config.js` 에서 web/main/account/equity/reward/iam/personal-message/school/open-account/floating-buttons/landing/embed/sentry 청크 정의.
 
 **Maven 프로파일**: local(기본)/dev/dev2/rc/rc2/stage/vqa1/real — WAR 빌드시 `classpath:*-${environment}.xml` 형태로 환경별 스프링 구성 로드 (`pom.xml:20-55`).
 
@@ -677,11 +729,11 @@ URL은 대부분 `/web/*` 접두어(과거 `/ko/Campaign/Details/*` 호환성 �
 | URL prefix | 용도 | 대표 Controller (path) | JSP 경로 |
 |---|---|---|---|
 | `/web/main`, `/web/wmain` | 통합 메인 (리워드 기본, 메인·얼리버드·플랜드·마이·모어) | `web/wmain/controller/WMainController.java:86` | `wmain/main.jsp` |
-| `/web/winvest/main`, `/web/wmain/main` | 투자(증권형) 메인 | `web/wmain/controller/WInvestMainController.java` | `wmain/wmain.jsp` |
+| `/web/winvest/main`, `/web/wmain/main` | 투자(증권형) 메인 | `web/wmain/controller/WInvestMainController.java` | **JSP 없음** — `wmain/wmain.jsp` 는 `CLIENT-239`(2026-09-04)로 삭제 |
 | `/web/wreward/main`, `/web/wreward/collection/*` | 리워드 메인/컬렉션 | `web/wmain/controller/WRewardMainController.java` | `wmain/wreward/*.jsp` |
-| `/web/campaign/detail/{campaignId}`, `/web/campaign/detail/reward-info/{id}`, `/web/campaign/detail/qa/{id}`, `/web/campaign/detail/fundingInfo/{id}`, `/web/campaign/detailPost/{id}`, `/web/campaign/detailBacker/{id}` | 리워드 캠페인 상세(SPA 쉘 + SEO 서버 렌더) | `web/campaign/controller/WEBCampaignController.java:67,116,140,166,193` | `wlayout/wRewardDetailSPA.jsp`, `campaign/detailQASPA.jsp`, `campaign/detailPostSPA.jsp`, `campaign/detailBackerSPA.jsp` |
+| `/web/campaign/detail/{id}`, `/detail/reward-info/{id}`, `/detail/qa/{id}`, `/detail/fundingInfo/{id}`, `/detailPost/{id}`, `/detailBacker/{id}` | 리워드 펀딩 상세 | **`web/globalkorea/controller/GlobalKoreaFundingDetailController.java:68`** | **`global-korea/index`**(React 셸). 종전 `detail*SPA` JSP 는 `CLIENT-238` 로 삭제 |
 | `/web/wcampaign/*` | 캠페인 검색/지지서명/리워드서명 | `web/wcampaign/controller/WSearchCampaignController.java:42`, `WWEBCampaignSignatureController.java:15`, `WWEBRewardSignatureController.java:24`, `WWEBInvestSignatureController.java:24` | `wcampaign/*.jsp` |
-| `/web/wpayment/*`, `/web/wpayment/handbook`, `/web/wpayment/error/{type}`, `/web/wpayment/complete` | 리워드 결제 + 약관 + 본인인증 메일코드 | `web/wpayment/controller/WPaymentController.java:84` | `wpayment/app.jsp`, `wpayment/handbook.jsp`, `wpayment/complete.jsp`, `wpayment/error.jsp` |
+| `/web/wpayment/*` | 리워드 결제 관련 **AJAX·JSON 전용** | `web/wpayment/controller/WPaymentController.java` | **JSP 없음.** 약관·에러·완료 지면 JSP 는 모두 삭제 |
 | `/web/wpayment/equity/*` | 증권형 청약 결제 | `web/wpayment/controller/WPaymentEquityController.java` | `wpayment/equity/*.jsp` |
 | `/web/wpurchase/*` | 리워드 결제(신 플로우) | `web/wpurchase/controller/WEBPaymentController.java` | (주로 JSON) |
 | `/web/account/login`, `/web/account/my`, `/web/waccount/*` | 로그인/회원가입/마이(일반/투자/마케팅/드롭아웃) | `web/waccount/controller/WAccountRegistController.java:72`, `WAccountMyController.java:36`, `WAccountSocialController.java`, `WAccountEquityController.java`, `WAccountPlusController.java` 등 17개 | `waccount/*.jsp`, `winclude/*.jsp` |
@@ -714,9 +766,27 @@ URL은 대부분 `/web/*` 접두어(과거 `/ko/Campaign/Details/*` 호환성 �
 | `/resources/**`, `/wwwwadiz/**`, `/favicon.ico` | 정적 | mvc:resources | — |
 
 ### 4.2 JSP 최상위 그룹 (`web/WEB-INF/jsp/*`)
-`account`, `campaign`, `catchup`, `community`, `embed`, `equity`, `error`, `ftexautn`, `funding2015`, `global`, `global-account`, `global-korea`, `include`, `linkprice`, `makerprofile`, `mobile`, `mywadiz`, `oauth`, `personalverification`, `react`, `school`, `startup`, `supporterclub`, `video`, `waccount`, `wboard`, `wcampaign`, `wcoming`, `wevent`, `winclude`, `wiplicense`, `wlayout`(레이아웃 템플릿), `wlive`, `wmain`, `wmypage`, `wpage`, `wpartner`, `wpayment`, `wpersonalmessage`, `wpremium`, `wpurchase`, `wsub`, `wterms`.
 
-`wlayout/` 는 kwonnam jsp-template-inheritance 의 레이아웃 베이스: `common.jsp`, `mainCommon.jsp`, `wmeta.jsp`, `wcommon.jsp`, `wAwardsCommon.jsp`, `wGlobalCommon.jsp`, `wnoLayout.jsp`, `wnofooter.jsp`, `wRewardDetailSPA.jsp`, `_header.jsp`, `_footer.jsp`, `ftCommunity.jsp` (`jsp-inheritance-prefix = /WEB-INF/jsp/wlayout/`, `web.xml:258-262`).
+**2026-09-22 확인 40개 · JSP 파일 260개**입니다.
+
+`account`, `campaign`, `catchup`, `community`, `embed`, `equity`, `error`, `ftexautn`, `funding2015`, `global`, `global-account`, `global-korea`, `include`, `linkprice`, `makerprofile`, `mobile`, `mywadiz`, `oauth`, `personalverification`, `react`, `school`, **`studio`**, `startup`, `video`, `waccount`, `wboard`, `wevent`, `winclude`, `wiplicense`, `wlayout`, `wlive`, `wmain`, `wmypage`, `wpage`, `wpartner`, `wpayment`, `wpersonalmessage`, `wpurchase`, `wsub`, `wterms`
+
+> ⚠️ **네 그룹이 사라졌습니다** — `supporterclub`, `wcampaign`, `wcoming`, `wpremium`.
+> `studio` 가 새로 생겼습니다.
+
+주요 그룹의 현재 상태입니다.
+
+| 그룹 | 지금 무엇이 남았나 |
+|---|---|
+| `wpayment/` | **`equity/` 하위만 남았습니다.** 리워드 결제 JSP 는 전부 사라졌습니다 |
+| `campaign/` | **`include/` 하위만 남았습니다.** `detail*SPA.jsp` 는 `CLIENT-238`(2026-09-03)로 삭제 |
+| `wmain/` | 8개 — `comment` · `eventPage` · `feed` · `intergratedExibition` · `iplicenseMain` · `main` · `myWadizBirthdaySetting` · `myWadizProfileSetting` |
+
+`wlayout/` 는 kwonnam jsp-template-inheritance 의 레이아웃 베이스입니다. **2026-09-22 확인 16개**입니다.
+
+`_footer`, `_header`, `account`, `common`, `ftCommunity`, `mainCommon`, `wAccount`, `wAwardsCommon`, `wGlobalCommon`, `wcommon`, `wmeta`, `wmypage`, `wnoLayout`, `wnofooter`, `wterms`, `wtermsInvest`
+
+> ⚠️ `wRewardDetailSPA.jsp` 는 여기 없습니다. `CLIENT-238` 로 삭제됐습니다.
 
 ### 4.3 urlrewrite 주요 패턴 (`web/WEB-INF/urlrewrite.xml`)
 459라인 / 외부 유입 URL 호환성 유지에 집중.
@@ -810,29 +880,37 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 ## 6. 주요 화면 상세 분석
 
 ### 6.1 리워드 캠페인 상세 (`/web/campaign/detail/{campaignId}`)
-- **Controller**: `web/campaign/controller/WEBCampaignController.java:67-111` (`selectCampaign`).
-- **의존 서비스**:
-  - `CampaignService.getCampaignOverview(id)` — `com.wadiz.core.campaign.service.CampaignService`.
-  - `RewardCampaignService.getStatus(id)` — `com.wadiz.web.reward.campaign.service.RewardCampaignService`.
-  - `CampaignAccessPermitValidator.validate(...)` — 프리뷰/종료 접근권한 검사.
-  - `CampaignService.getCampaignDefaultInfo(id)` — 오픈/종료 시간.
-  - `GlobalFundingGateway.getProject(id, "ko")` — funding-api 호출(HTTP).
-  - (봇 전용) `getAiSummary`, `getProjectProductInfoNotice`, `getProjectStory`, `CampaignService.getSignatureRewardOverview`, `CommentService.getComments`.
-- **DAO / Mapper**:
-  - `com.wadiz.core.campaign.dao.CampaignDao` → `src/main/resources/sqls/campaign/campaign-mapper.xml:selectCampaignDefaultInfo`, `selectCampaignOverview`, `selectSignatureRewardOverview`, `selectCampaignProgressSummary1`, `selectCampaignRewardList`, `selectCampaignSocialReach`.
-  - SQL 패턴: MyBatis resultMap + `parameterType="map"` 중심. 매우 많은 `<if test>` 동적 쿼리(1057건 전체 중 `wcampaign/WInvestCampaignBaseInfo-mapper.xml` 107건, `community/communityArticle-mapper.xml` 145건 최다).
-- **렌더링 JSP**: `web/WEB-INF/jsp/wlayout/wRewardDetailSPA.jsp` — `layout:extends name="mainCommon"` 구조. 실제 프로젝트 본문은 React 번들(`__staticPath_reward_main_js`)이 그리고, 이 JSP 는 **OG 메타태그 / JSON-LD schema.org (WebPage, Product, QAPage) / Twitter card / 봇 전용 HTML** 을 서버사이드로 렌더. If-Modified-Since/304 처리도 컨트롤러 단에서 수행 (`WEBCampaignController.java:81-98`).
-- **외부 호출**: `globalFundingGateway` (funding-api HTTP), 모바일 디바이스 판별(`spring-mobile-device`).
-- **인증/권한**: 세션 기반 (`SessionUtil.isAdminUser()`, `SessionUtil.isLoggedIn()`), 캠페인 비공개 상태면 `CampaignAccessPermitValidator` 가 예외 발생 → `serverError.jsp`.
+
+> ⚠️ **2026-09-22 전면 정정.** 이 화면은 더 이상 전용 JSP 를 쓰지 않습니다.
+> `CLIENT-238`(2026-09-03)이 "통합으로 참조를 잃은 펀딩 상세 JSP" 를 지웠습니다.
+
+- **Controller**: `src/main/java/com/wadiz/web/globalkorea/controller/GlobalKoreaFundingDetailController.java:68` 이 아래 경로를 전부 받습니다.
+
+  | 구분 | 경로 |
+  |---|---|
+  | 본펀딩 상세 | `/campaign/detail/{id}` · `/campaign/detail/{id}/rewards` |
+  | 새소식·질문 | `/campaign/detailPost/{id}` · `/campaign/detail/qa/{id}` |
+  | 서포터 | `/campaign/detailBacker/{id}` |
+  | 오픈예정 | `/wcomingsoon/rwd/{id}` |
+
+- **렌더링**: `mv.setViewName("global-korea/index")` (`:169`). **React 셸 하나**입니다.
+  종전의 `wRewardDetailSPA` · `detailQASPA` · `detailPostSPA` · `detailBackerSPA` 는 모두 없어졌습니다.
+- **종전 컨트롤러** `src/main/java/com/wadiz/web/campaign/controller/WEBCampaignController.java` 는 남아 있지만 **AJAX 전용**이 됐습니다.
+  에디터 이미지 업로드, 페이스북 서명, 참여자 조회, 앵콜 요청·취소만 처리합니다. 지면 렌더링 코드는 없습니다.
+- **의존 서비스**: `CampaignService`, `RewardCampaignService`, `CampaignAccessPermitValidator`, `GlobalFundingGateway` 조합은 `GlobalKoreaFundingDetailController` 로 옮겨 갔습니다.
+- **인증/권한**: 세션 기반(`SessionUtil`). 캠페인 비공개면 `CampaignAccessPermitValidator` 가 예외를 던집니다.
 
 ### 6.2 리워드 결제 체크아웃 (`/web/wpayment/{campaignId}` 및 서브)
-- **Controller**: `web/wpayment/controller/WPaymentController.java:84` (class mapping `/web/wpayment/*`, 813 줄로 프로젝트 내 최대 컨트롤러 중 하나).
-- **포함 플로우**: 메인 진입 → 약관 페이지 `wpayment/handbook` → 결제 앱 진입 `wpayment/app` → 에러 `wpayment/error/{type}` → 완료 `wpayment/complete`.
+> ⚠️ **2026-09-22 전면 정정.** 이 컨트롤러는 **더 이상 지면을 그리지 않습니다.**
+
+- **Controller**: `src/main/java/com/wadiz/web/wpayment/controller/WPaymentController.java` (`@Controller`, class mapping `/web/wpayment/*`). **699줄**입니다(종전 기록 813줄).
+- **지금은 AJAX·JSON 전용입니다.** 뷰 이름을 정하는 코드가 없습니다. 메서드가 전부 `ajax*` 또는 `getIs*` 이고 `produces` 가 `text/plain` 혹은 `application/json` 입니다.
+- 종전에 적혀 있던 플로우(약관 `wpayment/handbook` → 결제 앱 `wpayment/app` → 에러 → 완료 `wpayment/complete`)의 **JSP 가 전부 사라졌습니다.** `wpayment/` 폴더에는 `equity/` 하위만 남아 있습니다.
 - **ajax 엔드포인트 (17+)**: 약관 목록, 결제상품 목록, 투자한도, 본인인증 메일 코드 발송/확인, 증권형 위험 고지 메일, 실시간/공휴일/환불시간 체크.
 - **주요 서비스**: `WPaymentService`, `PaymentService`, `NicePayService`(혹은 Inicis), `PointService`, `CouponService`, `AccountService`, `CampaignService`.
 - **Mapper**: `sqls/reward/payment/payment-mapper.xml`, `payment-refund-mapper.xml`, `sqls/equity/payment/wpayment-mapper.xml` / `ftpayment-mapper.xml`.
 - **외부 결제 연동**: NicePay(`kr.co.nicepay nicepay-lite`), Inicis(`inicis inipay 5.0`, `ExecureCrypto`) — pom 의존성으로 포함. 가상계좌/실명인증/IBK KSD 전산망 등 증권형 쪽은 `KSFCclient`/`NiceID.Check`.
-- **뷰**: `wpayment/app.jsp`(결제 SPA 쉘), `wpayment/handbook.jsp`, `wpayment/complete.jsp`.
+- **뷰**: 없습니다. 종전의 결제 SPA 쉘·약관·완료 JSP 는 `FE1-1359`(2026-08-04, 투자 지면 제거) 전후로 모두 삭제됐습니다.
 
 ### 6.3 투자 청약 (증권형) (`/web/wpayment/equity/*` + `/web/waccount/equity/*`)
 - **Controller**: `web/wpayment/controller/WPaymentEquityController.java` (약 700줄) + `web/waccount/controller/WAccountEquityController.java`, `WAccountJoinEquityController.java`.
@@ -854,11 +932,15 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 - **외부**: NICE 본인인증(`NiceID.Check`), 페이스북/카카오/네이버/구글/애플/라인 OAuth (`oauth2LoginFilter`, `oauth2RedirectFilter` → `com.wadiz.web.oauth.*`).
 
 ### 6.6 통합 메인 (`/web/main`, `/web/wmain`)
-- **Controller**: `WMainController.java:86`(`home`), `WInvestMainController.java`(투자 메인), `WRewardMainController.java`(리워드 메인), `WStartupMainController.java`(스타트업), `WLiveMainController.java`(라이브), `PreOrderUiMainController.java`(오픈예정).
+- **Controller**: `WMainController.java:86`(`home`), `WInvestMainController.java`(투자 메인), `WRewardMainController.java`(리워드 메인), `WLiveMainController.java`(라이브), `PreOrderUiMainController.java`(오픈예정).
 - **서비스**: `WMainService`, `WWEBMainService`, `MainApiService`(main-client로 main-api 호출), `WInvestSearchService`, `WRewardSearchService`, `StatisticService`, `NewsletterService`.
 - **Mapper**: `sqls/wmain/wiosmain-mapper.xml`, `sqls/wcampaign/winvestsearch-mapper.xml`(43 `<if>` 동적쿼리), `wrewardsearch-mapper.xml`(11), `WInvestCampaignBaseInfo-mapper.xml`(107 `<if>` — 프로젝트 최대 동적 쿼리).
-- **JSP**: `wmain/main.jsp`(통합 리워드 메인), `wmain/wmain.jsp`(투자 메인), `wmain/startupMain.jsp`, `wmain/makerCode.jsp`, `wmain/about.jsp`.
-- **특이**: 메인은 대부분 `main.js` React 번들 쉘. 서버는 GA 추적 엔드포인트 `/web/main/track/section`, 배너 리스트, 메이커 구독 AJAX 제공.
+- **JSP**: `wmain/main.jsp`(통합 리워드 메인) **하나만 남았습니다.**
+
+  > ⚠️ 투자 메인·스타트업·메이커코드·소개 JSP 는 모두 삭제됐습니다.
+  > 스타트업 지면은 `FE1-1359`(2026-08-04), 나머지는 `CLIENT-239`(2026-09-04)입니다.
+  > `WStartupMainController.java` 도 함께 사라졌습니다.
+- **특이**: 메인은 대부분 `main` React 청크 쉘입니다(번들 파일은 정적 호스트에서 받습니다). 서버는 GA 추적 엔드포인트 `/web/main/track/section`, 배너 리스트, 메이커 구독 AJAX 제공.
 
 ---
 
@@ -876,7 +958,7 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
   - `wboard/wBoardComment-mapper.xml`: 52
   - `wcampaign/winvestsearch-mapper.xml`: 43
 - XML 내 `<select>/<insert>/<update>/<delete>` 중심. `statementType="CALLABLE"` 은 3건(`code/ftcommon-mapper.xml`) 정도로 적으며, **대부분 CRUD + 조건부 동적 where**.
-- `SqlSessionType`: `com.wadiz.core.SqlSessionType.java`(`src/main/java/com/wadiz/core/SqlSessionType.java`) 는 master/slave(읽기/쓰기) 또는 DB2(`sqls_db2`) 분리용.
+- `SqlSessionType`: `src/main/java/com/wadiz/core/SqlSessionType.java` 는 master/slave(읽기/쓰기) 또는 DB2(`sqls_db2`) 분리용.
 
 ### 7.2 Stored procedure
 `src/main/resources/sp/` 에 20개 `.sql` 원본 파일 — 배포 시 DB 측에서 수동으로 관리(소스 버전관리 용). 대표:
@@ -942,7 +1024,7 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 - Apple Sign In: `bcpkix-jdk15on 1.60` (JWT 서명 검증)
 
 ### 8.3 SNS·OAuth·알림
-- Facebook App ID `190622721088710`, Kakao app, Naver, Google, Apple, LINE(twitter4j 는 twitter 만 쓰는 듯). callback: `https://www.wadiz.kr/web/oauth/{provider}`.
+- Facebook App ID `190622721088710`, Kakao app, Naver, Google, Apple, LINE(twitter4j 는 twitter 만 쓰는 듯). callback: clive 기준 `https://www.wadiz.io/web/oauth/{provider}`.
 - Braze(`web/braze/**` 및 `web/crmgateway/**` 추정) 관련 CRM 게이트웨이.
 
 ### 8.4 기타
@@ -957,7 +1039,7 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 
 ### 8.5 CDN/정적자산
 - `https://cdn.wadiz.kr/resources` — 이미지/공용 리소스.
-- `https://static.wadiz.kr` / `https://static-dev.wadiz.kr` — **React 번들 배포 원천**(`file-real.properties:static_host`, `.frontend/static.config.js`).
+- **React 번들 배포 원천** — clive `https://cdn-static.wadiz.io`, dev `https://cdn-static.dev.wadiz.io`, 온프레미스 real `https://static.wadiz.kr` (`src/main/resources/properties/file-{env}.properties` 의 `static_host`, `.frontend/static.config.js`).
 - `https://www2.wadiz.kr` — `prev_site_url`. 구버전 와디즈 서브도메인.
 - `https://app.wadiz.kr`, `https://adm.wadiz.kr`, `https://event.wadiz.kr` — 주변 도메인.
 
@@ -976,29 +1058,32 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 
 ### 9.2 내부 이관(SPA 쉘)
 - `/WEB-INF/jsp/react/entries/iam.jsp` → iam React 번들(로그인/회원가입). 서버는 세션 + 이메일/SMS 인증 AJAX만 수행.
-- `wRewardDetailSPA.jsp`, `detailQASPA.jsp`, `detailPostSPA.jsp`, `detailBackerSPA.jsp` → 각자 reward React 번들이 본문 렌더, JSP 는 SEO 메타/JSON-LD/봇 HTML/초기 project 데이터 주입.
+- ~~펀딩 상세 SPA 쉘 JSP 4종~~ — **없어졌습니다.** `CLIENT-238`(2026-09-03)이 지웠고, 지금은 `GlobalKoreaFundingDetailController` 가 `global-korea/index` 하나를 돌려줍니다. SEO 메타·JSON-LD·봇 HTML·초기 데이터 주입은 그 컨트롤러가 맡습니다.
 - `wpayment/app.jsp` → payment React 번들.
 - `/web/mywadiz/*` → mywadiz(account React 번들) + 일부 구 JSP.
 - `/web/wcomingsoon/*` → coming React 번들.
 
-`chunks.config.js` 에 정의된 React 번들과 JSP 연결 맵:
-| 청크 | JSP 쉘 |
+`.frontend/chunks.config.js`(162줄)에 정의된 React 번들입니다. **2026-09-22 확인 11개**입니다.
+
+| 청크 | 쓰이는 곳 |
 |---|---|
-| `web` (공통 polyfill/wui/vendor/common) | 모든 JSP |
-| `main` | `wmain/main.jsp`, `wmain/wmain.jsp` |
+| `web` | 공통 polyfill·wui·vendor·common. 모든 지면 |
+| `main` | `wmain/main.jsp` |
 | `account` | `waccount/*.jsp`, `mywadiz/*.jsp` |
-| `equity` | `equity/**`, `wpayment/equity*.jsp` |
-| `reward` | `wlayout/wRewardDetailSPA.jsp`, `wmain/main.jsp` |
+| `reward` | 리워드 지면 |
 | `iam` | `react/entries/iam.jsp` |
-| `open-account` | 계좌개설 |
 | `personal-message` | `wpersonalmessage/*.jsp` |
 | `school` | `school/*.jsp` |
 | `floating-buttons` | 공통 플로팅 버튼 |
+| `landing` · **`landing-static`** | `wpage/*.jsp` 계열 |
 | `embed` | `embed/*.jsp` |
-| `landing` | `wpage/*.jsp` (about, wadiz2017, partners, terms, bestmaker2017/2018) |
+
+> ⚠️ **세 청크가 사라졌습니다** — `equity`, `open-account`, `coming`.
+> `landing-static` 이 새로 생겼습니다.
+> `main` 청크가 쓰던 `wmain/wmain.jsp` 와 `reward` 청크가 쓰던 `wlayout/wRewardDetailSPA.jsp` 도 없어졌습니다.
 
 ### 9.3 아직 JSP 로 강하게 남아있는 영역
-- **리워드 결제 체크아웃** (`/web/wpayment/*`): `WPaymentController.java` 813 라인, 증권형/리워드 결제 전체 서버 로직.
+- ~~**리워드 결제 체크아웃**~~ — **더 이상 해당하지 않습니다.** `WPaymentController.java` 는 699줄이고 지면을 그리지 않습니다. AJAX·JSON 만 제공하며 `wpayment/` 폴더에는 `equity/` 하위만 남았습니다.
 - **증권형 청약**: `WPaymentEquityController.java`, `/web/wpayment/equity/*.jsp` — 한국증권금융/KSD 연동 SSR 중심.
 - **이벤트 기획전** `/web/wevent/*`: id 기반이지만 JSP 서버 사이드 데이터 주입.
 - **wpartner** `/web/wpartner/detail/{slug}`: 파트너 상세 SEO 페이지.
@@ -1010,7 +1095,7 @@ Jersey(api) 계열은 별도: `/api/campaign/*`, `/api/login/*`, `/api/wmain/*`,
 루트에 `Jenkinsfile` 없음. 배포는 `mvnw clean install -Dmaven.test.skip=true` (README.md:14) + `package.json scripts.deploy` (`.frontend/scripts/deploy/createStaticPath.js`) 로 프런트 매니페스트를 JSP 에 주입 후 WAR 빌드.
 
 ### 9.5 커밋 활동도 간접 지표
-- `.frontend/scripts/deploy/createStaticPath.js` 는 매 배포마다 `_assetVersions.jsp` 를 regenerate. `_assetVersions.jsp:8` 주석에 **Last Updated: 2019-10-23 15:15:34** — 해당 번들은 2019년 이후 갱신되지 않은 레거시 webpack build.
+- `.frontend/scripts/deploy/createStaticPath.js` 는 매 배포마다 `web/WEB-INF/jsp/winclude/assetVersions.jsp` 를 다시 만듭니다(파일명 앞의 밑줄은 없습니다). **2026-09-22 확인 — 그 파일에 `Last Updated` 주석이 더는 없습니다.** 종전 기록의 "Last Updated: 2019-10-23" 근거는 사라졌으므로, 아래 "2019년 이후" 판단은 재확인이 필요합니다. 해당 번들은 2019년 이후 갱신되지 않은 레거시 webpack build.
 - 한편 `chunks.config.js` 의 iam/floating-buttons 는 `manifestPath: '/static/iam/manifest.json'` 식으로 **외부 CDN static-* 호스트**를 가리키므로, 신규 React 앱은 본 레포 외부(`wadiz-frontend` 모노레포로 추정) 에서 빌드/배포됨.
 - adm 과 달리 이쪽은 본체 서비스라 커밋은 꾸준: 최근 임포트 클래스에서 `equity-http-client 0.0.6`, `funding-core 1.0.137`, `main-client 1.0.6`, `ksd-client 0.0.12` 등 소수점 두자리 패치 버전이 관찰됨 → **적극 개발 중**.
 

@@ -67,7 +67,7 @@
 | 접근 불가/서버 에러 — 공용 컴포넌트 `NotPermittedErrorContent`·`ServerErrorContent`(@wadiz/ui) 사용 | `apps/global/src/pages/error/{not-permitted,server-error}/` |
 | 에러 공통 레이아웃(데스크톱/모바일)·메타 | `apps/global/src/pages/error/ErrorLayout.tsx` |
 | 어바웃 슬로건("혁신의 시작") — Framer 외부 사이트 iframe 임베드(언어별 URL 분기), 문구는 외부 | `apps/global/src/pages/about/slogan/innovation-begins/InnovationBeginsPage.tsx` |
-| 이미지 최적화 / 로딩 스피너 (문구 없음) | `apps/global/src/features/optimized-image/OptimizedImage.jsx`, `apps/global/src/features/spinner/ui/Spinner.tsx` |
+| 이미지 최적화 / 로딩 스피너 (문구 없음) | `packages/ui/src/image-optimization/ui/OptimizedImage/OptimizedImage.tsx` (**`packages` 로 옮겼습니다**), `apps/global/src/features/spinner/ui/Spinner.tsx` |
 
 ## 이슈 히스토리 (apps/global 내부 features)
 

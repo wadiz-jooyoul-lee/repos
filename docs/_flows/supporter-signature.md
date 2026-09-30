@@ -191,7 +191,7 @@ V3 엔드포인트 전체 상세·SQL 은 기존 분석 문서 참조:
    │    body: { campaignId, text, keywords[...], imageUrl?, ... }
    │    (쿠키 세션, credentials: same-origin)
    ▼
-[www.wadiz.kr — com.wadiz.web]
+[www.wadiz.io — com.wadiz.web]
    │
    ├─ SupporterSignatureV3Controller#createSignature        [v3/controller/:143]
    │     SessionUtil.getUserId() > 0 검증 → UserUnauthorizedException 방어

@@ -262,11 +262,30 @@ public void timerBulkLastEnteredFeeds() {
 
 **중요**: 이 두 개가 자체 색인 작업의 전부다. **Campaign 도큐먼트 색인은 여기 없다.**
 
-## 외부 의존성 (dev 기준)
+## 외부 의존성 (2026-09-21 이전 dev 설정 기준 — **지금은 저장소에서 확인 불가**)
 
-`application-dev.yml` 에서 호출하는 외부 호스트:
+> ⚠️ **근거 파일이 사라졌습니다.**
+> 아래 표는 `application-dev.yml` 에서 읽은 값인데, 그 파일이 2026-09-21 에 삭제됐습니다
+> (`695b27e1`, "EKS ConfigMap 이관에 따른 프로파일별 설정 파일 제거").
+> 같은 커밋이 `live`·`rc`·`rc2`·`rc3`·`localrc`·`localrc2` 설정까지 **911줄을 한꺼번에 지웠습니다.**
+> 지금 저장소에 남은 설정은 `src/main/resources/application.yml` **111줄뿐**입니다.
+>
+> **어떤 서비스를 부르는지(=의존 관계)는 지금도 유효합니다.** 자바 코드가 그대로이기 때문입니다.
+> 다만 **주소 값은 더는 저장소로 확인할 수 없습니다.** 쿠버네티스 설정맵을 봐야 합니다.
+> 아래 표의 URL 은 "2026-09-21 이전 개발 환경에서 이랬다"는 기록으로만 읽습니다.
+>
+> 이건 이 저장소만의 일이 아닙니다.
+>
+> | 저장소 | 언제 | 무엇 |
+> |---|---|---|
+> | `com.wadiz.api.funding` | 2026-07-01 (`RWD-5766`) | `application-dev.yml` 삭제, helm chart 대체 |
+> | `com.wadiz.store` | 2026-09 이전 | `application-clive.yml` 을 helm-charts 로 이관 |
+> | `com.wadiz.wave.searcher` | 2026-09-21 (`695b27e1`) | 프로파일 설정 7개 전부 삭제 |
+>
+> **설정을 저장소에서 쿠버네티스로 옮기는 흐름이 회사 전체에서 진행 중입니다.**
+> 도서관 문서가 "환경별 주소"를 저장소 파일에서 읽어 적던 방식은 이제 통하지 않습니다.
 
-| 의존 | URL | 용도 |
+| 의존 | URL (2026-09-21 이전 dev) | 용도 |
 |---|---|---|
 | `user-api` | `http://dev-app01:9990/user/api/v1/...` | 추천·피드 사용자 정보 (`com.wadiz.wave.user` 추정) |
 | `startup-api` | `http://dev-app01:9500/api/v1/startup/...` + `dev-app01:9990/api/v1/startup/...` | 메이커 팔로우/뉴스/피드 (`com.wadiz.api.startup`) |
@@ -277,6 +296,8 @@ public void timerBulkLastEnteredFeeds() {
 | `corporation` | `http://dev-app01:9990` | 메이커/기업 정보 |
 | `external-api.search-ai` | `https://api.dev-searchai.wadizdata.team` | AI 검색 (시맨틱·임베딩 추정), `search-period: 12M` |
 | `external-api.main2` | `https://dev-platform.wadizcorp.net/main2` | 메인 추천 v2 |
+
+> 위 표의 호출 대상 9개는 자바 코드에 그대로 남아 있어 **의존 관계 자체는 유효합니다.**
 
 ## 특이사항
 

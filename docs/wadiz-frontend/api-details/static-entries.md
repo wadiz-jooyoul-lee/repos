@@ -1,12 +1,12 @@
 # static/entries 레거시 호환 진입점 상세 스펙
 
-> **기록 범위**: `wadiz-frontend/static/entries/` 디렉터리 13개 엔트리(`account`, `analytics`, `assets`, `embed`, `floating-buttons`, `iam`, `landing`, `main`, `open-account`, `personal-message`, `reward`, `school`, `web`)의 `package.json` · `webpack.config.js` · `src/index.*` 등 빌드·부트스트랩 코드에서 직접 관측 가능한 것만 기록합니다. 각 엔트리가 불러오는 공통 패키지(`@wadiz/react-common`, `@wadiz/reward-simple-pay-app`, `@wadiz/equity-*`, …) 내부는 외부 모듈로 간주하고 진입점에서 import 되는 사실만 기록합니다. `entries/RENDERER_ID_SELECTORS.md` 에 2025-01-05 기준으로 정리된 selector 목록을 참고 자료로 활용하되, 본 문서는 현행 소스에서 다시 확인한 내용을 우선합니다. 실제 배포 파이프라인(Jenkins/S3/CDN 구성)은 이 repo 바깥에 있어 확인 불가이며, `cdnPurge.js` 와 `STATIC_DEPLOYMENT_ORIGIN` 환경 변수에서 드러나는 부분만 기록합니다.
+> **기록 범위**: `wadiz-frontend/static/entries/` 디렉터리 **12개** 엔트리(`account`, `analytics`, `assets`, `embed`, `floating-buttons`, `iam`, `landing`, `main`, `personal-message`, `reward`, `school`, `web`) — 2026-09-23 확인. `open-account` 는 `FE1-1366`(2026-08-05)로 삭제됐습니다의 `package.json` · `webpack.config.js` · `src/index.*` 등 빌드·부트스트랩 코드에서 직접 관측 가능한 것만 기록합니다. 각 엔트리가 불러오는 공통 패키지(`@wadiz/react-common`, `@wadiz/reward-simple-pay-app`, `@wadiz/equity-*`, …) 내부는 외부 모듈로 간주하고 진입점에서 import 되는 사실만 기록합니다. `entries/RENDERER_ID_SELECTORS.md` 에 2025-01-05 기준으로 정리된 selector 목록을 참고 자료로 활용하되, 본 문서는 현행 소스에서 다시 확인한 내용을 우선합니다. 실제 배포 파이프라인(Jenkins/S3/CDN 구성)은 이 repo 바깥에 있어 확인 불가이며, `cdnPurge.js` 와 `STATIC_DEPLOYMENT_ORIGIN` 환경 변수에서 드러나는 부분만 기록합니다.
 
 ---
 
 ## 개요
 
-`static/entries/` 는 레거시 JSP 기반 포털(`com.wadiz.web`, `www.wadiz.kr`) 이 `<script src="…">` 로 직접 로드하던 정적 번들을 공급하는 디렉터리입니다. 각 엔트리는 Yarn workspace 1개(`@wadiz-static/<name>`) 로 등록되어 있고 (`wadiz-frontend/static/package.json:35-42`), `lerna run --scope=@wadiz-static/* build` 로 독립적으로 빌드되어 (`wadiz-frontend/static/package.json:16`) `build/<publicPath>/` 하위에 `main.js`, `vendor.js`, `manifest.json`, `<name>.css` 등 산출물을 출력합니다.
+`static/entries/` 는 레거시 JSP 기반 포털(`com.wadiz.web`, `www.wadiz.io`) 이 `<script src="…">` 로 직접 로드하던 정적 번들을 공급하는 디렉터리입니다. 각 엔트리는 Yarn workspace 1개(`@wadiz-static/<name>`) 로 등록되어 있고 (`wadiz-frontend/static/package.json:35-42`), `lerna run --scope=@wadiz-static/* build` 로 독립적으로 빌드되어 (`wadiz-frontend/static/package.json:16`) `build/<publicPath>/` 하위에 `main.js`, `vendor.js`, `manifest.json`, `<name>.css` 등 산출물을 출력합니다.
 
 ### 왜 존재하는가
 
@@ -16,7 +16,7 @@
 
 1. **빌드**: `<entry>/webpack.config.js` 가 `entry.main = ['./src/index.(jsx|js|tsx)']` 로 진입점을 정의합니다. 공통 설정은 `static/libraries/shared/config/webpack.config.js` 또는 `static/packages/shared/config/webpack.config.js` 에서 래핑됩니다. output 은 기본 UMD, `libraryTarget: 'umd'` 로 고정 (`static/libraries/shared/config/webpack.config.js:38`).
 2. **산출물**: `publicPath` 는 각 `package.json` 의 `publicPath` 필드(`/static/web/`, `/main/`, `/static/iam/` 등)로 지정되고, `STATIC_DEPLOYMENT_ORIGIN` 환경 변수가 있으면 그 origin 과 결합되어 절대 URL 이 됩니다 (`static/packages/shared/config/paths.js:12-17`, `static/config/webpackCommonConfig/paths.js:12-17`). 이 URL 은 `manifest.json` 에 기록됩니다.
-3. **CDN 배포 · 무효화**: 빌드된 파일이 `static.wadiz.kr` 으로 추정되는 호스트에 업로드되고, 배포 후 `static/scripts/tasks/cdnPurge.js` 가 각 엔트리의 `manifest.json` 을 순회해 `http://purge.concdn.com/cgi-bin/cpurge.cgi?url=static.wadiz.kr<path>` 로 CDN 퍼지 요청을 날립니다 (`static/scripts/tasks/cdnPurge.js:30-56`). 업로드 자체는 이 repo에 정의되어 있지 않아 확인 불가.
+3. **CDN 배포 · 무효화**: 빌드된 파일이 `cdn-static.wadiz.io` 으로 추정되는 호스트에 업로드되고, 배포 후 `static/scripts/tasks/cdnPurge.js` 가 각 엔트리의 `manifest.json` 을 순회해 `http://purge.concdn.com/cgi-bin/cpurge.cgi?url=cdn-static.wadiz.io<path>` 로 CDN 퍼지 요청을 날립니다 (`static/scripts/tasks/cdnPurge.js:30-56`). 업로드 자체는 이 repo에 정의되어 있지 않아 확인 불가.
 4. **주입**: 레거시 JSP/HTML 이 `<script src="…/static/<entry>/main.js">` 를 포함합니다. 실제 JSP 는 이 repo 외부(`com.wadiz.web`) 에 있어 확인 불가이나, `wadiz-frontend/static/CLAUDE.md` 가 "1) web 번들 → 2) 페이지별 번들 1개" 패턴을 설명합니다. 본 repo에서는 `reward/src/payments/SimplePay.jsx:29-34` 의 주석 `리워드 결제 예약 - step20.jsp / myfundingPurchaseDetail.jsp` 와 `main/src/index.jsx:9` 의 `reactRendererWithInitialization(MainApp, 'main-app')` 처럼, 특정 JSP 가 `<div id="main-app">` 같은 placeholder 를 심어둔다는 가정을 확인할 수 있습니다.
 5. **렌더**: 번들이 실행되면 `shared/reactRenderer` 의 `reactRenderer` / `reactEmbedRenderer` 가 `document.getElementById('<selector>')` 를 찾아 React 18 `createRoot(el).render(<Component {...dataSetProps} />)` 으로 실제 렌더링을 수행합니다 (`static/packages/shared/reactRenderer.tsx:87-90`).
 
@@ -57,7 +57,7 @@
   - `src/my/index.js:27` — `ImageBanner` → `my-equity-banner` (`@wadiz/react-promotion-banner`)
   - `src/my/index.js:30` — `EquityCloseNotice` → `account-equity-certification-face-certification`
   - `src/my/index.js:46` — `RegistAccountCompleteBox` → `my-equity--normal-member-app`
-  - `src/my/w9-info.js:7` — `W9MembershipInfo` → `my-w9-info-app` (`@wadiz/equity-w9-membership-app`)
+  - ~~`src/my/w9-info.js`~~ — **삭제됐습니다**(`FE1-1366`, 2026-08-05 투자 패키지·엔트리 제거)
   - `src/maker-profile/index.js:4` — `MakerProfileApp` → `maker-profile-app` (`@wadiz/maker-profile-app`)
   - `src/my-purchase-detail/index.jsx:8-9` — `MyRewardPurchaseDetail` → `myreward-purchase-detail` + `MyRewardPurchaseDetailFooter` → `myreward-purchase-detail-footer`
   - `src/follow/follow.js` — jQuery 기반, React 렌더 없음 (`.social-user-item[data-item-id="…"]` DOM 조작)
@@ -115,7 +115,7 @@
 - **루트 `index.js`**: 0바이트(`wc -l` → 0). 번들이 아닌 workspace 플레이스홀더로 보이며 실제로는 `public/` 자산만 배포됨.
 - **복사 대상 `public/` 하위**: `equity/`, `error/`, `fonts/`, `funding2015/`, `icon/`, `pdfjs/`, `startup-search/`, `svgs/`, `wadizawards/`, `welcomeMaker/`, `landingEventList.json` (`ls` 결과).
 - **사용 라이브러리**: 없음 (shared 만 의존). React / Redux 없음.
-- **참고**: 다른 엔트리 코드에서 `https://static.wadiz.kr/assets/wadiz2017/…` 처럼 이 `/assets/` 경로의 파일을 직접 URL 로 참조하는 패턴이 다수 확인됨 (예: `entries/landing/src/wadiz2017/default.js:342,359`, `entries/school/src/containers/SchoolRootPage/SchoolMainLectureApp/components/KeyVisual.tsx:46`, `entries/school/.../SchoolBannerList.jsx:18,24`, `entries/landing/src/wadiz2017/index.scss` 다수 — `static.wadiz.kr/assets/...`).
+- **참고**: 다른 엔트리 코드에서 `https://cdn-static.wadiz.io/assets/wadiz2017/…` 처럼 이 `/assets/` 경로의 파일을 직접 URL 로 참조하는 패턴이 다수 확인됨 (예: `entries/landing/src/wadiz2017/default.js:342,359`, `entries/school/src/containers/SchoolRootPage/SchoolMainLectureApp/components/KeyVisual.tsx:46`, `entries/school/.../SchoolBannerList.jsx:18,24`, `entries/landing/src/wadiz2017/index.scss` 다수 — `cdn-static.wadiz.io/assets/...`).
 
 ---
 
@@ -204,7 +204,7 @@
   - `src/startup-registration/landing.tsx:4-6` — `DOMContentLoaded` 후 `reactEmbedRendererWithInitialization(StartupRegistrationApp, '#startup-registration-app')` (jQuery 스타일 `#` 셀렉터).
   - `src/terms-confirm/terms-confirm.jsx:4` — `reactEmbedRendererWithInitialization(TermsConfirmApp, '#terms-confirm-app', { isOpen: true })` (`@wadiz/terms-confirm-modal`).
   - `src/supporter-club/index.js:4` — `SupporterClubIntro` → `supporter-club-intro`. 컴포넌트는 `../../../main/src/pages/landing/supporter-club-intro/SupporterClubIntro` 로 **`main` 엔트리의 소스 트리를 넘나들어 import** 하는 교차 참조가 존재.
-  - `src/w9/w9-landing.js` — `#w9` 페이지 (w9 비활성화 주석과 별개로 파일은 존재). `$('.w9-join-button-app').each(function … reactEmbedRendererWithInitialization(W9MembershipJoinButton, this))` 처럼 jQuery 각 DOM 요소 자체를 target 으로 넘김 (`w9-landing.js:42-56`). `@wadiz/equity-w9-membership-app` 을 **동적 import**.
+  - ~~`src/w9/w9-landing.js`~~ — **삭제됐습니다**(`FE1-1366`, 2026-08-05). 종전 서술: `#w9` 페이지 (w9 비활성화 주석과 별개로 파일은 존재). `$('.w9-join-button-app').each(function … reactEmbedRendererWithInitialization(W9MembershipJoinButton, this))` 처럼 jQuery 각 DOM 요소 자체를 target 으로 넘김 (`w9-landing.js:42-56`). `@wadiz/equity-w9-membership-app` 을 **동적 import**.
   - `src/apps/index.js` — 6개 서브 앱 번들(`welcomeMaker`, `wadizAwards`, `trend-report`, `line-friends`, `iplicense`, `fanz-maker`) 재수출.
   - `src/apps/welcomeMaker/index.js:5` — `WelcomeMakerApp` 를 `lazyWithPreload` 로 동적 import 후 `welcome-maker` id 에 임베드.
   - `src/apps/wadizAwards/wadiz-awards.jsx` — 연도별 컨테이너(2019~2025) 를 `lazyWithPreload` 로 모두 import 해두고 `document.querySelector` 로 존재 여부 확인 뒤 렌더:
@@ -262,26 +262,14 @@
 
 ---
 
-### 9. `open-account`
+### 9. ~~`open-account`~~ — 없어졌습니다
 
-- **패키지**: `@wadiz-static/open-account` (`entries/open-account/package.json:3`)
-- **publicPath**: `/static/open-account/` (`entries/open-account/package.json:5`)
-- **devServer.port**: 9102 (`entries/open-account/package.json:7`)
-- **책임**: 투자 서비스용 **계좌 개설(구 W9) 흐름** 전용 페이지.
-- **빌드 진입점** (`entries/open-account/webpack.config.js:8-14`):
-  - entry: `./src/index.jsx` (+ dev polyfill · hot client · waffle css)
-- **진입 코드** (`src/index.jsx` 전체):
-  ```js
-  import { reactRendererWithInitialization } from 'shared/reactRenderer';
-  import OpenAccountApp from './OpenAccountApp';
-  reactRendererWithInitialization(OpenAccountApp, 'open-account-app');
-  ```
-- **static.config.js** (`entries/open-account/static.config.js`): 한 줄 — `module.exports = require('shared/config/webpack.static.config')`. 이는 **SSG(static site generator)** 모드용 보조 설정(`static/packages/shared/config/webpack.static.config.js:53-55` 의 `StaticSiteGeneratorPlugin`) 을 import 하는 파일로, 정적 HTML 프리렌더 파이프라인이 일부 엔트리에 존재함을 시사합니다. 실행 스크립트는 이 repo 에서는 별도 정의되지 않음 — 사용 실태는 확인 불가.
-- **사용 라이브러리**: React 18.2, `react-redux`, `redux`, `redux-thunk` (Redux store 존재 — `src/store/` ), `react-router-dom 6`, `react-hook-form-deprecated@3.28.4` (레거시 react-hook-form 3 을 deprecated 별칭으로 사용), `@wadiz/validation-deprecated`, classnames, lodash-es, prop-types (`entries/open-account/package.json:16-34`).
-- **외부 패키지**: `@wadiz/react-common`, `@wadiz/web-root`, `@wadiz/web-redux-store`.
-- **API 호출**: 진입점에서 없음. 내부 `AccountWrapperApp.jsx` / `iam-open-account/` 서브 컴포넌트에서 처리.
+> ⚠️ **2026-09-23 확인 — 이 엔트리는 통째로 삭제됐습니다.**
+> `FE1-1366`(2026-08-05) "투자 패키지·엔트리 제거" 가 지웠습니다.
+> 증권형 계좌 개설 화면(완료·모바일 본인인증·1원 송금·주소·신분증)이 모두 사라졌습니다.
+> 같은 커밋이 `static/entries/account/src/my/w9-info.js` 와 `static/entries/landing/src/w9/w9-landing.js` 도 지웠습니다.
+> w9(증권형)는 지금 `packages/widgets/src/home/ui/W9StaticBanner/` 배너 하나로만 남아 있습니다.
 
----
 
 ### 10. `personal-message`
 
@@ -371,7 +359,7 @@
 - **static.config.js**: 한 줄 `require('shared/config/webpack.static.config')` — open-account 와 동일하게 SSG 보조 설정. 실행 경로 확인 불가.
 - **사용 라이브러리**: React 18.2, react-redux, redux, redux-thunk, react-router-dom 6, react-helmet-async, react-media, react-slick, slick-carousel, dayjs, classnames, prop-types, `@wadiz/react-ad-boundary`, `@wadiz/react-promotion-banner` (`entries/school/package.json:16-38`).
 - **외부 패키지**: `@wadiz/main-common`, `@wadiz/web-root`.
-- **API 호출**: 진입점에 없음. `containers/` 하위에서 `static.wadiz.kr/assets/school/…` 경로의 배너 · Lottie JSON 을 직접 URL 참조 (`src/containers/SchoolRootPage/SchoolMainLectureApp/components/KeyVisual.tsx:46`, `SchoolBannerList.jsx:18,24`).
+- **API 호출**: 진입점에 없음. `containers/` 하위에서 `cdn-static.wadiz.io/assets/school/…` 경로의 배너 · Lottie JSON 을 직접 URL 참조 (`src/containers/SchoolRootPage/SchoolMainLectureApp/components/KeyVisual.tsx:46`, `SchoolBannerList.jsx:18,24`).
 
 ---
 
@@ -456,7 +444,7 @@
 
 - 대부분은 **bare id**: `'main-app'`, `'funding-detail-app'`, `'active-account'` 등.
 - 일부는 **jQuery 스타일 `#` 접두**: `'#startup-registration-app'`, `'#terms-confirm-app'`, `'#line-Friends'`, `'#trend-report-2022'`, `'#trend-report-202101'`, `'#reward-funding-complete-app'`.
-- 일부는 **동적 DOM 요소**: `reward/src/reward-product/index.js:12` 는 `querySelectorAll` 로 얻은 `element` 를 그대로 전달, `landing/src/w9/w9-landing.js:42-56` 은 jQuery `$(selector).each(function(){ …, this })` 로 `this` 전달, `web/src/layout/headerRenderer.jsx:9` 와 `footerRenderer.jsx:10` 는 호출자가 넘긴 `renderTarget` 을 그대로 전달.
+- 일부는 **동적 DOM 요소**: `reward/src/reward-product/index.js:12` 는 `querySelectorAll` 로 얻은 `element` 를 그대로 전달, ~~`landing/src/w9/w9-landing.js`~~(삭제됨) 은 jQuery `$(selector).each(function(){ …, this })` 로 `this` 전달, `web/src/layout/headerRenderer.jsx:9` 와 `footerRenderer.jsx:10` 는 호출자가 넘긴 `renderTarget` 을 그대로 전달.
 - 일부는 **env 변수**: `school/src/index.jsx:6` — `process.env.ROOT_ELEMENT_ID` (기본 `'root'`).
 
 ### 3. AppInitializer + Sentry 실패 처리
@@ -486,7 +474,7 @@ if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_MSW_ENABLE =
 - **중층**: `static/packages/shared/config/webpack.config.js` 가 공통 externals(`@sentry/browser: 'Sentry'`, `jquery: 'jQuery'`) 를 추가 후 webpack-merge — 여기가 **CDN 로드 전제의 externals 규약을 박는 지점**. 외부 스크립트(`<script src="CDN/react.js">` 등) 가 존재한다고 가정하고 번들에서 제외.
 - **상층**: 각 `entries/<x>/webpack.config.js` 가 entry/resolve.alias 만 차별화.
 - **static SSG 보조**: `static/packages/shared/config/webpack.static.config.js` — `ssr.jsx` 를 `StaticSiteGeneratorPlugin` 으로 프리렌더. `axios` 는 `fakeModules/axios.js` 로 치환되어 SSG 중에는 실제 네트워크 호출을 차단. `school`, `open-account` 가 이 설정 파일을 `static.config.js` 에서 re-export. 실행 스크립트는 이 repo에 직접 정의되지 않음.
-- **개발 인증서**: 모든 dev server 가 `shared/config/cert` 의 `key`/`crt` 로 HTTPS + `host: 'local.wadiz.kr'` 고정 (`entries/web/webpack.config.js:57-59` 등).
+- **개발 인증서**: 모든 dev server 가 `shared/config/cert` 의 `key`/`crt` 로 HTTPS + `host: 'local.wadiz.io'` 고정 (`entries/web/webpack.config.js:57-59` 등).
 
 ### 6. externals — 바벨 번들에서 빠지는 라이브러리
 
@@ -526,10 +514,10 @@ static/
 
 ### CDN 업로드 · 무효화
 
-- 빌드 후 어떤 파이프라인이 `build/` 의 산출물을 `static.wadiz.kr` 에 업로드하는지는 이 repo 에서는 확인 불가 (Jenkins/스크립트 외부).
+- 빌드 후 어떤 파이프라인이 `build/` 의 산출물을 `cdn-static.wadiz.io` 에 업로드하는지는 이 repo 에서는 확인 불가 (Jenkins/스크립트 외부).
 - `static/scripts/tasks/cdnPurge.js` (`:30-56`) 가 배포 후 CDN 캐시를 무효화하는 스크립트. 동작:
   1. `findEntryChunks()` 로 각 엔트리의 `build/<publicPath>/manifest.json` 을 모두 읽어 `Object.values()` 를 합친 URL 리스트 생성 (`:17-28`).
-  2. 각 URL 에 대해 `http://purge.concdn.com/cgi-bin/cpurge.cgi?url=<host><path>` 에 GET 요청 (호스트가 `static.wadiz.kr` 일 때만).
+  2. 각 URL 에 대해 `http://purge.concdn.com/cgi-bin/cpurge.cgi?url=<host><path>` 에 GET 요청 (호스트가 `cdn-static.wadiz.io` 일 때만).
   3. purge 결과 문자열에 `'success'` 가 포함되면 성공, 추가로 `axios.get(chunkUrl)` 로 200 여부 확인.
 - `STATIC_DEPLOYMENT_ORIGIN` 환경 변수가 빌드 시 `process.env` 에 설정되면 manifest 에 **절대 URL** 이 저장되어 JSP 에서 그대로 사용 가능 (`static/packages/shared/config/paths.js:12-17`, `static/config/webpackCommonConfig/paths.js:12-17`).
 
@@ -549,7 +537,7 @@ static/
 | `process.env.NODE_ENV` | `'development'` / `'production'` |
 | `process.env.ENVIRONMENT` | `'local'` / `'dev'` / `'stage'` / `'live'` (기본 `'local'`) |
 | `process.env.DEPLOYMENT_ORIGIN` | 서비스 origin 추정 |
-| `process.env.STATIC_DEPLOYMENT_ORIGIN` | 정적 자원 origin (보통 `https://static.wadiz.kr`) — publicPath 절대화에도 사용 |
+| `process.env.STATIC_DEPLOYMENT_ORIGIN` | 정적 자원 origin (보통 `https://cdn-static.wadiz.io`) — publicPath 절대화에도 사용 |
 | `process.env.ROOT_ELEMENT_ID` | SPA 루트 id (기본 `'root'`) — school 에서 사용 |
 
 Sentry 릴리즈는 별도 빌드 스크립트(`build:sentry` in `entries/web/package.json:12`) 가 `entries/web/webpack.sentry.config.js` 를 사용해 `sentry.js` chunk + 소스맵을 Sentry 프로젝트에 업로드. Release 키는 `GIT_COMMIT` 환경 변수.

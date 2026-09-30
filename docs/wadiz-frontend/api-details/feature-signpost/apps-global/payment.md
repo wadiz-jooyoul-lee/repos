@@ -106,7 +106,7 @@
 |---|---|
 | 주문 완료 헤더/요약 — `funding_payment_completed_page.header.title`="주문 완료" / EN "Your order is complete", `header.description`="프로젝트 성공 시 결제가 처리되고 결제 성공 시 리워드를 발송해요.", `content.view_my_orders_button_label`="참여 내역 보기", `back_to_details_button_label`="상세 페이지 보기" | `apps/global/src/pages/funding/payment/completed/_ui/OrderCompletedSection/OrderCompletedSection.tsx` |
 | 완료 페이지 컨테이너 + AI 추천/구매 이벤트 트래킹 — **하드코딩(트래킹명)** "결제완료_AI추천" | `apps/global/src/pages/funding/payment/completed/FundingPaymentCompletedPage.tsx` |
-| 메이커 팔로우 유도 — `maker_following_section.description`="메이커 소식을 받아보고 싶다면?" | `apps/global/src/pages/funding/payment/completed/_ui/OrderCompletedSection/MakerFollowingSection.tsx` |
+| 메이커 팔로우 유도 — `maker_following_section.description`="메이커 소식을 받아보고 싶다면?" | ~~`.../MakerFollowingSection.tsx`~~ — **삭제됐습니다**(`FE1-1517`, 2026-08-10 "참여완료 지면 지지서명 확산 유도 강화") |
 | 해외배송 유의사항 박스 — `international_shipping_message_box.title`="유의 사항", `description_1`="해외배송 프로젝트의 경우 배송이 시작된 이후 단순변심 환불은 거절될 수 있어요…" | `packages/features/src/funding-payment/ui/PaymentCompleteInternationalShippingSection/PaymentCompleteInternationalShippingSection.tsx` |
 | 배송지 국가 변경 확인 모달 — `country_change_confirm_modal.title`="국가 변경", `description`="방금 선택한 배송지 국가로 회원 정보를 업데이트 할까요?", `confirm_button_label`="국가 변경하기" | `apps/global/src/pages/funding/payment/completed/_ui/CountryChangeConfirmModal/CountryChangeConfirmModal.tsx` |
 

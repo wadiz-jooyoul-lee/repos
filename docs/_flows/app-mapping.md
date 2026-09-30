@@ -9,17 +9,17 @@
 | 영역 | 웹 경로 | 앱 경로 |
 |---|---|---|
 | 펀딩 위시 | `/web/apip/funding/wishes` | `/api/funding/wishes` |
-| 검색 펀딩 | `/api/search/v2/funding` (service.wadiz.kr) | `/api/search/v2/funding` (서비스 host 동일) |
-| 로그인 이메일 | `/oauth/loginPerform` (account.wadiz.kr form) | `/api/v4/login/email` (앱 전용 API) |
+| 검색 펀딩 | `/api/search/v2/funding` (api.wadiz.io) | `/api/search/v2/funding` (서비스 host 동일) |
+| 로그인 이메일 | `/oauth/loginPerform` (account.wadiz.io form) | `/api/v4/login/email` (앱 전용 API) |
 | 회원가입 | `/api/v1/users` (account) | `/api/v4/sign-up/email` (앱 전용 V4) |
 
 ### 앱의 API Host 분류 (iOS `APIDomain.swift` 기준)
 - `.api` → 기본 (내부 API, 예: `api.wadiz.kr` 또는 유사) — V3/V4 앱 API
-- `.publicApi` → `public-api.wadiz.kr` (비로그인 공개)
-- `.platform(.inbox/.keyword/.main/.push/.wish/.activities)` → `platform.wadiz.kr` (알림/키워드/푸시/위시 플랫폼)
-- `.service` → `service.wadiz.kr` (검색)
+- `.publicApi` → `api.wadiz.io` (비로그인 공개)
+- `.platform(.inbox/.keyword/.main/.push/.wish/.activities)` → `api.wadiz.io` (알림/키워드/푸시/위시 플랫폼)
+- `.service` → `api.wadiz.io` (검색)
 - `.ad` / `.analytics` → 광고/분석
-- `.webOrigin` → `www.wadiz.kr` (Origin 헤더 용도)
+- `.webOrigin` → `www.wadiz.io` (Origin 헤더 용도)
 
 Android 도 동일 구조 — `WadizPlatformAPIService`, `WadizServiceAPIService`, `AppV3APIService`, `WadizWebAPIService`, `WadizStoreAPIService` 등 **Retrofit interface 별로 baseUrl 다름**.
 
@@ -30,7 +30,7 @@ Android 도 동일 구조 — `WadizPlatformAPIService`, `WadizServiceAPIService
 ### A1 — 펀딩 코어
 
 #### 1. funding-detail (펀딩 상세)
-**Android**: `WadizServiceAPIService.kt` 나 별도 feature API 에서 `/api/search/v2/products` 등으로 카드 조회. 상세 페이지는 대부분 **웹뷰(WebView)** 로 `https://www.wadiz.kr/campaign/{id}` 렌더 — 네이티브 API 호출 최소화.
+**Android**: `WadizServiceAPIService.kt` 나 별도 feature API 에서 `/api/search/v2/products` 등으로 카드 조회. 상세 페이지는 대부분 **웹뷰(WebView)** 로 `https://www.wadiz.io/campaign/{id}` 렌더 — 네이티브 API 호출 최소화.
 **iOS**: 동상. `Projects/Features/ServiceHome/Sources/Store/Data/API/StoreAPI.swift` 등에서 홈 카드 조회.
 
 > 📌 대부분의 앱 "프로젝트 상세" 는 WebView 기반 (wadiz-android 의 `feature/catchup`, `feature/service-home`, wadiz-ios 의 `Features/ServiceHome`). 순수 네이티브 상세가 아니라 **하이브리드**.
@@ -128,7 +128,7 @@ let request = RequestBuilder(domain: .api, path: path, method: .post, headers: h
 @POST("/api/search/v2/preorder")          // :71
 @GET("/api/v1/searcher/wish/project/endingsoon")  // :61
 ```
-Host: `service.wadiz.kr` (`WadizServiceAPIService` baseUrl).
+Host: `api.wadiz.io` (`WadizServiceAPIService` baseUrl).
 
 **iOS**: `Projects/App/Sources/ServiceHome/Preorder/API/PreorderAPI.swift:26`
 ```swift
@@ -137,7 +137,7 @@ let path = "api/search/v2/preorder"
 ```
 `Projects/App/Sources/Development/NetworkStubs/CategoryAPIStub.swift` — 테스트 스텁으로 `/api/search/categories`, `/api/search/home` 관측.
 
-→ **검색은 앱·웹 모두 `service.wadiz.kr/api/search/v2/*`** 로 동일 host/path.
+→ **검색은 앱·웹 모두 `api.wadiz.io/api/search/v2/*`** 로 동일 host/path.
 
 #### 14. store-detail
 **Android**: `WadizStoreAPIService.kt:11`  `@GET("store/projects/my")`. 기타 스토어 상세는 WebView.
@@ -164,7 +164,7 @@ let path = "/api/funding/wishes/my/qty"
 #### 17. notification (알림)
 **Android**:
 - `NotiChannelDataSource.kt` — 알림 채널
-- `InboxDataSource.kt` — 인박스 (platform.wadiz.kr)
+- `InboxDataSource.kt` — 인박스 (api.wadiz.io)
 - `WadizPlatformAPIService.kt` — 푸시/키워드
 - `keyword/KeywordAlarmDatasource.kt` — 키워드 알림
 
@@ -176,7 +176,7 @@ RequestBuilder(domain: .api, path: path, method: .post, ...)               // �
 ```
 `Projects/Features/Setting/Sources/NotificationSetting/NotificationAPI.swift` — 알림 설정.
 
-→ 앱 인박스는 `platform.wadiz.kr/inbox/*` 직접 호출. 웹도 동일 플랫폼 서비스를 공유하지만 경로 prefix 가 다를 수 있음.
+→ 앱 인박스는 `api.wadiz.io/inbox/*` 직접 호출. 웹도 동일 플랫폼 서비스를 공유하지만 경로 prefix 가 다를 수 있음.
 
 #### 18. wai-agent
 **Android**: `SearchAiDatasource.kt` 에 AI 검색 일부. AI 에이전트 런처 전용 클라이언트 feature 미관측 (또는 WebView).
@@ -191,8 +191,8 @@ RequestBuilder(domain: .api, path: path, method: .post, ...)               // �
 - **계정 관리** (`/api/v3/account/*`)
 - **설정** (약관·알림 설정)
 - **위시** (`/api/funding/wishes`)
-- **알림 인박스** (`platform.wadiz.kr/inbox/*`)
-- **검색** (`service.wadiz.kr/api/search/v2/*` — 웹과 host 동일)
+- **알림 인박스** (`api.wadiz.io/inbox/*`)
+- **검색** (`api.wadiz.io/api/search/v2/*` — 웹과 host 동일)
 - **홈 피드** (`/main/*`, `/main/display-ads/*`)
 
 ### 🟡 "웹 경로 공유" 영역 (앱이 웹 Retrofit 경로 그대로 사용)

@@ -9,6 +9,25 @@
 
 ---
 
+> 📅 **2026-09-22 (2차) main pull 보강** (7 커밋)
+>
+> 전부 **dev 환경 이미지 태그 갱신**입니다. clive 와 rc4 는 손대지 않았습니다.
+>
+> | 파일 | 소스 저장소 |
+> |---|---|
+> | `core/dev/order-api.yaml` | [`io.wadiz.order`](./io.wadiz.order.md) |
+> | `web/dev/admin-server.yaml` | [`co.wadiz.adm`](./co.wadiz.adm.md) |
+> | `client/dev/makercenter-api.yaml` · `client/dev/makercenter.yaml` | [`makercenter-be`](./makercenter-be.md) · [`makercenter-fe`](./makercenter-fe.md) |
+>
+> 앞의 두 건은 **RWD-5804** 작업입니다.
+> 커밋 제목이 `[wadiz-service/io.wadiz.order]` 와 `[wadiz-web/co.wadiz.adm]` 를 번갈아 가리킵니다.
+> **구매확정 후 환불을 어드민에서 order 로 넘기는 작업이 두 저장소를 오가며 진행 중입니다.**
+>
+> 이 문서가 앞서 기록한 "`client/dev/makercenter-api.yaml` 에 AWS 키가 남아 있다"는 관측은
+> **아직 유효합니다.** 이번 갱신은 이미지 태그만 바꿨고 자격증명 2줄은 그대로입니다.
+>
+> ---
+
 > 📅 **2026-09-22 main pull 보강** (88 커밋)
 >
 > 대부분 통합 검사 자동 이미지 태그 갱신입니다.

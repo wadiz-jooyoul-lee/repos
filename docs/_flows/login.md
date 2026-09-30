@@ -29,15 +29,15 @@
 ## 1. Client Trigger (FE/App)
 
 ### 1.1 Client 앱이 `/oauth2/authorize` 로 리다이렉트
-www.wadiz.kr 또는 wadiz-frontend 앱 중 인증이 필요한 리소스를 요청하면, 클라이언트는 `https://account.wadiz.kr/oauth2/authorize?client_id=...&redirect_uri=...&scope=...&response_type=code` 로 리다이렉트.
+www.wadiz.io 또는 wadiz-frontend 앱 중 인증이 필요한 리소스를 요청하면, 클라이언트는 `https://account.wadiz.io/oauth2/authorize?client_id=...&redirect_uri=...&scope=...&response_type=code` 로 리다이렉트.
 
 - **환경별 host** (예: `wadiz-frontend/apps/account/.env-cmdrc:16-81`):
-  - dev: `https://dev-account.wadiz.kr`
-  - rc/rc2/rc3: `https://rc-account.wadiz.kr` 등
-  - live: `https://account.wadiz.kr`
+  - dev: `https://account.dev.wadiz.io`
+  - rc/rc2/rc3: `https://rc-account.wadiz.io` 등
+  - live: `https://account.wadiz.io`
 
 ### 1.2 로그인 페이지 SPA 자체도 모노레포에 존재
-- `apps/account/` 앱이 로그인 UX 를 Vite 로 빌드, `account.wadiz.kr` 도메인에 배포.
+- `apps/account/` 앱이 로그인 UX 를 Vite 로 빌드, `account.wadiz.io` 도메인에 배포.
 - 페이지 컴포넌트: `src/pages/(auth)/login/AuthLoginPage`
 - 소셜 유틸: `src/entities/oauth/lib/socialUtil.js` — `signIn: ['google', 'kakao']` 매핑
 - Apple Client ID 고정: `APPLE_CLIENT_ID = 'com.wadiz.signin'`
@@ -234,10 +234,10 @@ Normal 만 로그인 허용. 휴면/탈퇴/파기 상태는 미매칭 → `Wadiz
 
 ### A. 이메일 로그인 + OAuth2 authorize
 ```
-[FE: 보호 리소스 접근 (예: www.wadiz.kr/funding/checkout)]
+[FE: 보호 리소스 접근 (예: www.wadiz.io/funding/checkout)]
    │  (세션 없음 감지 → 리다이렉트)
    ▼
-GET https://account.wadiz.kr/oauth2/authorize?client_id=X&redirect_uri=...&response_type=code&scope=...
+GET https://account.wadiz.io/oauth2/authorize?client_id=X&redirect_uri=...&response_type=code&scope=...
    │
    │  [authorizationServerSecurity] — 인증 안 됨
    │  SavedRequest 에 authorize 요청 저장 → /login 로 redirect
@@ -272,7 +272,7 @@ POST /oauth/loginPerform  (form data: username, password, _csrf)
    │  OAuth2AuthorizationCodeGeneration → 302 redirect_uri?code=XXX&state=...
    ▼
 [Client (예: com.wadiz.web) 콜백 엔드포인트]
-   │  POST https://account.wadiz.kr/oauth2/token    (code + client_credentials)
+   │  POST https://account.wadiz.io/oauth2/token    (code + client_credentials)
    │
    │  [OAuth2 Authorization Server 표준 Token Endpoint]
    │     → access_token + refresh_token + id_token(OIDC 시) 발급
@@ -312,7 +312,7 @@ GET /login → "카카오로 로그인" 클릭
 2. **`LoginTryLimiter` 구현** — Redis 사용 여부·키 네임스페이스·TTL·한도 수치. 코드 위치만 확인됨.
 3. **`WadizPassWordUtils.matches`** — BCrypt / PBKDF2 / 자체 해시 여부.
 4. **Remember-Me 토큰** — `RememberMeAuthenticationSuccessHandler` 경로와 DB 저장소 (`PersistentToken*`) 추가 분석 필요.
-5. **OAuth2 Client 등록** — 어떤 client_id 가 등록되어 있고(www.wadiz.kr, 모바일 앱들, 파트너존 등) redirect_uri 규칙은 별도 문서(`kr.wadiz.account/persistence.md`의 `RegisteredClient` 참조).
+5. **OAuth2 Client 등록** — 어떤 client_id 가 등록되어 있고(www.wadiz.io, 모바일 앱들, 파트너존 등) redirect_uri 규칙은 별도 문서(`kr.wadiz.account/persistence.md`의 `RegisteredClient` 참조).
 6. **소셜 계정 연결·분리 플로우** — `/social-signup`, `/social-link`, Apple Notification webhook 은 별도 flow 로 분리 가능.
 7. **앱(Android/iOS) PKCE** — 앱의 OAuth2 Authorization Code + PKCE 세부는 Phase 2 앱 분석 영역.
 8. **`userStatus = 'NM'`** 외 상태(휴면/파기/탈퇴)에서 사용자가 로그인 시도 시 별도 가이드 페이지 라우팅 경로는 `WadizUserNotFoundException` 핸들러 내부 추적 필요.

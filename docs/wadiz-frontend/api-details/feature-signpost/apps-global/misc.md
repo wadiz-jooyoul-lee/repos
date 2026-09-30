@@ -33,7 +33,7 @@
 | WAi 스타터 프롬프트 — `starter_prompt_group.starter_prompt_1_text`="펀딩에 필요한 필수 서류를 알려 줘" | `apps/global/src/features/wai/ui/ChatContent/ChatContent.tsx` |
 | WAi 스토리 생성 미리보기 패널 — `story_preview_panel.title`="스토리 생성 AI 미리보기" | `apps/global/src/features/wai/ui/StoryPreviewPanel/StoryPreviewPanel.tsx` |
 | WAi 로그인 유도 배너 — `supporter_login_banner_full.title`="로그인하면 더 많은 도움을 받을 수 있어요" | `apps/global/src/features/wai/ui/LoginCTA/LoginBanner.tsx` |
-| WAi 온보딩 워크스루 모달 — `walkthrough_modal.title`="이제 와디즈 상세페이지도 5분이면 초안 완성" | `apps/global/src/features/wai/ui/WalkthroughModal/WalkthroughModal.tsx` |
+| WAi 온보딩 워크스루 모달 — `walkthrough_modal.title`="이제 와디즈 상세페이지도 5분이면 초안 완성" | ~~`.../WalkthroughModal.tsx`~~ — **교체됐습니다**(`FE2-1267`, 2026-09-09 "WAi 광고 추천 워크스루 모달 추가 및 노출 모달 교체") |
 
 ## 알림 (notifications)
 

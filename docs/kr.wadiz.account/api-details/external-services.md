@@ -1,5 +1,31 @@
 # kr.wadiz.account — Outbound Externalservice Adapters
 
+> 📅 **2026-09-30 본문 전면 점검** — `cloud_live` 브랜치 `b42a8e7f`(2026-09-21) 기준
+>
+> 직전 본문 점검 이후 **`BE3-555`(2026-06-26, `f7d832ac`) 하나가 이 문서의 절반을 낡게 만들었습니다.**
+> 커밋 제목이 "user-api 클라이언트 통합 및 wadiz.api 외부서비스 설정 일관화" 입니다.
+>
+> | 고친 곳 | 예전 | 지금 |
+> |---|---|---|
+> | `notification/` 어댑터 | 11개 파일 | **패키지 통째로 삭제** |
+> | `platform/` 어댑터 | 있음 | **`notichannel/` 로 이름 바뀜** (`BE3-457`, 2026-06-30) |
+> | `terms/TermsClient.java` | 있음 | 삭제. 쓰기가 `TermsPort` 로 일원화 |
+> | `user/TermsApiAdapter.java`·`TermsApiPort` | 있음 | 삭제 |
+> | `usercoupon/UserCouponClient.java` | 있음 | 삭제. `UserClient` 로 통합 |
+> | FeignClient | 13개 | **12개** |
+> | 설정 키 이름 | `wadiz.api.users`·`braze`·`marketing-consent` 등 | **서비스 이름으로 통일** |
+> | 환경 주소 | `dev-app01:9990`·`172.31.1.12:9990` | **`api.dev.wadiz.io/{서비스}`** |
+>
+> **이 문서가 예전에 한 예측이 맞았습니다.**
+> 3.6 절이 `notification/` 을 "호출 지점 없음, dead code 상태"라고 적어 뒀는데,
+> 실제로 `BE3-555` 커밋 메시지가 *"notification 패키지 전체(IAM-3399 NotificationAdapter 리팩토링으로 고아화)"* 라며 지웠습니다.
+>
+> ⚠️ **`application-dev.yml` 과 `application-live.yml` 이 사라졌습니다.**
+> `BE3-410`(2026-05-28, `ec729cf5`)이 지웠습니다. 커밋 제목이 "application yml 환경별 설정 분리 및 local 시크릿 env var 외부화" 입니다.
+> 지금 저장소에 남은 프로파일 파일은 `local`·`rc`·`rc2`·`rc3`·`test` 다섯입니다.
+> **클라우드 환경(`cdev`·`clive`) 값은 저장소에 없고 쿠버네티스 설정맵에 있습니다.**
+> 그래서 아래 URL 표는 `application-local.yml` 과 `application-rc.yml` 기준으로 다시 썼습니다.
+
 ## 1. 기록 범위
 
 - **대상**: `src/main/java/kr/wadiz/oauth2/adapters/outbound/externalservice/` 아래 11개 어댑터 디렉터리 (실제로 하위 디렉터리 수는 12 — `user/` 안에 3개 어댑터가 혼재).
@@ -13,10 +39,13 @@
   - Spring Security OAuth2 Client 자체의 토큰 획득 흐름 (Kakao/Naver/Apple 로그인 Provider) — 이는 `WebSecurityConfig` / `ClientRegistrationRepository` 쪽이고 본 문서는 **로그인 이후** outbound 호출만 다룬다.
   - `security.oauth2.client.*` 로 공급되는 Google/Facebook/Line/Apple provider — 외부 IDP 이므로 제외 (KakaoPort 는 카카오 IDP 와는 별개로 `/v2/user/*` 를 호출하므로 포함).
   - 테스트 (`src/test/groovy/.../externalservice/`).
-- **인용 규칙**: 모든 HTTP path / DTO 필드는 소스 `path:line` 포함. URL 값은 `application-live.yml` / `application-dev.yml` 의 실 값을 인용.
+- **인용 규칙**: 모든 HTTP path 와 DTO 필드는 소스의 `경로:줄번호` 를 함께 적습니다.
+  URL 값은 `application-local.yml`(클라우드 개발 인프라)과 `application-rc.yml`(사내 온프렘)의 실제 값을 씁니다.
+  예전에 쓰던 `application-dev.yml`·`application-live.yml` 은 2026-05-28 에 삭제됐습니다.
 - **분석 대상 파일 요약**:
-  - Adapter 13개, FeignClient 13개 (`user/` 에 1개 Client 로 3 Adapter 가 공유), DTO/Enum 40+.
-  - Port 인터페이스 12 (`kr.wadiz.oauth2.port.outbound.*`, + `kr.wadiz.oauth2.domain.terms.TermsPort`).
+  - Adapter **13개**, FeignClient **12개**, 외부서비스 폴더 **11개**.
+  - `kr.wadiz.oauth2.port.outbound` 아래 Port 인터페이스 **20개** (저장소 Port 포함). 여기에 `kr.wadiz.oauth2.domain.terms.TermsPort` 가 더해집니다.
+  - `UserClient` 하나를 **`UserApiAdapter`·`UserAppContactApiAdapter`·`TermsAdapter`·`UserCouponAdapter` 넷이 공유**합니다.
 
 ---
 
@@ -40,7 +69,8 @@
 | IP → 국가코드 (LocaleResolver) | `datasvc` | `GetCountryFromIPPort` |
 | Kakao 추가 권한/토큰 재발급 | Kakao Open API | `KakaoPort` |
 
-`notification/NotificationClient.java` 는 `publishToSubscriber`, `publishToGroup` 등 **레거시** 알림 발행 API 를 노출하지만, 본 저장소 내 어디서도 해당 메서드를 호출하는 Adapter 가 없다 (아래 "경계" 참고).
+~~`notification/NotificationClient.java`~~ 는 **2026-06-26 에 패키지째 삭제됐습니다**(`BE3-555`).
+예전 문서가 "호출하는 Adapter 가 없다"고 짚어 둔 그대로였습니다. 3.6 절을 봅니다.
 
 ### 2.2 Port/Adapter 인터페이스 구조
 
@@ -85,31 +115,52 @@ Feign 공통 설정은 `kr.wadiz.oauth2.application.FeignConfig` 에서 로깅 �
 - **mTLS 는 없음**. 모든 호출은 평문 Bearer 토큰 혹은 무인증 내부 HTTP.
 - **JWT propagation 은 없음**. 사용자 JWT 를 downstream 에 전달하는 adapter 는 0개 (account 는 본인이 Authorization Server 이므로 스스로 발급한 사용자 토큰을 재사용하지 않음).
 
-### 2.4 URL 설정 총괄 (dev vs live)
+### 2.4 URL 설정 총괄
 
-모든 외부 서비스의 URL 은 `application-{profile}.yml` 의 `wadiz.api.*` 하위에 정의. dev 와 live 를 비교해보면 환경별 분리가 일관되지 않다 (일부는 `dev-platform.wadizcorp.net`, 일부는 `dev-app01:9990` 같은 호스트명).
+외부 서비스 주소는 `application-{프로파일}.yml` 의 `wadiz.api.*` 아래에 있습니다.
 
-| Property | FeignClient name | dev (`application-dev.yml`) | live (`application-live.yml`) |
+**`BE3-555` 가 설정 키 이름을 서비스 이름으로 통일했습니다.**
+커밋 메시지가 이렇게 적고 있습니다 —
+*"wadiz.api 키를 commonConfig 서비스명(-api 제외)으로 통일: user/crm-gateway/notification/noti-channel/push/datasvc/alimtalk/mail-fast/mail-normal"*.
+
+| 설정 키 | FeignClient name | local (클라우드 개발) | rc (사내 온프렘) |
 |---|---|---|---|
-| `wadiz.api.users` | wadiz-user-service | `http://dev-app01:9990/api/v1/users` | `http://172.31.1.12:9990/api/v1/users` |
-| `wadiz.api.terms` | terms-client | `http://dev-app01:9990/api/v1/users/terms` | `http://172.31.1.12:9990/api/v1/users/terms` |
-| `wadiz.api.alimtalk` | (unused 프로퍼티) | `http://dev-app01:9990/user/api/v1/users/message/alim-talk` | `http://172.31.1.12:9990/user/api/v1/users/message/alim-talk` |
-| `wadiz.api.braze` | braze-service | `http://dev-app01:9990/crmgateway/api/v1/crmgateway/braze` | `http://172.31.1.12:9990/crmgateway/api/v1/crmgateway/braze` |
-| `wadiz.api.notification` | mail-client + subsciber-client | `http://dev-app01:9990/notification/api/v1/notifications` | `http://172.31.1.12:9990/notification/api/v1/notifications` |
-| `wadiz.api.marketing-consent` | platform-api-client | `https://dev-platform.wadizcorp.net/noti-channel` | `https://platform.wadiz.kr/noti-channel` |
-| `wadiz.api.push2` | push2-api-client | `https://dev-platform.wadizcorp.net/push/api/v1/push` | `https://platform.wadiz.kr/push/api/v1/push` |
-| `wadiz.api.mail.fast.path` | fast-mail-client | `https://dev-platform.wadizcorp.net/mail-fast` | `https://platform.wadiz.kr/mail-fast` |
-| `wadiz.api.mail.normal.path` | normal-mail-client | `https://dev-platform.wadizcorp.net/mail-normal` | `https://platform.wadiz.kr/mail-normal` |
-| `wadiz.api.data.url` | data-client2 | `https://dev-datasvc.wadiz.kr` | `https://datasvc.wadiz.kr` |
-| `wadiz.api.user-coupon.base-url` | coupon-service | `http://dev-app01:9990/user/api/v1/users/coupon` | `http://172.31.1.12:9990/user/api/v1/users/coupon` |
-| `wadiz.api.alim-talk.base-url` | alim-talk-service | `https://dev-platform.wadizcorp.net/alimtalk/api/v2/message` | `https://platform.wadiz.kr/alimtalk/api/v2/message` |
-| — (hardcoded) | kakao-service | `https://kapi.kakao.com` | `https://kapi.kakao.com` |
-| — (hardcoded) | kakao-auth-service | `https://kauth.kakao.com` | `https://kauth.kakao.com` |
+| `wadiz.api.user.base-url` | `wadiz-user-service`, `wadiz-terms-query-service` | `https://api.dev.wadiz.io/user` | `http://rc-api01:9990` |
+| `wadiz.api.crm-gateway.base-url` | `braze-service` | `https://api.dev.wadiz.io/crm-gateway` | `http://rc-api01:9990/crmgateway` |
+| `wadiz.api.notification.base-url` | `subsciber-client` | `https://api.dev.wadiz.io/notification` | `http://rc-api01:9990/notification` |
+| `wadiz.api.noti-channel.base-url` | `noti-channel-client` | `https://api.dev.wadiz.io/noti-channel` | `https://rc-platform.wadizcorp.net/noti-channel` |
+| `wadiz.api.push.base-url` | `push2-api-client` | `https://api.dev.wadiz.io/push` | `https://rc-platform.wadizcorp.net/push` |
+| `wadiz.api.mail-fast.base-url` | `fast-mail-client` | `https://api.dev.wadiz.io/mail-fast` | (rc 미정의) |
+| `wadiz.api.mail-normal.base-url` | `normal-mail-client` | `https://api.dev.wadiz.io/mail-normal` | (rc 미정의) |
+| `wadiz.api.alimtalk.base-url` | `alim-talk-service` | `https://api.dev.wadiz.io/alimtalk` | `https://rc-platform.wadizcorp.net/alimtalk` |
+| `wadiz.api.datasvc.base-url` | `data-client2` | `https://datasvc.dev.aidata.wadiz.io` | `https://rc-datasvc.wadiz.kr` |
+| — (코드에 직접 씀) | `kakao-service` | `https://kapi.kakao.com` | 동일 |
+| — (코드에 직접 씀) | `kakao-auth-service` | `https://kauth.kakao.com` | 동일 |
 
-관찰:
-- `wadiz.api.alimtalk` property 는 yml 에 정의되어 있지만 실제 FeignClient 에서는 읽지 않는다 (`AlimTalkClient.java:9` 는 `wadiz.api.alim-talk.base-url` 을 사용). 2개의 별도 프로퍼티가 공존하는 중 — **legacy AlimTalk v1 호환을 위한 잔존 키** 로 보임.
-- `wadiz.api.notification` 은 `NotificationClient` (legacy, 미사용) 와 `SubscribeNotificationClient` (활성) 둘 다 동일 base url 을 공유. downstream 서비스가 `/mails/*`, `/publishes/*`, `/inboxes/*`, `/subscribers/*`, `/groups/*`, `/mails`, `/phones` 등을 하나의 root path 아래에 혼재시키는 마이크로서비스 하나라는 뜻.
-- `live` 의 `172.31.1.12:9990` 은 사내 VPC IP — 즉 같은 클러스터 내 한 host (혹은 한 Ingress) 뒤에 `/api/v1/users/*`, `/crmgateway/*`, `/notification/*`, `/user/*` 등 여러 path 가 노출된 형태.
+**`BE3-555` 가 Feign 경로 규칙도 통일했습니다.**
+커밋 메시지의 표현은 *"base-url=서비스 루트, `@FeignClient(path)`=`/api/v{N}`(버전까지), 메서드=리소스+액션"* 입니다.
+버전이 없는 서비스는 `path` 를 붙이지 않습니다.
+
+| FeignClient | `path` |
+|---|---|
+| `wadiz-user-service` · `braze-service` · `push2-api-client` · `subsciber-client` | `/api/v1` |
+| `alim-talk-service` · `fast-mail-client` | `/api/v2` |
+| `normal-mail-client` | `/api/v3` |
+| `data-client2` | `/global/v1` |
+| `wadiz-terms-query-service` · `noti-channel-client` · 카카오 2종 | 없음 |
+
+**확인된 것 세 가지**
+
+| 관찰 | 내용 |
+|---|---|
+| 클라우드는 게이트웨이 한 곳으로 모임 | 사내 서비스 호출이 전부 `api.dev.wadiz.io/{서비스}` 를 지납니다. 예전의 `dev-app01:9990` 직접 호출이 사라졌습니다 |
+| 온프렘은 갈래가 둘 | 사내 서비스는 `rc-api01:9990`, 플랫폼 서비스는 `rc-platform.wadizcorp.net` 입니다 |
+| rc 에 메일 설정이 없음 | `mail-fast`·`mail-normal` 키가 `application-rc.yml` 에 없습니다. **확인 필요**입니다 |
+
+> `subsciber-client` 는 이름에 오타가 있습니다(`subscriber` 가 맞습니다). 코드 원문 그대로입니다.
+>
+> `wadiz.api.datasvc` 의 `token` 값이 `application-rc.yml` 에 **평문으로 적혀 있습니다.**
+> 값은 이 문서에 옮기지 않았습니다. 원본 저장소는 읽기 전용이라 기록만 남깁니다.
 
 ---
 
@@ -157,22 +208,38 @@ signUp(cmd, device, locale)
 
 ### 어댑터 index
 
-| # | 디렉터리 | Adapter | Port | FeignClient name | base URL property |
+| # | 디렉터리 | Adapter | Port | FeignClient name | base URL 설정 키 |
 |---|---|---|---|---|---|
-| 3.1 | alimtalk | AlimTalkAdapter | AlimTalkPort | `alim-talk-service` | `wadiz.api.alim-talk.base-url` |
-| 3.2 | crmgateway | CrmGatewayAdapter | CrmPort | `braze-service` | `wadiz.api.braze` |
-| 3.3 | datasvc | DataServiceAdapter | GetCountryFromIPPort | `data-client2` | `wadiz.api.data.url` |
-| 3.4 | fastmail2 | NotificationAdapterV2 | NotificationPort | `fast-mail-client` + `normal-mail-client` | `wadiz.api.mail.fast.path` / `…normal.path` |
-| 3.5 | kakao | KakaoAdapter | KakaoPort | `kakao-service` + `kakao-auth-service` | (hardcoded) |
-| 3.6 | notification | (없음, dead) | — | `mail-client` | `wadiz.api.notification` |
-| 3.7 | platform | MarketingConsentAdapter | MarketingConsentPort | `platform-api-client` | `wadiz.api.marketing-consent` |
-| 3.8 | push2 | Push2Adapter | Push2Port | `push2-api-client` | `wadiz.api.push2` |
-| 3.9 | subscribenotification | SubscribeNotificationAdapter | SubscribeNotificationPort | `subsciber-client` (오타) | `wadiz.api.notification` |
-| 3.10 | terms | TermsAdapter | TermsPort | `terms-client` | `wadiz.api.terms` |
-| 3.11a | user | UserApiAdapter | UserApiPort | `wadiz-user-service` | `wadiz.api.users` |
-| 3.11b | user | TermsApiAdapter | TermsApiPort | `wadiz-user-service` (공유) | `wadiz.api.users` |
-| 3.11c | user | UserAppContactApiAdapter | UserAppContactApiPort | `wadiz-user-service` (공유) | `wadiz.api.users` |
-| 3.12 | usercoupon | UserCouponAdapter | UserCouponPort | `coupon-service` | `wadiz.api.user-coupon.base-url` |
+| 3.1 | `alimtalk/` | `AlimTalkAdapter` | `AlimTalkPort` | `alim-talk-service` | `wadiz.api.alimtalk.base-url` |
+| 3.2 | `crmgateway/` | `CrmGatewayAdapter` | `CrmPort` | `braze-service` | `wadiz.api.crm-gateway.base-url` |
+| 3.3 | `datasvc/` | `DataServiceAdapter` | `GetCountryFromIPPort` | `data-client2` | `wadiz.api.datasvc.base-url` |
+| 3.4 | `fastmail2/` | `NotificationAdapterV2` | `NotificationPort` | `fast-mail-client` · `normal-mail-client` | `wadiz.api.mail-fast.base-url` · `…mail-normal…` |
+| 3.5 | `kakao/` | `KakaoAdapter` | `KakaoPort` | `kakao-service` · `kakao-auth-service` | 코드에 직접 씀 |
+| 3.6 | ~~`notification/`~~ | **삭제됨** | — | — | — |
+| 3.7 | `notichannel/` | `MarketingConsentAdapter` | `MarketingConsentPort` | `noti-channel-client` | `wadiz.api.noti-channel.base-url` |
+| 3.8 | `push2/` | `Push2Adapter` | `Push2Port` | `push2-api-client` | `wadiz.api.push.base-url` |
+| 3.9 | `subscribenotification/` | `SubscribeNotificationAdapter` | `SubscribeNotificationPort` | `subsciber-client` (오타 원문) | `wadiz.api.notification.base-url` |
+| 3.10a | `terms/` | `TermsAdapter` | `TermsPort` | `wadiz-user-service` (공유) | `wadiz.api.user.base-url` |
+| 3.10b | `terms/` | `TermsQueryAdapter` | `SignupTermsQueryPort` | `wadiz-terms-query-service` | `wadiz.api.user.base-url` |
+| 3.11a | `user/` | `UserApiAdapter` | `UserApiPort` | `wadiz-user-service` | `wadiz.api.user.base-url` |
+| 3.11b | `user/` | `UserAppContactApiAdapter` | `UserAppContactApiPort` | `wadiz-user-service` (공유) | `wadiz.api.user.base-url` |
+| 3.12 | `usercoupon/` | `UserCouponAdapter` | `UserCouponPort` | `wadiz-user-service` (공유) | `wadiz.api.user.base-url` |
+
+> **`UserClient` 하나를 어댑터 넷이 나눠 씁니다.**
+> `TermsAdapter`·`UserApiAdapter`·`UserAppContactApiAdapter`·`UserCouponAdapter` 입니다.
+> `BE3-555` 이전에는 약관과 쿠폰이 각자 Feign 클라이언트를 갖고 있었습니다.
+> 지금은 클라이언트를 하나로 합치고 **도메인 경계는 Port 로만 유지**합니다.
+> 커밋 메시지의 표현이 *"user-api 호출을 단일 UserClient 로 통합(terms/coupon/contacts/timezone); 도메인 경계는 포트로 유지"* 입니다.
+
+`UserClient` 가 노출하는 경로(`user/UserClient.java`, `path = "/api/v1"`)
+
+| 메서드 | 경로 | 쓰는 어댑터 |
+|---|---|---|
+| `acceptTerms` | `POST /users/terms/accepter/{userId}` | `TermsAdapter` |
+| (쿠폰 발급) | `POST /users/coupon/user/{userId}/type/{couponType}` | `UserCouponAdapter` |
+| (쿠폰 종류 조회) | `GET /users/coupon/type/{couponType}` | `UserCouponAdapter` |
+| `reconnectContactsByMyMobileNumber` | `PUT /users/contacts/{userId}/my-number/reconnection` | `UserAppContactApiAdapter` |
+| `updateUserTimeZone` | `PUT /users/{userId}/time-zone/by-country` | `UserApiAdapter` |
 
 ---
 
@@ -387,35 +454,33 @@ signUp(cmd, device, locale)
 
 ---
 
-### 3.6 `notification/` — 레거시 알림 발행 클라이언트 (현재 미사용)
+### 3.6 ~~`notification/`~~ — **패키지 전체가 삭제됐습니다**
 
-- **파일**: `NotificationClient.java`, `NotificationPublish.java`, `NotificationPublishRequest.java`, `NotificationPublishWithInbox.java`, `NotificationPolicyCode.java`, `Inbox.java`, `InboxRequest.java`, `Mail.java`, `EmailToMailConverter.java`, `PublishType.java`, `PublisherType.java`.
-- **호출 대상**: 사내 알림 발행 API.
-  - Base URL: `${wadiz.api.notification}` — live: `http://172.31.1.12:9990/notification/api/v1/notifications` (`application-live.yml:81`), dev: `http://dev-app01:9990/notification/api/v1/notifications` (`application-dev.yml:65`).
-  - Endpoints (`NotificationClient.java:14-28`):
-    - `POST /mails/send/priority/fast` body=`Mail`.
-    - `POST /publishes/subscribers/{subscriberKey}` body=`NotificationPublishRequest` → `NotificationPublish`.
-    - `GET /publishes/{transactionKey}` → `NotificationPublish`.
-    - `GET /inboxes/{subscriberKey}/transactions/{transactionKey}` → `Optional<Inbox>`.
-    - `POST /publishes/groups/{subscriberGroupKey}` body=`NotificationPublishRequest`.
-- **클라이언트 구현**: OpenFeign. `@FeignClient(name = "mail-client", url = "${wadiz.api.notification}")` (`NotificationClient.java:11`).
-- **인증 방식**: 없음 (사내망).
-- **요청/응답 DTO 핵심 필드**:
-  - `Mail { mailKey, fromEmail, templateCode, templateAlias, title, body, toEmail, cc, bcc, templateData }` (`Mail.java:15-27`).
-  - `NotificationPublishRequest { PublishType publishType, publishKey, notificationPolicyCode, publisherType, publisherKey, Map<String,String> property, InboxRequest inbox }` (`NotificationPublishRequest.java:15-24`).
-  - `InboxRequest` / `Inbox`: `subscriberKey, inboxNo, transactionKey, isDisplay, title, summary, link, profileType, profileKey, isRead` (`InboxRequest.java:12-23`, `Inbox.java:6-17`).
-  - `NotificationPublishWithInbox extends NotificationPublish { Inbox inbox }` (`NotificationPublishWithInbox.java:8-9`).
-- **enum**:
-  - `PublishType` — `SUBSCRIBER`, `SUBSCRBIER_GROUP` (오타 원문 그대로, `PublishType.java:4-6`).
-  - `PublisherType` — `SYSTEM, EXTENRAL_SYSTEM, ADMIN, MAKER, MASTER, USER` (`PublisherType.java:4-27`, 오타 원문 그대로).
-  - `NotificationPolicyCode` — 문자열 상수 (WDZ01 News, WDZ02 Event, IVT10~13 invest, MAKER01, RWD00/10) (`NotificationPolicyCode.java:3-29`).
-- **호출 시점**: **저장소 내 실제 호출 지점 없음**. `NotificationClient` 를 주입받는 `@Component` / adapter 가 존재하지 않음 (Grep 결과: Adapter 0, 직접 호출 0). `EmailToMailConverter.java` 도 `FastEmail → Mail` 변환기만 정의되어 있고, 이를 사용하는 adapter 가 없다.
-- **판단**: 과거 `NotificationAdapter` (V2 이전) 에서 사용했을 코드 골격이 잔존 (현재 활성 어댑터는 `NotificationAdapterV2` = `fastmail2`). 본 디렉터리는 **dead code 상태의 shared DTO 모음** 으로 보이며, 재사용되는 건 `subscribenotification` 에서 동일 base URL `${wadiz.api.notification}` 을 공유한다는 사실 뿐.
-- **실패 처리**: N/A (호출자 없음).
+`BE3-555`(2026-06-26, `f7d832ac`)가 지웠습니다. 파일 11개가 한꺼번에 사라졌습니다.
+
+~~`EmailToMailConverter.java`~~ · ~~`Inbox.java`~~ · ~~`InboxRequest.java`~~ · ~~`Mail.java`~~ ·
+~~`NotificationClient.java`~~ · ~~`NotificationPolicyCode.java`~~ · ~~`NotificationPublish.java`~~ ·
+~~`NotificationPublishRequest.java`~~ · ~~`NotificationPublishWithInbox.java`~~ ·
+~~`PublishType.java`~~ · ~~`PublisherType.java`~~
+
+> 취소선은 "이 파일은 이제 없다"는 표시입니다. 낡음 검사기가 이 표시를 보고 소실 인용에서 뺍니다.
+
+> ✅ **이 문서가 미리 짚어 둔 대로였습니다.**
+> 예전 3.6 절이 *"저장소 내 실제 호출 지점 없음 … dead code 상태의 shared DTO 모음"* 이라고 적어 뒀습니다.
+> 삭제 커밋의 설명도 같은 말을 합니다 —
+> *"죽은 코드 제거: … notification 패키지 전체(IAM-3399 NotificationAdapter 리팩토링으로 고아화) + 관련 테스트"*.
+>
+> 지금 메일 발송은 `fastmail2/NotificationAdapterV2` 가 맡습니다(3.4 절).
+> `wadiz.api.notification.base-url` 설정 키는 남아 있고, `subscribenotification/` 이 씁니다(3.9 절).
 
 ---
 
-### 3.7 `platform/` — Platform 마케팅 수신 동의
+### 3.7 `notichannel/` — 마케팅 수신 동의 (예전 이름 `platform/`)
+
+> 📅 **폴더 이름이 바뀌었습니다.** `BE3-457`(2026-06-30, `a4fe9a60`) "MarketingConsent noti-channel 통일 및 토큰 제거".
+> FeignClient 이름도 `platform-api-client` 에서 **`noti-channel-client`** 로,
+> 설정 키도 `wadiz.api.marketing-consent` 에서 **`wadiz.api.noti-channel.base-url`** 로 바뀌었습니다.
+> 커밋 제목의 "토큰 제거"대로 인증 토큰도 빠졌습니다.
 
 - **파일**: `MarketingConsentAdapter.java`, `MarketingConsentClient.java`, `NotificationChannelAgreement.java`, `ChannelType.java` (+ response DTO 가 `subscribenotification/dto/PlatformNotiChannelMarketingConsentsDto` 에 위치).
 - **호출 대상**: Platform Marketing Consent (Noti-Channel).
@@ -545,60 +610,92 @@ signUp(cmd, device, locale)
 
 ---
 
-### 3.10 `terms/` — 레거시 약관 저장
+### 3.10 `terms/` — 약관 동의 저장과 가입 약관 조회
 
-- **파일**: `TermsClient.java`, `TermsAdapter.java`, `dto/CreateTermsRequest.java`.
-- **호출 대상**: 레거시 Terms 서비스.
-  - Base URL: `${wadiz.api.terms}` — live: `http://172.31.1.12:9990/api/v1/users/terms` (`application-live.yml:78`). 주석에 `"??"` — 운영자도 정확한 소유를 확신 못하는 듯.
-  - Endpoints (`TermsClient.java:14-19`):
-    - `POST /accepter/{userId}` body=`CreateTermsRequest` → void.
-    - `GET /accepter/{userId}` → raw `LinkedHashMap` (타입 미정, legacy).
-- **클라이언트 구현**: OpenFeign. `@FeignClient(name = "terms-client", url = "${wadiz.api.terms}")` (`TermsClient.java:12`).
-- **인증 방식**: 없음.
-- **요청 DTO**: `CreateTermsRequest { List<Terms> termsList }` (`CreateTermsRequest.java:15-17`). `Terms` 는 `kr.wadiz.oauth2.domain.terms.Terms` 도메인 객체.
-- **호출 시점**: `AbstractCreateUserService.saveTerms(savedUser, agreedTerms)` → `termsPort.acceptTerms(userId, terms)` (`AbstractCreateUserService.java:69`). Adapter (`TermsAdapter.java:17-24`) 는 `terms.removeUserAgeCheck()` 로 "userAgeCheck" 약관을 제외한 뒤 전송 — "TODO check why? terms api doesn't support this" 주석 (`:17`).
-- **실패 처리**: 없음. 성공 로그만 남김 (`:24`).
-- **Port 시그니처** (`TermsPort.java:5-7`, **유일하게 domain 패키지에 위치**):
+> 📅 **`BE3-555` 로 크게 바뀐 절입니다.**
+> `TermsClient.java` 가 삭제되고 **`UserClient` 를 쓰도록** 바뀌었습니다.
+> 대신 가입 화면용 조회 클라이언트 `SignupTermsQueryClient` 가 새로 들어왔습니다.
+
+- **파일**: `TermsAdapter.java`, `TermsQueryAdapter.java`, `SignupTermsQueryClient.java`, `dto/CreateTermsRequest.java`
+
+#### 3.10a `TermsAdapter` (`TermsPort`) — 약관 동의 저장
+
+- 전용 Feign 클라이언트가 없습니다. **`UserClient` 를 주입받아** 씁니다 (`TermsAdapter.java:15`).
+- 호출 경로: `POST /api/v1/users/terms/accepter/{userId}`, 본문은 `CreateTermsRequest`
+- **호출 시점**: `AbstractCreateUserService.saveTerms(...)` 에서 `termsPort.acceptTerms(userId, terms)`
+- **보내기 전에 한 가지를 걸러냅니다.**
   ```java
-  public interface TermsPort {
-    void acceptTerms(Long userId, AgreedTerms terms);
-  }
+  terms.removeUserAgeCheck(); // TODO check why? terms api doesn't support this
   ```
-  위치가 `port.outbound` 가 아닌 `domain.terms` 인 이유는 코드 히스토리상 리팩터링 중간 상태로 추정. `AbstractCreateUserService.java:7` 도 이 위치를 import.
-- **관찰**:
-  - `getTerms` 반환 타입이 raw `LinkedHashMap` (`TermsClient.java:18`) — 미매핑 DTO. account 쪽에서 호출자 없음.
-  - `terms.removeUserAgeCheck()` (`TermsAdapter.java:17`) — `AgreedTerms` 도메인 객체가 mutable. 외부에 나가기 전 필터링 부수효과를 도메인 객체에 가한다. 동일 도메인 객체를 다른 호출에서 재사용하면 문제 가능 (현 호출자 흐름상 `termsPort` 는 회원가입 1회 호출 후 소멸하므로 실질 영향 없음).
+  "userAgeCheck" 약관을 뺀 뒤 보냅니다. 주석의 `TODO` 가 이유를 모르겠다고 적고 있습니다.
+- **실패 처리**: 없습니다. 성공 로그만 남깁니다.
+- **Port 위치**: `TermsPort` 만 `port.outbound` 가 아니라 **`domain.terms`** 에 있습니다.
+  리팩터링이 중간에 멈춘 상태로 보입니다(추정).
+
+#### 3.10b `TermsQueryAdapter` (`SignupTermsQueryPort`) — 가입 약관 목록 조회
+
+가입 화면에 보여 줄 약관 목록을 받아 옵니다.
+
+```java
+@FeignClient(name = "wadiz-terms-query-service", url = "${wadiz.api.user.base-url}")
+public interface SignupTermsQueryClient {
+  @GetMapping(value = "/api/v2/terms/{flowType}", produces = "application/json")
+  ResponseEntity<List<JsonNode>> getTerms(String flowType, String platformType,
+                                          @RequestHeader(COUNTRY) String country,
+                                          @RequestHeader(LANGUAGE) String language);
+}
+```
+
+| 항목 | 내용 |
+|---|---|
+| `flowType` | 코드에 `"signup"` 으로 고정돼 있습니다 |
+| 국가·언어 | 본문이 아니라 **요청 헤더**로 보냅니다 |
+| 응답 | `JsonNode` 목록입니다. DTO 로 매핑하지 않습니다 |
+
+> **클라이언트를 따로 둔 이유가 코드 주석에 있습니다.**
+> *"통합 UserClient(path=/api/v1)는 v1 전용이라 v2 경로(/api/v2/terms)는 이 클라이언트가 담당한다.
+> 단 대상 서비스는 동일하므로 UserClient와 같은 base-url을 재사용한다"*.
+> 서비스는 같은데 API 버전이 달라서 나뉜 것입니다.
+
+> **실패해도 빈 목록으로 넘어갑니다.** 다만 조용히 넘기지는 않습니다.
+> ```java
+> } catch (Exception e) {
+>   // 응답을 받고도 디코딩/전송 단계에서 실패하면 빈 목록으로 폴백한다.
+>   // 조용히 삼키면 "user-api는 200인데 응답은 []"인 원인 파악이 어려우므로 반드시 로깅한다.
+>   log.warn("가입 약관 목록 조회 실패 - country: {}, ...", country, language, platformType, e);
+>   return Collections.emptyList();
+> }
+> ```
 
 ---
 
-### 3.11 `user/` — wave.user API (3개 어댑터 공유)
+### 3.11 `user/` — wave.user API
 
-하나의 `UserClient` 를 3개 어댑터가 공유하는 구조.
+- **파일**: `UserClient.java`, `UserApiAdapter.java`, `UserAppContactApiAdapter.java`, `ReconnectionContactCount.java`
+- **클라이언트**: `@FeignClient(name = "wadiz-user-service", url = "${wadiz.api.user.base-url}", path = "/api/v1")`
+- **인증**: 없습니다 (사내망)
 
-- **파일**:
-  - Client: `UserClient.java`.
-  - Adapter 3개: `UserApiAdapter.java`, `TermsApiAdapter.java`, `UserAppContactApiAdapter.java`.
-  - DTO: `ReconnectionContactCount.java`, `TermsTypeWithDate.java`.
-- **호출 대상**: legacy `com.wadiz.wave.user` 서비스.
-  - Base URL: `${wadiz.api.users}` — live: `http://172.31.1.12:9990/api/v1/users` (`application-live.yml:77`).
-  - Endpoints (`UserClient.java:15-26`):
-    - `GET /terms/accepter/{userId}` → `Map<ServiceCode, List<TermsTypeWithDate>>`.
-    - `POST /terms/accepter/{userId}` body=`AgreedTerms` → `Object`.
-    - `PUT /contacts/{userId}/my-number/reconnection` body=`ReconnectionContactsCommand` → `ReconnectionContactCount`.
-    - `PUT /{userId}/time-zone/by-country` body=`UserTimeZoneUpdateByCountryRequest` → void.
-- **클라이언트 구현**: OpenFeign. `@FeignClient(name = "wadiz-user-service", url = "${wadiz.api.users}")` (`UserClient.java:13`).
-- **인증 방식**: 없음.
+`UserClient` 가 노출하는 경로 5개는 [어댑터 index](#어댑터-index) 아래 표를 봅니다.
+그중 이 폴더의 어댑터가 쓰는 것은 둘입니다.
 
 #### 3.11.1 `UserApiAdapter` (`UserApiPort`)
-- `updateUserTimeZoneByCountry(userId, country)` → `PUT /{userId}/time-zone/by-country { country }` (`UserApiAdapter.java:14-16`).
-- **호출 시점**: `AbstractCreateUserService.updateUserTimeZone(savedUser)` (`AbstractCreateUserService.java:90-92`). 회원가입 본류 후 별도 public 메서드로 호출.
-- **실패 처리**: 없음.
+- `updateUserTimeZoneByCountry(userId, country)` → `PUT /api/v1/users/{userId}/time-zone/by-country`
+- **호출 시점**: `AbstractCreateUserService.updateUserTimeZone(savedUser)`. 회원가입 본류가 끝난 뒤 별도로 부릅니다.
+- **실패 처리**: 없습니다.
 
-#### 3.11.2 `TermsApiAdapter` (`TermsApiPort`)
-- `updateAgreement(userId, AgreedTerms)` → `POST /terms/accepter/{userId}` (`TermsApiAdapter.java:13-16`).
-- **호출 시점**: `SocialAuthenticationSuccessHandler.syncKakaoAgreement()` — 카카오 로그인 후 약관 동의 상태가 변했을 때 wave.user 에도 동기화 (`SocialAuthenticationSuccessHandler.java:147`).
-- **실패 처리**: 없음.
-- **주의**: 같은 저장소의 `TermsPort` (`terms/TermsAdapter.java`) 와 **별도 경로** (`/api/v1/users/terms/accepter/{userId}` vs `/api/v1/users/terms/accepter/{userId}`) — 실제로 live yml 상 두 base URL 은 모두 `172.31.1.12:9990` 의 `/api/v1/users/terms` / `/api/v1/users` 인데, `TermsAdapter` 는 `POST /accepter/{userId}` = `…/users/terms/accepter/{userId}`, `TermsApiAdapter` 는 `POST /terms/accepter/{userId}` = `…/users/terms/accepter/{userId}` → **결과적으로 동일 endpoint 를 두 경로 포맷으로 호출**. 설계 상 정리가 필요해 보임.
+#### 3.11.2 ~~`TermsApiAdapter`~~ — **삭제됐습니다**
+
+`BE3-555` 가 ~~`TermsApiAdapter.java`~~·~~`TermsApiPort.java`~~·~~`TermsTypeWithDate.java`~~ 를 함께 지웠습니다.
+
+> ✅ **이 문서가 지적했던 설계 문제가 실제로 고쳐졌습니다.**
+> 예전 3.11.2 절이 이렇게 적어 뒀습니다 —
+> *"결과적으로 동일 endpoint 를 두 경로 포맷으로 호출 → 설계 상 정리가 필요해 보임"*.
+>
+> 삭제 커밋의 설명이 정확히 그 얘기를 합니다 —
+> *"terms 쓰기 일원화: 카카오 동의 sync 도 TermsPort.acceptTerms 사용 (TermsApiPort/TermsApiAdapter 제거)"*.
+>
+> 즉 카카오 로그인 뒤 약관 동의를 맞추는 `SocialAuthenticationSuccessHandler.syncKakaoAgreement()` 도
+> 이제 **`TermsPort.acceptTerms` 한 경로만** 씁니다.
 
 #### 3.11.3 `UserAppContactApiAdapter` (`UserAppContactApiPort`)
 - `asyncReconnectContactsByMyMobileNumber(userId, mobileNumber)` → `@Async` 로 `PUT /contacts/{userId}/my-number/reconnection { mobileNumber }` (`UserAppContactApiAdapter.java:16-26`).
@@ -645,35 +742,49 @@ Single Responsibility Principle 로 port 를 분할했지만 underlying FeignCli
 
 ---
 
-### 3.12 `usercoupon/` — 회원가입 쿠폰 발급
+### 3.12 `usercoupon/` — 회원가입 쿠폰 발급·조회
 
-- **파일**: `UserCouponAdapter.java`, `UserCouponClient.java`, `dto/UserCouponType.java`.
-- **호출 대상**: `com.wadiz.api.reward` 내부 쿠폰 API.
-  - Base URL: `${wadiz.api.user-coupon.base-url}` — live: `http://172.31.1.12:9990/user/api/v1/users/coupon` (`application-live.yml:95`).
-  - Endpoint: `POST /user/{userId}/type/{couponType}` (`UserCouponClient.java:12-17`).
-- **클라이언트 구현**: OpenFeign. `@FeignClient(name = "coupon-service", url = "${wadiz.api.user-coupon.base-url}")` (`UserCouponClient.java:10`).
-- **인증 방식**: 없음. 대신 **국적/언어 헤더** 를 전달:
-  - `wadiz-country` (`WadizHttpHeaders.COUNTRY`).
-  - `wadiz-language` (`WadizHttpHeaders.LANGUAGE`).
-  - `UserCouponClient.java:15-16`, `WadizHttpHeaders.java:4-5`.
-- **요청/응답**: Path 파라미터만 (`userId`, `couponType`). body 없음. 응답 `ResponseEntity<Object>` — 내용 대신 HTTP status 만 확인 (`UserCouponAdapter.java:18-19`).
-- **쿠폰 타입**: `UserCouponType.SIGN_UP("signup")` 단일 (`UserCouponType.java:7-8`).
-- **호출 시점**: `AbstractCreateUserService.giveAwaySignupCouponsAndNotifyCRM(savedUser, locale)` (`AbstractCreateUserService.java:76-88`):
-  - 글로벌 가입 (`!"KR".equals(locale.getCountry())`) 이거나 funding 마케팅 수신 동의가 있을 때만 `userCouponPort.giveAwaySignupCoupons(savedUser)` 호출.
-  - 결과는 이후 `crmPort.sendSignUpInformationWithCoupon(user, issuedCoupon)` 의 `issuedCoupon` 플래그로 Braze 에 전달.
-- **실패 처리**: Adapter 가 `try/catch (Exception) { return false; }` 로 모든 예외 삼킴 (`UserCouponAdapter.java:17-23`). 상위도 catch 로 보호 (`AbstractCreateUserService.java:84-87`) — 쿠폰 발급 실패가 회원가입 자체를 막지 않음.
-- **Port 시그니처** (`UserCouponPort.java:5-7`):
-  ```java
-  public interface UserCouponPort {
-    Boolean giveAwaySignupCoupons(User user);
-  }
-  ```
-  반환값 `Boolean` 은 이후 `CrmPort.sendSignUpInformationWithCoupon(user, issuedCoupon)` 에 전달되는 **Braze 속성 값** 이다.
-- **관찰**:
-  - path `/user/{userId}/type/{couponType}` 의 첫 segment 가 `user` (단수) — 사내 reward 서비스의 기존 path 패턴.
-  - 호출 서비스는 사실상 `com.wadiz.api.reward` 이지만 `wadiz.api.user-coupon.base-url` 로 별도 이름을 사용. 이는 reward 서비스 내에 쿠폰 모듈이 존재하는 방식에서 유래한 naming.
-  - `HttpStatus.OK` 만 성공으로 판정 — 201/202/204 등 다른 2xx 는 실패로 간주 (`UserCouponAdapter.java:19-20`). downstream 계약이 정확히 200 일 때만 성공한다는 가정.
-  - `ResponseEntity<Object>` 는 Body 를 쓰지 않는다는 의도이지만 Feign 이 `Object` 역직렬화를 시도하므로 응답 Body 형태에 따라 예외 가능성 존재 (catch 로 잡히므로 false 반환).
+> 📅 **`BE3-555` 로 바뀐 절입니다.**
+> `UserCouponClient.java` 가 삭제되고 **`UserClient` 를 쓰도록** 바뀌었습니다.
+> 조회 메서드 `getSignupCoupons` 도 새로 들어왔습니다.
+
+- **파일**: `UserCouponAdapter.java`, `dto/UserCouponType.java` (2개만 남았습니다)
+- **클라이언트**: 전용 클라이언트가 없습니다. `UserClient` 를 주입받습니다 (`UserCouponAdapter.java:20`)
+
+| 하는 일 | 경로 | 응답 |
+|---|---|---|
+| 가입 쿠폰 발급 | `POST /api/v1/users/coupon/user/{userId}/type/{couponType}` | `ResponseEntity<Object>` — 본문은 안 쓰고 상태 코드만 봅니다 |
+| 가입 쿠폰 목록 조회 | `GET /api/v1/users/coupon/type/{couponType}` | `ResponseEntity<List<JsonNode>>` |
+
+- **인증**: 없습니다. 대신 국적·언어를 **요청 헤더**로 보냅니다 (`wadiz-country`, `wadiz-language`)
+- **쿠폰 타입**: `UserCouponType.SIGN_UP("signup")` 하나뿐입니다
+- **호출 시점**: `AbstractCreateUserService.giveAwaySignupCouponsAndNotifyCRM(savedUser, locale)`
+  - 글로벌 가입이거나 펀딩 마케팅 수신 동의가 있을 때만 부릅니다
+  - 결과 `Boolean` 은 `CrmPort.sendSignUpInformationWithCoupon(user, issuedCoupon)` 으로 넘어가 Braze 속성이 됩니다
+
+**실패 처리가 두 메서드에서 다릅니다.**
+
+| 메서드 | 실패했을 때 | 로그 |
+|---|---|---|
+| `giveAwaySignupCoupons` | `false` 를 돌려줍니다 | **남기지 않습니다** |
+| `getSignupCoupons` | 빈 목록을 돌려줍니다 | `log.warn` 으로 남깁니다 |
+
+조회 쪽 주석이 이유를 적어 뒀습니다 —
+*"조용히 삼키면 'user-api는 200인데 응답은 []'인 원인 파악이 어려우므로 반드시 로깅한다"*.
+
+> ⚠️ **확인 필요 — 발급 실패는 아무 흔적을 남기지 않습니다.**
+> ```java
+> } catch (Exception e) {
+>   return false;
+> }
+> ```
+> 같은 파일의 조회 메서드는 로그를 남기는데 발급 메서드는 남기지 않습니다.
+> 쿠폰이 안 나갔을 때 원인을 찾을 단서가 없습니다.
+> 원본 저장소는 읽기 전용이라 고치지 않고 기록만 남깁니다.
+
+> 🔎 **성공 판정이 `HttpStatus.OK` 하나뿐입니다.**
+> `201`·`202`·`204` 같은 다른 2xx 응답은 실패로 봅니다.
+> 상대 서비스가 정확히 `200` 만 준다는 가정에 기대고 있습니다.
 
 ---
 
@@ -716,8 +827,11 @@ Single Responsibility Principle 로 port 를 분할했지만 underlying FeignCli
 
 ### 5.2 dead / 모호한 영역
 
-- **`notification/` 디렉터리** 는 `NotificationClient`, `Mail`, `InboxRequest`, `EmailToMailConverter` 등을 정의하지만, 해당 Client 를 주입받는 어댑터가 본 저장소 내에 없다. 구 `NotificationAdapter` 가 제거되고 `fastmail2/NotificationAdapterV2` 로 대체되면서 남은 잔존물로 추정. `NotificationClient` bean 은 `@EnableFeignClients` 에 의해 컨텍스트에 주입 가능하지만 실제 호출자가 0이므로 "정의만 남고 죽은 채널" 로 본다. Grep 기반 관찰 — Spring DI 가 반영 런타임 체크까지는 본 분석에서 수행 안 함.
-- **`UserClient.getAcceptedTerms(userId)`** — 호출 지점 없음.
+- ~~**`notification/` 디렉터리**~~ — **해소됐습니다.** 2026-06-26 `BE3-555` 가 패키지를 통째로 지웠습니다.
+  예전에 "정의만 남고 죽은 채널"이라고 적어 둔 판단이 맞았습니다.
+- ~~**`UserClient.getAcceptedTerms(userId)`**~~ — **해소됐습니다.** `BE3-555` 가 "미사용 terms 조회 메서드"로 함께 지웠습니다.
+- **`UserClient.getSignupCoupons` · `SignupTermsQueryClient.getTerms`** — 둘 다 `BE3-555` 이후에 들어온 조회 경로입니다.
+  가입 화면이 쓰는 것으로 보이나 상위 호출 그래프는 이 범위에서 확인하지 않았습니다.
 - **`KakaoAdapter.renewToken(refreshToken)`** — 호출 지점을 본 저장소에서 즉시 확인 못함. 본 externalservice 범위 밖의 token scheduler / refresh 흐름에서 쓰일 가능성.
 - **`CreateUserWithSocialAccountApplicationService.updateKakaoAccountAboutAgreement`** — `@Deprecated` 주석 (`:108-110`). `kakaoPort.isFriendsScopeAgreed` 호출이 이 메서드에 남아있지만 사용 여부는 상위 호출 그래프 추적 필요.
 
@@ -727,15 +841,37 @@ Single Responsibility Principle 로 port 를 분할했지만 underlying FeignCli
 - `TermsAdapter` 가 "userAgeCheck" 를 제거하는 이유 주석 (`:17`, "terms api doesn't support this").
 - `UserToSubscriberRequestConverter.photoId = ""` + TODO 주석 (`:20`).
 - `SubscribeNotificationAdapter` Reactive TODO (`:23-28`).
-- `PublishType.SUBSCRBIER_GROUP` (오타), `PublisherType.EXTENRAL_SYSTEM` (오타) — 본 저장소 내 사용처 없음이라 교정 시 downstream 영향 재검토 필요.
+- ~~`PublishType.SUBSCRBIER_GROUP`·`PublisherType.EXTENRAL_SYSTEM` (오타)~~ — **해소됐습니다.** 두 열거형이 `notification/` 패키지와 함께 삭제됐습니다.
+- FeignClient 이름 `subsciber-client` 의 오타는 **그대로 남아 있습니다** (`subscribenotification/SubscribeNotificationClient.java:11`).
 - `MarketingConsentClient.getMarketingConsent` 는 정의만 있고 `MarketingConsentAdapter` 는 `updateMarketingConsent` 만 구현 (`MarketingConsentAdapter.java:18-23`). get 메서드는 호출자 없음.
 
 ### 5.4 운영 리스크 요약 (관측된 범위만)
 
 - 외부 서비스 호출 대부분 retry / circuit breaker / timeout 미설정 (Feign 기본값 의존).
-- 실패 처리가 adapter 마다 제각각 (`crmgateway` = log, `datasvc` = null, `usercoupon` = false, `subscribenotification`/`terms`/`platform` = 예외 전파, `push2` = RuntimeException, `UserAppContactApi` = warn 후 무시, `fastmail2` = EmailNotSentException).
-- 정적 Bearer 토큰이 `application-*.yml` 에 평문으로 저장되고 Git 에 체크인 (`application-live.yml:87, 90, 93, 99`).
-- 두 "terms" 어댑터 (`terms/TermsAdapter` + `user/TermsApiAdapter`) 가 동일 서비스 다른 경로로 호출 — 중복 여지.
-- `notification/` 디렉터리는 dead 로 보임.
+- **실패 처리가 어댑터마다 제각각입니다.**
 
-본 문서는 `src/main` 의 static 코드 관측만으로 작성되었다. 런타임 graph, Spring bean 활성 여부, 실제 HTTP 트래픽 로그 는 미확인.
+  | 어댑터 | 실패했을 때 |
+  |---|---|
+  | `crmgateway` | 로그만 남김 |
+  | `datasvc` | `null` 반환 |
+  | `usercoupon` (발급) | `false` 반환, 로그 없음 |
+  | `usercoupon` (조회) · `terms` (조회) | 빈 목록 반환, `log.warn` |
+  | `subscribenotification` · `terms`(쓰기) · `notichannel` | 예외를 그대로 올림 |
+  | `push2` | `RuntimeException` |
+  | `UserAppContactApi` | `warn` 남기고 무시 |
+  | `fastmail2` | `EmailNotSentException` |
+- **설정 파일에 평문 토큰이 남아 있습니다.** `application-rc.yml` 의 `wadiz.api.datasvc.token` 이 그 예입니다.
+  다만 `BE3-410`(2026-05-28)이 **로컬 비밀값을 환경 변수로 빼냈습니다** — `application-local.yml` 은 `${data_platform_api_token}` 처럼 참조만 합니다.
+  값은 이 문서에 옮기지 않았습니다.
+- ~~두 "terms" 어댑터가 동일 서비스를 다른 경로로 호출~~ — **해소됐습니다.**
+  `BE3-555` 가 `TermsApiAdapter`·`TermsApiPort` 를 지우고 `TermsPort.acceptTerms` 하나로 일원화했습니다.
+- ~~`notification/` 디렉터리는 dead 로 보임~~ — **해소됐습니다.** 패키지가 삭제됐습니다.
+- **쿠폰 발급 실패가 로그를 남기지 않습니다** (`UserCouponAdapter.giveAwaySignupCoupons`).
+  같은 파일의 조회 메서드는 `log.warn` 을 남깁니다. 3.12 절을 봅니다.
+- **`application-rc.yml` 에 메일 설정이 없습니다** (`mail-fast`·`mail-normal`). 확인이 필요합니다.
+
+본 문서는 `src/main` 의 정적 코드 관측만으로 작성했습니다.
+실행 시점의 호출 그래프, 스프링 빈이 실제로 뜨는지, 오가는 HTTP 트래픽 기록은 확인하지 않았습니다.
+
+**클라우드 환경(`cdev`·`clive`) 값도 확인하지 못했습니다.**
+`BE3-410`(2026-05-28) 이후 그 값들은 저장소가 아니라 쿠버네티스 설정맵에 있습니다.
