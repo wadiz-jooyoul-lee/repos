@@ -458,10 +458,12 @@ signUp(cmd, device, locale)
 
 `BE3-555`(2026-06-26, `f7d832ac`)가 지웠습니다. 파일 11개가 한꺼번에 사라졌습니다.
 
-`EmailToMailConverter.java` · `Inbox.java` · `InboxRequest.java` · `Mail.java` ·
-`NotificationClient.java` · `NotificationPolicyCode.java` · `NotificationPublish.java` ·
-`NotificationPublishRequest.java` · `NotificationPublishWithInbox.java` ·
-`PublishType.java` · `PublisherType.java`
+~~`EmailToMailConverter.java`~~ · ~~`Inbox.java`~~ · ~~`InboxRequest.java`~~ · ~~`Mail.java`~~ ·
+~~`NotificationClient.java`~~ · ~~`NotificationPolicyCode.java`~~ · ~~`NotificationPublish.java`~~ ·
+~~`NotificationPublishRequest.java`~~ · ~~`NotificationPublishWithInbox.java`~~ ·
+~~`PublishType.java`~~ · ~~`PublisherType.java`~~
+
+> 취소선은 "이 파일은 이제 없다"는 표시입니다. 낡음 검사기가 이 표시를 보고 소실 인용에서 뺍니다.
 
 > ✅ **이 문서가 미리 짚어 둔 대로였습니다.**
 > 예전 3.6 절이 *"저장소 내 실제 호출 지점 없음 … dead code 상태의 shared DTO 모음"* 이라고 적어 뒀습니다.
@@ -683,7 +685,7 @@ public interface SignupTermsQueryClient {
 
 #### 3.11.2 ~~`TermsApiAdapter`~~ — **삭제됐습니다**
 
-`BE3-555` 가 `TermsApiAdapter.java`·`TermsApiPort.java`·`TermsTypeWithDate.java` 를 함께 지웠습니다.
+`BE3-555` 가 ~~`TermsApiAdapter.java`~~·~~`TermsApiPort.java`~~·~~`TermsTypeWithDate.java`~~ 를 함께 지웠습니다.
 
 > ✅ **이 문서가 지적했던 설계 문제가 실제로 고쳐졌습니다.**
 > 예전 3.11.2 절이 이렇게 적어 뒀습니다 —
