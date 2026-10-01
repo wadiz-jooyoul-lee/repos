@@ -9,6 +9,47 @@
 
 ---
 
+> 📅 **2026-10-01 main pull 보강** (293 커밋)
+>
+> 커밋 수는 많지만 **대부분 CI 가 찍는 이미지 태그 갱신**입니다. 변경 파일 242개가 전부 `charts/service/values/` 아래입니다.
+> 사람이 손으로 넣은 변화는 셋입니다.
+>
+> ### 1. 신규 서비스 — `maker-intelligence-api` · `maker-intelligence-agent`
+>
+> 두 서비스가 **dev · rc4 · clive 세 환경에 한꺼번에** 들어왔습니다. 파일 6개가 새로 생겼습니다.
+>
+> | 파일 | 환경 |
+> |---|---|
+> | `charts/service/values/core/{dev,rc4,clive}/maker-intelligence-api.yaml` | 셋 |
+> | `charts/service/values/core/{dev,rc4,clive}/maker-intelligence-agent.yaml` | 셋 |
+>
+> 설정 파일의 주석이 성격을 알려 줍니다.
+>
+> | 항목 | 내용 |
+> |---|---|
+> | 언어 | **파이썬**입니다. 이미지 태그 접두가 `main-` 입니다 (주석에 "python 서비스는 태그 접두 main- (community-agent 선례)") |
+> | 배포 브랜치 | `main` 이 `clive` 로 갑니다 |
+> | 설정 전달 | **`extraEnvs` 로만** 받습니다. 주석이 *"앱은 이 ConfigMap 을 읽지 않는다 — 새 설정은 extraEnvs 에"* 라고 못 박았습니다 |
+> | 파드 수 | `agent` 는 **1 고정**입니다 |
+>
+> ⚠️ **`agent` 의 파드 수 주석이 함정을 경고합니다.**
+> *"★ 공통 values 가 replicas: 2 를 걸어 두므로 아래 줄을 지우면 두 파드가 같은 배치를 돌린다."*
+> 즉 `replicas: 1` 을 빼면 **같은 작업이 두 번 돌아갑니다.** `community-agent` 선례를 따랐다고 적혀 있습니다.
+>
+> 이름으로 보아 메이커 관련 AI 기능으로 보입니다(추정). 앱 저장소는 이 회차 범위에 없어 확인하지 못했습니다.
+>
+> ### 2. `rc1` 환경이 실제로 돌기 시작했습니다
+>
+> 이 저장소에 **`rc1` 값 파일이 94개** 있습니다. `backoffice` · `client` · `core` 세 플랫폼 모두에 디렉터리가 있습니다.
+>
+> 같은 흐름이 소스 저장소 쪽에서도 확인됩니다. 이번 회차에 **`aws_deploy_ecr_rc1.yml` 을 새로 넣은 저장소가 6곳**입니다 —
+> [`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md) · [`main2-api`](./main2-api.md) · `main2-batch-api` · `main2-batch` · `mail-fast-api` · `wish-api`.
+> [`co.wadiz.api.community`](./co.wadiz.api.community/co.wadiz.api.community.md) 는 직전 회차에 이미 넣었습니다.
+>
+> ### 3. `core-mcp` 설정 수정 (4 커밋) · `display-agent` live CDC 설정 변경 (2 커밋)
+>
+> ---
+
 > 📅 **2026-09-22 (2차) main pull 보강** (7 커밋)
 >
 > 전부 **dev 환경 이미지 태그 갱신**입니다. clive 와 rc4 는 손대지 않았습니다.

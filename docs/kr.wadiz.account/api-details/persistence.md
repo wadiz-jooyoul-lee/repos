@@ -1,7 +1,28 @@
 # `kr.wadiz.account` — Outbound Persistence 계층 (DB + Redis + IAM)
 
-> `oauth2/adapters/outbound/persistence/` 하위 어댑터를 전수 분석한다.
-> 이 서비스는 Wadiz 계정/OAuth2 인증서버로, **별도 스키마 두 벌(RDB)** 과 **Redis** 를 동시에 소유한다.
+> `oauth2/adapters/outbound/persistence/` 하위 어댑터를 전수 분석합니다.
+> 이 서비스는 와디즈 계정·OAuth2 인증서버로, **별도 스키마 두 벌(RDB)** 과 **Redis** 를 함께 씁니다.
+
+> 📅 **2026-09-30 본문 점검** — `cloud_live` 브랜치 `b42a8e7f`(2026-09-21) 기준
+>
+> **Redis 절(5장)이 통째로 낡아 있었습니다.** 뿌리는 `BE3-701` 하나입니다.
+>
+> | 고친 곳 | 예전 | 지금 |
+> |---|---|---|
+> | 저장 방식 | `@RedisHash` + `CrudRepository` 2쌍 | **`StringRedisTemplate` 직접 사용** |
+> | 비밀번호 재설정 키 | `account:user:password:reset:token:{hash}` | **`user:` 마디가 빠졌습니다** |
+> | 키 접두 | `account:` 고정 | **환경마다 다릅니다** (`wadiz.redis.key-prefix`) |
+> | Redis 연결 | Lettuce 클러스터 9노드 | **클라우드는 단일 노드.** 클러스터 코드는 삭제됨 |
+>
+> | 이슈키 | 날짜 | 무엇이 바뀌었나 |
+> |---|---|---|
+> | `BE3-701` | 2026-07-27 (`6268b45e`) | 클라우드 전용으로 죽어 있던 클러스터 Redis 코드 제거 |
+> | `BE3-701` | 2026-07-29 (`890c2778`) | `@RedisHash` 를 `RedisTemplate` 으로 전환 (누적 문제 해소) |
+> | `BE3-701` | 2026-07-30 (`89e5acd1`) | 키 조립을 `AccountRedisKeyspace` 로 한곳에 모음 |
+> | `BE3-701` | 2026-07-30 (`24d14cd0`) | 비밀번호 재설정 키에서 `user:` 제거 |
+> | `BE3-410` | 2026-05-28 (`ec729cf5`) | `application-dev.yml`·`application-live.yml` 삭제 |
+>
+> **`@RedisHash` 가 이 저장소에서 완전히 사라졌습니다.**
 
 ---
 
@@ -27,10 +48,10 @@
 - `src/main/java/kr/wadiz/oauth2/application/config/DatasourceConfig.java`
 - `src/main/java/kr/wadiz/oauth2/application/config/WadizDbJpaConfig.java`
 - `src/main/java/kr/wadiz/oauth2/application/config/IamDbJpaConfig.java`
-- `src/main/java/kr/wadiz/oauth2/application/config/RedisConnectionFactoryBeanPostProcessor.java`
+- ~~`src/main/java/kr/wadiz/oauth2/application/config/RedisConnectionFactoryBeanPostProcessor.java`~~ — 2026-07-27 삭제(`6268b45e`)
 - `src/main/java/kr/wadiz/oauth2/application/RememberMeConfig.java`
 - `src/main/java/kr/wadiz/oauth2/application/authentication/SessionCleanerService.java`
-- `src/main/resources/application.yml`, `application-dev.yml`
+- `src/main/resources/application.yml` (~~`application-dev.yml`~~ 은 2026-05-28 삭제 — `BE3-410`)
 - `schema/mysql_ddl.sql` (IAM 스키마 초기본)
 
 **미탐색 영역**:
@@ -90,17 +111,27 @@ public HikariDataSource wadizDataSource(...) {
   → Entity 필드 `registeredClientId` 가 `registered_client_id` 컬럼에 매핑된다.
 - wadiz 쪽은 별도 naming strategy 지정 없음 → `@Column(name=...)` 로 개별 지정.
 
-### 2.3 DB URL (dev 프로파일, `application-dev.yml:15-24`)
+### 2.3 DB URL (`application-local.yml:37-48` — 클라우드 개발 인프라)
+
+> 📅 **2026-09-30 정정.** 예전 문서는 `application-dev.yml:15-24` 의 사내 IP `192.168.0.162` 를 적었습니다.
+> 그 파일은 `BE3-410`(2026-05-28)이 지웠습니다. 값은 쿠버네티스 설정맵으로 옮겨 갔습니다.
+> 저장소에서 확인할 수 있는 가장 가까운 것이 로컬 프로파일이고, 그것이 클라우드 개발 인프라를 바라봅니다.
 
 ```yaml
 spring.datasource:
   iam:
-    url: jdbc:mysql://192.168.0.162:3306/wadiz_iam?...&connectionCollation=utf8mb4_unicode_ci&allowMultiQueries=true...
+    url: jdbc:mysql://rds.dev.wadiz.io:3306/wadiz_iam?...&sslMode=REQUIRED
+    username: wadiz_account_dev
+    password: ${mysql_wadiz_account_dev_password}
   wadiz:
-    url: jdbc:mysql://192.168.0.162:3306/wadiz_db?...
+    url: jdbc:mysql://rds.dev.wadiz.io:3306/wadiz_db?...
 ```
 
-→ 두 스키마는 **같은 MySQL 인스턴스** 안의 두 DB (`wadiz_iam`, `wadiz_db`).
+→ 두 스키마는 **같은 MySQL 인스턴스** 안의 두 DB 입니다 (`wadiz_iam`, `wadiz_db`).
+
+> **호스트가 사내 IP 에서 `rds.dev.wadiz.io` 로 바뀌었고 `sslMode=REQUIRED` 가 붙었습니다.**
+> 비밀번호도 평문이 아니라 환경 변수 참조로 바뀌었습니다(`BE3-410` 의 "local 시크릿 env var 외부화").
+> 사내(온프렘) `rc`·`rc2` 프로파일은 여전히 Jasypt 암호문(`ENC(...)`)을 씁니다.
 `UserDropOutLogEntityRepository` 네이티브 쿼리가 `wadiz_db.UserDropOutLog` JOIN `wadiz_iam.persistent_logins` 로 두 DB를 물리적으로 크로스-DB JOIN 함 (`UserDropOutLogEntityRepository.java:19-28`).
 
 ### 2.4 책임 분리 개념표
@@ -804,11 +835,25 @@ public interface ClientRepository extends JpaRepository<Client, String> {
 
 ## 5. Redis 사용 패턴
 
-### 5.1 Redis Cluster 연결
+### 5.1 Redis 연결
 
-- Lettuce Cluster. `application-dev.yml:79-89` 에 9노드(192.168.1.240~242 × 6001~6003).
-- `RedisConnectionFactoryBeanPostProcessor` (`config/RedisConnectionFactoryBeanPostProcessor.java:17-45`) 가 `LettuceConnectionFactory` 를 `LettuceClusterKeyspaceMessageListenableConnectionFactory` 로 래핑 — 클러스터 키스페이스 이벤트 구독 가능하게.
-- 추가로 `rememberMeRedisTemplate` 빈 (`...:38-44`) — String Key + `GenericJackson2JsonRedisSerializer` Value.
+> 📅 **2026-09-30 정정** — 예전 문서가 적은 클러스터 구성은 **클라우드에서 쓰이지 않습니다.**
+
+`6268b45e`(2026-07-27)가 클러스터 전용 코드를 지웠습니다.
+커밋 설명이 이유를 적고 있습니다 —
+*"cloud는 항상 standalone(단일 ElastiCache)이라 클러스터 keyspace 알림용 코드가 dead"*.
+
+| 지워진 것 | 무엇이었나 |
+|---|---|
+| ~~`config/RedisConnectionFactoryBeanPostProcessor.java`~~ | 연결 팩토리를 클러스터용으로 바꿔 끼우던 장치 |
+| ~~`support/redis/lettuce/` 3종~~ | 클러스터 키스페이스 알림 구독 |
+
+**동작은 바뀌지 않았습니다.** 단일 노드에서는 클러스터 분기가 아무 일도 하지 않았기 때문입니다.
+
+`rememberMeRedisTemplate` 빈은 지워지지 않고 **쓰는 쪽인 `RememberMeConfig` 로 옮겨졌습니다.**
+
+> 사내(IDC) `master` 브랜치는 여전히 클러스터라 그쪽 코드는 남아 있습니다.
+> 이 문서는 `cloud_live` 기준이라 클라우드 쪽만 적습니다.
 
 ### 5.2 Spring Session (서버측 HttpSession 저장소)
 
@@ -828,39 +873,95 @@ public interface ClientRepository extends JpaRepository<Client, String> {
 - `SessionCleanerService` 가 `UserLoggedEvent` 리스너에서 만료 sessionId 를 인덱스에서 제거(async).
 - `cleanup-cron: '-'` → Spring 기본 세션 청소 cron 비활성. 자체 이벤트 기반 청소.
 
-### 5.3 Email 인증 코드 (TTL 300초)
+### 5.3 Email 인증 코드 (TTL 300초) — `@RedisHash` 를 걷어냈습니다
 
-`redis/emailvalidationcode/EmailValidationCodeEntity.java:12-20`
+> 📅 **2026-09-30 전면 정정.** `BE3-701`(2026-07-29, `890c2778`)이 방식을 바꿨습니다.
+
+**왜 바꿨는지가 커밋 설명에 자세히 적혀 있습니다.**
+
+> *"`@RedisHash` 는 id 추적용 keyspace SET 을 유지해, TTL 만료분이 keyspace notification
+> (=off, 부하로 미사용) 없이는 SET 에 무한 누적됐음. plain RedisTemplate 은 SET 자체가 없어
+> TTL 이 완전 자기정리 → 누적 원천 제거."*
+
+풀어서 말하면 이렇습니다.
+`@RedisHash` 는 저장한 것들의 목록을 따로 SET 에 들고 있습니다.
+값 자체는 TTL 로 사라지는데, **그 목록에서 지우는 일은 알림(keyspace notification)을 켜야 일어납니다.**
+그 알림은 부하 때문에 꺼 뒀습니다. 그래서 목록만 끝없이 불어났습니다.
+
+`StringRedisTemplate` 을 직접 쓰면 목록 자체가 없어 이 문제가 생기지 않습니다.
+
+**지금 구현** — `redis/emailvalidationcode/RedisEmailValidationRepository.java`
 
 ```java
-@RedisHash(value = "account:email:validation:code", timeToLive = 300)
-public class EmailValidationCodeEntity {
-  @Id private String id;     // sessionId 기반 (mapper)
-  private String email;
-  private String code;
+public void saveEmailValidation(final EmailValidationCode code) {
+    final String key = keyspace.emailValidationCode(code.getSessionId());
+    final HashOperations<String, String, String> ops = redisTemplate.opsForHash();
+    ops.putAll(key, Map.of(FIELD_EMAIL, code.getEmail(), FIELD_CODE, code.getCode()));
+    redisTemplate.expire(key, TTL_SECONDS, TimeUnit.SECONDS);
 }
 ```
 
-- Key: `account:email:validation:code:{id}` (Spring Data Redis `@RedisHash` 규약).
-- TTL: 300s = 5분.
-- Repository: `EmailValidationCodeRepository extends CrudRepository<EmailValidationCodeEntity, String>` (`EmailValidationCodeRepository.java`).
-- Port adapter `RedisEmailValidationRepository` (`RedisEmailValidationRepository.java:14-30`) — `mapper` 로 도메인 `EmailValidationCode` ↔ entity 변환 (mapper.id ↔ domain.sessionId, `EmailValidationCodeEntityMapper.java:9-14`).
+| 항목 | 값 |
+|---|---|
+| 키 | `{접두}:email:validation:code:{sessionId}` |
+| 자료형 | 해시. 필드는 `email`·`code` 둘 |
+| TTL | 300초 (5분) |
+| 포트 | `EmailValidationRepositoryPort` (그대로) |
+
+**사라진 것**: ~~`EmailValidationCodeEntity.java`~~ · ~~`EmailValidationCodeRepository.java`~~ · ~~`EmailValidationCodeEntityMapper.java`~~
 
 ### 5.4 Password Reset Token (TTL 1800초 = 30분)
 
-`redis/passwordreset/PasswordResetTokenEntity.java:13-19`
+같은 커밋으로 함께 바뀌었습니다.
+
+**지금 구현** — `redis/passwordreset/RedisPasswordResetTokenRepository.java`
 
 ```java
-@RedisHash(value = "account:user:password:reset:token", timeToLive = 1800)
-public class PasswordResetTokenEntity {
-  @Id private String tokenHash;
-  private Long      userId;
-}
+redisTemplate.opsForValue().set(
+        keyspace.passwordResetToken(token.getTokenHash()),
+        String.valueOf(token.getUserId()), TTL_SECONDS, TimeUnit.SECONDS);
 ```
 
-- Key: `account:user:password:reset:token:{tokenHash}`.
-- Repository `PasswordResetTokenEntityRepository extends CrudRepository<_, String>` (`PasswordResetTokenEntityRepository.java`).
-- Adapter `RedisPasswordResetTokenRepository` (`RedisPasswordResetTokenRepository.java:13-32`) — `save / findByTokenHash / deleteByTokenHash` 만.
+| 항목 | 값 |
+|---|---|
+| 키 | `{접두}:password:reset:token:{tokenHash}` |
+| 자료형 | 문자열. 값은 `userId` |
+| TTL | 1800초 (30분) |
+| 메서드 | `save` · `findByTokenHash` · `deleteByTokenHash` |
+
+> ⚠️ **키에서 `user:` 마디가 빠졌습니다.**
+> 예전 키는 `account:user:password:reset:token:{hash}` 였습니다.
+> `24d14cd0`(2026-07-30) "BE3-701: 비밀번호 리셋 토큰 redis key 수정" 이 한 줄을 고쳤습니다.
+>
+> ```
+> - return prefix + ":user:password:reset:token:" + tokenHash;
+> + return prefix + ":password:reset:token:" + tokenHash;
+> ```
+>
+> **전환 커밋(`890c2778`)의 설명은 "키 문자열 불변"이라고 적었는데 결과적으로 달라졌습니다.**
+> 그 다음 날 별도 커밋으로 바로잡은 것입니다. 왜 바꿨는지는 커밋 설명에 없습니다.
+> 배포 시점에 옛 키로 발급된 토큰이 있었다면 찾지 못했을 텐데, 확인할 근거가 저장소에 없습니다. **확인 필요**입니다.
+
+**사라진 것**: ~~`PasswordResetTokenEntity.java`~~ · ~~`PasswordResetTokenEntityRepository.java`~~
+
+### 5.4-1 키 접두는 환경마다 다릅니다
+
+`redis/AccountRedisKeyspace.java` 가 모든 키를 조립합니다.
+
+```java
+public AccountRedisKeyspace(@Value("${wadiz.redis.key-prefix:account}") final String prefix)
+```
+
+코드 주석이 이유를 적고 있습니다 —
+*"공유 Redis(dev/rc4) 환경 격리를 위해 prefix 는 helm 프로퍼티로 주입되며(예 `account:dev`),
+전용 Redis(clive 등)는 base `account`(env 없음)"*.
+
+| 환경 | 접두 |
+|---|---|
+| `dev` · `rc4` (Redis 를 나눠 씀) | `account:dev` 처럼 환경 이름이 붙습니다 |
+| `clive` (전용 Redis) | `account` |
+
+즉 **예전 문서가 `account:` 로 고정해 적은 키는 개발·검증 환경에서 맞지 않습니다.**
 
 ### 5.5 Remember-Me 쿠키 캐시 (TTL 15초)
 
@@ -898,13 +999,18 @@ public class HttpSessionSocialAccountRepository implements SocialAccountReposito
 
 ### 5.7 Redis 키 네임스페이스 요약
 
-| Key 패턴 | 저장 주체 | TTL | 직렬화 |
+아래 `{접두}` 는 환경마다 다릅니다 — `clive` 는 `account`, 공유 Redis 를 쓰는 `dev`·`rc4` 는 `account:dev` 같은 형태입니다(5.4-1 참고).
+
+| Key 패턴 | 저장 주체 | TTL | 자료형·직렬화 |
 |---|---|---|---|
-| `account:sessions:{sid}` | Spring Session (Redis indexed) | `server.servlet.session.timeout: 1440m` (1일) | Spring Session 기본 (JdkSerializationRedisSerializer) |
-| `account:index:PRINCIPAL_NAME_INDEX_NAME:{principal}` | Spring Session index | 자동 만료 | Set of sessionIds |
-| `account:email:validation:code:{id}` | `EmailValidationCodeEntity` | 300s | `@RedisHash` 해시 (필드별 저장) |
-| `account:user:password:reset:token:{tokenHash}` | `PasswordResetTokenEntity` | 1800s | `@RedisHash` 해시 |
-| `{series}_{token}` | Remember-Me 캐시 | 15s (LOCK) | `GenericJackson2JsonRedisSerializer` (rememberMeRedisTemplate) |
+| `account:sessions:{sid}` | Spring Session | `server.servlet.session.timeout: 1440m` (1일) | Spring Session 기본 (`JdkSerializationRedisSerializer`) |
+| `account:index:PRINCIPAL_NAME_INDEX_NAME:{principal}` | Spring Session 색인 | 자동 만료 | sessionId 들의 SET |
+| `{접두}:email:validation:code:{sessionId}` | `RedisEmailValidationRepository` | 300초 | **해시** — 필드 `email`·`code` |
+| `{접두}:password:reset:token:{tokenHash}` | `RedisPasswordResetTokenRepository` | 1800초 | **문자열** — 값은 `userId` |
+| `{series}_{token}` | Remember-Me 캐시 | 15초 (LOCK) | `GenericJackson2JsonRedisSerializer` |
+
+> **`@RedisHash` 가 이 저장소에서 완전히 사라졌습니다.**
+> 마지막 두 곳이 `BE3-701` 로 전환되면서 `@EnableRedisRepositories` 와 `RedisKeyspaceConfig` 도 함께 지워졌습니다.
 
 ---
 
@@ -954,7 +1060,7 @@ public class BaseEntity {
 | `ProviderProfileMapper` | `wadiz/socialuser/mapper/ProviderProfileMapper.java` | `SocialAccountWithAdditionalInfo` → `ProviderProfile`. |
 | `ProviderProfileLogMapper` | `wadiz/socialuser/mapper/ProviderProfileLogMapper.java` | `SocialAccountWithAdditionalInfo` → `ProviderProfileLog`. |
 | `UserRecordMapper` | `wadiz/userrecording/UserRecordMapper.java` | `UserDataChangeRecord` → `UserRecordingEntity` (List 지원). |
-| `EmailValidationCodeEntityMapper` | `redis/emailvalidationcode/EmailValidationCodeEntityMapper.java` | Redis entity ↔ 도메인 (id ↔ sessionId). |
+| ~~`EmailValidationCodeEntityMapper`~~ | ~~`redis/emailvalidationcode/EmailValidationCodeEntityMapper.java`~~ | **2026-07-29 삭제** (`BE3-701`). `@RedisHash` 를 걷어내면서 엔티티·매퍼가 함께 사라졌습니다. 5.3 절 참고 |
 
 ### 6.4 암호 유틸 (util 패키지 — 암호화 로직 자체는 범위 외)
 
@@ -985,7 +1091,9 @@ public class BaseEntity {
 
 - `persistence/` 하위 순수 어댑터/Entity/Repository 만 대상. 도메인 객체(`domain/`), 포트 (`port/outbound/`), 서비스 오케스트레이션(`application/`) 은 범위 외 — 다만 문맥 보조로 일부 참조.
 - 테스트 (`src/test/groovy/...`) 는 포함하지 않음.
-- Jasypt 암호화 비밀번호(`application-dev.yml:19` `ENC(...)`) 복호 메커니즘은 `PropertyEncryptionConfig` 참조(범위 외).
+- Jasypt 암호화 비밀번호 복호 방식은 `PropertyEncryptionConfig` 를 봅니다(범위 외).
+  지금 `ENC(...)` 가 남은 곳은 사내 검증 환경 둘입니다 — `application-rc.yml:18`, `application-rc2.yml:18`.
+  클라우드 쪽은 환경 변수 참조로 바뀌었습니다.
 
 ### 7.2 관측되지 않은 / 불명확한 것
 
