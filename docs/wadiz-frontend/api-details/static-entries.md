@@ -1,6 +1,25 @@
 # static/entries 레거시 호환 진입점 상세 스펙
 
-> **기록 범위**: `wadiz-frontend/static/entries/` 디렉터리 **12개** 엔트리(`account`, `analytics`, `assets`, `embed`, `floating-buttons`, `iam`, `landing`, `main`, `personal-message`, `reward`, `school`, `web`) — 2026-09-23 확인. `open-account` 는 `FE1-1366`(2026-08-05)로 삭제됐습니다의 `package.json` · `webpack.config.js` · `src/index.*` 등 빌드·부트스트랩 코드에서 직접 관측 가능한 것만 기록합니다. 각 엔트리가 불러오는 공통 패키지(`@wadiz/react-common`, `@wadiz/reward-simple-pay-app`, `@wadiz/equity-*`, …) 내부는 외부 모듈로 간주하고 진입점에서 import 되는 사실만 기록합니다. `entries/RENDERER_ID_SELECTORS.md` 에 2025-01-05 기준으로 정리된 selector 목록을 참고 자료로 활용하되, 본 문서는 현행 소스에서 다시 확인한 내용을 우선합니다. 실제 배포 파이프라인(Jenkins/S3/CDN 구성)은 이 repo 바깥에 있어 확인 불가이며, `cdnPurge.js` 와 `STATIC_DEPLOYMENT_ORIGIN` 환경 변수에서 드러나는 부분만 기록합니다.
+> **기록 범위**: `wadiz-frontend/static/entries/` 아래 **12개** 엔트리입니다 —
+> `account` · `analytics` · `assets` · `embed` · `floating-buttons` · `iam` · `landing` · `main` · `personal-message` · `reward` · `school` · `web` (2026-09-23 확인).
+> 예전 13번째였던 `open-account` 는 `FE1-1366`(2026-08-05)이 지웠습니다.
+>
+> 각 엔트리의 `package.json` · `webpack.config.js` · `src/index.*` 등 빌드·부트스트랩 코드에서 **직접 관측한 것만** 기록합니다. 각 엔트리가 불러오는 공통 패키지(`@wadiz/react-common`, `@wadiz/reward-simple-pay-app`, `@wadiz/equity-*`, …) 내부는 외부 모듈로 간주하고 진입점에서 import 되는 사실만 기록합니다. `entries/RENDERER_ID_SELECTORS.md` 에 2025-01-05 기준으로 정리된 selector 목록을 참고 자료로 활용하되, 본 문서는 현행 소스에서 다시 확인한 내용을 우선합니다. 실제 배포 파이프라인(Jenkins/S3/CDN 구성)은 이 repo 바깥에 있어 확인 불가이며, `cdnPurge.js` 와 `STATIC_DEPLOYMENT_ORIGIN` 환경 변수에서 드러나는 부분만 기록합니다.
+
+> 📅 **2026-09-30 본문 점검** — `cloud_live` `4ff419bc` 기준
+>
+> 낡음 검사기가 잡아낸 소실 인용 6건을 확인했습니다. **진짜 오류는 1건이었습니다.**
+>
+> | 인용 | 판정 |
+> |---|---|
+> | `src/w9/w9-landing.js` (미탐색 9번) | **오류.** 파일이 사라졌는데 "그대로 유지"라고 적혀 있었습니다 |
+> | `apps.js` · `polyfill.js` · `sentry.js` · `vendor.js` | **오탐.** webpack 이 만들어 내는 빌드 산출물입니다 |
+>
+> ⚠️ **빌드 산출물은 검사기가 걸러내지 못합니다.**
+> 검사기는 백틱 안의 `이름.확장자` 를 저장소 파일과 맞춰 보는데,
+> 번들 이름은 빌드 때 생기므로 저장소에 있을 수가 없습니다.
+> 이 문서처럼 번들 이름을 자주 쓰는 글은 **소실 인용 수치를 그대로 믿으면 안 됩니다.**
+> 그래서 번들 이름을 쓴 자리마다 "빌드 산출물"이라고 덧붙였습니다.
 
 ---
 
@@ -199,7 +218,8 @@
 - **빌드 진입점** (`entries/landing/webpack.config.js:22-36` + `entry.config.js:1-42` + `entries.js`):
   - `entries.js` 가 고정 디렉터리 목록 나열(`about`, `board`, `bestmaker2017`, `bestmaker2018`, `partners`, `startup-registration`, `startup-requesting-administrator`, `terms`, `terms-confirm`, `terms-embed`, `wadiz2017`, `apps`) — 주석으로 `w9`, `w9-webinar` 는 비활성 (`entries.js:1-17`)
   - `entry.config.js` 가 각 디렉터리의 `index.scss`/`index.js`/`index.ts` 존재 여부에 따라 entry 자동 구성, 결과를 `{dirName: [stylePath, scriptPath]}` 형태로 반환 (`entry.config.js:18-37`).
-  - 결과적으로 chunk 이름이 디렉터리명과 동일 (`about.js`, `terms.js`, `apps.js` 등).
+  - 결과적으로 만들어지는 덩어리(chunk) 이름이 디렉터리 이름과 같습니다 (`about.js`·`terms.js`·`apps.js` 등).
+  이것들은 **빌드가 만들어 내는 산출물**이라 저장소에는 없습니다.
 - **주요 렌더링 호출 (selector 중심)**
   - `src/startup-registration/landing.tsx:4-6` — `DOMContentLoaded` 후 `reactEmbedRendererWithInitialization(StartupRegistrationApp, '#startup-registration-app')` (jQuery 스타일 `#` 셀렉터).
   - `src/terms-confirm/terms-confirm.jsx:4` — `reactEmbedRendererWithInitialization(TermsConfirmApp, '#terms-confirm-app', { isOpen: true })` (`@wadiz/terms-confirm-modal`).
@@ -377,7 +397,8 @@
     common: path.join(__dirname, './src/index.js'),
   }
   ```
-  → **3개 번들이 동시에 빌드**: `polyfill.js`, `wui.css`(+ 공통 CSS), `common.js`.
+  → **번들 3개가 함께 만들어집니다**: `polyfill.js`, `wui.css`(공통 CSS 포함), `common.js`.
+     셋 다 빌드 산출물이라 저장소에는 없습니다.
   - 추가로 `webpack.sentry.config.js` 가 별도 실행되어 `src/sentry/index.js` → `sentry.js` chunk 를 만들고 `@sentry/webpack-plugin` 으로 **Sentry 릴리즈 업로드 + 소스맵 전송** 수행 (`webpack.sentry.config.js:22-47`). `release` 값은 `process.env.GIT_COMMIT`.
   - `optimization.splitChunks` 로 `node_modules` 의존성(`@wadiz`, `@sentry`, `wadiz-` 제외) 을 별도 `vendor.js` 로 enforce 분리 (`webpack.config.js:100-118`).
   - `output.libraryTarget: 'umd'` (`:90`).
@@ -556,7 +577,13 @@ Sentry 릴리즈는 별도 빌드 스크립트(`build:sentry` in `entries/web/pa
 6. **`assets` 의 상세 콘텐츠 목록**: 복사 대상 디렉터리(`public/equity`, `public/fonts`, `public/pdfjs`, `public/wadizawards` 등) 는 바이너리 자산이므로 구성만 기록하고 내용은 생략.
 7. **RENDERER_ID_SELECTORS.md 와 현행 소스의 불일치**: 본 문서 작성 시점(2026-04-20) 기준, 최소 다음 2개 drift 관측 — (a) `reward/SimplePay.jsx:73` 의 `campaign-support-signature` 제거됨, (b) `landing/src/apps/wadizAwards/wadiz-awards.jsx` 에 `wadiz-awards-app-2025-result` 가 추가됨(RENDERER_ID_SELECTORS.md 는 2024 까지만 기록). 현행 소스가 항상 우선.
 8. **`iam/marketing-notification-settings` 의 렌더러 호출 위치**: 이 디렉터리는 `MarketingNotificationSettingsApp` 을 default export 만 할 뿐 이 repo 내부에서 `reactRenderer` 를 호출하지 않음. 과거 버전에서 제거된 렌더러 호출일 수 있으나 컴파일 대상에는 여전히 포함 — 사용처 확인 필요.
-9. **`landing/w9` 활성/비활성 혼재**: `entries.js` 에서 `w9`/`w9-webinar` 디렉터리가 주석 처리되었지만 `src/w9/w9-landing.js` 는 그대로 유지. 빌드 포함 여부는 `entries.js` 의 명시적 목록에 의존하므로 **현재 빌드에는 미포함**.
+9. ~~**`landing/w9` 활성/비활성 혼재**~~ — ✅ **2026-09-30 해소.** 파일이 아예 사라졌습니다.
+
+   `FE1-1366`(2026-08-05)이 투자·스타트업 관련 엔트리를 걷어내면서 함께 지웠습니다.
+   지금 `static/entries/landing/src/` 에 **`w9` 가 들어간 폴더도 파일도 없습니다.**
+   `entries.js` 에도 `w9` 문자열이 남아 있지 않습니다.
+
+   예전 서술은 "주석 처리됐지만 파일은 유지"였는데, 그 어중간한 상태가 정리된 것입니다.
 10. **`RENDERER_ID_SELECTORS.md:83-97` auth 섹션**: 문서에는 `auth` 엔트리(2개 selector: `auth-app`, `error-app`) 가 기록되어 있으나 현 task 대상 13개에는 포함되지 않음. `entries/auth/` 디렉터리 자체가 현재 존재하지 않거나 이름 변경된 것으로 보이며 — `ls entries/` 결과에는 포함되지 않음. (본 task 의 scope 는 13개 entries 로 제한.)
 
 ---
