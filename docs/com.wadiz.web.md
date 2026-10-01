@@ -6,6 +6,56 @@
 
 ---
 
+> 📅 **2026-10-01 cloud_live pull 보강** (21 커밋)
+>
+> ### CLIENT-311 — 정적 리소스를 CDN 호스트로 옮기고 6건을 지웠습니다
+>
+> JSP 가 `${resources_path}` 로 참조하던 주소를 **`${cdn_host}`** 로 바꿨습니다.
+> 각 JSP 상단에 선언을 넣는 방식입니다.
+>
+> ```jsp
+> <spring:eval expression="@file['cdn_host']" var="cdn_host" />
+> <link rel="stylesheet" href="${cdn_host}/resources/static/editor/froala_editor.pkgd.min.css" />
+> ```
+>
+> 옮긴 뒤 **저장소에서 지운 정적 파일이 6개**입니다.
+>
+> | 파일 | 쓰이던 곳 |
+> |---|---|
+> | `web/resources/static/css/wlayout.css` | 공통 레이아웃 |
+> | `web/resources/static/editor/froala_editor.pkgd.min.css` · `froala_custom.css` | 에디터 스타일 |
+> | `web/resources/static/lib/datepicker3.css` | 날짜 선택기 |
+> | `web/resources/static/js/wboard.js` | 공지 글쓰기·수정 |
+> | `web/resources/static/js/wMotion.js` | 공통 모션 |
+>
+> ### CLIENT-311 — 지면 3건도 함께 사라졌습니다
+>
+> | 삭제된 것 | 내용 |
+> |---|---|
+> | `web/WEB-INF/jsp/video/shorts.jsp` + `web/video/controller/VideoController.java` | **`video` JSP 그룹이 통째로 없어졌습니다.** 폴더 자체가 사라졌습니다 |
+> | `web/WEB-INF/jsp/wpurchase/reward/step20.jsp` | 리워드 결제 2단계. 이제 그 폴더에 `result10.jsp` 하나만 남았습니다 |
+>
+> **리워드 결제 JSP 가 계속 줄고 있습니다.** 직전 회차에 `step10.jsp` 가 빠졌고 이번에 `step20.jsp` 입니다.
+> 결제 화면이 프런트엔드로 옮겨 가는 흐름의 연장으로 보입니다(추정).
+>
+> ### BE3-1004 — 앱 가입 국가·언어의 Braze 전송 경로 변경
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 보내는 주체 | `BrazeKafkaClient` 에서 **`BrazeInquiryService`** 로 옮겼습니다 |
+> | 보내는 경로 | **`crm-gateway` 의 `users/track`** 으로 바꿨습니다 |
+> | 정리 | `BrazeKafkaClient` 의 미사용 `sendUserTrackWithAttributes` 를 지웠습니다 |
+>
+> ### 그 밖
+>
+> | 이슈키 | 내용 |
+> |---|---|
+> | `SCOUT-193` | 엑셀 일괄 발송에서 **송장번호 형식 검증**을 넣었습니다 |
+> | `RWD-6123` | 만족도 목록 조회에서 삭제 글을 reward 조회 조건으로 제외했습니다. [`com.wadiz.api.reward`](./com.wadiz.api.reward/com.wadiz.api.reward.md) 와 같은 건입니다 |
+> | `FE1-2044` | 결제 완료 페이지에서 **이미 삭제된 `sendAppMessage` 호출 분기**를 걷었습니다 |
+>
+> ---
+
 > 🔍 **2026-09-22 본문 전면 점검** — `cloud_live`(`ac28913e`, 2026-09-22) 기준
 >
 > 본문이 2026-07-10 이후 74일 멈춘 사이 저장소에 390 커밋이 들어왔습니다.
@@ -767,12 +817,12 @@ URL은 대부분 `/web/*` 접두어(과거 `/ko/Campaign/Details/*` 호환성 �
 
 ### 4.2 JSP 최상위 그룹 (`web/WEB-INF/jsp/*`)
 
-**2026-09-22 확인 40개 · JSP 파일 260개**입니다.
+**2026-10-01 확인 39개**입니다.
 
-`account`, `campaign`, `catchup`, `community`, `embed`, `equity`, `error`, `ftexautn`, `funding2015`, `global`, `global-account`, `global-korea`, `include`, `linkprice`, `makerprofile`, `mobile`, `mywadiz`, `oauth`, `personalverification`, `react`, `school`, **`studio`**, `startup`, `video`, `waccount`, `wboard`, `wevent`, `winclude`, `wiplicense`, `wlayout`, `wlive`, `wmain`, `wmypage`, `wpage`, `wpartner`, `wpayment`, `wpersonalmessage`, `wpurchase`, `wsub`, `wterms`
+`account`, `campaign`, `catchup`, `community`, `embed`, `equity`, `error`, `ftexautn`, `funding2015`, `global`, `global-account`, `global-korea`, `include`, `linkprice`, `makerprofile`, `mobile`, `mywadiz`, `oauth`, `personalverification`, `react`, `school`, **`studio`**, `startup`, `waccount`, `wboard`, `wevent`, `winclude`, `wiplicense`, `wlayout`, `wlive`, `wmain`, `wmypage`, `wpage`, `wpartner`, `wpayment`, `wpersonalmessage`, `wpurchase`, `wsub`, `wterms`
 
-> ⚠️ **네 그룹이 사라졌습니다** — `supporterclub`, `wcampaign`, `wcoming`, `wpremium`.
-> `studio` 가 새로 생겼습니다.
+> ⚠️ **다섯 그룹이 사라졌습니다** — `supporterclub`, `wcampaign`, `wcoming`, `wpremium`, 그리고 **`video`**.
+> `video` 는 2026-10-01 확인분입니다 (`CLIENT-311`). `studio` 는 새로 생겼습니다.
 
 주요 그룹의 현재 상태입니다.
 

@@ -5,6 +5,15 @@
 >
 > ⚠️ **이름이 같은 저장소가 둘입니다.** 이미지 태그(`imageVersion`)와 애플리케이션 설정(`configmap.data`)은 이 저장소가 아니라 GitOps 저장소 [`helm-charts-gitops`](./helm-charts-gitops.md)(`wadiz-gitops/helm-charts`)에 있습니다. 이 문서는 **차트·템플릿·배포 스펙** 쪽만 다룹니다.
 
+> 📅 **2026-10-01 main pull 보강** (9 커밋)
+>
+> | 대상 | 내용 |
+> |---|---|
+> | `maker-intelligence-agent` | **dev 환경 core 플랫폼에 신규 추가**. [`helm-charts-gitops`](./helm-charts-gitops.md) 쪽에도 값 파일 6개가 함께 생겼습니다 |
+> | `nicepay-api` | **시작 탐침(startup probe)을 없애고** 생존 탐침을 `actuator/liveness` 로 바꿨습니다 (dev·공통 둘 다) |
+> | `main2-api` | clive·stage 힙 예산을 조정하고 **G1 수집기로 전환**했습니다 |
+> | `platform-admin` | clive 메모리 설정을 바꿨습니다 |
+
 > 📅 분석 기준: 2026-08-27 `main` 브랜치(`21b9ba2`). 저장소 전체 535개 파일 중 467개가 서비스별 values 파일입니다.
 
 ---
