@@ -3,6 +3,12 @@
 > 와디즈 사내 TF **팀 굿웨이브**가 만드는 캠페인 웹사이트입니다. 서비스 본체와 무관한 **별도 프론트엔드 제품**이며, 기수(期)마다 새 캠페인 페이지를 만들어 한 저장소에 쌓아 갑니다.
 > Org: `wadiz-fe` (`https://github.com/wadiz-fe/good-wave.git`). 배포 이름 **`good-wave-anyone-can-challenge`**, 플랫폼 `client`.
 
+> 📅 **2026-10-13 cloud_live pull 보강** (1 커밋)
+>
+> `CLIENT-323` — 도커 실행 단계(`runner`)에 `apt-get upgrade` 를 넣었습니다(`apps/good-wave/Dockerfile`, 2줄).
+> 기반 이미지에 아직 안 들어온 **운영체제 보안 패치를 빌드할 때 적용**하려는 것입니다.
+> 같은 날 `app-api`(`FE1-2108`)와 `makercenter-fe`(`FE2-1483`)에도 같은 한 줄이 들어갔습니다.
+
 > 📅 **2026-10-01 cloud_live pull 보강** (5 커밋, 모두 `CLIENT-296`)
 >
 > **Datadog 추적(dd-trace)을 붙였습니다.**

@@ -20,7 +20,7 @@
 > 3.6 절이 `notification/` 을 "호출 지점 없음, dead code 상태"라고 적어 뒀는데,
 > 실제로 `BE3-555` 커밋 메시지가 *"notification 패키지 전체(IAM-3399 NotificationAdapter 리팩토링으로 고아화)"* 라며 지웠습니다.
 >
-> ⚠️ **`application-dev.yml` 과 `application-live.yml` 이 사라졌습니다.**
+> ⚠️ **~~`application-dev.yml`~~ 과 ~~`application-live.yml`~~ 이 사라졌습니다.**
 > `BE3-410`(2026-05-28, `ec729cf5`)이 지웠습니다. 커밋 제목이 "application yml 환경별 설정 분리 및 local 시크릿 env var 외부화" 입니다.
 > 지금 저장소에 남은 프로파일 파일은 `local`·`rc`·`rc2`·`rc3`·`test` 다섯입니다.
 > **클라우드 환경(`cdev`·`clive`) 값은 저장소에 없고 쿠버네티스 설정맵에 있습니다.**
@@ -41,7 +41,7 @@
   - 테스트 (`src/test/groovy/.../externalservice/`).
 - **인용 규칙**: 모든 HTTP path 와 DTO 필드는 소스의 `경로:줄번호` 를 함께 적습니다.
   URL 값은 `application-local.yml`(클라우드 개발 인프라)과 `application-rc.yml`(사내 온프렘)의 실제 값을 씁니다.
-  예전에 쓰던 `application-dev.yml`·`application-live.yml` 은 2026-05-28 에 삭제됐습니다.
+  예전에 쓰던 ~~`application-dev.yml`~~·~~`application-live.yml`~~ 은 2026-05-28 에 삭제됐습니다.
 - **분석 대상 파일 요약**:
   - Adapter **13개**, FeignClient **12개**, 외부서비스 폴더 **11개**.
   - `kr.wadiz.oauth2.port.outbound` 아래 Port 인터페이스 **20개** (저장소 Port 포함). 여기에 `kr.wadiz.oauth2.domain.terms.TermsPort` 가 더해집니다.
@@ -109,7 +109,9 @@ Feign 공통 설정은 `kr.wadiz.oauth2.application.FeignConfig` 에서 로깅 �
 - **클라이언트 구현 기술**: 13개 모두 Spring Cloud OpenFeign 기반. RestClient / WebClient / RestTemplate 사용한 outbound adapter 는 externalservice 디렉터리에 없음.
 - **인증 방식**:
   - 대부분 내부 서비스 → `Bearer <static token>` (`@Value` 로 yml 에서 주입).
-  - `usercoupon` 은 `Authorization` 헤더 없이 `wadiz-country`, `wadiz-language` 헤더만 사용 (`UserCouponClient.java:15-16`, `WadizHttpHeaders.java:4-5`) — 내부망 IP 기반 신뢰로 추정.
+  - `usercoupon` 은 `Authorization` 헤더 없이 `wadiz-country`·`wadiz-language` 헤더만 씁니다.
+    지금 이 호출은 `UserClient.java` 안에 있습니다 (예전 ~~`UserCouponClient.java`~~ 는 `BE3-555` 로 삭제). 헤더 상수는 `WadizHttpHeaders.java:4-5` 입니다.
+    인증을 생략하는 것은 내부망 IP 기반 신뢰 때문으로 보입니다(추정).
   - `user`, `terms`, `notification`, `crmgateway` 도 `Authorization` 파라미터가 없음 — 역시 내부망 기반.
   - Kakao 는 외부 공개 API 이므로 유저 `access_token` 혹은 `KakaoAK <adminkey>` 사용.
 - **mTLS 는 없음**. 모든 호출은 평문 Bearer 토큰 혹은 무인증 내부 HTTP.
@@ -247,14 +249,16 @@ signUp(cmd, device, locale)
 
 - **파일**: `AlimTalkAdapter.java`, `AlimTalkClient.java`, `dto/AlimTalkRequestDto.java`, `dto/AlimTalkPayloadsRequestDto.java`.
 - **호출 대상**: Platform AlimTalk 서비스 v2.
-  - Base URL: `${wadiz.api.alim-talk.base-url}` — live: `https://platform.wadiz.kr/alimtalk/api/v2/message` (`application-live.yml:98`), dev: `https://dev-platform.wadizcorp.net/alimtalk/api/v2/message` (`application-dev.yml:80`).
+  - Base URL 설정 키: **`application.wadiz.api.alimtalk.base-url`** (`BE3-555` 로 `alim-talk` 에서 이름이 바뀌었습니다).
+    local 은 `https://api.dev.wadiz.io/alimtalk`, rc 는 `https://rc-platform.wadizcorp.net/alimtalk` 입니다.
+    예전 근거였던 ~~`application-live.yml`~~·~~`application-dev.yml`~~ 은 `BE3-410`(2026-05-28)이 지웠습니다.
   - 단일 endpoint: `POST /alimtalk` (`AlimTalkClient.java:11-12`).
 - **클라이언트 구현**: OpenFeign. `@FeignClient(name = "alim-talk-service", url = "${wadiz.api.alim-talk.base-url}")` (`AlimTalkClient.java:9`).
 - **인증 방식**: Bearer 정적 내부 토큰. `internalToken` 을 `${wadiz.api.alim-talk.internal-token}` 으로 주입 → `"Bearer " + internalToken` 을 `@RequestHeader("Authorization")` 로 전달 (`AlimTalkAdapter.java:19-20, 46-47`).
 - **요청 DTO** (`AlimTalkRequestDto.java:10-17`):
   - `String tid` — UUID (멱등 키).
-  - `String templateCode` — `${wadiz.api.alim-talk.template.code}` = `B_WD_004_02_44717` (live `application-live.yml:101`).
-  - `String templateNo` — `${wadiz.api.alim-talk.template.number}` = `3078` (live `application-live.yml:102`).
+  - `String templateCode` — `${wadiz.api.alimtalk.template.code}` = `B_WD_004_02_44717` (`application.yml:157`, 전 환경 공통).
+  - `String templateNo` — `${wadiz.api.alimtalk.template.number}` = `3078` (`application.yml:158`).
   - `String reserved` — 빈 문자열.
   - `String priority` — `"NORMAL"` 하드코딩 (`AlimTalkAdapter.java:31`).
   - `List<AlimTalkPayloadsRequestDto> payloads`:
@@ -281,7 +285,9 @@ signUp(cmd, device, locale)
 
 - **파일**: `CrmGatewayAdapter.java`, `CrmGatewayClient.java`, `SetUnsubscribeKeyRequest.java`, `SetUnsubscribeKeyResponse.java`, `dto/BrazeUserInfoDto.java`.
 - **호출 대상**: 사내 Braze CRM Gateway.
-  - Base URL: `${wadiz.api.braze}` — live: `http://172.31.1.12:9990/crmgateway/api/v1/crmgateway/braze` (`application-live.yml:80`). 내부 앱 서버 (`dev-app01:9990` 같은 사내 IP).
+  - Base URL: **`${wadiz.api.crm-gateway.base-url}`** (`BE3-555` 로 `wadiz.api.braze` 에서 이름이 바뀌었습니다).
+    local 은 `https://api.dev.wadiz.io/crm-gateway`, rc 는 `http://rc-api01:9990/crmgateway` 입니다.
+    예전 문서가 적은 사내 IP `172.31.1.12:9990` 은 삭제된 ~~`application-live.yml`~~ 의 값이었습니다.
   - Endpoints (`CrmGatewayClient.java:11-15`):
     - `PUT /setUnsubscribeKey` → `SetUnsubscribeKeyResponse`.
     - `PUT /users/track` → void.
@@ -317,10 +323,10 @@ signUp(cmd, device, locale)
 
 - **파일**: `DataClient.kt`, `DataServiceAdapter.kt`, `IpDto.kt`, `CountryDto.kt`.
 - **호출 대상**: Wadiz DataService (사내 국가/IP 매핑).
-  - Base URL: `${wadiz.api.data.url}` — live: `https://datasvc.wadiz.kr` (`application-live.yml:92`), dev: `https://dev-datasvc.wadiz.kr` (`application-dev.yml:74`).
+  - Base URL: `${wadiz.api.data.url}` — live: `https://datasvc.wadiz.kr` (~~`application-live.yml:92`~~), dev: `https://dev-datasvc.wadiz.kr` (~~`application-dev.yml:74`~~).
   - Endpoint: `POST /global/v1/ip` (`DataClient.kt:10-14`).
 - **클라이언트 구현**: OpenFeign (Kotlin). `@FeignClient(name = "data-client2", url = "\${wadiz.api.data.url}")` (`DataClient.kt:8`).
-- **인증 방식**: Bearer 정적 토큰. `@Value("\${wadiz.api.data.token}")` (live: `D4850ADC...`, `application-live.yml:93`) → `"Bearer $token"` (`DataServiceAdapter.kt:12-17`).
+- **인증 방식**: Bearer 정적 토큰. `@Value("\${wadiz.api.data.token}")` (live: `D4850ADC...`, ~~`application-live.yml:93`~~) → `"Bearer $token"` (`DataServiceAdapter.kt:12-17`).
 - **요청 DTO**: `IpDto(val ip: String)` (`IpDto.kt:3`).
 - **응답 DTO**: `CountryDto(@JsonProperty("country_code") val countryCode: String)` (`CountryDto.kt:4`).
 - **호출 시점**: `CustomLocaleResolver.createLocaleFromIpOrDefault(httpRequest)` — 앱/봇이 아닌 HTTP 요청의 기본 Locale 결정 (`CustomLocaleResolver.java:92-98`).
@@ -353,9 +359,9 @@ signUp(cmd, device, locale)
 
 #### 3.4.1 FastMail
 
-- **호출 대상**: `${wadiz.api.mail.fast.path}` — live `https://platform.wadiz.kr/mail-fast` (`application-live.yml:86`).
+- **호출 대상**: `${wadiz.api.mail.fast.path}` — live `https://platform.wadiz.kr/mail-fast` (~~`application-live.yml:86`~~).
   - Endpoint: `POST /api/v2/send` (`FastMailClient.java:11-12`).
-- **인증**: Bearer 정적 토큰 `${wadiz.api.mail.fast.token}` (live: `C2830C95...`, `application-live.yml:87`). `"Bearer " + fastMailToken` 를 생성자에서 prefix (`NotificationAdapterV2.java:27`).
+- **인증**: Bearer 정적 토큰 `${wadiz.api.mail.fast.token}` (live: `C2830C95...`, ~~`application-live.yml:87`~~). `"Bearer " + fastMailToken` 를 생성자에서 prefix (`NotificationAdapterV2.java:27`).
 - **요청 DTO** `FastMailRequest` (`FastMailRequest.kt:3-9`):
   - `tid` UUID, `domainCode="AUTH"`, `senderType="INTERNAL_SERVICE"`, `senderId=0`, `isAd=false`, `fromEmail`, `mailInfoList: List<FastMailInfo>` (`FastEmailToMailRequestConverter.kt:11-27`).
   - `FastMailInfo { toEmail, userId, title, body, cc, bcc }` (`FastMailInfo.kt:3-10`).
@@ -363,10 +369,10 @@ signUp(cmd, device, locale)
 
 #### 3.4.2 NormalMail
 
-- **호출 대상**: `${wadiz.api.mail.normal.path}` — live `https://platform.wadiz.kr/mail-normal` (`application-live.yml:89`).
+- **호출 대상**: `${wadiz.api.mail.normal.path}` — live `https://platform.wadiz.kr/mail-normal` (~~`application-live.yml:89`~~).
   - Endpoint: `POST /api/v3/send` (`NormalMailClient.java:12-15`).
   - 추가 헤더: `WadizHttpHeaders.LANGUAGE = "wadiz-language"` (`NormalMailClient.java:14`, `WadizHttpHeaders.java:5`).
-- **인증**: Bearer 정적 토큰 `${wadiz.api.mail.normal.token}` (live: `0245331D...`, `application-live.yml:90`).
+- **인증**: Bearer 정적 토큰 `${wadiz.api.mail.normal.token}` (live: `0245331D...`, ~~`application-live.yml:90`~~).
 - **요청 DTO** `NormalMailRequest` (`NormalMailRequest.kt:3-8`):
   - `tid`, `domainCode` (nullable, 예: `null` — 2025.09.24 주석 참고), `isAd=false`, `templateNo` (필수 int), `attachFileIdList`, `mailInfoList: List<NormalMailInfo>`.
   - `NormalMailInfo { toEmail, cc, bcc, userId, templateData: Map<String, Object> }` (`NormalMailInfo.kt:3-9`).
@@ -423,7 +429,7 @@ signUp(cmd, device, locale)
 - **클라이언트 구현**: OpenFeign. URL 이 property 없이 **하드코딩** 된 외부 공개 엔드포인트.
 - **인증 방식**: 두 가지 상이한 토큰:
   - 사용자 컨텍스트 API (`getAgreement`) → `"Bearer " + accessToken` (OAuth2 에서 얻은 사용자 토큰, `KakaoAdapter.java:29-30`).
-  - 관리자 API (`getScopes`, `isFriendsScopeAgreed`) → `"KakaoAK " + kakaoAdminToken`. `kakaoAdminToken` 은 `${wadiz.kakao.adminkey}` (`KakaoAdapter.java:20-21, 40`; live 에선 `application-live.yml` 에 해당 키, local 에선 `application-local.yml:52` = `f3e319...`).
+  - 관리자 API (`getScopes`, `isFriendsScopeAgreed`) → `"KakaoAK " + kakaoAdminToken`. `kakaoAdminToken` 은 `${wadiz.kakao.adminkey}` (`KakaoAdapter.java:20-21, 40`; live 에선 ~~`application-live.yml`~~ 에 해당 키, local 에선 `application-local.yml:52` = `f3e319...`).
   - `renewToken()` 은 무인증 (refresh_token flow 자체가 credential) — `client_id`, `client_secret` 는 `OAuth2ClientProperties` 의 kakao registration 에서 꺼내 본문 파라미터로 (`KakaoAdapter.java:50-52`).
 - **요청/응답 DTO**:
   - `Agreement { String user_id, List<KakaoTerms> allowed_service_terms }` with inner `KakaoTerms { String tag, LocalDateTime agreed_at }` (`Agreement.java:17-36`). JSON 필드명: `id` → `user_id`, `service_terms` → `allowed_service_terms` (`@JsonProperty`).
@@ -484,12 +490,12 @@ signUp(cmd, device, locale)
 
 - **파일**: `MarketingConsentAdapter.java`, `MarketingConsentClient.java`, `NotificationChannelAgreement.java`, `ChannelType.java` (+ response DTO 가 `subscribenotification/dto/PlatformNotiChannelMarketingConsentsDto` 에 위치).
 - **호출 대상**: Platform Marketing Consent (Noti-Channel).
-  - Base URL: `${wadiz.api.marketing-consent}` — live: `https://platform.wadiz.kr/noti-channel` (`application-live.yml:82`), dev: `https://dev-platform.wadizcorp.net/noti-channel` (`application-dev.yml:66`).
+  - Base URL: `${wadiz.api.marketing-consent}` — live: `https://platform.wadiz.kr/noti-channel` (~~`application-live.yml:82`~~), dev: `https://dev-platform.wadizcorp.net/noti-channel` (~~`application-dev.yml:66`~~).
   - Endpoints (`MarketingConsentClient.java:10-21`):
     - `PUT /marketingconsents?serviceCode={code}&userId={id}` body=`NotificationChannelAgreement`.
     - `GET /marketingconsents?userId={id}` → `Optional<PlatformNotiChannelMarketingConsentsDto>`.
 - **클라이언트 구현**: OpenFeign. `@FeignClient(name = "platform-api-client", url = "${wadiz.api.marketing-consent}")` (`MarketingConsentClient.java:9`).
-- **인증 방식**: Bearer 정적 `${wadiz.platform.api.token}` (live `B0D86E95...`, `application-live.yml:69`). Adapter 에서 `"Bearer " + bearerToken` 조립 (`MarketingConsentAdapter.java:15-16, 19`).
+- **인증 방식**: Bearer 정적 `${wadiz.platform.api.token}` (live `B0D86E95...`, ~~`application-live.yml:69`~~). Adapter 에서 `"Bearer " + bearerToken` 조립 (`MarketingConsentAdapter.java:15-16, 19`).
 - **요청 DTO**:
   - `NotificationChannelAgreement { ChannelType channelType, boolean consentValue }` (`NotificationChannelAgreement.java:8-10`).
   - `ChannelType` enum = `ALL, APP, EMAIL, PHONE` (`ChannelType.java:3-5`). Adapter 는 항상 `ChannelType.ALL + true` (`NotificationChannelAgreement.allChannelAgreement()`, `:16-19`) 로 고정 → "모든 채널 마케팅 동의 ON".
@@ -516,7 +522,7 @@ signUp(cmd, device, locale)
 
 - **파일**: `Push2Adapter.java`, `Push2Client.java`, `PushRequest.java`, `PushInboxRequest.java`, `PushResponse.java`.
 - **호출 대상**: Platform Push2 서비스.
-  - Base URL: `${wadiz.api.push2}` — live: `https://platform.wadiz.kr/push/api/v1/push` (`application-live.yml:83`), dev: `https://dev-platform.wadizcorp.net/push/api/v1/push` (`application-dev.yml:67`).
+  - Base URL: `${wadiz.api.push2}` — live: `https://platform.wadiz.kr/push/api/v1/push` (~~`application-live.yml:83`~~), dev: `https://dev-platform.wadizcorp.net/push/api/v1/push` (~~`application-dev.yml:67`~~).
   - Endpoints (`Push2Client.java:8-14`):
     - `POST /user` body=`PushRequest` → void.
     - `POST /inbox` body=`PushInboxRequest` → `PushResponse`.
@@ -560,7 +566,7 @@ signUp(cmd, device, locale)
   - DTO: `SubscriberRequest.java`, `SubscriberResponse.java`, `SubscriberGroupResponse.java`, `SubscriberProperty.java`, `AddSubscriberMailRequest.java`, `AddSubscriberPhoneRequest.java`, `AbstractAddSubscriberInfoRequest.java`, `PostStatus.java`, `PlatformNotiChannelMarketingConsentsDto.java`, `TemporaryMarketingConsentValue.java`.
   - Model: `Subscriber.java`, `SubscriberGroup.java`, `NotificationApp.java`, `NotificationMail.java`, `NotificationMobilePhone.java`, `NotificationMethodStatus.java`, `IncomingType.java`.
 - **호출 대상**: 사내 Notification Service.
-  - Base URL: `${wadiz.api.notification}` (`notification/` adapter 와 동일 base 공유!) — live: `http://172.31.1.12:9990/notification/api/v1/notifications` (`application-live.yml:81`).
+  - Base URL: `${wadiz.api.notification}` (`notification/` adapter 와 동일 base 공유!) — live: `http://172.31.1.12:9990/notification/api/v1/notifications` (~~`application-live.yml:81`~~).
   - Endpoints (`SubscribeNotificationClient.java:14-60`):
     - `GET /subscribers/incomings/{incomingType}/keys/{userId}?serviceCode=&includes=app,phone,mail` → `Optional<Subscriber>`.
     - `GET /subscribers/incomings/{incomingType}/keys/{userId}?serviceCode=` → `Optional<SubscriberResponse>` (includes 없이).
@@ -706,7 +712,9 @@ public interface SignupTermsQueryClient {
 - **실패 처리**: `try/catch (Exception)` 으로 warn 로그만 남기고 무시 (`UserAppContactApiAdapter.java:22-25`) — best-effort.
 
 #### 3.11.4 사용되지 않는 메서드
-- `getAcceptedTerms(userId)` (`UserClient.java:15-16`) — 현재 저장소 내 호출 지점 없음. `TermsTypeWithDate` DTO 는 `termsType`, `updated` 두 필드만 (`TermsTypeWithDate.java:16-17`).
+- ~~`getAcceptedTerms(userId)`~~ — **2026-06-26 삭제** (`BE3-555`, "미사용 terms 조회 메서드" 제거).
+  반환 DTO ~~`TermsTypeWithDate.java`~~ 도 함께 사라졌습니다 (`termsType`·`updated` 두 필드뿐이었습니다).
+  예전 문서가 "저장소 내 호출 지점 없음"이라고 적어 둔 그대로였습니다.
 
 #### 3.11.5 Port 시그니처
 - `UserApiPort` (`UserApiPort.java:3-5`):
@@ -715,7 +723,7 @@ public interface SignupTermsQueryClient {
     void updateUserTimeZoneByCountry(Long userId, String country);
   }
   ```
-- `TermsApiPort` (`TermsApiPort.java:5-13`):
+- ~~`TermsApiPort`~~ — **2026-06-26 삭제** (`BE3-555`). 아래는 삭제 전 모습입니다:
   ```java
   public interface TermsApiPort {
     /** update terms data of userId */
@@ -745,7 +753,7 @@ Single Responsibility Principle 로 port 를 분할했지만 underlying FeignCli
 ### 3.12 `usercoupon/` — 회원가입 쿠폰 발급·조회
 
 > 📅 **`BE3-555` 로 바뀐 절입니다.**
-> `UserCouponClient.java` 가 삭제되고 **`UserClient` 를 쓰도록** 바뀌었습니다.
+> ~~`UserCouponClient.java`~~ 가 삭제되고 **`UserClient` 를 쓰도록** 바뀌었습니다.
 > 조회 메서드 `getSignupCoupons` 도 새로 들어왔습니다.
 
 - **파일**: `UserCouponAdapter.java`, `dto/UserCouponType.java` (2개만 남았습니다)

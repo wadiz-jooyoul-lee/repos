@@ -1,5 +1,29 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-10-13 cloud_live pull 보강** (5 커밋)
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `FE2-1469` | 로그와 주소창에 남던 **개인정보를 걷어냈습니다** (4커밋) |
+> | `FE2-1519` | 빌드 워크플로를 `v2` 로 올렸습니다 |
+>
+> ### `FE2-1469` — 개인정보가 남던 네 곳
+>
+> | 어디 | 무엇이 남았나 | 어떻게 고쳤나 |
+> |---|---|---|
+> | `.../controller/ManagerController.java` | 관리자 아이디 중복 확인·계정 찾기를 **GET 주소에 담아** 보내 주소창·접속 기록에 남았습니다 | **POST 본문 방식**으로 바꿨습니다. 요청 모양은 `.../data/request/ReqManagerId.java`(14줄 신규) |
+> | `.../service/AuthService.java` | 관리자 로그인 기록에 **JWT 토큰 원문**이 찍혔습니다 | 토큰을 뺐습니다 |
+> | `.../event/ApplicationAppliedEventListener.java` | 기획전 이메일 발송 기록에 **받는 사람 이메일과 메이커 이름**이 찍혔습니다 | 둘 다 뺐습니다 |
+> | `.../controller/AuthController.java` | 이메일 형식 검증이 실패하면 **입력값이 APM(성능 모니터링 도구) 기록에 남았습니다** | `.../utils/ValidationUtil.java`(31줄 신규)로 검증을 옮겨 값이 새지 않게 했습니다 |
+>
+> 테스트가 다섯 개 새로 붙었습니다 — `AuthLoginValidationTest`(102줄), `ManagerAccountLookupTest`(202줄), `ManagerSignupValidationTest`(84줄), `ApplicationAppliedEventListenerTest`(64줄), `AuthServiceLoginLogTest`(102줄)입니다.
+>
+> 짝이 되는 프런트엔드 변경이 `makercenter-fe-admin` 에 함께 들어갔습니다.
+>
+> ### `FE2-1519` — 빌드 워크플로 v2
+>
+> `.github/workflows/build-and-push-image-to-ecr.yml` 이 부르는 재사용 워크플로를 `v2` 로 올리고, 개인 토큰(PAT) 비밀값을 **GitHub App 비밀값**으로 바꿨습니다.
+
 > 📅 **2026-10-01 cloud_live pull 보강** (1 커밋)
 >
 > `FE2-1144` — **카테고리 캐시 로드가 실패했을 때 신청 건마다 외부 호출을 반복하지 않게** 고쳤습니다.

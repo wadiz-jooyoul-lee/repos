@@ -29,8 +29,8 @@
 | 설정 항목 목록 (알림/비밀번호/전화번호/동영상 자동재생 · `settings_section`) | `apps/global/src/pages/my-wadiz/settings/_ui/SettingItem.tsx` |
 | 닉네임/이메일/전화번호/비밀번호 설정·확인 모달 | `apps/global/src/pages/my-wadiz/settings/_ui/modal/{NicknameSetting,EmailSetting,PhoneNumberSetting,PasswordSetting,ConfirmPassword}.tsx` |
 | 회원 탈퇴 진입 (footer "회원 탈퇴" · `footer`) | `apps/global/src/pages/my-wadiz/settings/MyWadizSettingsMobileLayout.tsx` |
-| 알림 설정 (헤더 "알림 설정", 이벤트 혜택 알림 이메일/SMS/푸시 토글 · `my_wadiz_settings_notification_page`) | `apps/global/src/pages/my-wadiz/settings/notification/_ui/MarketingNotificationSettingsContainer.jsx` (+ `...List.jsx`) |
-| 새소식 알림 설정 (프로젝트별 "종료"/"결제" 뱃지 · `my_wadiz_settings_notification_news_page`) | `apps/global/src/pages/my-wadiz/settings/notification/news/_ui/container/NotificationDenyPageContainer.jsx` |
+| 알림 설정 (헤더 "알림 설정", 이벤트 혜택 알림 이메일/SMS/푸시 토글 · `my_wadiz_settings_notification_page`) | `packages/features/src/notification-settings/ui/marketing/MarketingNotificationSettingsContainer.jsx` (+ `...List.jsx`) — 지면 진입점은 `apps/global/src/pages/my-wadiz/settings/notification/MarketingNotificationSettingsPage.jsx` 입니다 |
+| 새소식 알림 설정 (프로젝트별 "종료"/"결제" 뱃지 · `my_wadiz_settings_notification_news_page`) | `packages/features/src/notification-settings/ui/news/NotificationDenyPageContainer.jsx` — 지면 진입점은 `apps/global/src/pages/my-wadiz/settings/notification/news/MyWadizSettingsNotificationNewsPage.jsx` 입니다 |
 
 ## 마이와디즈 — 참여 내역 / 주문 상세
 

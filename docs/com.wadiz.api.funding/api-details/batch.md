@@ -711,10 +711,13 @@ SQL 은 `mapper/AutomatedCollectionMapper.xml` 에 있습니다.
    ```sql
    SELECT CampaignId
    FROM CampaignContractInfo
-   WHERE ResidentRegistrationNumber IS NOT NULL
-     AND DATE(Registered) < (CURDATE() - INTERVAL 5 YEAR)
+   WHERE Registered >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR) - INTERVAL 7 DAY
+     AND Registered <  DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
+     AND ResidentRegistrationNumber IS NOT NULL
    ```
-2. 500건씩 나눠 `destroyResidentRegistrationNumbers` 실행 — 해당 칼럼을 `NULL` 로 바꿉니다
+   `RWD-6152`(2026-10-13, DB-3021 DBA 가이드)로 **조회 범위를 "5년이 지나는 시점 앞뒤 7일" 창으로 좁혔습니다.** 종전에는 5년보다 오래된 전체 구간을 매번 다시 읽어 40만 6천 행을 훑었습니다. 실측으로 1.93초가 0.09초가 됐습니다.
+   여유 7일은 배치가 하루 걸러도 놓치지 않게 두는 값입니다. **배치가 7일 넘게 멈추면 그 구간은 사람이 손으로 보정해야 합니다.**
+2. 500건씩 나눠 `destroyResidentRegistrationNumbers` 실행 — 해당 칼럼을 `NULL` 로 바꿉니다. 이 갱신문에도 "5년 경과" 안전장치가 그대로 있습니다. 같은 작업에서 `DATE(Registered)` 감싸기를 `Registered` 로 풀어 인덱스를 타게 했습니다(뜻은 같습니다).
 3. `personalDataDestructionLogGateway.save(auditLog)` — MongoDB `personal_data_destruction_log` 에 파기 이력을 남깁니다
 
 **남기는 파기 이력**

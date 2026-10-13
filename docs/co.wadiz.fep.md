@@ -1,5 +1,51 @@
 # co.wadiz.fep 분석
 
+> 📅 **2026-10-13 cloud_live pull 보강** (10 커밋)
+>
+> **해외 메이커에게 돈을 보내기 위한 Stripe 커넥티드 계정 구성을 다시 잡았습니다.**
+> Stripe 는 해외 결제·지급 대행사입니다. 커넥티드 계정은 **와디즈 아래에 메이커별로 만드는 하위 계정**으로, 정산금이 여기로 들어갑니다.
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `SCOUT-148` | 커넥티드 계정을 만들 때 넣는 값을 바로잡았습니다 (6커밋) |
+> | `SCOUT-121` | Stripe 결제 웹훅에서 처리할 이벤트를 추려 냈습니다 (2커밋) |
+>
+> ### `SCOUT-148` — 커넥티드 계정 생성 값
+>
+> 대상 파일은 `finance-fep-application-api/.../adapter/out/stripe/StripeGatewayImpl.java` 입니다.
+> 여러 번 고쳤는데, 마지막에 정리된 모습은 이렇습니다.
+>
+> | 항목 | 값 | 뜻 |
+> |---|---|---|
+> | 대시보드 종류 | `stripe_dashboard.type = express` | 메이커가 Stripe 가 제공하는 화면으로 가입 절차를 밟습니다 |
+> | 책임 주체 | `controller` 를 플랫폼(와디즈)으로 | 수수료와 손실을 와디즈가 집니다 |
+> | 수수료 부담 | `fees.payer = APPLICATION` | 국경 간 송금·환전·지급 수수료를 와디즈가 냅니다 |
+> | 손실 부담 | `losses.payments = APPLICATION` | 환불·분쟁·잔액 부족 손실을 와디즈가 집니다 |
+> | 요건 수집 | `requirement_collection = stripe` | 신원 확인 서류를 Stripe 가 직접 받습니다 |
+> | 받을 수 있는 기능 | `transfers` 만 요청 | 수취 전용이라 카드 결제(`card_payments`)는 받을 수 없습니다 |
+>
+> **약관은 메이커의 나라에 따라 갈립니다.** 기준은 Stripe 플랫폼 계정의 나라인 `US` 입니다.
+>
+> | 메이커 나라 | 약관(`tos_acceptance.service_agreement`) |
+> |---|---|
+> | `US` (플랫폼과 같은 나라) | `full` — 자국 지급 |
+> | 그 밖 | `recipient` — 국경 간 송금 수취 전용 |
+>
+> 가는 길이 순탄하지 않았습니다. 처음에는 `type` 과 `controller` 를 같이 넣었다가 Stripe 가 거부했고, `stripe_dashboard.type` 을 `none` 으로 잡았다가 다시 `express` 로 돌렸습니다.
+> `fees.payer` 도 `APPLICATION_EXPRESS` 를 넣었다가 **생성 API 가 그 값을 모른다는 것을 확인하고** `APPLICATION` 으로 되돌렸습니다. 주석에 따르면 Express 대시보드 계정은 Stripe 가 저장할 때 알아서 `application_express` 로 적습니다.
+>
+> ### `SCOUT-121` — 결제 웹훅 이벤트 추리기
+>
+> 신규 파일 `finance-fep-application-api/.../mapper/StripePaymentEventFilter.java` 가 생겼습니다.
+> 웹훅은 Stripe 가 우리 서버로 보내는 알림입니다. 종전에는 들어오는 것을 모두 처리하려다 `payment_intent.created` 같은 불필요한 알림까지 탔습니다.
+>
+> | 이벤트 | 처리 여부 |
+> |---|---|
+> | `payment_intent.succeeded` | 처리합니다 — 일반 결제 완료 |
+> | `refund.created` | 처리합니다 — 환불 생성 |
+> | `payment_intent.amount_capturable_updated` | `metadata.type` 이 `card_verification` 인 것만 처리합니다 — 1원 카드 확인 |
+> | 그 밖 | 처리하지 않습니다 |
+
 > 📅 **2026-10-01 cloud_live pull 보강** (2 커밋, 모두 `SCOUT-194`)
 >
 > **읽기 제한시간이 지났을 때 다시 시도하도록 고쳤습니다.** 두 곳입니다.

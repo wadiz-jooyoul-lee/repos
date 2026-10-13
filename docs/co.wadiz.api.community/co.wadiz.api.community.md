@@ -1,5 +1,31 @@
 # co.wadiz.api.community
 
+> 📅 **2026-10-13 cloud_live pull 보강** (4 커밋)
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `RWD-6151` | 로그에 남던 개인정보를 걷어냈습니다 (2커밋) |
+> | `RWD-6158` | 배포 워크플로를 `@v2` 로 올렸습니다 (2커밋) |
+>
+> ### `RWD-6151` — 로그에서 개인정보 빼기
+>
+> 세 곳을 고쳤습니다.
+>
+> | 파일 | 무엇을 뺐나 |
+> |---|---|
+> | `src/main/java/co/wadiz/api/community/integration/push/PushApiGateway.java` | 푸시 발송 요청·응답을 로그로 남기던 부분 |
+> | `src/main/java/co/wadiz/api/community/domain/content_rule/ContentRuleAuditLog.java` | 감사 기록에 들어가던 본문 원문 |
+> | `src/main/java/co/wadiz/api/community/shared/error/GlobalExceptionHandler.java` | 검증 실패 때 예외 메시지에 섞여 나가던 입력값 |
+>
+> `shared/util/BodyMasker.java` 도 한 줄 손봤습니다. 본문을 가릴 때 쓰는 도구입니다.
+> 검증 테스트가 함께 붙었습니다 — `PushApiGatewayTest`(104줄 신규), `ContentRuleAuditLogTest`, `GlobalExceptionHandlerTest` 입니다.
+>
+> ### `RWD-6158` — 배포 워크플로 `@v2`
+>
+> 배포 워크플로 여섯(`clive`·`dev`·`rc`·`rc1`·`rc2`·`rc4`)이 부르는 재사용 워크플로를 `@v2` 로 올렸습니다.
+> 배포 저장소 접근은 **GitHub App** 인증으로 바꿨습니다.
+> 다만 Gradle 빌드가 쓰는 사내 패키지 저장소(GPR) 인증은 **`WADIZ_DEV_PAT` 토큰으로 되돌렸습니다** — GPR 이 GitHub App 토큰을 받지 않기 때문입니다.
+
 > 📅 **2026-10-01 cloud_live pull 보강** (2 커밋)
 >
 > | 이슈키 | 내용 |

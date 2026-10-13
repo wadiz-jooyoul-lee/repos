@@ -49,15 +49,18 @@
 
 ## reward — 리워드 결제 (JSP 임베드)
 
-> step20.jsp 등에 임베드. 결제(간편결제)·리워드 상품 선택·결제완료 3영역. publicPath `/reward/`.
+> JSP 에 임베드되는 엔트리입니다. publicPath 는 `/reward/` 입니다.
+>
+> ⚠️ **2026-09-28 `FE1-2005` 로 결제 영역이 빠졌습니다.** 종전에는 결제·리워드 상품 선택·결제완료 **3영역**이었습니다.
+> 지금은 **리워드 상품 선택과 결제완료 2영역**입니다. 결제는 리액트 화면(`apps/global/src/pages/funding/payment/`)으로 옮겼습니다.
 
 관련 이슈: `FE1-788`(참여내역 상세 indemand 대응)
 
 | 기능 / 화면 문구 | 소스 위치 |
 |---|---|
-| 3개 영역 통합 진입(payments/product/complete) | `static/entries/reward/src/index.jsx` |
-| 리워드 간편결제 앱·결제예약(`window.simplepay.initSimpleReservationDialog`, eventBus `payment:simple-pay:requested`) | `static/entries/reward/src/payments/SimplePay.jsx` |
-| 펀딩 금액 입력(`@wadiz/payment-price-app`) | `static/entries/reward/src/payments/funding-price.js` |
+| 2개 영역 통합 진입(product/complete) | `static/entries/reward/src/index.jsx` |
+| ~~리워드 간편결제 앱·결제예약~~ | ~~`static/entries/reward/src/payments/SimplePay.jsx`~~ — **2026-09-28 삭제** |
+| ~~펀딩 금액 입력~~ | ~~`static/entries/reward/src/payments/funding-price.js`~~ — **2026-09-28 삭제.** `@wadiz/payment-price-app` 은 쓰는 곳 없이 남았습니다 |
 | 리워드 상품 선택 앱 + 환불정책 안내 | `static/entries/reward/src/reward-product/index.js` |
 | 펀딩 결제완료("배송이 완료되면 알림을 보내드릴까요?", "혜택 알림 받기") + AI 추천 | `static/entries/reward/src/funding-complete/RewardFundingCompleteContents.jsx` |
 
@@ -80,11 +83,11 @@
 
 | 기능 / 화면 문구 | 소스 위치 |
 |---|---|
-| 4개 기능 통합 엔트리 | `static/entries/iam/webpack.config.js` |
+| 2개 기능 통합 엔트리 | `static/entries/iam/webpack.config.js` |
 | 친구 초대("님이 와디즈에 초대하셨어요") | `static/entries/iam/invite-friends/index.jsx` |
-| 마케팅 알림 설정("결제한 프로젝트 새소식…") | `static/entries/iam/marketing-notification-settings/index.jsx` |
+| 마케팅 알림 설정("결제한 프로젝트 새소식…") | ~~`static/entries/iam/marketing-notification-settings/index.jsx`~~ — **FE1-1785(2026-10-13)로 삭제**됐습니다. 화면은 `packages/features/src/notification-settings/` 로 옮겼습니다 |
 | 성인 인증 완료 | `static/entries/iam/adult-authentication/src/AdultCertificationSuccess.tsx` |
-| 스타트업 컨택 리스트(거절 사유/검토 의견) | `static/entries/iam/startup-contact-list/index.jsx` |
+| 스타트업 컨택 리스트(거절 사유/검토 의견) | ~~`static/entries/iam/startup-contact-list/index.jsx`~~ — 현재 소스에 없습니다(삭제 시점은 이 회차 밖) |
 
 ## 기타 엔트리 (open-account · landing · personal-message · school · analytics · embed · floating-buttons · assets)
 

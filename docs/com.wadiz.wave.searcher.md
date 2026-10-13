@@ -2,6 +2,12 @@
 
 > 와디즈 **검색 서버**. 외부 호스트 `service.wadiz.kr` 의 실체로, FE/앱이 호출하는 `/api/search/v2/*`, `/api/search/v3/*`, `/api/search/v4/*` 와 사내 호출용 `/api/v1/searcher/*` 를 동시에 노출. **ElasticSearch 7.x + MySQL JPA** 하이브리드. Org: `wadiz-service`. Java 패키지: `com.wadiz.wave.searcher`.
 
+> 📅 **2026-10-13 main pull 보강** (1 커밋)
+>
+> `RWD-6159` — 배포 워크플로 셋(`dev`·`live`·`rc4`)의 재사용 워크플로를 `@v2` 로 올렸습니다.
+> 배포 저장소 접근은 **GitHub App** 인증, 사내 패키지 저장소(GPR) 인증은 `wadiz_dev_pat` 토큰 유지입니다.
+> 애플리케이션 코드 변경은 없습니다.
+
 > 📅 **2026-10-01 main pull 보강** (4 커밋, 모두 `DISPLAY-1797`)
 >
 > **"막펀잡기"(마감 임박 펀딩) 노출 규칙을 손봤습니다.**

@@ -6,6 +6,131 @@
 
 ---
 
+> 📅 **2026-10-13 cloud_live pull 보강** (28 커밋)
+>
+> | 이슈키 | 커밋 | 무엇을 하고 있나 |
+> |---|---:|---|
+> | `RWD-6098` | 8 | **앵콜 프로젝트 "불러오기"에 리워드 복사**를 붙였습니다 |
+> | `SCOUT-209` | 6 | 인디맨드 발송 상태를 "발송 처리중"에서 **"발송 준비중"**으로 바꿨습니다 |
+> | `FE-10884` | 5 | 서포터 프로필·팔로잉 지면을 **글로벌 번들로 넘겼습니다** |
+> | `RWD-6078` | 3 | 스튜디오 **리워드 복사 API** 를 만들었습니다 |
+> | `FE1-1785` | 1 | 마케팅 알림 설정 화면을 **`global-korea` 컨트롤러로 옮겼습니다** |
+>
+> ### `RWD-6078` · `RWD-6098` — 앵콜 리워드 복사
+>
+> 앵콜은 끝난 프로젝트를 다시 여는 것입니다. 종전에는 리워드를 손으로 다시 만들어야 했습니다.
+> 이번에 **원본 프로젝트의 리워드를 그대로 복사해 오는 기능**이 들어왔습니다.
+>
+> | 파일 | 역할 |
+> |---|---|
+> | `.../reward/studio/service/RewardCopyService.java`(254줄 신규) | 복사 본체 |
+> | `.../reward/studio/service/RewardCopyTranslator.java`(231줄 신규) | 복사하면서 번역을 채웁니다 |
+> | `.../reward/studio/service/RewardCopyTranslationAsyncService.java`(63줄 신규) | 번역을 커밋 뒤 비동기로 돌립니다 |
+> | `.../sqls/reward/rewarditem/reward-copy-mapper.xml`(241줄 신규) | 복사 질의 |
+> | `.../studio/model/constant/EncoreMarkerId.java`(21줄 신규) | 앵콜 표식 |
+>
+> 동작 규칙이 여러 차례 다듬어졌습니다.
+>
+> | 규칙 | 내용 |
+> |---|---|
+> | 덮어쓰기 | 리워드를 고르면 **항상 덮어씁니다.** 안 고르면 기존 리워드를 그대로 둡니다 (`QA-23582`·`QA-23602`) |
+> | 같은 원본 재실행 | 앵콜을 다시 돌릴 때 원본이 같으면 **복사를 건너뜁니다** |
+> | 미선택 처리 | 리워드를 안 고르면 대상 리워드를 정리하고, 조회할 때 `encoreCopy` 를 `null` 로 돌려줍니다 |
+> | 하위호환 | `encoreCopy.rewardUsed` 를 안 보내면 리워드를 바꾸지 않습니다 |
+> | 원본 후보 | 삭제된 캠페인은 후보에서 뺍니다. 저장할 때 원본을 한 번 더 검증합니다 (`QA-23584`) |
+>
+> `encoreCopy` 의 JSON 키는 `@JsonProperty` 로 못 박았습니다. 평면으로 늘어놓던 필드는 없앴습니다.
+>
+> ### `SCOUT-209` — 인디맨드 발송 준비중
+>
+> 인디맨드는 주문을 모아 제작해 보내는 판매 방식입니다. 상태 이름과 API 주소를 함께 바꿨습니다.
+>
+> | 항목 | 종전 | 지금 |
+> |---|---|---|
+> | 상태 문구 | 발송 처리중 | **발송 준비중** |
+> | API 경로 | (종전 경로) | `preparing-for-delivery` |
+>
+> 이 작업 중에 **빌드가 깨졌다 돌아온 일**이 있습니다. `pom.xml` 에 두 번 선언된 `nimbus-jose-jwt 9.8.1` 의존성을 지웠다가, 작업 범위가 아니라며 되돌렸다가, CI 가 실패해 다시 지웠습니다.
+> 깃허브 러너 이미지(`ubuntu-24.04 20261004.327`)의 Maven 3.10.0 이 **중복 선언을 오류로 처리**하기 때문입니다. Maven 3.9 이하는 뒤에 적힌 9.31 을 쓰고 넘어갔습니다. 해석 결과는 같아 동작은 바뀌지 않습니다.
+>
+> ### `FE-10884` — 서포터 프로필·팔로잉을 글로벌 번들로
+>
+> 서포터 프로필과 팔로잉·팔로워 지면의 국내 주소를 **글로벌 번들이 받아 그리도록** 등록했습니다.
+> 대상 파일은 `web/wmypage/controller/WMyProfileController.java`(138줄 수정)와 `web/social/controller/WWEBSocalController.java`(82줄 수정)입니다.
+> 마이프로필 레거시 리다이렉트의 정본 경로도 맞췄습니다. 프런트엔드 `wadiz-frontend` 의 `FE1-1301` 과 짝입니다.
+>
+> ### `FE1-1785` — 마케팅 알림 설정 화면 이전
+>
+> 주소(`/web/waccount/notificationSetting`)는 그대로 두고, **컨트롤러를 `waccount` 에서 `globalkorea` 로 옮기고 화면을 React 셸로 바꿨습니다.**
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 이름 바뀜 | `web/waccount/controller/WAccountNotificationSettingController.java` 가 `web/globalkorea/controller/GlobalKoreaNotificationSettingController.java` 로 |
+> | 지워짐 | ~~`web/WEB-INF/jsp/waccount/notificationSetting/marketing.jsp`~~ (11줄) |
+> | 뷰 | `global-korea/index` (React 셸) |
+>
+> 프런트엔드 `wadiz-frontend` 가 같은 이슈로 화면을 `packages/features/src/notification-settings/` 로 옮겼습니다.
+>
+> ### 그 밖
+>
+> - `FE1-1984` — rc 환경의 데이터 수집 주소를 `analytics.rc.aidata.wadiz.io` 로 통일했습니다(`file-rc1.properties`·`file-rc4.properties`).
+> - `RWD-6159` — 배포 워크플로의 재사용 워크플로를 `@v2` 로 올렸습니다.
+
+> 📅 **2026-10-06 cloud_live pull 보강** (11 커밋)
+>
+> ### `FE1-1758` — 메이커 프로필 지면을 글로벌 뷰로 옮겼습니다 (3커밋)
+>
+> 메이커 프로필은 **메이커 한 사람(또는 한 회사)의 소개 지면**입니다.
+> 종전에는 전용 JSP 파일로 그렸습니다. 이제 다른 지면과 같은 **리액트 셸**을 씁니다.
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 지워진 화면 파일 | ~~`web/WEB-INF/jsp/makerprofile/makerProfile.jsp`~~ (124줄). **`makerprofile` 폴더 자체가 없어졌습니다** |
+> | 국내 경로 6개 | `/web/maker/detail/*` — `GlobalKoreaMakerDetailController.java`(신규 126줄)로 옮겼습니다 |
+> | 글로벌 경로 6개 | `/maker/detail/*` — `GlobalMakerDetailController.java`(신규 49줄)로 옮겼습니다 |
+> | 빠져나온 곳 | `StartupMakerUIController.java` 에서 59줄이 빠졌습니다 |
+> | 검색엔진 | 글로벌 쪽은 **비노출 메이커를 막고** `robots noindex` 를 붙입니다 |
+> | 예외 처리 | `viewMakerPage` 의 예외 경로는 지워진 JSP 대신 **메인으로 리다이렉트**합니다 |
+>
+> **글로벌 언어 사용자가 메이커 상세로 못 들어가던 문제도 함께 고쳤습니다.**
+> 국내·글로벌 주소 목록에 이 경로가 없어서, `LocaleRedirectService` 가 국내 전용으로 보고
+> `/home` 으로 302 로 돌려보내고 있었습니다. `GlobalUrlMappingConfig.java` 에 42줄을 등재해 해결했습니다.
+>
+> ### `FE1-2057` — 스토어 상세의 검색엔진 비노출을 앱 설정 기반으로 바꿨습니다
+>
+> `robots noindex` 는 **이 페이지를 검색 결과에 넣지 말라**고 검색엔진에 알리는 표시입니다.
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 새 파일 | `web/WEB-INF/jsp/store/include/robotsNoindex.jsp` (9줄) |
+> | 모델 | `AppSettingsRobotsNoIndex.java` 에 스토어 번호 축을 더했습니다 |
+> | 주입 시점 | `DefaultInterceptor.java` 가 **봇인지 아닌지와 무관하게** 목록을 넣습니다. 종전에는 봇일 때만 넣었습니다 |
+>
+> `makerprofile` 쪽 `robotsNoindex.jsp` 는 `FE1-1758` 이 지웠습니다.
+> 이름과 내용이 비슷해 **같은 파일이 옮겨간 것처럼 보이지만, 서로 다른 작업입니다.**
+> 유사도를 재 보면 64% 로 낮고, 커밋도 다릅니다.
+>
+> ### `CLIENT-312` — 브랜치 자동 병합 워크플로를 교체했습니다 (7커밋)
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 새 워크플로 | `.github/workflows/schedule-sync-dev-rc-branches.yml` (120줄 신규) |
+> | 대상 브랜치 | `cloud_dev` · `rc1` · `rc4` 세 갈래를 각각 따로 돌립니다 |
+> | 시각 | 월요일부터 금요일, 낮 12시 30분 |
+> | 알림 | 슬랙 채널 `C03L8MZNHB2` |
+> | 이름 정리 | 이미지 빌드 워크플로를 **`app-web-ci.yml`** 로, 정기배포 준비 워크플로를 `schedule-prepare-branch-for-regular-release.yml` 로 바꿨습니다 |
+>
+> [`app-api`](./app-api.md) 에도 같은 작업이 함께 들어갔습니다. 두 저장소의 워크플로 체계를 맞추는 일입니다.
+>
+> ### 본문에서 고친 것
+>
+> | 어디 | 무엇이 틀렸나 |
+> |---|---|
+> | JSP 폴더 목록 | **`makerprofile` 이 남아 있고 `store` 가 빠져** 있었습니다 |
+> | 투자 메인 행 | 지워진 `wmain/wmain.jsp` 에 취소선이 없어 검사기가 계속 소실로 셌습니다 |
+> | 글로벌 경로 표 | 메이커 상세 전용 컨트롤러 두 개가 빠져 있었습니다 |
+>
+> ---
 > 📅 **2026-10-01 cloud_live pull 보강** (21 커밋)
 >
 > ### CLIENT-311 — 정적 리소스를 CDN 호스트로 옮기고 6건을 지웠습니다
@@ -779,7 +904,7 @@ URL은 대부분 `/web/*` 접두어(과거 `/ko/Campaign/Details/*` 호환성 �
 | URL prefix | 용도 | 대표 Controller (path) | JSP 경로 |
 |---|---|---|---|
 | `/web/main`, `/web/wmain` | 통합 메인 (리워드 기본, 메인·얼리버드·플랜드·마이·모어) | `web/wmain/controller/WMainController.java:86` | `wmain/main.jsp` |
-| `/web/winvest/main`, `/web/wmain/main` | 투자(증권형) 메인 | `web/wmain/controller/WInvestMainController.java` | **JSP 없음** — `wmain/wmain.jsp` 는 `CLIENT-239`(2026-09-04)로 삭제 |
+| `/web/winvest/main`, `/web/wmain/main` | 투자(증권형) 메인 | `web/wmain/controller/WInvestMainController.java` | **JSP 없음** — ~~`wmain/wmain.jsp`~~ 는 `CLIENT-239`(2026-09-04)로 삭제 |
 | `/web/wreward/main`, `/web/wreward/collection/*` | 리워드 메인/컬렉션 | `web/wmain/controller/WRewardMainController.java` | `wmain/wreward/*.jsp` |
 | `/web/campaign/detail/{id}`, `/detail/reward-info/{id}`, `/detail/qa/{id}`, `/detail/fundingInfo/{id}`, `/detailPost/{id}`, `/detailBacker/{id}` | 리워드 펀딩 상세 | **`web/globalkorea/controller/GlobalKoreaFundingDetailController.java:68`** | **`global-korea/index`**(React 셸). 종전 `detail*SPA` JSP 는 `CLIENT-238` 로 삭제 |
 | `/web/wcampaign/*` | 캠페인 검색/지지서명/리워드서명 | `web/wcampaign/controller/WSearchCampaignController.java:42`, `WWEBCampaignSignatureController.java:15`, `WWEBRewardSignatureController.java:24`, `WWEBInvestSignatureController.java:24` | `wcampaign/*.jsp` |
@@ -805,6 +930,9 @@ URL은 대부분 `/web/*` 접두어(과거 `/ko/Campaign/Details/*` 호환성 �
 | `/web/wsub/*` | 서브 페이지(Easy Card, 메이커 가이드 등) | `web/wsub/controller/WSubController.java` | `wsub/*.jsp` |
 | `/web/embed/*` | 임베드 위젯 | `web/embed/controller/EmbedController.java` | `embed/*.jsp` |
 | `/web/global/*`, `/web/globalkorea/*` | 글로벌 크라우드펀딩(WEN) | `web/global/controller/GlobalUIController.java`, `GlobalKoreaUIController.java` | `global/*.jsp`, `global-korea/*.jsp` |
+| `/web/maker/detail/*` (국내 6경로) | 메이커 프로필 상세 | `web/globalkorea/controller/GlobalKoreaMakerDetailController.java` | `global-korea/index`(React 셸). 2026-09-02 `FE1-1758` 로 ~~`makerprofile/makerProfile.jsp`~~ 를 대체 |
+| `/maker/detail/*` (글로벌 6경로) | 메이커 프로필 상세 (글로벌) | `web/global/controller/GlobalMakerDetailController.java` | `global/index`(React 셸). 비노출 메이커 차단 + robots noindex |
+| `/web/waccount/notificationSetting`, `/web/waccount/notificationSetting/*` | 마케팅 알림 설정 (기본·새소식·스토어 재입고·따라잡기) | `web/globalkorea/controller/GlobalKoreaNotificationSettingController.java` | `global-korea/index`(React 셸). 2026-10-13 `FE1-1785` 로 ~~`waccount/notificationSetting/marketing.jsp`~~ 를 대체. 주소는 그대로 두고 컨트롤러만 `waccount` 에서 `globalkorea` 로 옮겼습니다 |
 | `/web/school/*` | (구) 와디즈 스쿨 — 리다이렉트 대상 | `web/school/**` | `school/*.jsp` (레거시) |
 | `/web/redirect/hashkey/*`, `/web/redirect/keyword/*` | 단축 URL 리다이렉트 | `web/redirect/controller/*` | — |
 | `/web/wterms/*`, `/web/waccount/wAccountLogin` 등 | 약관/계약/본인인증 | `web/wterms/*`, `web/waccount/*` | `wterms/*.jsp` |
@@ -819,7 +947,7 @@ URL은 대부분 `/web/*` 접두어(과거 `/ko/Campaign/Details/*` 호환성 �
 
 **2026-10-01 확인 39개**입니다.
 
-`account`, `campaign`, `catchup`, `community`, `embed`, `equity`, `error`, `ftexautn`, `funding2015`, `global`, `global-account`, `global-korea`, `include`, `linkprice`, `makerprofile`, `mobile`, `mywadiz`, `oauth`, `personalverification`, `react`, `school`, **`studio`**, `startup`, `waccount`, `wboard`, `wevent`, `winclude`, `wiplicense`, `wlayout`, `wlive`, `wmain`, `wmypage`, `wpage`, `wpartner`, `wpayment`, `wpersonalmessage`, `wpurchase`, `wsub`, `wterms`
+`account`, `campaign`, `catchup`, `community`, `embed`, `equity`, `error`, `ftexautn`, `funding2015`, `global`, `global-account`, `global-korea`, `include`, `linkprice`, ~~`makerprofile`~~, `mobile`, `mywadiz`, `oauth`, `personalverification`, `react`, `school`, **`store`**, **`studio`**, `startup`, `waccount`, `wboard`, `wevent`, `winclude`, `wiplicense`, `wlayout`, `wlive`, `wmain`, `wmypage`, `wpage`, `wpartner`, `wpayment`, `wpersonalmessage`, `wpurchase`, `wsub`, `wterms`
 
 > ⚠️ **다섯 그룹이 사라졌습니다** — `supporterclub`, `wcampaign`, `wcoming`, `wpremium`, 그리고 **`video`**.
 > `video` 는 2026-10-01 확인분입니다 (`CLIENT-311`). `studio` 는 새로 생겼습니다.

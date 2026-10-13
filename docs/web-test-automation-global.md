@@ -3,6 +3,11 @@
 > 와디즈 **글로벌 서비스의 회귀(Sanity) 테스트 자동화** 저장소입니다. Playwright 로 PC·모바일 웹을 동시에 검증합니다. 저장소 제목은 *"Global Regression by AI"* 입니다.
 > Org: `wadiz-qa` (`https://github.com/wadiz-qa/web-test-automation-global.git`). 서비스가 아니라 **QA 도구**라 helm 배포 대상이 아닙니다.
 
+> 📅 **2026-10-13 main pull 보강** (1 커밋)
+>
+> 코드 변경은 없습니다. `CLAUDE.md` 의 작업 상태에 **TC_069(공유 모달) 로케이터 수정**이 반영됐다는 한 줄(PR #43)이 추가됐습니다.
+> 로케이터는 테스트가 화면 요소를 찾아가는 주소입니다.
+
 > 📅 **2026-10-01 main pull 보강** (3 커밋)
 >
 > | 무엇 | 내용 |

@@ -294,8 +294,8 @@ Next.js App Router (`app/page.tsx`).
 ### 10.2 `iam` — 인증/권한
 | 페이지 | 위치 |
 |---|---|
-| `MarketingNotificationSettingsPage.jsx` | `marketing-notification-settings/MarketingNotificationSettingsApp/pages/...` |
-| `NotificationDenyPage.jsx` | `.../FundingNoticiationDenyApp/pages/...` |
+| `MarketingNotificationSettingsPage.jsx` | ~~`marketing-notification-settings/MarketingNotificationSettingsApp/pages/...`~~ → `apps/global/src/pages/my-wadiz/settings/notification/MarketingNotificationSettingsPage.jsx` (화면 조각은 `packages/features/src/notification-settings/ui/marketing/`) — `FE1-1785`, 2026-10-13 |
+| `NotificationDenyPage.jsx` | ~~`.../FundingNoticiationDenyApp/pages/...`~~ → `apps/global/src/pages/my-wadiz/settings/notification/news/MyWadizSettingsNotificationNewsPage.jsx` (화면 조각은 `packages/features/src/notification-settings/ui/news/`) — `FE1-1785`, 2026-10-13 |
 | `InvestmentAndStartupNotificationSettingsPage` | `.../pages/...` |
 | `InviteFriendsReceptionUserPage.jsx` | `invite-friends/...` |
 | `InviteFriendsWadizUserPage.jsx` | 동상 |

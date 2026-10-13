@@ -1,3 +1,62 @@
+> 📅 **2026-10-13 cloud_live pull 보강** (3 커밋)
+>
+> 애플리케이션 코드는 이번에도 손대지 않았습니다. 셋 다 빌드·배포 설정입니다.
+>
+> | 이슈키 | 무엇을 바꿨나 |
+> |---|---|
+> | `FE1-2108` | 실행용 도커 이미지를 가볍게 바꿨습니다 |
+> | `FE1-2134` | 이미지 번호를 배포 저장소에 적는 작업을 공용 워크플로 v2 로 옮겼습니다 |
+> | `CLIENT-312` | 브랜치 동기화 워크플로의 Git 사용자 설정 범위를 좁혔습니다 |
+>
+> ### `FE1-2108` — 실행 이미지를 `node:22-bookworm-slim` 으로
+>
+> 종전에는 빌드와 실행이 같은 `node:22` 이미지를 썼습니다. 이제 둘을 나눕니다.
+>
+> | 단계 | 이미지 | 왜 |
+> |---|---|---|
+> | 빌드(`base`) | `node:22-bookworm` | 소스를 컴파일할 도구가 들어 있는 전체 이미지가 필요합니다 |
+> | 실행(`deploy`) | `node:22-bookworm-slim` | 실행에 필요한 것만 남긴 가벼운 이미지입니다 |
+>
+> 두 단계 모두 `bookworm` 으로 못 박았습니다. 데비안 배포판을 고정해 **glibc(C 표준 라이브러리) 버전을 빌드와 실행에서 맞추려는 것**입니다.
+> 실행 이미지에는 `apt-get update && apt-get upgrade -y` 를 넣어 기반 이미지에 아직 안 들어온 보안 패치를 적용합니다.
+> 이번에 손댄 파일은 `.github/workflows/app-api-ci.yml`, `.github/workflows/schedule-sync-dev-rc-branches.yml`, `Dockerfile` 셋입니다.
+>
+> 같은 날 `good-wave`(`CLIENT-323`)와 `makercenter-fe`(`FE2-1483`)에도 같은 `apt-get upgrade` 한 줄이 들어갔습니다.
+>
+> ### `FE1-2134` · `CLIENT-312` — 워크플로 정리
+>
+> - `app-api-ci.yml` 이 부르는 이미지 번호 반영 워크플로를 `@v2` 로 올리고, 개인 토큰(PAT) 대신 **GitHub App 인증**을 쓰게 했습니다. 사내 여러 저장소가 같은 날 함께 바꾼 `RWD-6159`·`RWD-6158` 작업과 같은 흐름입니다.
+> - `schedule-sync-dev-rc-branches.yml` 은 Git 사용자 이름·메일을 전역(`--global`)이 아니라 **그 저장소 안에서만** 설정하도록 고쳤습니다. 사내 전용 기계에서 돌기 때문에 전역 설정이 다른 작업에 남는 것을 막으려는 것으로 보입니다(이 해석은 추측입니다).
+
+> 📅 **2026-10-06 cloud_live pull 보강** (10 커밋)
+>
+> **전부 `CLIENT-312` 입니다. 애플리케이션 코드는 손대지 않았습니다.**
+>
+> ### 매일 브랜치를 합치던 워크플로를 교체했습니다
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 지워진 것 | ~~`.github/workflows/schedule-daily-merge-branches.yml`~~ (166줄) |
+> | 새로 생긴 것 | `.github/workflows/schedule-sync-dev-rc-branches.yml` (135줄) |
+> | 대상 브랜치 | `dev` · `rc1` · `rc4` 세 갈래를 각각 따로 돌립니다. 한 갈래가 실패해도 나머지는 계속합니다 |
+> | 시각 | 월요일부터 금요일, 낮 12시 30분 |
+> | 실행하는 기계 | 깃허브 공용 기계에서 **사내 전용 기계(`self-hosted, app-api`)** 로 바꿨습니다 |
+> | 알림 | 슬랙 채널 `C03L8MZNHB2`. 토큰 이름은 `SLACK_CLIENT_BOT_TOKEN` |
+>
+> **동작을 세 번 다듬었습니다.**
+>
+> | 상황 | 종전 | 지금 |
+> |---|---|---|
+> | 합칠 커밋이 없을 때 | 실패로 끝났습니다 | 성공으로 끝냅니다 |
+> | 충돌이 없을 때 | 그래도 PR 을 만들었습니다 | **PR 없이 바로 푸시**합니다 |
+> | 기본 브랜치로 가는 PR | 시험을 돌렸습니다 | 돌리지 않습니다 |
+>
+> ### 이름 체계를 `wadiz-frontend` 쪽에 맞췄습니다
+>
+> 이미지 빌드 워크플로 파일 이름을 **`app-api-ci.yml`** 로 바꿨습니다.
+> 코드 서식 규칙 파일 `.prettierrc` (8줄)도 새로 넣었습니다 — 한 줄 120자, 작은따옴표, 들여쓰기 2칸입니다.
+>
+> ---
 > 📅 **2026-10-01 cloud_live pull 보강** (6 커밋)
 >
 > **전부 GitHub Actions 워크플로 손질입니다. 애플리케이션 코드는 손대지 않았습니다.**
@@ -164,7 +223,7 @@
 - Zendesk 헬프센터 한국어 문서 게시 웹훅 → 자동 다국어 번역/등록
 - 단순 헬스체크
 
-주요 호출 주체는 와디즈 웹(www.wadiz.kr), 와디즈 모바일 앱(iOS/Android), 고객센터 페이지이며, `/api/links` 같은 BFF API와 `/links/:shortId` 같은 브라우저 직접 진입 엔드포인트를 함께 제공합니다. 참고: `README.md:1-61`, `CLAUDE.md:1-73`.
+주요 호출 주체는 와디즈 웹(운영 기준 `www.wadiz.io`, `.env.clive:BASE_URL`), 와디즈 모바일 앱(iOS/Android), 고객센터 페이지이며, `/api/links` 같은 BFF API와 `/links/:shortId` 같은 브라우저 직접 진입 엔드포인트를 함께 제공합니다. 참고: `README.md:1-61`, `CLAUDE.md:1-73`.
 
 ## 기술 스택
 
@@ -246,7 +305,8 @@
   - YouTube iframe → div placeholder 치환
   - `<img src>` → `data-src`로 변환, alt 기본값 `no description` 삽입
   - `.gif` URL에 대해 동일 경로의 `.mp4` 존재 여부를 HEAD로 확인 후, 존재 시 `<video>` 태그(자동재생 속성 포함)로 교체
-  - live 환경에서는 `wadiz.kr` 도메인만 변환, 예외 도메인(`www.wadiz.kr`, `cdn.wadiz.kr` 등)은 스킵
+  - 운영 환경에서는 **와디즈 도메인만** 변환합니다. 허용 목록은 `wadiz.kr` 과 `wadiz.io` 둘이고, 하위 도메인도 포함합니다 (`src/common/constants/domain.constants.ts`)
+  - 허용 도메인이어도 **제외 목록 8개**는 건너뜁니다 (`src/api/funding/projects/project.service.ts:27-36`) — `www.wadiz.kr`·`wadiz.kr`·`cdn.wadiz.kr`·`ai-cdn.wadiz.kr`·`www.wadiz.io`·`wadiz.io`·`cdn-funding.wadiz.io`·`ai-cdn.wadiz.io`
 
 ### 2. POST /api/v1/links (및 v2)
 
@@ -347,7 +407,7 @@
 
 - 업스트림 서비스
   - 와디즈 펀딩 Public API: `${BASE_URL}/web/apip/funding/global/projects/...` — 스토리 원본 조회 (`project.controller.ts:188`)
-  - 와디즈 OIDC 인증 서버(account.wadiz.kr): `ACCOUNT_API_OPENID_CONFIGURATION_URL` — `jwks_uri` + `userinfo_endpoint` 사용
+  - 와디즈 OIDC 인증 서버(운영 기준 `account.wadiz.io`, `.env.clive`): `ACCOUNT_API_OPENID_CONFIGURATION_URL` — `jwks_uri` + `userinfo_endpoint` 사용
   - 와디즈 Global Translate API(플랫폼 내부): `${PLATFORM_GLOBAL_API_URL}/translate/html`, `/translate/text`
   - Zendesk Support API: `https://{wadiz6256|wadiz-dev}.zendesk.com/api/v2/*` (Brand ID 및 계정을 환경별로 분기)
 - 외부 CDN: 펀딩 스토리 내 이미지의 `.mp4` 존재 여부 확인을 위해 `HEAD` 요청(`wadiz.kr` 이하)

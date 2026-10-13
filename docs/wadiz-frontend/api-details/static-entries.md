@@ -6,6 +6,25 @@
 >
 > 각 엔트리의 `package.json` · `webpack.config.js` · `src/index.*` 등 빌드·부트스트랩 코드에서 **직접 관측한 것만** 기록합니다. 각 엔트리가 불러오는 공통 패키지(`@wadiz/react-common`, `@wadiz/reward-simple-pay-app`, `@wadiz/equity-*`, …) 내부는 외부 모듈로 간주하고 진입점에서 import 되는 사실만 기록합니다. `entries/RENDERER_ID_SELECTORS.md` 에 2025-01-05 기준으로 정리된 selector 목록을 참고 자료로 활용하되, 본 문서는 현행 소스에서 다시 확인한 내용을 우선합니다. 실제 배포 파이프라인(Jenkins/S3/CDN 구성)은 이 repo 바깥에 있어 확인 불가이며, `cdnPurge.js` 와 `STATIC_DEPLOYMENT_ORIGIN` 환경 변수에서 드러나는 부분만 기록합니다.
 
+> 📅 **2026-10-06 본문 점검** — `cloud_live` `4ff419bc` 기준
+>
+> 지난 회차가 소실 인용 6건 중 **5건만 보고** 넘어갔습니다.
+> 남은 1건(`src/payments/funding-price.js`)을 따라가 보니 **훨씬 큰 변화**가 있었습니다.
+>
+> | 인용 | 판정 |
+> |---|---|
+> | `src/payments/funding-price.js` | **오류.** `FE1-2005`(2026-09-28)가 **결제 모듈 28파일 2,005줄**을 지웠는데 문서는 그대로였습니다 |
+> | `w9-landing.js:42-56` | **오류.** 지난 회차에 취소선을 **앞쪽에만** 달아 뒤쪽 인용이 그대로 남았습니다 |
+> | `apps.js` · `polyfill.js` · `sentry.js` · `vendor.js` | **오탐.** 표기를 **청크 이름**(`apps`·`polyfill`·`sentry`·`vendor`)으로 바꿔 검사기가 더는 세지 않습니다 |
+>
+> ### 검사기가 못 보는 확장자가 있습니다
+>
+> 낡음 검사기의 확장자 목록에 **`.jsx` 가 없습니다**(`.tsx` 는 있습니다).
+> 그래서 `src/payments/SimplePay.jsx` 를 가리키는 **인용 4곳이 한 번도 잡히지 않았습니다.**
+> 이번에는 확장자를 넓혀 다시 훑어 찾아냈습니다.
+>
+> ---
+>
 > 📅 **2026-09-30 본문 점검** — `cloud_live` `4ff419bc` 기준
 >
 > 낡음 검사기가 잡아낸 소실 인용 6건을 확인했습니다. **진짜 오류는 1건이었습니다.**
@@ -25,7 +44,15 @@
 
 ## 개요
 
-`static/entries/` 는 레거시 JSP 기반 포털(`com.wadiz.web`, `www.wadiz.io`) 이 `<script src="…">` 로 직접 로드하던 정적 번들을 공급하는 디렉터리입니다. 각 엔트리는 Yarn workspace 1개(`@wadiz-static/<name>`) 로 등록되어 있고 (`wadiz-frontend/static/package.json:35-42`), `lerna run --scope=@wadiz-static/* build` 로 독립적으로 빌드되어 (`wadiz-frontend/static/package.json:16`) `build/<publicPath>/` 하위에 `main.js`, `vendor.js`, `manifest.json`, `<name>.css` 등 산출물을 출력합니다.
+`static/entries/` 는 레거시 JSP 기반 포털(`com.wadiz.web`, `www.wadiz.io`) 이 `<script src="…">` 로 직접 로드하던 정적 번들을 공급하는 디렉터리입니다. 각 엔트리는 Yarn workspace 1개(`@wadiz-static/<name>`) 로 등록되어 있고 (`wadiz-frontend/static/package.json:35-42`), `lerna run --scope=@wadiz-static/* build` 로 독립적으로 빌드되어 (`wadiz-frontend/static/package.json:16`) `build/<publicPath>/` 아래에 산출물을 내보냅니다. 아래 이름은 **빌드 때 생기므로 저장소에는 없습니다.**
+
+```
+main.js        엔트리 진입 번들
+vendor.js      node_modules 의존성 분리본
+manifest.json  파일 이름과 공개 경로 대응표
+<name>.css     추출된 스타일
+```
+
 
 ### 왜 존재하는가
 
@@ -36,7 +63,7 @@
 1. **빌드**: `<entry>/webpack.config.js` 가 `entry.main = ['./src/index.(jsx|js|tsx)']` 로 진입점을 정의합니다. 공통 설정은 `static/libraries/shared/config/webpack.config.js` 또는 `static/packages/shared/config/webpack.config.js` 에서 래핑됩니다. output 은 기본 UMD, `libraryTarget: 'umd'` 로 고정 (`static/libraries/shared/config/webpack.config.js:38`).
 2. **산출물**: `publicPath` 는 각 `package.json` 의 `publicPath` 필드(`/static/web/`, `/main/`, `/static/iam/` 등)로 지정되고, `STATIC_DEPLOYMENT_ORIGIN` 환경 변수가 있으면 그 origin 과 결합되어 절대 URL 이 됩니다 (`static/packages/shared/config/paths.js:12-17`, `static/config/webpackCommonConfig/paths.js:12-17`). 이 URL 은 `manifest.json` 에 기록됩니다.
 3. **CDN 배포 · 무효화**: 빌드된 파일이 `cdn-static.wadiz.io` 으로 추정되는 호스트에 업로드되고, 배포 후 `static/scripts/tasks/cdnPurge.js` 가 각 엔트리의 `manifest.json` 을 순회해 `http://purge.concdn.com/cgi-bin/cpurge.cgi?url=cdn-static.wadiz.io<path>` 로 CDN 퍼지 요청을 날립니다 (`static/scripts/tasks/cdnPurge.js:30-56`). 업로드 자체는 이 repo에 정의되어 있지 않아 확인 불가.
-4. **주입**: 레거시 JSP/HTML 이 `<script src="…/static/<entry>/main.js">` 를 포함합니다. 실제 JSP 는 이 repo 외부(`com.wadiz.web`) 에 있어 확인 불가이나, `wadiz-frontend/static/CLAUDE.md` 가 "1) web 번들 → 2) 페이지별 번들 1개" 패턴을 설명합니다. 본 repo에서는 `reward/src/payments/SimplePay.jsx:29-34` 의 주석 `리워드 결제 예약 - step20.jsp / myfundingPurchaseDetail.jsp` 와 `main/src/index.jsx:9` 의 `reactRendererWithInitialization(MainApp, 'main-app')` 처럼, 특정 JSP 가 `<div id="main-app">` 같은 placeholder 를 심어둔다는 가정을 확인할 수 있습니다.
+4. **주입**: 레거시 JSP/HTML 이 `<script src="…/static/<entry>/main.js">` 를 포함합니다. 실제 JSP 는 이 repo 외부(`com.wadiz.web`) 에 있어 확인 불가이나, `wadiz-frontend/static/CLAUDE.md` 가 "1) web 번들 → 2) 페이지별 번들 1개" 패턴을 설명합니다. 본 repo에서는 `main/src/index.jsx:9` 의 `reactRendererWithInitialization(MainApp, 'main-app')` 처럼, 특정 JSP 가 `<div id="main-app">` 같은 placeholder 를 심어둔다는 가정을 확인할 수 있습니다. (종전에 함께 들던 ~~`reward/src/payments/SimplePay.jsx`~~ 의 ~~`step20.jsp`~~ 주석은 `FE1-2005` 로 파일째 사라졌습니다. 그 JSP 자체도 같은 날 `com.wadiz.web` 에서 지워졌습니다(1,401줄).)
 5. **렌더**: 번들이 실행되면 `shared/reactRenderer` 의 `reactRenderer` / `reactEmbedRenderer` 가 `document.getElementById('<selector>')` 를 찾아 React 18 `createRoot(el).render(<Component {...dataSetProps} />)` 으로 실제 렌더링을 수행합니다 (`static/packages/shared/reactRenderer.tsx:87-90`).
 
 ### `RENDERER_ID_SELECTORS.md` 의 의미
@@ -187,12 +214,12 @@
 - **패키지**: `@wadiz-static/iam` (`entries/iam/package.json:3`)
 - **publicPath**: `/static/iam/` (`entries/iam/package.json:5`)
 - **devServer.port**: 9110 (`entries/iam/package.json:7`)
-- **책임**: Identity & Access 관련 작은 컴포넌트 묶음. 본인(성인)인증, 친구 초대, 스타트업 연락처 목록, 마케팅 알림 동의 등 4개 독립 마이크로 페이지.
-- **빌드 진입점** (`entries/iam/webpack.config.js:9-19`): 4개 파일을 **동일한 `main` chunk 에 합쳐서** 번들링 — 각 페이지 DOM placeholder 존재 여부로 조건 분기하는 패턴이 아니라, 렌더러 호출이 대상 id 가 없으면 `null` 을 반환하도록 설계됨.
+- **책임**: Identity & Access 관련 작은 컴포넌트 묶음. 본인(성인)인증과 친구 초대 **2개** 독립 마이크로 페이지입니다. (마케팅 알림 동의는 `FE1-1785`(2026-10-13)로 빠졌고, 스타트업 연락처 목록도 현재 소스에 없습니다.)
+- **빌드 진입점** (`entries/iam/webpack.config.js:9-19`): 2개 파일을 **동일한 `main` chunk 에 합쳐서** 번들링 — 각 페이지 DOM placeholder 존재 여부로 조건 분기하는 패턴이 아니라, 렌더러 호출이 대상 id 가 없으면 `null` 을 반환하도록 설계됨.
   - `./adult-authentication/index.js`
   - `./invite-friends/index.jsx`
-  - `./marketing-notification-settings/index.jsx`
-  - `./startup-contact-list/index.jsx`
+  - ~~`./marketing-notification-settings/index.jsx`~~ — `FE1-1785`(2026-10-13)로 삭제
+  - ~~`./startup-contact-list/index.jsx`~~ — 현재 소스에 없음
 - **렌더링 호출**
   - `adult-authentication/index.js:7-8` —
     ```js
@@ -201,8 +228,8 @@
     ```
     `AdultVerificationContent` 는 `@wadiz/ui/AdultVerificationContent`, `AdultCertificationSuccess` 는 `./src/AdultCertificationSuccess` (로컬). RENDERER_ID_SELECTORS.md 는 과거 `AdultCertification` 컴포넌트였음을 기록 — 현행은 `@wadiz/ui` 로 대체된 상태.
   - `invite-friends/index.jsx:4` — `reactRendererWithInitialization(InviteFriendsApp, 'invite-friends-app')`
-  - `startup-contact-list/index.jsx:4` — `reactRendererWithInitialization(StartupContactListApp, 'startup-contact-list-app')`
-  - `marketing-notification-settings/index.jsx` — `MarketingNotificationSettingsApp` 을 **default export 만** 하고 `reactRenderer` 호출 없음. 렌더 시점 호출부가 이 repo에서는 확인되지 않음 (다른 엔트리나 외부 묶음에서 사용될 가능성).
+  - ~~`startup-contact-list/index.jsx:4`~~ — 파일이 없어졌습니다.
+  - ~~`marketing-notification-settings/index.jsx`~~ — 파일이 없어졌습니다. `FE1-1785`(2026-10-13)에서 이 화면을 `packages/features/src/notification-settings/` 로 옮기고 레거시 묶음을 지웠습니다. 아래 "남은 의문" 8번의 "렌더러 호출 위치를 찾을 수 없다"는 문제도 이것으로 끝났습니다.
 - **사용 라이브러리**: React 18.2, `@reduxjs/toolkit`, react-redux, redux, redux-thunk (Redux store 사용), `react-router-dom@6`, `react-helmet-async@1.3.0`, `react-media@1.9.2`, `immer`, `dayjs`. (`entries/iam/package.json:17-42`)
 - **외부 패키지**: `@wadiz/fetch-api`, `@wadiz/request`, `@wadiz/react-common`, `@wadiz/web-root`, `@wadiz/web-redux-store`, `@wadiz/store-component`, `@wadiz/maker-following`, `@wadiz/main-common`.
 - **API 호출**: 진입점에서 없음. `invite-friends`/`startup-contact-list` 의 하위 `*App` 컴포넌트가 `@wadiz/fetch-api`/`@wadiz/request` 를 사용할 것으로 추정되나 본 문서 범위 밖.
@@ -218,13 +245,13 @@
 - **빌드 진입점** (`entries/landing/webpack.config.js:22-36` + `entry.config.js:1-42` + `entries.js`):
   - `entries.js` 가 고정 디렉터리 목록 나열(`about`, `board`, `bestmaker2017`, `bestmaker2018`, `partners`, `startup-registration`, `startup-requesting-administrator`, `terms`, `terms-confirm`, `terms-embed`, `wadiz2017`, `apps`) — 주석으로 `w9`, `w9-webinar` 는 비활성 (`entries.js:1-17`)
   - `entry.config.js` 가 각 디렉터리의 `index.scss`/`index.js`/`index.ts` 존재 여부에 따라 entry 자동 구성, 결과를 `{dirName: [stylePath, scriptPath]}` 형태로 반환 (`entry.config.js:18-37`).
-  - 결과적으로 만들어지는 덩어리(chunk) 이름이 디렉터리 이름과 같습니다 (`about.js`·`terms.js`·`apps.js` 등).
-  이것들은 **빌드가 만들어 내는 산출물**이라 저장소에는 없습니다.
+  - 결과적으로 만들어지는 덩어리(chunk) 이름이 디렉터리 이름과 같습니다 — `about` · `terms` · `apps` 처럼입니다.
+  빌드가 여기에 `.js` 를 붙여 내보내므로, **그 이름의 파일은 저장소에 없습니다.**
 - **주요 렌더링 호출 (selector 중심)**
   - `src/startup-registration/landing.tsx:4-6` — `DOMContentLoaded` 후 `reactEmbedRendererWithInitialization(StartupRegistrationApp, '#startup-registration-app')` (jQuery 스타일 `#` 셀렉터).
   - `src/terms-confirm/terms-confirm.jsx:4` — `reactEmbedRendererWithInitialization(TermsConfirmApp, '#terms-confirm-app', { isOpen: true })` (`@wadiz/terms-confirm-modal`).
   - `src/supporter-club/index.js:4` — `SupporterClubIntro` → `supporter-club-intro`. 컴포넌트는 `../../../main/src/pages/landing/supporter-club-intro/SupporterClubIntro` 로 **`main` 엔트리의 소스 트리를 넘나들어 import** 하는 교차 참조가 존재.
-  - ~~`src/w9/w9-landing.js`~~ — **삭제됐습니다**(`FE1-1366`, 2026-08-05). 종전 서술: `#w9` 페이지 (w9 비활성화 주석과 별개로 파일은 존재). `$('.w9-join-button-app').each(function … reactEmbedRendererWithInitialization(W9MembershipJoinButton, this))` 처럼 jQuery 각 DOM 요소 자체를 target 으로 넘김 (`w9-landing.js:42-56`). `@wadiz/equity-w9-membership-app` 을 **동적 import**.
+  - ~~`src/w9/w9-landing.js`~~ — **삭제됐습니다**(`FE1-1366`, 2026-08-05). 종전 서술: `#w9` 페이지 (w9 비활성화 주석과 별개로 파일은 존재). `$('.w9-join-button-app').each(function … reactEmbedRendererWithInitialization(W9MembershipJoinButton, this))` 처럼 jQuery 각 DOM 요소 자체를 target 으로 넘김 (~~`w9-landing.js:42-56`~~). `@wadiz/equity-w9-membership-app` 을 **동적 import**.
   - `src/apps/index.js` — 6개 서브 앱 번들(`welcomeMaker`, `wadizAwards`, `trend-report`, `line-friends`, `iplicense`, `fanz-maker`) 재수출.
   - `src/apps/welcomeMaker/index.js:5` — `WelcomeMakerApp` 를 `lazyWithPreload` 로 동적 import 후 `welcome-maker` id 에 임베드.
   - `src/apps/wadizAwards/wadiz-awards.jsx` — 연도별 컨테이너(2019~2025) 를 `lazyWithPreload` 로 모두 import 해두고 `document.querySelector` 로 존재 여부 확인 뒤 렌더:
@@ -237,7 +264,7 @@
   - `src/apps/iplicense/index.js:7-11` — `#iplicense-main` / `#alwayz-maker` 존재 시에만 렌더.
   - `src/apps/trend-report/index.js:7-8` — `#trend-report-2022`, `#trend-report-202101` (`#` 접두).
 - **퍼블리시 스크립트** (`entries/landing/scripts/publish.js`):
-  - `public/` 하위의 `*.html` 을 읽어 `<body>` 부분만 추출(cheerio), `<basename>.ssr.html` 로 `buildDirectory` 에 복사. `static-manifest.json` 을 생성해 각 파일의 publicPath 를 기록 (`publish.js:20-42`).
+  - `public/` 하위의 `*.html` 을 읽어 `<body>` 부분만 추출(cheerio), `<basename>.ssr.html` 로 `buildDirectory` 에 복사. 빌드 때 `static-manifest` 파일(`.json`)을 만들어 각 파일의 publicPath 를 기록합니다 (`publish.js:20-42`). 이것도 산출물이라 저장소에는 없습니다.
   - `copy-html` 이 `prebuild: run-s clean copy-html` 에서 자동 실행됨 (`package.json:11`).
   - `STATIC_DEPLOYMENT_ORIGIN` 이 있으면 절대 URL, 없으면 상대 URL 로 저장.
 - **사용 라이브러리**: React 18.2, MobX 3, react-redux + redux + redux-thunk, react-router-dom 6, `react-dates@21.8.0`, `react-hook-form@7.54.2` + `react-hook-form-deprecated@3.28.4`, `react-slick@0.26`, `slick-carousel@1.6`, `react-helmet-async@1.3`, `react-countup`, `d3@5`, `flipclock`, `jquery@2.1.3`, `dayjs`, `cheerio` (`entries/landing/package.json:18-58`).
@@ -322,29 +349,38 @@
 - **패키지**: `@wadiz-static/reward` (`entries/reward/package.json:3`)
 - **publicPath**: `/reward/` (`entries/reward/package.json:5`)
 - **devServer.port**: 9100 (`entries/reward/package.json:7`)
-- **책임**: 리워드(크라우드펀딩) **결제 플로우** 및 제품 디테일 UI. 결제 예약(간편결제), 펀딩 완료 화면, 리워드 제품 카드, 환불 정책 가이드 등.
+- **책임**: 리워드(크라우드펀딩) **제품 디테일 UI** 와 펀딩 완료 화면입니다.
+  - ⚠️ **2026-09-28 `FE1-2005` 로 결제 부분이 빠졌습니다.** 종전에는 결제 예약(간편결제)도 이 엔트리가 맡았습니다.
+    이관 전 결제 페이지(~~`step20.jsp`~~) 전용 모듈 **28파일 2,005줄**이 한 번에 지워졌습니다.
+    지금 남은 것은 리워드 제품 카드, 환불 정책 가이드, 펀딩 완료 화면입니다.
 - **빌드 진입점** (`entries/reward/webpack.config.js:11-14`):
   - entry: `./src/index.jsx` (+ dev hot client)
 - **진입 코드 트리**
-  - `src/index.jsx` (`:1-3`):
+  - `src/index.jsx` (전체 2줄):
     ```js
-    import './payments/index';
     import './reward-product/index';
     import './funding-complete/index';
     ```
-  - `src/payments/index.jsx` (`:1-2`):
-    ```js
-    import './SimplePay';
-    import './funding-price';
-    ```
-  - `src/payments/SimplePay.jsx` (전체 55줄):
-    - `window.simplepay.initSimpleReservationDialog(data)` 를 글로벌에 바인딩. 내부에서 `@wadiz/core` 의 `eventBus.emit('payment:simple-pay:requested', data)` 실행 (`:24-31`).
-    - 주석 `리워드 결제 예약 - step20.jsp / myfundingPurchaseDetail.jsp` 로 **레거시 JSP 파일명이 명시** (`:29`). 본 repo 에서 직접 관측되는 몇 안 되는 JSP 연결 흔적 중 하나.
-    - `DOMContentLoaded` 후 `document.getElementById('reward-simplepay-app')` 발견 시 `createRoot` 로 `PurchaseApp` (`@wadiz/reward-simple-pay-app`) 렌더. `'datachange'` 커스텀 이벤트 와 `'pageshow'` (Safari bfcache) 이벤트에 재렌더 훅을 연결 (`:36-55`).
-  - `src/payments/funding-price.js` (전체 5줄):
-    ```js
-    reactEmbedRendererWithInitialization(FundingPriceApp, 'reward-funding-price-app');
-    ```
+  - ### ~~`src/payments/`~~ — **폴더 전체가 삭제됐습니다**
+
+    `FE1-2005`(2026-09-28, `391bd419`)가 지웠습니다. 커밋 제목은
+    "이관 전 결제 페이지(step20) 전용 모듈 삭제" 입니다.
+
+    | 지워진 것 | 줄 수 | 종전에 하던 일 |
+    |---|---|---|
+    | ~~`src/payments/index.jsx`~~ | 2 | 아래 둘을 불러오던 묶음 |
+    | ~~`src/payments/SimplePay.jsx`~~ | 55 | `window.simplepay.initSimpleReservationDialog` 을 전역에 걸고, `reward-simplepay-app` 에 `PurchaseApp` 을 그림 |
+    | ~~`src/payments/funding-price.js`~~ | 5 | `reward-funding-price-app` 에 `FundingPriceApp` 을 그림 |
+    | ~~`src/payments/payment.scss`~~ | 38 | 위 화면들의 스타일 |
+
+    같은 커밋이 `@wadiz/reward-simple-pay-app` 쪽도 **24파일** 정리했습니다 —
+    `apps/purchase/` 전체, `RewardPaymentCTA`(599줄), `CashReceipt`, `PaymentOptions` 7종입니다.
+    그 패키지의 `src/index.js` 는 지금 **`RewardPaymentInfo` 와 공통 컴포넌트 2개, 상수 3개만** 내보냅니다.
+
+    > ⚠️ **고아가 된 의존성이 하나 남았습니다.**
+    > `@wadiz/payment-price-app` 이 `entries/reward/package.json:40` 에 그대로 있는데,
+    > 이 패키지를 **불러오는 코드가 저장소 어디에도 없습니다**(2026-10-06 전수 확인).
+    > 유일한 사용처가 지워진 `funding-price.js` 였습니다. 정리 대상인지는 담당팀 확인이 필요합니다.
   - `src/reward-product/index.js` (`:1-16`):
     - `reactEmbedRendererWithInitialization(RewardProductApp, 'reward-product-app')`
     - `DOMContentLoaded` 후 `document.querySelectorAll('#funding-refund-policy-guide-app')` 를 전부 순회해 `FundingRefundPolicyGuideApp` 렌더 — selector 가 중복된 경우(여러 id 중복) 대비.
@@ -353,7 +389,10 @@
     ```js
     reactEmbedRendererWithInitialization(RewardFundingCompleteApp, '#reward-funding-complete-app');
     ```
-- **RENDERER_ID_SELECTORS.md 대비 차이**: 해당 문서에는 `campaign-support-signature` 가 `reward/src/payments/SimplePay.jsx:73` 에 있다고 기록되어 있으나, **현재 SimplePay.jsx 에는 이 호출이 없습니다** (현행 파일은 55줄). 제거된 것으로 보이며, RENDERER_ID_SELECTORS.md 의 2025-01-05 스냅샷 이후 변경됨.
+- **`RENDERER_ID_SELECTORS.md` 대비 차이** (2026-10-06 재확인)
+  - 종전 기록이던 `campaign-support-signature`(~~`reward/src/payments/SimplePay.jsx:73`~~)는 **그 저장소 문서에서도 지워졌습니다.** `FE1-2005` 의 후속 커밋 `92ac43de` "삭제한 step20 모듈을 가리키는 문서 정리" 가 16줄을 걷어냈습니다.
+  - ⚠️ **다만 그 정리가 한 건을 놓쳤습니다.** `RENDERER_ID_SELECTORS.md:253` 이 아직 ~~`reward/src/payments/modal-portal.js`~~ 를 가리킵니다. 그 파일은 **2025-11-14 `FE-11199`** 로 이미 없어졌습니다. 저장소 쪽 문서의 어긋남이라 여기에만 적어 둡니다.
+  - 지금 그 문서가 `reward` 에 적어 둔 selector 는 4개인데, 살아 있는 것은 `reward-product-app`·`reward-funding-complete-app`·동적 selector **3개**입니다.
 - **사용 라이브러리**: React 18.2, `@reduxjs/toolkit`, react-redux, MobX 3, `classnames`, `intersection-observer`, `qs`, `prop-types`, `react-moment-proptypes` (`entries/reward/package.json:15-42`).
 - **외부 패키지**: `@wadiz/reward-simple-pay-app`, `@wadiz/reward-update-news-app`, `@wadiz/reward-coming-news-app`, `@wadiz/reward-news-app`, `@wadiz/reward-project-report`, `@wadiz/payment-price-app`, `@wadiz/react-common`, `@wadiz/maker-following`, `@wadiz/components`, `@wadiz/fetch-api`, `@wadiz/helpers`, `@wadiz/request`, `reward-common`.
 - **API 호출**: 진입점에서 없음. 모든 실제 호출은 `@wadiz/reward-*`, `@wadiz/payment-price-app` 등 외부 패키지가 담당.
@@ -397,10 +436,10 @@
     common: path.join(__dirname, './src/index.js'),
   }
   ```
-  → **번들 3개가 함께 만들어집니다**: `polyfill.js`, `wui.css`(공통 CSS 포함), `common.js`.
-     셋 다 빌드 산출물이라 저장소에는 없습니다.
-  - 추가로 `webpack.sentry.config.js` 가 별도 실행되어 `src/sentry/index.js` → `sentry.js` chunk 를 만들고 `@sentry/webpack-plugin` 으로 **Sentry 릴리즈 업로드 + 소스맵 전송** 수행 (`webpack.sentry.config.js:22-47`). `release` 값은 `process.env.GIT_COMMIT`.
-  - `optimization.splitChunks` 로 `node_modules` 의존성(`@wadiz`, `@sentry`, `wadiz-` 제외) 을 별도 `vendor.js` 로 enforce 분리 (`webpack.config.js:100-118`).
+  → **번들 3개가 함께 만들어집니다.** 청크 이름은 `polyfill` · `wui`(공통 CSS 포함) · `common` 입니다.
+     빌드가 각각 확장자를 붙여 내보내므로, 그 이름의 파일은 저장소에 없습니다.
+  - 추가로 `webpack.sentry.config.js` 가 별도 실행되어 `src/sentry/index.js` 를 읽어 `sentry` chunk 를 만들고 `@sentry/webpack-plugin` 으로 **Sentry 릴리즈 업로드 + 소스맵 전송** 수행 (`webpack.sentry.config.js:22-47`). `release` 값은 `process.env.GIT_COMMIT`.
+  - `optimization.splitChunks` 로 `node_modules` 의존성(`@wadiz`, `@sentry`, `wadiz-` 제외) 을 별도 `vendor` chunk 로 enforce 분리 (`webpack.config.js:100-118`).
   - `output.libraryTarget: 'umd'` (`:90`).
 - **진입 코드** (`src/index.js` 전체 2줄):
   ```js
@@ -545,7 +584,7 @@ static/
 ### 레거시 JSP 주입
 
 - 이 repo 에는 JSP 파일이 없어 실제 주입 코드는 관측 불가. 단, 일부 주석과 엔트리 엔트리포인트에서 간접 근거를 찾을 수 있음:
-  - `reward/src/payments/SimplePay.jsx:29` 주석: `// 리워드 결제 예약 - step20.jsp / myfundingPurchaseDetail.jsp`
+  - ~~`reward/src/payments/SimplePay.jsx`~~ 의 ~~`step20.jsp`~~ 주석 — **2026-09-28 `FE1-2005` 로 사라졌습니다.** 이 repo 에서 JSP 이름이 직접 보이던 근거 하나가 없어졌습니다.
   - `account/src/empty/index.jsx:1-5` 주석: `// TODO: com.wadiz.web 배포 이전에 UI 중복 노출 방지(배포 이후 제거)`
 - 상위 `static/CLAUDE.md` Section 8 이 JSP 로드 순서를 규약으로 설명(공통 `web` 번들 → 페이지별 번들 1개). 본 repo 의 코드와는 정합적이나 실제 JSP 가 그 규약을 지키는지는 `com.wadiz.web` 문서 참조 필요.
 
@@ -561,7 +600,7 @@ static/
 | `process.env.STATIC_DEPLOYMENT_ORIGIN` | 정적 자원 origin (보통 `https://cdn-static.wadiz.io`) — publicPath 절대화에도 사용 |
 | `process.env.ROOT_ELEMENT_ID` | SPA 루트 id (기본 `'root'`) — school 에서 사용 |
 
-Sentry 릴리즈는 별도 빌드 스크립트(`build:sentry` in `entries/web/package.json:12`) 가 `entries/web/webpack.sentry.config.js` 를 사용해 `sentry.js` chunk + 소스맵을 Sentry 프로젝트에 업로드. Release 키는 `GIT_COMMIT` 환경 변수.
+Sentry 릴리즈는 별도 빌드 스크립트(`build:sentry` in `entries/web/package.json:12`) 가 `entries/web/webpack.sentry.config.js` 를 사용해 `sentry` chunk 와 소스맵을 Sentry 프로젝트에 업로드합니다. Release 키는 `GIT_COMMIT` 환경 변수.
 
 ---
 
@@ -575,8 +614,8 @@ Sentry 릴리즈는 별도 빌드 스크립트(`build:sentry` in `entries/web/pa
 4. **com.wadiz.web 측 `resourceServerUrl`, `STATIC_DEPLOYMENT_ORIGIN` 값의 실제 기본 설정**: 환경별 값이 어디에 정의되는지 역시 외부.
 5. **`school`, `open-account` 의 `static.config.js`(SSG) 실행 엔트리**: `webpack --config static.config.js` 같은 스크립트가 각 엔트리 `package.json` 에 명시되지 않아 실제 언제 호출되는지 확인 불가. SSG 산출물(`*.ssr.html`) 은 `landing/scripts/publish.js` 경로와 달리 별도로 빌드되는 것으로 보이나 본 repo 에 사용례 없음.
 6. **`assets` 의 상세 콘텐츠 목록**: 복사 대상 디렉터리(`public/equity`, `public/fonts`, `public/pdfjs`, `public/wadizawards` 등) 는 바이너리 자산이므로 구성만 기록하고 내용은 생략.
-7. **RENDERER_ID_SELECTORS.md 와 현행 소스의 불일치**: 본 문서 작성 시점(2026-04-20) 기준, 최소 다음 2개 drift 관측 — (a) `reward/SimplePay.jsx:73` 의 `campaign-support-signature` 제거됨, (b) `landing/src/apps/wadizAwards/wadiz-awards.jsx` 에 `wadiz-awards-app-2025-result` 가 추가됨(RENDERER_ID_SELECTORS.md 는 2024 까지만 기록). 현행 소스가 항상 우선.
-8. **`iam/marketing-notification-settings` 의 렌더러 호출 위치**: 이 디렉터리는 `MarketingNotificationSettingsApp` 을 default export 만 할 뿐 이 repo 내부에서 `reactRenderer` 를 호출하지 않음. 과거 버전에서 제거된 렌더러 호출일 수 있으나 컴파일 대상에는 여전히 포함 — 사용처 확인 필요.
+7. **`RENDERER_ID_SELECTORS.md` 와 현행 소스의 불일치** (2026-10-06 재확인) — (a) ~~`reward/SimplePay.jsx:73`~~ 의 `campaign-support-signature` 는 소스와 그 문서 양쪽에서 사라졌습니다(해소), (b) `landing/src/apps/wadizAwards/wadiz-awards.jsx` 의 `wadiz-awards-app-2025-result` 는 아직 그 문서에 없습니다(2024 까지만 기록), (c) **새로 생긴 어긋남** — 그 문서가 아직 ~~`reward/src/payments/modal-portal.js`~~ 를 가리킵니다. 현행 소스가 항상 우선입니다.
+8. ~~**`iam/marketing-notification-settings` 의 렌더러 호출 위치**~~ — ✅ **2026-10-13 해소.** `FE1-1785` 가 이 디렉터리를 통째로 지우고 화면을 `packages/features/src/notification-settings/` 로 옮겼습니다. 호출부를 찾지 못한 것은 이미 쓰이지 않는 코드였기 때문입니다.
 9. ~~**`landing/w9` 활성/비활성 혼재**~~ — ✅ **2026-09-30 해소.** 파일이 아예 사라졌습니다.
 
    `FE1-1366`(2026-08-05)이 투자·스타트업 관련 엔트리를 걷어내면서 함께 지웠습니다.

@@ -1,5 +1,18 @@
 # makercenter-fe-admin
 
+> 📅 **2026-10-13 cloud_live pull 보강** (1 커밋)
+>
+> `FE2-1469` — **아이디 중복 확인과 계정 찾기 요청을 GET 에서 POST 본문 방식으로** 바꿨습니다.
+> GET 으로 보내면 아이디·이메일이 주소에 담겨 주소창과 접속 기록에 남습니다.
+>
+> | 파일 | 변화 |
+> |---|---|
+> | `src/api/global.js` | 중복 확인 호출을 POST 로 (−8줄) |
+> | `src/api/manager.js` | 계정 찾기 호출을 POST 로 |
+> | `src/api/__test__/global.test.ts` · `manager.test.ts` · `src/pages/__test__/FindUser.test.tsx` | 기대값을 맞췄습니다 |
+>
+> 서버 쪽 짝은 `makercenter-be` 의 같은 이슈입니다.
+
 > 📅 **2026-10-01 cloud_live pull 보강** (3 커밋, 모두 `FE2-1412`)
 >
 > | 무엇 | 내용 |

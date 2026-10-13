@@ -92,7 +92,19 @@ Android 도 같은 구조입니다 — `WadizPlatformAPIService`·`WadizServiceA
 > 📌 대부분의 앱 "프로젝트 상세" 는 WebView 기반 (wadiz-android 의 `feature/catchup`, `feature/service-home`, wadiz-ios 의 `Features/ServiceHome`). 순수 네이티브 상세가 아니라 **하이브리드**.
 
 #### 2. funding-payment (서포팅 결제)
-**앱**: 결제 시 WebView 로 `/web/wpurchase/reward/step10/{campaignId}` 진입 → 동일 웹 결제 플로우 사용. 순수 네이티브 결제 화면은 **없는 것으로 관측**.
+**앱**: 결제는 WebView 로 웹 화면을 그대로 씁니다. 순수 네이티브 결제 화면은 **없는 것으로 관측**됩니다.
+
+2026-09-28 `FE1-2005` 로 **결제 화면이 리액트로 이관**됐습니다. 안드로이드의 주소 키도 이미 셋으로 나뉘어 있습니다 (`core/model/src/main/java/com/markmount/wadiz/model/web/UrlKey.kt:52-54`).
+
+| 키 | 국내 경로 | 글로벌 경로 |
+|---|---|---|
+| `FUNDING_PAYMENT` | `/web/funding/payment` | `/funding/payment` |
+| `PURCHASE_STEP10` | `/web/wpurchase/reward/step10` | (없음) |
+| `PURCHASE_STEP20` | `/web/wpurchase/reward/step20` | `/funding/payment` |
+
+⚠️ **`step10` 과 `step20` 은 이제 되돌려 보내기만 합니다.** `step10` 은 펀딩 상세로, `step20` 은 메인으로 갑니다. 앱이 이 둘로 진입하면 결제 화면이 나오지 않습니다 — **확인 필요**입니다.
+
+iOS 는 `/web/wpurchase/reward` 를 아예 **차단 목록**에 두고 있습니다 (`Projects/App/Sources/WebView/ProjectWebViewController.swift:22`).
 **참고**: `CreditCardOCR` feature 모듈은 카드번호 OCR 인식만 담당 (Features/CreditCardOCR).
 
 #### 3. funding-reward-select
@@ -303,7 +315,7 @@ let path = "/api/funding/wishes/my/qty"
 
 ### 🟠 "WebView 위임" 영역 (앱은 URL 만 전달, 렌더는 웹)
 - **펀딩 프로젝트 상세**
-- **펀딩 결제** (step10/step20/result10)
+- **펀딩 결제** — 지금은 `/web/funding/payment` 리액트 화면입니다. 완료만 아직 `result10` JSP 입니다
 - **리워드 선택**
 - **환불·Billkey 등록**
 - **스토어 상세·주문**

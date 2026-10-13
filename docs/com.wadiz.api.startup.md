@@ -1,5 +1,18 @@
 # com.wadiz.api.startup 분석 문서
 
+> 📅 **2026-10-13 cloud_live pull 보강** (1 커밋)
+>
+> `BE3-1014` — **찜 큐레이션에서 하위 기업 소식 카드를 만들 때 나던 널 참조 오류(NPE)를 고쳤습니다.**
+> 널 참조 오류는 값이 없는 자리를 값이 있는 것처럼 읽다가 나는 오류입니다.
+>
+> | 파일 | 무엇을 바꿨나 |
+> |---|---|
+> | `domain/wish/service/WishService.java` | 소식 카드를 만드는 경로에 값 없음 처리를 넣었습니다 (+44줄) |
+> | `domain/maker/service/MakerService.java` 와 그 구현 둘 | 메이커 조회에 값 없음 대비를 더했습니다 |
+> | `domain/wish/service/WishIntegrateService.java` | 호출부를 맞췄습니다 |
+>
+> 단위 테스트 `WishServiceUnitTest`(127줄)가 새로 붙었습니다.
+
 > 📅 **2026-10-01 cloud_live pull 보강** (1 커밋)
 >
 > `BE3-905` — **개인정보 제3자 제공 현황의 노출 기준을 바꾸고 목록 쿼리를 개선**했습니다.

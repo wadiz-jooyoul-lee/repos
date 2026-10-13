@@ -1,5 +1,55 @@
 # kr.wadiz.account 분석 문서
 
+> 📅 **2026-10-13 cloud_live pull 보강** (7 커밋, 전부 `BE3-912`)
+>
+> **자동 로그인(remember-me) 처리를 전반적으로 다시 손봤습니다.** 자동 로그인은 브라우저에 쿠키를 남겨 다음에 올 때 로그인 화면을 건너뛰게 하는 기능입니다.
+>
+> | 무엇을 | 어떻게 바뀌었나 |
+> |---|---|
+> | 로그아웃 범위 | 모든 기기 → **그 기기 하나만** |
+> | 쿠키 도난 감지 | 모든 기기 토큰 삭제 → **그 기기(series) 한 행만 삭제** |
+> | 만료 토큰 정리 | 별도 없음 → **매일 02:00 배치에 편입** |
+> | 탈퇴 회원 정리 배치 | 매일 01:00 실행 → **제거** |
+> | `/api` 하위 요청 | 자동 로그인 대상 → **대상에서 제외** |
+>
+> ### 로그아웃이 다른 기기까지 풀던 문제
+>
+> Spring 기본 구현(`PersistentTokenBasedRememberMeServices.logout`)은 로그아웃할 때 **그 사람의 모든 기기 토큰을 지웁니다.**
+> 그래서 휴대폰에서 로그아웃하면 PC 의 자동 로그인까지 풀렸습니다.
+>
+> 이제 `logout()` 을 재정의해 **요청에 실려 온 쿠키의 series 한 건과 Redis 캐시만** 지우고 쿠키를 만료시킵니다.
+> series 는 한 기기에 붙는 식별자입니다.
+>
+> 쿠키 도난 감지도 같은 방식으로 좁혔습니다. 공격자와 피해자는 같은 series 를 쓰므로 그 행 하나만 지우면 양쪽이 끊기고, 무관한 다른 기기는 그대로 남습니다.
+> 커밋 설명에 따르면 **도난 감지는 운영에서 하루 120~187건** 일어나고 있고 대부분 오탐입니다(24시간 183건에 고유 사용자 182명).
+> 판단을 돕기 위해 `TOKEN-THEFT` 로그에 `rotated-before`(마지막 회전 이후 경과 시간)를 넣었습니다. 요청이 겹친 것인지 옛 쿠키를 다시 쓴 것인지 가르기 위해서입니다.
+>
+> ### 탈퇴 회원 정리 배치 제거
+>
+> `cleanup-dropped-user-data` 배치를 없앴습니다. 근거는 둘입니다.
+>
+> 1. 탈퇴할 때 `SessionUtil.kickUser` 가 세션과 토큰을 바로 지웁니다. 남더라도 `UserProfile.userStatus` 가 `DO` 라 자동 로그인이 막힙니다. (clive 최근 30일 탈퇴자 1,760명이 전원 `DO` 였습니다.)
+> 2. 안전망 역할도 못 했습니다. 조회 조건이 "`persistent_logins` 에 토큰이 남은 탈퇴자"여서, 정작 구제해야 할 "토큰 없이 세션만 남은" 경우를 찾지 못합니다. 전체 기간 조인 결과가 0건이고 운영 로그도 매일 0건이었습니다.
+>
+> > ⚠️ `helm-charts` 의 stage values 에 남아 있는 `cleanup-dropped-user-data: "-"` 도 함께 지워야 한다고 커밋 설명에 적혀 있습니다. 이번 회차의 `helm-charts` 변경에는 들어 있지 않습니다.
+>
+> ### `/api` 하위 요청을 자동 로그인에서 뺐습니다
+>
+> 세션이 없고 자동 로그인 쿠키(`WRMAT`)만 있을 때, 필터가 자동 로그인을 한 뒤 **리다이렉트로 요청을 끝내 버렸습니다.**
+> 그래서 `user-login-status` 가 302 를 돌려주고 브라우저의 교차 출처 요청(CORS)이 실패했습니다.
+> 이제 `/api` 하위는 컨트롤러까지 그대로 보내고, 쿠키 판정은 `hasValidRememberMeCookie` 로만 합니다. 로그인 승인 흐름은 종전과 같습니다.
+>
+> ### 그 밖
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 새 파일 | `.../iam/rememberme/WadizJdbcTokenRepository.kt`, `.../WadizPersistentTokenRepository.kt`, `.../WadizOidcLogoutErrorResponseHandler.kt` — 모두 코틀린입니다 |
+> | 세션 전체 삭제 API | 숫자 `userId` 만 받고, 숫자가 아니면 400 을 돌려줍니다 (`SessionController.kt`) |
+> | OIDC 로그아웃 | 실패했을 때 원인을 로그로 남기는 처리기를 붙였습니다 |
+> | 쿼리 정리 | 탈퇴 정리 쿼리의 `username` 형변환(CAST)을 뺐습니다. `varchar` 상태로 두면 컬럼이 숫자로 변환돼 인덱스를 못 탑니다 |
+> | 지워진 테스트 | ~~`src/test/groovy/.../SchedulingServiceTest.groovy`~~ — 실제 DB 를 비울 수 있게 된 스모크 테스트라 뺐습니다 |
+> | 새 테스트 | 코틀린 + JUnit 5 + mockk 로 로그아웃 12건, 도난 감지 1건, JDBC 질의 2건 |
+
 > 📅 **2026-10-01 cloud_live pull 보강** (2 커밋)
 >
 > | 이슈키 | 내용 |
@@ -72,7 +122,8 @@
 
 `kr.wadiz.account`는 와디즈의 **OAuth2 Authorization Server + 계정(회원) 플랫폼**이다. 표준 OAuth2/OIDC 인가서버 기능(`/oauth/authorize`, `/oauth/token`, `/oauth/revoke`, `/oauth/check_token`, `/oauth/token_key`, `/userinfo`, `/connect/register`, `/.well-known/*`)과 와디즈 자체의 로그인 UI, 이메일/소셜 회원가입, 계정 연결(link), 비밀번호 재설정, 세션 관리 등 계정 도메인 전반을 함께 수행한다.
 
-- 애플리케이션 진입점: `src/main/java/kr/wadiz/oauth2/Application.java` (group `kr.wadiz.auth`)
+- 애플리케이션 진입점: `src/main/java/kr/wadiz/oauth2/AuthorizationServiceApplication.java` (group `kr.wadiz.auth`)
+  (예전 문서가 적은 ~~`Application.java`~~ 라는 이름의 파일은 없습니다)
 - 기본 포트: `8080` (`src/main/resources/application.yml:6`)
 - Spring Session은 **Redis**(`namespace: account`) 기반, 인가/계정 데이터는 **MySQL**(JPA)에 저장, 계정 원장(`UserProfile`, `webpages_Membership` 등)은 기존 Wadiz RDB 테이블을 그대로 매핑.
 - 아키텍처는 **Hexagonal(포트 & 어댑터)**, 주 패키지는 `kr.wadiz.oauth2.adapters`, `kr.wadiz.oauth2.application`, `kr.wadiz.oauth2.domain`, `kr.wadiz.oauth2.port`.
@@ -111,7 +162,7 @@ Hexagonal 구조로 4개 레이어:
 1. **Order(1) — Authorization Server 체인** (`SecurityConfig.java:106`)
    - `OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http)` 위에
    - `tokenEndpoint`에 커스텀 `OAuth2CustomWadizAuthenticationConverter` + `OAuth2CustomWadizAuthenticationProvider` 추가(`application/customgrant/*`). 기본 password grant 대체로 와디즈 전용 로직 수행.
-   - OIDC Logout은 `WadizOidcLogoutAuthenticationConverter` + `WadizOidcLogoutAuthenticationProvider` + `WadizOidcLogoutHandler`로 대체(RememberMe까지 정리, `SecurityConfig.java:118-137`).
+   - OIDC Logout은 `WadizOidcLogoutAuthenticationConverter` + `WadizOidcLogoutAuthenticationProvider` + `WadizOidcLogoutHandler`로 대체(RememberMe까지 정리, `SecurityConfig.java:118-137`). **2026-10-13(`BE3-912`)부터 지우는 범위가 그 기기(series) 하나로 좁아졌습니다** — 다른 기기의 자동 로그인은 유지됩니다. 실패하면 원인을 남기는 `WadizOidcLogoutErrorResponseHandler.kt` 가 붙었습니다.
    - `authorizationResponseHandler`에 `AuthorizationAuthenticationSuccessHandler` 주입.
 
 2. **Order(2) — App 체인** (`SecurityConfig.java:166`)
@@ -195,8 +246,8 @@ AuthorizationServerSettings.builder()
 | GET | `/api/v1/user-login-status` | `SessionController.currentStatus` | 현재 로그인/RememberMe 상태 확인 (`SessionController.kt:73`) |
 | GET | `/api/v1/error-codes` | `ErrorCodeController.errorCodes` | i18n 에러코드 목록 조회 (`ErrorCodeController.java:22`) |
 | POST | `/webhooks/apple/server-notifications` | `AppleNotificationController.handleNotification` | Apple Server-to-Server Notification 수신(JWS 검증) (`AppleNotificationController.java:42`) |
-| GET | `/v0/oauth2/callback` | `CallbackController.callback` | 토큰 발급 테스트/디버깅 페이지 (`CallbackController.java:42`) |
-| GET | `/test_page` | `CallbackController.testPage` | hello 렌더링(테스트) (`CallbackController.java:138`) |
+| ~~GET~~ | ~~`/v0/oauth2/callback`~~ | — | **2026-08-31 삭제** (`BE3-864`). 토큰 발급 디버깅 페이지였습니다 |
+| ~~GET~~ | ~~`/test_page`~~ | — | **2026-08-31 삭제** (`BE3-864`) |
 | GET | `info` | `MaintenanceController.configuration` | 버전/세션/IP 정보 (`MaintenanceController.java:28`) |
 | GET | `info/{fileName}` | `MaintenanceController.releaseNote` | 릴리즈노트 텍스트 파일 조회 (`MaintenanceController.java:45`) |
 
@@ -382,13 +433,13 @@ AuthorizationServerSettings.builder()
 | `externalservice/alimtalk` | `AlimTalkClient` | `${wadiz.api.alim-talk.base-url}/alimtalk` | **카카오 알림톡** 발송(회원 이벤트·가입 완료 안내 등). Bearer 토큰 필요 (`AlimTalkClient.java:11`). |
 | `externalservice/crmgateway` | `CrmGatewayClient` | `${wadiz.api.braze}` | **Braze(CRM) 게이트웨이**: `PUT /setUnsubscribeKey`(구독 해제 키), `PUT /users/track`(회원 속성 동기화) (`CrmGatewayClient.java:11-15`). |
 | `externalservice/kakao` | `KakaoClient`, `KakaoAuthClient` | `https://kapi.kakao.com` / `https://kauth.kakao.com` | **Kakao Open API**: `/v2/user/service_terms`, `/v2/user/scopes` 조회(가입시 동의 정보 수집) (`KakaoClient.java:11-18`). |
-| `externalservice/fastmail2` | `FastMailClient`(`/api/v2/send`), `NormalMailClient`(`/api/v3/send`) | `${wadiz.api.mail.fast.path}`, `${wadiz.api.mail.normal.path}` | **사내 메일 플랫폼**. FastMail은 인증코드·비번재설정·보안 경고 등 즉시 발송, NormalMail은 템플릿 기반(회원가입 축하 메일 템플릿ID `1482`) (`FastMailClient.java`, `NormalMailClient.java`). |
-| `externalservice/notification` | `NotificationClient` | `${wadiz.api.notification}` | 메일 송신 API(`POST /mails/send/priority/fast`), **Publish/Subscribe 알림**(`POST /publishes/subscribers/{subscriberKey}`, `GET /publishes/{transactionKey}`, `GET /inboxes/{subscriberKey}/transactions/{transactionKey}`, `POST /publishes/groups/{subscriberGroupKey}`) (`NotificationClient.java:13-27`). |
-| `externalservice/push2` | `Push2Client` | `${wadiz.api.push2}` | **푸시 알림 & 인박스** 서비스 v2 (`POST /user`, `POST /inbox`). 회원 가입 완료/보안 이벤트 푸시·인박스 (`Push2Client.java:9-13`). |
+| `externalservice/fastmail2` | `FastMailClient`(`/api/v2/send`), `NormalMailClient`(`/api/v3/send`) | `${wadiz.api.mail-fast.base-url}`, `${wadiz.api.mail-normal.base-url}` | **사내 메일 플랫폼**. FastMail은 인증코드·비번재설정·보안 경고 등 즉시 발송, NormalMail은 템플릿 기반(회원가입 축하 메일 템플릿ID `1482`) (`FastMailClient.java`, `NormalMailClient.java`). |
+| ~~`externalservice/notification`~~ | — | — | **2026-06-26 패키지째 삭제** (`BE3-555`). 파일 11개가 함께 사라졌습니다. 메일 발송은 `fastmail2` 가 맡고, 설정 키 `wadiz.api.notification.base-url` 은 `subscribenotification` 이 씁니다 |
+| `externalservice/push2` | `Push2Client` | `${wadiz.api.push.base-url}` | **푸시 알림 & 인박스** 서비스 v2 (`POST /user`, `POST /inbox`). 회원 가입 완료/보안 이벤트 푸시·인박스 (`Push2Client.java:9-13`). |
 | `externalservice/subscribenotification` | `SubscribeNotificationClient` | 구독 알림 플랫폼 | 회원 가입 시 기본 구독 topic 등록 (푸시/메일 구독 키 관리). `UserToSubscriberRequestConverter.java`로 DTO 변환. |
-| `externalservice/terms` | `TermsClient` | `${wadiz.api.terms}` | **약관 서비스**: `POST /accepter/{userId}` 동의 저장, `GET /accepter/{userId}` 조회 (`TermsClient.java:14-19`). |
-| `externalservice/usercoupon` | `UserCouponClient` | `${wadiz.api.user-coupon.base-url}` | **쿠폰 서비스**: `POST /user/{userId}/type/{couponType}`로 가입 축하 쿠폰 발급. Country/Language 헤더 전송 (`UserCouponClient.java:12-17`). |
-| `externalservice/user` | `UserClient`, `UserApiAdapter`, `UserAppContactApiAdapter` | `${wadiz.api.users}` | **User 도메인 서비스**: 약관 조회/저장(`/terms/accepter/{userId}`), 연락처 재연결(`PUT /contacts/{userId}/my-number/reconnection`), 타임존 업데이트(`PUT /{userId}/time-zone/by-country`) (`UserClient.java:15-25`). |
+| `externalservice/terms` | `TermsAdapter`(`UserClient` 공유) · `SignupTermsQueryClient` | `${wadiz.api.user.base-url}` | **약관**: 동의 저장은 `POST /api/v1/users/terms/accepter/{userId}`, 가입 화면용 목록 조회는 `GET /api/v2/terms/{flowType}`. 전용 ~~`TermsClient`~~ 는 `BE3-555` 로 삭제됐습니다 |
+| `externalservice/usercoupon` | `UserCouponAdapter`(`UserClient` 공유) | `${wadiz.api.user.base-url}` | **쿠폰**: 발급 `POST /api/v1/users/coupon/user/{userId}/type/{couponType}`, 목록 조회 `GET /api/v1/users/coupon/type/{couponType}`. 국가·언어 헤더를 보냅니다. 전용 ~~`UserCouponClient`~~ 는 `BE3-555` 로 삭제됐습니다 |
+| `externalservice/user` | `UserClient`, `UserApiAdapter`, `UserAppContactApiAdapter` | `${wadiz.api.user.base-url}` | **User 도메인 서비스.** `UserClient` 하나를 **어댑터 넷이 공유**합니다(약관·쿠폰·연락처·타임존). 경로는 `/api/v1` 접두 아래 `users/terms/accepter/{userId}`·`users/coupon/*`·`users/contacts/{userId}/my-number/reconnection`·`users/{userId}/time-zone/by-country` |
 | `externalservice/platform` | `MarketingConsentClient` | 플랫폼 API | 채널별 마케팅 동의 동기화(EMAIL/SMS/PUSH, `ChannelType`, `MarketingConsentAdapter.java`). |
 | `externalservice/datasvc` | `DataClient` (Kotlin) | Data 서비스 | IP 기반 국가 매핑(`IpDto`, `CountryDto`, `DataServiceAdapter.kt`). |
 
@@ -416,14 +467,14 @@ AuthorizationServerSettings.builder()
 9. **패스워드 해시**: 레거시 .NET Identity의 `Rfc2898DeriveBytes`(PBKDF2) 호환 구현(`persistence/wadiz/user/util/Rfc2898DeriveBytes.java`, `WadizPassWordUtils.java`) — 과거 ASP.NET 계정도 그대로 로그인 가능.
 10. **세션 공유**: Spring Session Redis(`namespace: account`, `repository-type: indexed`)로 Account 서버와 다른 Wadiz 서비스가 `user-login-status` API로 세션 상태를 조회.
 11. **RememberMe**: `WadizPersistentTokenBasedRememberMeServices` 커스터마이징. `SessionController`가 RememberMe 쿠키 유효성·정리 API를 x-api-key 기반으로 별도 제공 → 내부 서비스(com.wadiz.web 등)에서 호출.
-12. **OIDC Logout 커스터마이징**: `WadizOidcLogoutAuthenticationConverter` + `WadizOidcLogoutAuthenticationProvider` + `WadizOidcLogoutHandler`가 기본 `OidcLogoutAuthenticationProvider` 앞에 위치해 RememberMe까지 삭제하고 동의된 redirect로 이동(`SecurityConfig.java:119-137`).
+    토큰 저장소는 `WadizPersistentTokenRepository.kt`(인터페이스)와 `iam/rememberme/WadizJdbcTokenRepository.kt`(구현)입니다(`BE3-912`, 2026-10-13 신설). 로그아웃·도난 감지 모두 **기기(series) 단위**로 지우고, 만료된 토큰은 매일 02:00 `remove-expired-token` 배치가 걷어냅니다.
+12. **OIDC Logout 커스터마이징**: `WadizOidcLogoutAuthenticationConverter` + `WadizOidcLogoutAuthenticationProvider` + `WadizOidcLogoutHandler`가 기본 `OidcLogoutAuthenticationProvider` 앞에 위치해 RememberMe까지 삭제하고 동의된 redirect로 이동(`SecurityConfig.java:119-137`). 삭제 범위는 **그 기기(series) 한 건**입니다(`BE3-912`, 2026-10-13).
 13. **`TbProviderProfile` 차등 업데이트**: `ProviderProfile.updateWith`로 변경 필드만 갱신하는 도메인 메서드(`ProviderProfile.java:49-66`).
-14. **스케줄 작업** (`application.yml:213-218`):
-    - `remove-expired-token`: 매일 02:00 만료 `UserToken` 삭제
+14. **스케줄 작업** (`application.yml:162-166`) — 2026-10-13 기준 **셋**입니다:
+    - `remove-expired-token`: 매일 02:00. 만료된 `Authorization` 토큰과 **만료된 remember-me 토큰**을 함께 지웁니다. 한 번에 다 지우지 않고 묶음으로 나눠 지우며, 묶음 사이에 쉬어 복제 지연을 피합니다(`SchedulingService.runBatchedDeletion`).
     - `change-apple-security-token`: 매월 1일 02:00 Apple client-secret JWT 재발급
     - `remove-expired-authorization-code`: 매일 02:30 `Authorization` 테이블 만료 레코드 정리
-    - `cleanup-dropped-user-data`: 매일 01:00 탈퇴(DO) 회원 데이터 정리
-    - `wadiz.authorization.deletion.cron.expression`: 랜덤 시간에 추가 정리(`application.yml:212`)
+    - ~~`cleanup-dropped-user-data`: 매일 01:00 탈퇴(DO) 회원 데이터 정리~~ — **`BE3-912`(2026-10-13)로 제거**됐습니다. 탈퇴할 때 `SessionUtil.kickUser` 가 세션과 토큰을 바로 지우고, 남더라도 `UserProfile.userStatus` 가 `DO` 라 자동 로그인이 막힙니다. 게다가 이 배치의 조회 조건이 "`persistent_logins` 에 토큰이 남은 탈퇴자"여서 정작 구제해야 할 "토큰 없이 세션만 남은" 경우를 못 찾았고, 운영 기록상 매일 0건이었습니다.
 15. **배포 브랜치 다분화**: `Jenkinsfile_account_dev/rc/rc2/rc3/stage/live` + `backup` 등 6개 이상 환경을 분리 운영. `application-{profile}.yml`도 환경별 존재.
 16. **테스트 러너**: Spock(그루비) + Kotlintest(Kotlin) + MockK + `testcontainers:spock` 혼용(`build.gradle:128-138`).
 17. **`webpages_*` 테이블명**: 과거 .NET Wadiz 웹페이지에서 물려받은 테이블(`webpages_Membership`, `webpages_OAuthMembership`). Hibernate naming strategy 우회를 위해 엔티티에 `@Column(name = "\`...\`")` 백틱을 전반적으로 사용.

@@ -1,5 +1,123 @@
 # wadiz-frontend
 
+> 📅 **2026-10-13 cloud_live pull 보강** (85 커밋)
+>
+> **지면 두 묶음이 레거시 번들에서 글로벌 구조로 옮겨 왔습니다.** 이번 회차에서 가장 큰 변화입니다.
+> 이슈키가 붙은 커밋을 많은 순으로 보면 이렇습니다(자동 다국어 반영 커밋 10건은 뺐습니다).
+>
+> | 이슈키 | 커밋 | 무엇을 하고 있나 |
+> |---|---:|---|
+> | `FE-10884` | 25 | **서포터 프로필**을 `packages/widgets` 로 옮기고 글로벌에 대응시켰습니다 |
+> | `FE-10841` | 7 | **친구 추천 지면**을 국내·글로벌 공통으로 만들었습니다 |
+> | `FE2-1467` | 6 | 앵콜 **프로젝트 불러오기 모달**에 리워드 선택·GA·다국어를 붙였습니다 |
+> | `FE1-2059` | 6 | 저장소 전체의 Node 버전을 **24.21.0** 으로 올렸습니다 |
+> | `FE1-1785` | 6 | **국내 마케팅 알림 설정**을 글로벌 구조로 옮겼습니다 |
+> | `CLIENT-329` | 4 | Sentry 성능 수집 비율을 올렸습니다 |
+> | `FE2-1496` | 3 | 메이커 **설립일 입력 검증**을 보강했습니다 |
+> | `FE1-2122` | 2 | 오픈예정 알림신청의 오류 처리를 고쳤습니다 |
+> | `FE1-1301` | 2 | 이관된 지면으로 제대로 가도록 연결을 고쳤습니다 |
+> | `FE1-2119` | 1 | 맨 위로 버튼이 웹뷰에서 늘어나던 문제를 고쳤습니다 |
+> | `FE1-1377` | 1 | 글로벌 펀딩 상세의 봇 판정 이벤트 전송을 뺐습니다 |
+>
+> ### `FE-10884` · `FE1-1301` — 서포터 프로필 이관
+>
+> 서포터 프로필은 **한 서포터가 어떤 프로젝트를 응원했는지 보여 주는 지면**입니다.
+> 종전에는 레거시 묶음 `static/entries/main/src/pages/supporter/` 에 있었습니다. 이제 **`packages/widgets/src/supporters/`** 로 옮겼습니다.
+>
+> | 옮긴 것 | 어디로 |
+> |---|---|
+> | `SupporterProfile.jsx` · `SupporterProfileContainer.jsx` · `SupporterProfileInfo.jsx` 등 화면 조각 | `packages/widgets/src/supporters/ui/` (대부분 `.tsx` 로 바꾸며 이동) |
+> | `components/Card/EquityBadgeGroup.jsx` 등 카드 조각 | `packages/widgets/src/supporters/ui/Card/` |
+> | `asstes/badge-w9.svg` (철자가 틀린 폴더명) | `packages/widgets/src/supporters/assets/` |
+> | `pages/SupporterProfilePage.jsx` | `packages/widgets/src/supporters/ui/SupporterProfilePage.tsx` |
+>
+> 옮기면서 함께 한 일이 많습니다.
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 타입스크립트 전환 | 주요 화면 조각을 `.jsx` 에서 `.tsx` 로 바꿨습니다 |
+> | 다국어 | 화면 문구에 다국어 키를 적용했습니다. 소득공제 배지, 추천친구 보기 배지 등 |
+> | 해외 대응 | 프로필 링크가 해외 주소에도 맞게 동작하도록 고치고, 해외에서는 투자 프로젝트를 걸러 냅니다 |
+> | 신고 모달 | `ReportInfoModal` 을 `features` 의 `ReportModal` 로 바꿨습니다 |
+> | 이벤트 추적 | `event-tracker` 패키지로 옮겼습니다 |
+> | 화면 정리 | 관심사 태그 영역을 없애고, 소개글·키워드를 숨기고, 활동 정보 배치를 고쳤습니다 |
+> | 카드 구조 | 프로젝트 카드를 Card 조합형 구조로 바꿨습니다 |
+> | 뒷정리 | 레거시 서포터 카드 3종, 쓰이지 않게 된 프로필·팔로워 조각, 레거시 라우트를 지웠습니다 |
+>
+> 이관 뒤에 생긴 문제도 두 건 고쳤습니다(`FE1-1301`).
+>
+> - 피드에서 글쓴이 프로필을 누르면 **레거시 지면이 아니라 이관된 지면**으로 가게 했습니다.
+> - 추천 친구로 들어갈 때도 이관된 지면으로 가게 했습니다.
+>
+> 서버 쪽 짝은 `com.wadiz.web` 의 `FE-10884` 입니다. 국내 주소를 글로벌 번들이 받도록 등록했습니다.
+>
+> ### `FE-10841` — 친구 추천 지면 공통화
+>
+> 팔로워 지면 `static/entries/main/src/pages/social/pages/follower/FollowAppContainer.jsx` 를
+> `apps/global/src/pages/social/friends/_ui/SupporterFriends.tsx` 로 옮기면서 이름도 `SupporterFriends` 로 바꿨습니다.
+> 탭 목록(`TAB_LIST`)을 정리하고, 추천 문구에 다국어를 적용하고, **글로벌에서는 서포터 프로필을 막았습니다.**
+>
+> ### `FE1-1785` — 국내 마케팅 알림 설정 이관
+>
+> 국내 전용이던 알림 설정 화면을 글로벌 구조로 옮겼습니다. 가장 많은 파일이 움직인 작업입니다.
+>
+> | 종전 위치 | 지금 위치 |
+> |---|---|
+> | `static/entries/iam/marketing-notification-settings/` (레거시 번들, 통째로 삭제) | `packages/features/src/notification-settings/` |
+> | `apps/global/src/pages/my-wadiz/settings/notification/_ui/` | `packages/features/src/notification-settings/ui/marketing/` |
+> | `apps/global/src/pages/my-wadiz/settings/notification/news/_ui/` | `packages/features/src/notification-settings/ui/news/` |
+>
+> 옮긴 뒤 구조는 이렇습니다.
+>
+> | 폴더 | 담당 화면 |
+> |---|---|
+> | `ui/marketing/` | 기본 마케팅 알림 설정 |
+> | `ui/news/` | 새소식 알림 설정 |
+> | `ui/catchup/` | 따라잡기 알림 |
+> | `ui/store-restock/` | 스토어 재입고 알림 |
+> | `lib/` | `useCancelRestock`, `useStoreRestockList`, `useNotificationToastMessage` 등 |
+>
+> 화면 쪽 마무리도 함께 했습니다 — PC 머리글을 국내 전용으로 바꾸고, 바닥글은 기본 화면에만 보이게 하고, 하위 화면의 탭 제목과 아래쪽 빈칸을 고쳤습니다.
+> 서버 쪽 짝은 `com.wadiz.web` 의 `FE1-1785` 입니다.
+>
+> ### `FE2-1467` — 앵콜 프로젝트 불러오기 모달
+>
+> 앵콜은 끝난 프로젝트를 다시 여는 것입니다. 그때 원본 프로젝트를 고르는 모달에 **리워드 정보를 함께 가져올지 고르는 항목**을 넣었습니다.
+> 대상 파일은 `studio/.../pages/project/project-type/_ui/classifications/PreviousProjectList.tsx`(+81줄)이고, 테스트 `PreviousProjectList.test.tsx`(143줄)가 새로 붙었습니다.
+> 문구에 다국어 키를 적용하고, 모달이 보일 때와 선택 버튼을 누를 때의 GA 이벤트를 넣었습니다.
+> 서버 쪽 짝은 `com.wadiz.web` 의 `RWD-6098` 과 `com.wadiz.api.funding` 의 리워드 복사입니다.
+>
+> ### `FE2-1496` — 메이커 설립일 검증
+>
+> `studio/.../core/StartupInputDate/StartupInputDate.jsx` 를 고쳤습니다(+67줄).
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 실제 날짜인지 | 2월 30일 같은 값을 막습니다 |
+> | 하한 | `1900-01-01` 보다 앞설 수 없습니다 |
+> | 검사 시점 | 타이핑 중이 아니라 **입력을 마치고 칸에서 빠져나올 때** 검사합니다 |
+>
+> ### `CLIENT-329` — Sentry 성능 수집 비율
+>
+> Sentry 는 오류·성능을 모아 보는 도구입니다. 모든 요청을 다 보내면 비용이 커서 일부만 표본으로 보냅니다.
+>
+> | 대상 | 종전 | 지금 |
+> |---|---|---|
+> | 기본 | (종전 값) | **3%** |
+> | 기획전 상세 | (종전 값) | **20%** |
+>
+> 기획전 경로를 가려낼 때 쓰던 `/web` 접두어 조건도 뺐습니다. 대상 파일은 `static/entries/web/src/sentry/index.js` 입니다.
+>
+> ### 그 밖
+>
+> | 이슈키 | 내용 |
+> |---|---|
+> | `FE1-2059` | 저장소 전체의 Node 버전을 **24.21.0** 으로 올렸습니다. 디자인 시스템 자산 워크플로와 `studio/.nvmrc`, 각 안내 문서를 함께 고쳤습니다 |
+> | `FE1-2119` | 맨 위로 플로팅 버튼에서 **safe-area 아래쪽 여백을 뺐습니다.** iOS Liquid Glass 웹뷰에서 버튼이 세로로 늘어난 타원이 되던 문제입니다 (`FloatingTopButton.module.scss`) |
+> | `FE1-2122` | 오픈예정 알림신청에서 **본문 없는 400 응답이 올 때 나던 타입 오류**를 고치고, 훅이 자기 배럴을 참조하던 것을 상대 경로로 바꿨습니다 |
+> | `FE1-1377` | 글로벌 펀딩 상세의 `user-page-view` 봇 판정 이벤트 전송을 뺐습니다 |
+> | — | 자동 다국어 반영 커밋 10건(`i18n-web-supporter-*`)이 포함돼 있습니다 |
+
 > 📅 **2026-10-01 cloud_live pull 보강** (139 커밋)
 >
 > 이슈키가 붙은 커밋 중 많은 순으로 넷입니다. 자동 다국어 반영 커밋이 섞여 있습니다.
