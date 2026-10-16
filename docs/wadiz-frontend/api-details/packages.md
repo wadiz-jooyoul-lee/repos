@@ -90,12 +90,16 @@
 - **책임**: 앱 마운트 전 i18n / Settings / AppConfig 초기화를 병렬 실행하고 재시도·에러 처리를 담당. React `createRoot` 헬퍼도 제공.
 - **주요 export** (`packages/app-initializer/src/index.ts`)
   - `AppInitializer.initialize()` — Singleton Promise, MAX_RETRIES=2, 실패 stage 만 재시도(`packages/app-initializer/src/AppInitializer.tsx:19-140`)
-  - `renderAppWithInitialization(element, target)` — 초기화 후 `createRoot(...).render(...)`, 실패 시 `AppInitErrorContent` 대체 렌더(`...:142-166`)
-  - 타입: `InitResult`, `InitStageError`
+  - `renderAppWithInitialization(element, target)` — 초기화 후 `createRoot(...).render(...)`, 실패 시 `AppInitializationErrorContent` 대체 렌더
+  - 타입: `InitializationResult`, `InitializationStageError`
 - **스테이지 3종** (`packages/app-initializer/src/stages/`)
-  - `initI18n.ts` — `@wadiz/i18n/supporter/i18n` 의 `initializeI18n()` 호출
-  - `initSettings.ts` — `AccountSettings.initialize()` 필수, `LocaleSettings.isKorea` 가 false 일 때만 `CurrencySettings.initialize()` 추가
-  - `initAppConfig.ts` — `inAppWebviewPolicy.isAppConfigSupported` 가 true 일 때만 `AppConfig.initialize()`
+  - `initializeI18n.ts` — `@wadiz/i18n/supporter/i18n` 의 `initializeI18n()` 호출
+  - `initializeSettings.ts` — `AccountSettings.initialize()` 필수, `LocaleSettings.isKorea` 가 false 일 때만 `CurrencySettings.initialize()` 추가
+  - `initializeAppConfig.ts` — `inAppWebviewPolicy.isAppConfigSupported` 가 true 일 때만 `AppConfig.initialize()`
+
+> 2026-10-15(`CLIENT-289`)에 **이름의 `init` 이 모두 `initialize` 로 바뀌었습니다.**
+> 파일 이름(~~`initI18n.ts`~~ 등)과 타입 이름(~~`InitResult`~~ · ~~`InitStageError`~~), 실패 화면 이름(~~`AppInitErrorContent`~~)이 함께 바뀌었습니다.
+> 같은 회차에 **실패 사유를 Sentry 에 더 자세히 싣습니다** — 몇 번째 시도였는지(`attempt`)와 원래 오류의 `extra` 를 함께 보냅니다.
 - **의존**: `@wadiz/core`, `@wadiz/settings`, `@wadiz/i18n`, `@wadiz/waffle` (AppInitErrorContent), `dayjs` locale(`en/ja/ko/zh`).
 - **특이사항**
   - 초기화 성공 시 `dayjs.locale(LocaleSettings.languageCode)` 를 전역 설정.
@@ -153,7 +157,9 @@
 ### 2.7 `@wadiz/features`
 
 - **책임**: 여러 app 에서 재사용되는 화면 단위 feature 컴포넌트/훅(FSD `features` 레이어의 공통판). 레이어 최상위.
-- **하위 feature 33개** (`packages/features/src/*`): `ab-test`, `activities`, `auto-login`, `comments`, `coupon`, `error-handler`, `events`, `funding-detail`, `funding-payment`, `funding-tracking-event`, `home`, `invitation-code`, `launching-soon-notification`, `maker-club`, `marketing`, `my-funding-banner`, `navigation`, `onelink`, `optimized-image`, `pre-reservation`, `project-card`, `report-modal`, `reward-satisfaction-modal`, `search`, `service-home`, `simple-pay`, `sms-auth`, `social`, `social-modal`, `spinner`, `storage`, `support-share`, `wish`.
+- **하위 feature 50개** (`packages/features/src/*`, 2026-10-15 기준): `ab-test`,`activities` `adult-content-banner`,`auto-login` `category`,`collection` `comments`,`coupon` `error-handler`,`events` `exhibition-banner`,`feed` `funding-detail`,`funding-payment` `funding-tracking-event`,`home` `invitation-code`,`launching-soon-notification` `live-activity-banner`,`login-guide-popup` `maker-club`,`maker-following` `maker-news`,`makerInfo` `marketing`,`more-menu` `my-funding-banner`,`native-detail` `navigation`,`notification-settings` `oauth`,`onelink` `pre-reservation`,`project-card` `report-modal`,`reward-satisfaction-modal` `reward-selection`,`search` `service-home`,`signup-coupon` `simple-pay`,`sms-auth` `social`,`social-modal` `spinner`,`storage` `store`,`support-share` `webview`,`wish`
+  - 2026-10-15 회차에 늘어난 것들입니다 — `feed`·`oauth`(각각 `static/entries/main` 과 `apps/global` 에서 옮겨 옴, `FE1-1790`), `adult-content-banner`, `category`, `collection`, `exhibition-banner`, `live-activity-banner`, `login-guide-popup`, `maker-following`, `maker-news`, `makerInfo`, `more-menu`, `native-detail`, `notification-settings`, `reward-selection`, `signup-coupon`, `store`, `webview`.
+  - ~~`optimized-image`~~ 는 목록에서 빠졌습니다.
 - **feature 내부 구조 관찰 예**: `features/src/comments/{api,config,lib,ui,index.ts}`, `features/src/simple-pay/{api,lib,ui,requirements.md}`, `features/src/funding-detail/{ui,index.ts}` 로 feature 별 `api/lib/ui/config/index.ts` 분할 패턴.
 - **의존** (`packages/features/package.json`): `@tanstack/react-query`, `react-hook-form`, `yup`, `@hookform/resolvers`, `zustand`, `dayjs`, `libphonenumber-js`, `react-modal`, `react-router-dom`, `lodash-es`. 내부적으로 `@wadiz/api`·`@wadiz/core`·`@wadiz/ui`·`@wadiz/waffle`·`@wadiz/queries` 등 모든 하위 레이어를 호출.
 - **특이사항**: 개별 feature 는 이 문서의 심층 대상이 아님(각 feature 자체가 별도 분석 단위).
@@ -368,7 +374,7 @@
 | 일러스트/로고 | `@wadiz/artworks` | 자동 생성 배럴, 카테고리 + 결제사 + 플랫폼 로고 |
 | 비즈니스 단위 컴포넌트 | `@wadiz/ui` | 펀딩/결제/공유/배너 등 |
 | 복합 위젯 | `@wadiz/widgets` | 헤더·푸터·쿠폰·이벤트 |
-| 공통 feature | `@wadiz/features` | 33개 feature 모음 |
+| 공통 feature | `@wadiz/features` | 50개 feature 모음 |
 
 **의존 방향**: `features` → `widgets`/`ui` → `waffle`/`waffle-icons`/`artworks`. `waffle` 은 외부 React 라이브러리(`react-select`, `react-datepicker`, `react-froala-wysiwyg`, `react-jss`, `react-lottie`) 위에 구현. `ui` 와 `features` 는 `@wadiz/api`/`@wadiz/core`/`@wadiz/settings` 까지 의존 가능.
 
@@ -378,7 +384,7 @@
 
 ### 4.4 features — 공통 feature 모듈
 
-`packages/features/src` 하위 33개 feature(상단 섹션 참조). 각 feature 는 `api/` `lib/` `ui/` `config/` 중 일부와 `index.ts` 를 포함하는 FSD(Feature-Sliced Design) 미니 구조를 따릅니다. 예:
+`packages/features/src` 하위 50개 feature(상단 섹션 참조). 각 feature 는 `api/` `lib/` `ui/` `config/` 중 일부와 `index.ts` 를 포함하는 FSD(Feature-Sliced Design) 미니 구조를 따릅니다. 예:
 
 - `simple-pay/` — `api/`, `lib/`, `ui/`, `requirements.md`
 - `comments/` — `api/`, `config/`, `lib/`, `ui/`, `index.ts`

@@ -1,5 +1,39 @@
 # makercenter-be 분석 문서
 
+> 📅 **2026-10-15 cloud_live pull 보강** (1 커밋)
+>
+> `FE2-1439` — **와디즈 웹에 로그인한 상태를 메이커센터 로그인으로 이어받는 길이 생겼습니다.**
+>
+> 종전에는 메이커센터에 들어올 때 인증 서버를 거쳐 다시 로그인해야 했습니다.
+> 이제 프론트엔드가 **와디즈 웹에서 받은 출입증(access token)을 그대로 넘기면** 메이커센터 세션으로 바꿔 줍니다.
+>
+> | HTTP | 경로 | 받는 형식 |
+> |---|---|---|
+> | POST | `/api/oauth/wadiz-session` | JSON 본문의 `access_token` 한 가지 |
+>
+> ### 안전장치가 네 겹입니다
+>
+> | 장치 | 무엇을 막나 | 어디에 |
+> |---|---|---|
+> | JSON 본문만 받음 | 폼 전송을 막아 **공격자의 출입증을 피해자 브라우저로 밀어 넣는 로그인 CSRF** 를 차단합니다 | `controller/OAuthController.java` 의 `consumes = APPLICATION_JSON_VALUE` |
+> | `aud` 허용 목록 | 다른 서비스용으로 발급된 출입증을 거릅니다 | `service/OAuthService.java` 의 `hasAcceptedAudience` |
+> | 비어 있으면 전부 거부 | 설정을 빠뜨렸을 때 뚫리지 않게 합니다(fail-closed) | `config/OAuthProperties.java` 의 `acceptedAudiences` 기본값이 빈 목록 |
+> | 세션 교체 순서 | 검증이 **끝난 뒤에만** 기존 세션을 파기해, 실패해도 쓰던 세션이 끊기지 않습니다 | `OAuthController.wadizSession` |
+>
+> `aud` 는 출입증 안에 적힌 "이 증은 어느 서비스용인가" 값입니다.
+> 인증 서버의 `userinfo` 는 서명과 만료는 보지만 `aud` 는 보지 않습니다. 그래서 그 앞에서 직접 거릅니다.
+>
+> 허용값은 `src/main/resources/application.yml` 에 `wadiz.oauth.accepted-audiences: com_wadiz_web` 으로 넣었습니다.
+> 주석에 **dev·clive 공통이며, 환경별로 달라지면 GitOps values 의 `wadiz.oauth` 블록에서 덮어쓴다**고 적혀 있습니다.
+>
+> ### 서명 검증 전에 payload 를 직접 읽습니다
+>
+> `aud` 를 보려면 출입증 안을 들여다봐야 하는데, 그 시점에는 아직 서명을 확인하지 않았습니다.
+> 코드 주석이 그 사정을 밝힙니다 — *"서명 검증 전이라 payload 만 읽는다 — 위조 토큰은 이어지는 userinfo 에서 걸러진다"*,
+> *"JJWT 0.9.1 의 `parseClaimsJwt` 는 서명된 토큰을 거부하므로 payload 를 직접 디코딩한다"*.
+>
+> 새로 생긴 파일은 요청 객체 `data/request/ReqWadizSession.java` 와 설정 묶음 시험 `OAuthPropertiesBindingTest.java` 입니다.
+
 > 📅 **2026-10-13 cloud_live pull 보강** (5 커밋)
 >
 > | 이슈키 | 무엇을 하고 있나 |
@@ -332,6 +366,7 @@
 - OAuth2 플로우 (`controller/OAuthController.java`, `service/OAuthService.java`)
   - `/api/oauth/authorize` → state 생성 후 세션 저장 + authorize URL 반환
   - `/api/oauth/callback` → state 비교 및 세션 무효화(fixation 방지) → 인가코드 토큰 교환 → `/userinfo` 조회 → 세션에 `wadiz_user_id, email, nickname` 저장
+  - `/api/oauth/wadiz-session` → 와디즈 웹에서 받은 access token 의 `aud` 를 허용 목록과 대조 → `/userinfo` 조회 → 기존 세션 파기 후 새 세션 생성 (2026-10-15 추가, `FE2-1439`)
 - 이벤트 아키텍처 (`event/ApplicationAppliedEvent.java`, `ApplicationAppliedEventListener.java`)
   - 기획전 신청 성공 시 `ApplicationEventPublisher`로 이벤트 발행, `@Async @EventListener`가 SES 템플릿 메일 발송. 메일 실패는 업무 흐름과 분리됨.
 - 스케줄러(`scheduler/SchedulerService.java`): 분산 환경에서 `@SchedulerLock` (lockAtMostFor/leastFor=PT5M)으로 중복 실행 방지
@@ -350,6 +385,7 @@
 | GET | /api/auth/expired_timer | AuthController.expiredTimer | JWT | 토큰 잔여 시간 |
 | GET | /api/oauth/authorize | OAuthController.authorize | None | OAuth authorize URL + state 발급 |
 | POST | /api/oauth/callback | OAuthController.callback | None | 인가코드 → 토큰교환 → 세션생성 |
+| POST | /api/oauth/wadiz-session | OAuthController.wadizSession | None | 와디즈 웹 access token → 메이커센터 세션 교환 (JSON 본문만, `aud` 허용 목록 검사) |
 | GET | /api/auth/me | OAuthController.me | None(Session) | 메이커 세션 상태 조회 |
 | POST | /api/auth/logout | OAuthController.logout | None(Session) | 세션 무효화 + logout URL |
 | GET | /api/banner/lists | BannerController.lists | JWT | 배너 목록(top/rolling/kv) |

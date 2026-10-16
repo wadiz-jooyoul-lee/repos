@@ -1,5 +1,23 @@
 # co.wadiz.fep 분석
 
+> 📅 **2026-10-15 cloud_live pull 보강** (1 커밋)
+>
+> `SCOUT-220` — **배포 워크플로의 인증 수단을 개인 토큰에서 GitHub App 토큰으로 바꿨습니다.**
+>
+> 개인 접근 토큰(PAT, Personal Access Token)은 사람 계정에 딸린 열쇠입니다.
+> 그 사람의 계정이 막히거나 토큰이 만료되면 배포가 멈춥니다.
+> GitHub App 토큰은 사람이 아니라 앱에 딸려 있어 그 위험이 없습니다.
+>
+> | 무엇이 | 어떻게 바뀌었나 |
+> |---|---|
+> | 공용 워크플로 버전 | `build_push_container_image.yaml` 과 `update_image_tag.yaml` 을 `@main` 에서 **`@v2`** 로 |
+> | 이미지 태그 갱신 인증 | `gitops_token`(`WADIZ_GITOPS_PAT`) 를 없애고 **`gitops_app_id` · `gitops_app_private_key`** 로 교체 |
+> | 빌드 단계 인증 | `wadiz_dev_pat`(`WADIZ_DEV_PAT`) 를 새로 넘깁니다 |
+>
+> 바뀐 파일: `.github/workflows/deploy-agent.yml` · `.github/workflows/deploy-api.yml`
+>
+> 이 전환은 같은 날 여러 저장소에 동시에 들어왔습니다. 코드 변경은 없습니다.
+
 > 📅 **2026-10-13 cloud_live pull 보강** (10 커밋)
 >
 > **해외 메이커에게 돈을 보내기 위한 Stripe 커넥티드 계정 구성을 다시 잡았습니다.**

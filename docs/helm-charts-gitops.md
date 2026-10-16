@@ -9,6 +9,75 @@
 
 ---
 
+> 📅 **2026-10-15 main pull 보강** (205 커밋)
+>
+> 대부분은 CI 가 찍는 이미지 번호 갱신입니다. **사람이 손으로 바꾼 것은 아래 일곱 묶음**입니다.
+>
+> ### 1. 백오피스 읽기 복제본이 02 에서 **01 로 되돌아왔습니다** (clive)
+>
+> | 대상 파일 | 바뀐 값 |
+> |---|---|
+> | `charts/service/values/backoffice/clive/indexer-schedule.yaml` | 데이터소스 5개의 `rds-read-replica-02` → **`rds-read-replica-01`** |
+> | `charts/service/values/backoffice/clive/indexer-cdc01.yaml` · `indexer-cdc02.yaml` | 같은 방향으로 되돌림 |
+>
+> 커밋 설명이 이유를 밝힙니다 — *"[백오피스] clive rds replica02 -> 01 로 원복 (현재 카프카 데이터가 replica01의 데이터)"*.
+> 2026-10-06 회차에 "되돌려야 하는 값"으로 적어 둔 항목이 실제로 되돌려졌습니다
+> ([`kr.wadiz.backoffice.indexer-schedule.md`](./kr.wadiz.backoffice.indexer-schedule.md) 본문도 함께 고쳤습니다).
+>
+> ### 2. 메이커 인텔리전스(`maker-intelligence-*`) 라이브 설정이 더미에서 실값으로
+>
+> 종전 주석은 *"★ 더미 — 라이브 인프라 미생성"* 이었습니다. 지금은 이렇게 바뀌었습니다 —
+> *"큐·버킷·캐시·DocumentDB 는 실재 확인(10-11). 남은 fixme = 시크릿 등록"*.
+>
+> | 항목 | 종전 | 지금 |
+> |---|---|---|
+> | 작업 큐(SQS) | `clive-maker-intelligence-reports.fifo` (미생성) | **`live-maker-intelligence-reports.fifo`** |
+> | 1회 투입 상한 | `200` | **`1500`** — 주석: *"진행 중 전체(~1,000건)를 한 번에 넣어 워커가 쉬지 않고 빼 가게"* |
+> | Snowflake 인증 | 개인 접근 토큰(`mi_snowflake_pat_live`) | **키 페어 방식** — 사용자명 `MAKER_INTELLIGENCE`, 개인키 `mi_snowflake_private_key` |
+> | OpenAI 키 | 공용 `open_ai_token` | **전용 `mi_openai_api_key`** — 주석: *"비용을 서비스별로 본다"* |
+>
+> 아직 등록되지 않은 비밀값이 셋 남아 있습니다 — `mi_snowflake_private_key` · `mi_service_key` · `mi_openai_api_key`.
+>
+> `funding-api` 의 clive 설정에 **메이커 인텔리전스를 부르는 자리**가 생겼습니다.
+> 클러스터 안에서 바로 부르고(게이트웨이를 거치지 않음) 읽기 제한 시간은 2초입니다.
+>
+> ### 3. 주문 서비스(`order-api`)에 몽고DB 와 국가 목록 설정 추가 — 전 환경
+>
+> dev · rc1 · rc4 · clive 네 환경 모두입니다.
+>
+> | 설정 | 값 | 주석에 적힌 뜻 |
+> |---|---|---|
+> | `spring.mongodb.uri` | `wadiz_funding` 계정으로 같은 `orderSheet` 묶음 | *"주문서 로그(funding 과 같은 orderSheet 컬렉션·계정). Boot 4 는 spring.mongodb.uri"* |
+> | `country.base-url` | `https://www.wadiz.io/web` | *"wadiz-web 국가 목록(GET /web/v1/countries). funding country-client.base-url 과 같은 값"* |
+>
+> 바깥 통신 제한 시간(`socket-timeout`)을 **15초에서 35초로** 늘렸습니다.
+> 주석이 근거를 댑니다 — *"35s = 토스(nicepay-api 30s > FEP 25s) 체인보다 길게 — 토스 연동 계약 3장."*
+>
+> ### 4. rc4 의 몽고DB 데이터베이스가 dev 와 분리됐습니다
+>
+> rc4 의 `funding-api` · `funding-batch` · `audit-api` 가 쓰던 이름이 바뀌었습니다.
+>
+> | 종전 | 지금 |
+> |---|---|
+> | `wadiz_funding_dev` | **`wadiz_funding_rc4`** |
+> | `wadiz_compliance_dev` · `wadiz_compliance`(rc4) | **`wadiz_compliance_rc4`** |
+>
+> 접속 계정은 그대로 `wadiz_funding_dev` 입니다. **데이터베이스 이름만** 갈랐습니다.
+>
+> ### 5. 추천 모델이 `v2_5` 에서 **`v3`** 으로 (`main2-api`, clive·stage)
+>
+> `charts/service/values/display-platform/clive/main2-api.yaml` 과 `stage/main2-api.yaml` 에서 세 자리의 `version` 값이 바뀌었습니다.
+>
+> ### 6. rc4 `fulfillment-api` 의 온도 구분 코드 교체
+>
+> `ROOM_TEMPERATURE` 를 `92883` 에서 **`61135`** 로, `LOW_TEMPERATURE` 를 `61137` 에서 **`61139`** 로 바꿨습니다.
+> 같은 파일의 `requestsMemory` 상향은 [`helm-charts`](./helm-charts.md) 쪽 변경입니다.
+>
+> ### 7. 그 밖
+>
+> - `core-mcp`(dev): `funding` 토큰 설정 블록을 `api` 아래에서 **한 단 위로 꺼냈습니다**(`wadiz.mcp.funding`).
+> - `notification-log-agent`(dev): 처리 대상 목록 맨 앞에 **`pushHistory` 와 `pushDetailHistory`** 를 더했습니다.
+
 > 📅 **2026-10-13 main pull 보강** (326 커밋)
 >
 > 대부분은 CI 가 찍는 이미지 번호 갱신입니다. **사람이 손으로 바꾼 것은 아래 다섯 건**입니다.

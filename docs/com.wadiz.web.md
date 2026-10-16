@@ -6,6 +6,72 @@
 
 ---
 
+> 📅 **2026-10-15 cloud_live pull 보강** (32 커밋)
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `BE3-895` | **메이커 프록시를 `ApiProxyServlet` 하나로 합쳤습니다** (5커밋) |
+> | `CLIENT-214` | 사이트맵에 **마지막 수정일(`lastmod`)** 을 넣었습니다 (8커밋) |
+> | `RWD-5989` · `RWD-5877` | 스튜디오 프로젝트 목록 조회 API 추가와 정렬 변경 (3커밋) |
+> | `FE1-1790` · `FE1-1787` | 친구 피드·친구 관리 화면을 **글로벌 화면으로 전환** (3커밋) |
+> | `RWD-6076` · `SCOUT-174` · `RWD-6185` | 프록시가 메이커 인텔리전스·선정산·주문 경로를 다루도록 보강 (4커밋) |
+> | `QA-23508` | 레거시 결제 완료 페이지를 새 화면으로 넘깁니다 (1커밋) |
+> | `RWD-6161` · `FE1-2140` · `FE1-2135` · `CLIENT-312` | 그 밖 (5커밋) |
+>
+> ### `BE3-895` — 프록시 서블릿이 하나로 합쳐졌습니다
+>
+> 종전에는 서블릿이 둘이었습니다 — `/web/apip/*` 는 `ApiProxyServlet`, `/web/maker-proxy/*` 는 `MakerApiProxyServlet`.
+> 이제 **`ApiProxyServlet` 하나가 두 경로를 모두 받습니다.**
+> `web.xml` 주석에 그 뜻이 있습니다 — *"메이커 프록시는 같은 서블릿을 쓰되 경로는 유지합니다. serviceName(startup)으로 대상이 갈립니다."*
+>
+> 함께 들어온 변경이 셋입니다.
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | `LoginUserIdResolver` 도입 | Bearer 토큰과 세션, 두 갈래로 흩어져 있던 **회원 번호 해석을 한 자리로** 모았습니다 |
+> | Bearer 인증 경로 추가 | `/web/v1/user/location`(서포터 이용언어)과 `/web/maker-proxy/startup/maker/mywadiz/makerpages`(메이커페이지 목록) |
+> | 토큰 해석 정리 | `ApiProxyServlet` 의 인증 토큰 해석이 `Optional` 을 돌려주도록 바꿨습니다 |
+>
+> 본문의 §2 의존성·§3.1 구조·§3.2 필터 체인 세 곳을 이 사실에 맞춰 고쳤습니다.
+>
+> ### `RWD-6076` — 메이커 인텔리전스 재생성은 전용 연결로
+>
+> 메이커 인텔리전스의 진단 재생성은 **2~4분이 걸립니다**([`com.wadiz.api.funding`](./com.wadiz.api.funding/com.wadiz.api.funding.md) 쪽 변경 참고).
+> 보통 프록시 설정으로는 그 사이에 연결이 끊깁니다.
+>
+> 그래서 재생성 경로만 **전용 클라이언트**로 가릅니다 — 읽기 제한 **330초**, 연결 묶음 **20개**.
+> 처음에는 재생성 요청(POST)만 전용으로 보냈다가, 상태 조회 중 기다리는 요청(`wait=true` 가 붙은 GET)도 같이 넘기도록 했습니다.
+>
+> ### `CLIENT-214` — 사이트맵에 마지막 수정일
+>
+> 사이트맵은 검색 엔진에 "우리 사이트에 이런 주소가 있다"고 알려 주는 목록입니다.
+> 여기에 **주소마다 마지막으로 바뀐 날짜(`lastmod`)** 를 넣었습니다.
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 날짜 원천 | 검색 색인 서비스(searcher)가 주는 일시. 수집하는 엔드포인트마다 그 일시를 씁니다 |
+> | 오픈예정 | **게시 일시**를 씁니다(검증 시험으로 확인) |
+> | 변환기 | `SitemapLastmodResolver` 가 색인 일시를 사이트맵 표기로 바꿉니다 |
+> | 뺀 것 | `changefreq`(얼마나 자주 바뀌나)와 `priority`(중요도)는 **없앴습니다** |
+>
+> ### `QA-23508` — 결제 완료 페이지가 새 화면으로
+>
+> `/web/wpurchase/reward/result10/{backingPaymentId}` 는 종전에 **완료 페이지를 직접 그렸습니다**
+> (구매 내역 조회 · 본인 확인 · 인기 카드 목록까지 담아서).
+>
+> 이제 그 일을 전부 걷어내고 **`/web/funding/payment/completed/{backingPaymentId}` 로 넘기기만** 합니다.
+> 주소에 붙어 있던 질의 문자열은 그대로 옮겨 붙입니다.
+> 컨트롤러가 213줄에서 **145줄로** 줄었습니다.
+>
+> ### 그 밖
+>
+> - `FE1-1790`: 친구 피드를 글로벌 국내 화면으로 바꾸고 `/friends` 주소를 이어 붙였습니다. `FE1-1787` 은 친구 관리(`/web/social/setting`) 쪽입니다.
+> - `FE1-2135`: Braze 웹 SDK 의 미리 내려받기와 서비스 워커를 **7.0** 으로 올렸습니다(같은 날 [`kr.wadiz.account`](./kr.wadiz.account/kr.wadiz.account.md) 도 7.0 로더로 교체).
+> - `RWD-6161`: 재제출할 때 **메이커 프로필을 다시 이어 붙이고**, 메이커 정보 복사 때 하던 메이커 등록 호출은 뺐습니다.
+> - `FE1-2140`: 새소식 목록의 검색엔진용 표시에서 상세 링크 경로를 고쳤습니다.
+> - `RWD-6185`: stage 환경 프록시에 `order` 경로를 더했습니다.
+> - `CLIENT-312`: dev·rc 브랜치 맞추기 워크플로가 **Git 2.37 에서도** 충돌 파일을 찾도록 고쳤습니다.
+
 > 📅 **2026-10-13 cloud_live pull 보강** (28 커밋)
 >
 > | 이슈키 | 커밋 | 무엇을 하고 있나 |
@@ -835,7 +901,7 @@
 - MyBatis 3.2.7 / mybatis-spring 1.2.2 / MySQL connector 5.1.48.
 - JSP + JSTL 1.2 + **kwonnam jsp-template-inheritance 0.3** (레이아웃 상속: `layout:extends`, `layout:put`), custom TLD `functions.tld` (`https://wadiz.kr/tld/functions`) — `WadizCDNUtil.cdnURL*`, `StringUtil.escapeJson/escapeXml/convertToLinkFromURL` 등 JSP 커스텀 함수.
 - Jersey 1.13 + Spring Servlet — `/api/*` JSON REST 엔드포인트 (legacy RESTful layer). `web.xml:158-193` 의 `Jersey Spring Servlet` 에 `com.wadiz.api.*` 16개 패키지 스캔.
-- Smiley HTTP proxy servlet (`/web/apip/*` → main API, `/web/maker-proxy/*` → 메이커 API) — `web/WEB-INF/web.xml:195-213` 및 `com.wadiz.core.httpproxy.ApiProxyServlet`.
+- Smiley HTTP proxy servlet (`/web/apip/*` → main API, `/web/maker-proxy/*` → 메이커 API) — `web/WEB-INF/web.xml:198-208` 및 `com.wadiz.core.httpproxy.ApiProxyServlet`. 2026-10-15 기준 **두 경로를 `ApiProxyServlet` 하나가 모두 처리합니다**(`BE3-895`). ~~`MakerApiProxyServlet`~~ 은 없어졌고, 경로는 그대로 두되 `serviceName`(`startup`)으로 대상 서비스를 가릅니다.
 - URL rewrite: **tuckey urlrewritefilter 3.1.0** — 459라인 규칙 (`web/WEB-INF/urlrewrite.xml`).
 - 외부 클라이언트 라이브러리: `com.wadiz.wave wave-client/wave-data/wave-crypto`, `wave.notification notification-client`, `wave.pay pay-client`, `wave.point point-client`, `api.reward reward-http-client`, `api.equity equity-http-client`, `api.main main-client`, `api startup-client`, `api payment-log-client`, `api.ksd ksd-client`, `funding.core funding-core` — 전부 wadiz 내부 SNAPSHOT.
 - 결제/인증 SDK: `nicepay-lite 0.9.24`, `inicis inipay 5.0`, `ExecureCrypto`, `KSFCclient`(한국증권금융 증권형), `NiceID.Check`.
@@ -850,7 +916,7 @@
 ## 3. 아키텍처
 
 ### 3.1 배포/런타임 구조
-Tomcat 위 WAR. `DispatcherServlet` 이 `/` 전역을 잡고, `Jersey Spring Servlet` 은 `/api/*`, `ApiProxyServlet`/`MakerApiProxyServlet` 가 `/web/apip/*` / `/web/maker-proxy/*` 를 잡습니다 (`web/WEB-INF/web.xml:141-213`).
+Tomcat 위 WAR. `DispatcherServlet` 이 `/` 전역을 잡고, `Jersey Spring Servlet` 은 `/api/*`, **`ApiProxyServlet` 하나가** `/web/apip/*` 와 `/web/maker-proxy/*` 를 함께 잡습니다 (`web/WEB-INF/web.xml:141-208`).
 
 ### 3.2 필터 체인 (web.xml 순서)
 1. `encodingFilter` (UTF-8 force)
@@ -861,7 +927,12 @@ Tomcat 위 WAR. `DispatcherServlet` 이 `/` 전역을 잡고, `Jersey Spring Ser
 6. `CORSFilter` (`com.wadiz.web.fw.filter.CORSFilter`)
 7. `XssEscapeServletFilter` — `xss/xss-servlet-filter-rule.xml` 기반
 8. `oauth2LoginFilter` / `oauth2RedirectFilter` — Spring DelegatingFilterProxy → OAuth2 소셜로그인
-9. `bearerTokenAuthenticationFilter` — `/web/v1/maker/*`, `/web/v2/membership`, `/web/apip/funding/supporters/my/fundings`, `/web/apip/store/orders/*` 에만 Bearer JWT 인증 적용 (`web.xml:117-129`)
+9. `bearerTokenAuthenticationFilter` — 아래 경로에만 Bearer JWT 인증 적용 (`web.xml:117-132`)
+   - `/web/v1/maker/*` · `/web/v1/user/location`
+   - `/web/v2/membership` · `/web/v2/membership/payment/history`
+   - `/web/apip/funding/supporters/my/fundings` 와 그 하위 · `/web/apip/funding/maker-home/dashboard/*`
+   - `/web/apip/store/orders/*`
+   - `/web/maker-proxy/startup/maker/mywadiz/makerpages` (2026-10-15 추가, `BE3-895`)
 10. `autoLoginFilter` — rememberMe/자동 로그인
 
 이 다단계 필터 구성은 **"세션 기반 로그인 + 일부 API 만 Bearer token"** 하이브리드 인증 특징.

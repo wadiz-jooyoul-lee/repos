@@ -11,8 +11,8 @@
 | 기능 / 화면 문구 | 소스 위치 |
 |---|---|
 | 메이커 홈 진입 레이아웃 (반응형 분기) | `apps/global/src/pages/maker/MakerLayout.tsx` (+ Desktop/Mobile) |
-| 상단/하단 탭바 — `maker_page.tab_bar`: "대시보드/내 프로젝트/정산일/WAi/매출 UP/전체 메뉴" | `apps/global/src/pages/maker/_ui/PageWrapper/{DesktopTabBar,MobileTabBar}/` |
-| 온보딩 코치마크 — `maker_page.onboarding_section`: "한눈에 보는 프로젝트 관리", "WAi가 알려주는 오늘의 인사이트" | `apps/global/src/pages/maker/_lib/hooks/useCoachmark.tsx` |
+| 하단 탭바 — `maker_page.tab_bar`: "대시보드/내 프로젝트/정산일/WAi/매출 UP/전체 메뉴" | `apps/global/src/pages/maker/_ui/PageWrapper/MobileTabBar/`. ~~`DesktopTabBar`~~ 는 2026-10-15(`FE2-1435`)에 좌측 탭이 없어지면서 삭제됐고, PC 는 `PageDesktopWrapper.tsx` 가 맡습니다 |
+| ~~온보딩 코치마크~~ — `maker_page.onboarding_section` | ~~`apps/global/src/pages/maker/_lib/hooks/useCoachmark.tsx`~~ 가 2026-10-15(`FE2-1435`)에 삭제됐습니다. 커밋 제목이 사유입니다 — *"좌측 탭 제거 후속으로 E2E 계약과 코치마크 정리"* |
 | 프로모션 배너 (광고 배지, `useMakerBanner`) | `apps/global/src/pages/maker/_ui/PromotionBanner/PromotionBanner.tsx` |
 
 ## 메이커 대시보드
@@ -51,8 +51,8 @@
 | 매출 UP(광고) 메인 페이지 | `apps/global/src/pages/maker/ad/MakerAdPage.tsx` |
 | 광고 상품 오프닝 섹션 — `sales_up_opening_section`: "부스터 쿠폰", "앱 메인 팝업", "펀딩 패키지" | `apps/global/src/pages/maker/ad/_ui/SalesUpOpeningSection/SalesUpOpeningSection.tsx` |
 | 광고 서비스 배너 — `ad_service_banner_section`: "광고 상품 소개서", "광고 제안 서비스 신청" | `apps/global/src/pages/maker/ad/_ui/AdServiceBannerSection/AdServiceBannerSection.tsx` |
-| 메이커 가이드(클래스/팁/VOD/WAi) — `maker_guide_section`: "매출 더하기, 메이커 클래스", "24시간 무료 신청! VOD 강의" | `apps/global/src/pages/maker/ad/_ui/MakerGuideSection/MakerGuideSection.tsx` (+ `WaiEntry.tsx`) |
-| 진행 중 기획전·혜택 모집 배너 — `recruit_banner_section`: "진행 중인 기획전 · 혜택", "{{n}}일 남음" | `apps/global/src/pages/maker/ad/_ui/RecruitBannerSection/RecruitBannerSection.tsx` |
+| 메이커 가이드(클래스/팁/VOD) — `maker_guide_section`: "매출 더하기, 메이커 클래스", "24시간 무료 신청! VOD 강의" | `apps/global/src/pages/maker/ad/_ui/MakerGuideSection/MakerGuideSection.tsx` (+ `GuideListSection.tsx` · `FundingInsightList.tsx`). ~~`WaiEntry.tsx`~~ 는 2026-10-15 개편으로 없어졌습니다 |
+| ~~진행 중 기획전·혜택 모집 배너~~ — `recruit_banner_section` | ~~`apps/global/src/pages/maker/ad/_ui/RecruitBannerSection/`~~ 폴더째 삭제됐습니다(2026-10-15, `FE2-1296` — *"광고 알아보기 페이지를 서비스 IA 개편안 기준으로 개편"*). 같은 개편으로 `AvailablePromotionSection` · `AdPromotionSection` · `AdProcessSection` · `ExpertHelpSection` · `TopBannerSection` · `ProjectGuideBannerSection` · `SimilarProjectAdEfficiencySection` 가 새로 생겼습니다 |
 | 광고 서비스 카드/신청 (`ad_products_section`) | `apps/global/src/pages/maker/ad/_ui/AdServiceCardSection/AdServiceCardSection.tsx` |
 | 타겟/푸시/디스플레이 광고 상세 (`maker_ad_{target,push,display}_page.key_visual_section`) | `apps/global/src/pages/maker/ad/(type)/{target,push,display}/` |
 

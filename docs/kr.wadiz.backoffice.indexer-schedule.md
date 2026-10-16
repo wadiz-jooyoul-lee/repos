@@ -10,6 +10,24 @@
 
 ---
 
+> 📅 **2026-10-15 main pull 보강** (1 커밋)
+>
+> `SCOUT-220` — **배포 워크플로의 인증 수단을 개인 토큰에서 GitHub App 토큰으로 바꿨습니다.**
+>
+> 개인 접근 토큰(PAT, Personal Access Token)은 사람 계정에 딸린 열쇠입니다.
+> 그 사람의 계정이 막히거나 토큰이 만료되면 배포가 멈춥니다.
+> GitHub App 토큰은 사람이 아니라 앱에 딸려 있어 그 위험이 없습니다.
+>
+> | 무엇이 | 어떻게 바뀌었나 |
+> |---|---|
+> | 공용 워크플로 버전 | `build_push_container_image.yaml` 과 `update_image_tag.yaml` 을 `@main` 에서 **`@v2`** 로 |
+> | 이미지 태그 갱신 인증 | `gitops_token`(`WADIZ_GITOPS_PAT`) 를 없애고 **`gitops_app_id` · `gitops_app_private_key`** 로 교체 |
+> | 빌드 단계 인증 | `wadiz_dev_pat`(`WADIZ_DEV_PAT`) 를 새로 넘깁니다 |
+>
+> 바뀐 파일: `.github/workflows/aws_deploy_ecr.yml`
+>
+> 이 전환은 같은 날 여러 저장소에 동시에 들어왔습니다. 코드 변경은 없습니다.
+
 > 📅 **2026-10-13 main pull 보강** (2 커밋)
 >
 > | 이슈키 | 무엇을 하고 있나 |
@@ -182,8 +200,9 @@
 | 범위 | 이 색인기가 쓰는 **데이터소스 5개 전부** — `wadiz_db` · `wadiz_store` · `wadiz_membership` · `ad_center` · `wadiz_notification_channel` |
 | 왜 | 커밋 설명: **"10/12일 오전 RDS replica 01 서버 재기동으로 02 서버 바라보도록 임시 수정"** |
 
-**되돌려야 하는 값입니다.** 재기동이 끝난 뒤에도 02 를 보고 있으면
-읽기 부하가 한쪽에 몰립니다. 되돌림 여부는 **확인 필요**입니다.
+**2026-10-15 기준 되돌려졌습니다.** 다섯 데이터소스 전부 `rds-read-replica-01` 로 돌아왔습니다.
+되돌린 커밋 설명은 *"[백오피스] clive rds replica02 -> 01 로 원복 (현재 카프카 데이터가 replica01의 데이터)"* 입니다.
+같은 날 `indexer-cdc01` · `indexer-cdc02` 도 같이 돌아왔습니다. 앞 회차에 남겨 둔 "확인 필요"는 해소됐습니다.
 
 ## 최근 변경 (2026-09-10 · 4커밋)
 

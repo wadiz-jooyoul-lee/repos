@@ -297,6 +297,7 @@
 | Method | Path |
 |---|---|
 | GET | `/api/internal/settlement/{campaignId}/maker-info` |
+| GET | `/api/internal/settlement/{campaignId}/preliminary-settlement/availability` |
 | GET | `/api/internal/settlement/{campaignId}/package-plan` |
 | GET | `/api/internal/settlement/fee-proposals` |
 | GET | `/api/internal/settlement/fees` |
@@ -756,12 +757,33 @@
 | `/pay-via-stripe` | 해외 결제를 Stripe 로 보낼 때 |
 | `/alipay/{token}/callback-bypass` | 알리페이가 돌려보내는 응답을 받을 때 |
 
-### 15-5. 나머지 (17개)
+### 15-5. 나머지 (38개)
 
 | 컨트롤러 | Method | Path | 비고 |
 |---|---|---|---|
 | `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects` | `RWD-5497`(2026-04-29) 메이커홈 |
 | `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/{projectNo}/metrics` | 같은 건 |
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/summary` | `RWD-5988`(2026-10-15) 홈 대시보드 요약 |
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/{projectNo}/closing-summary` | 같은 건 — 종료 요약 |
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/{projectNo}/ad-bridge` | 같은 건 — 광고 연결 |
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/{projectNo}/trends/acquisition` | 같은 건 — 유입 추이 |
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/{projectNo}/trends/payments` | 같은 건 — 결제 추이 |
+| `MakerHomeDashBoardController` | GET | `/api/maker-home/dashboard/projects/{projectNo}/trends/open-notifications` | 같은 건 — 알림신청 추이 |
+| `MakerHomeSettlementController` | GET | `/api/maker-home/settlements` | `SCOUT-174`(2026-10-15) 정산일 목록(페이징) |
+| `MakerHomeSettlementController` | GET | `/api/maker-home/settlements/{campaignId}` | 같은 건 — 정산일 단건 |
+| `MakerIntelligenceController` | GET | `/api/maker-intelligence/projects/{projectNo}/report/latest`, `/report` | `RWD-6076`(2026-10-15) 최신 진단 보고서(HTML) |
+| `MakerIntelligenceController` | GET | `/api/maker-intelligence/projects/{projectNo}/report/versions/{version}` | 같은 건 — 판 지정 조회 |
+| `MakerIntelligenceController` | POST | `/api/maker-intelligence/projects/{projectNo}/report/refresh` | 같은 건 — 새로 진단 요청 |
+| `MakerIntelligenceController` | GET | `/api/maker-intelligence/projects/{projectNo}/report/refresh` | 같은 건 — 진단 진행 상태 |
+| `CampaignTagAdminController` | GET | `/api/admin/campaign-tags/campaigns/{campaignId}` | `RWD-6156`(2026-10-15) 캠페인 태그 조회 |
+| `CampaignTagAdminController` | DELETE | `/api/admin/campaign-tags/campaigns/{campaignId}/tags` | 같은 건 — 태그 해제 |
+| `CampaignTagAdminController` | GET | `/api/admin/campaign-tags/tags` | 같은 건 — 태그 목록 |
+| `CampaignTagAdminController` | GET | `/api/admin/campaign-tags/tags/campaigns` | 같은 건 — 태그별 캠페인 |
+| `CampaignTagAdminController` | POST | `/api/admin/campaign-tags/preview` | 같은 건 — 적용 미리보기 |
+| `CampaignTagAdminController` | POST | `/api/admin/campaign-tags/apply` | 같은 건 — 적용 |
+| `CampaignTagAdminController` | GET | `/api/admin/campaign-tags/histories` | 같은 건 — 변경 이력 목록 |
+| `CampaignTagAdminController` | GET | `/api/admin/campaign-tags/histories/{id}` | 같은 건 — 변경 이력 단건 |
+| `CampaignTagAdminController` | POST | `/api/admin/campaign-tags/histories/{id}/rollback` | 같은 건 — 그 이력으로 되돌리기 |
 | `CacheInternalController` | GET | `/api/internal/cache` | `RWD-5543`(2026-05-08) 캐시 목록 |
 | `CacheInternalController` | DELETE | `/api/internal/cache/{cacheName}` | 캐시 이름 단위로 비우기 |
 | `StudioRegionController` | GET | `/api/studio/regions` | `RWD-5675`(2026-06-16) 메이커 소재지 시도 목록 |
