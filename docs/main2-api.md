@@ -3,6 +3,23 @@
 > 와디즈 **메인 홈(2세대) API 서버**입니다. 메인 지면·마이와디즈·랭킹·큐레이션·추천·배너를 한곳에서 조립해 앱과 웹에 내려줍니다. 지면 데이터는 RDB 가 아니라 **MongoDB 도큐먼트**에 들어 있습니다.
 > Org: `wadiz-tech` (`https://github.com/wadiz-tech/main2-api.git`). 배포 이름 `main2-api`, 플랫폼 `display-platform`(전시플랫폼).
 
+> 📅 **2026-10-13 main pull 보강** (2 커밋)
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `DISPLAY-1812` | 프로젝트 조회 개수 상한을 100 에서 **120** 으로 올렸습니다 |
+> | `RWD-6159` | 배포 워크플로 여덟 개의 재사용 워크플로를 `@v2` 로 올렸습니다 |
+>
+> ### `DISPLAY-1812` — 조회 개수 100 → 120
+>
+> `src/main/java/kr/wadiz/api/main2api/controller/CommonController.java` 에서 `products` v1·v2 요청의 최대 크기를 바꿨습니다(4줄).
+> 같은 날 `com.wadiz.api.main` 의 따라잡기 보너스 스테이지(`DISPLAY-1808`)도 최대 노출 개수를 100 에서 120 으로 올렸습니다. 두 작업이 짝입니다.
+>
+> ### `RWD-6159` — 배포 워크플로 `@v2`
+>
+> `dev`·`live`·`rc`·`rc1`·`rc2`·`rc3`·`rc4`·`stage` 여덟 개 워크플로를 한꺼번에 올렸습니다.
+> 배포 저장소 접근은 **GitHub App** 인증, 사내 패키지 저장소(GPR) 인증은 `wadiz_dev_pat` 토큰 유지입니다.
+
 > 📅 **2026-10-01 main pull 보강** (1 커밋)
 >
 > `aws_deploy_ecr_rc1.yml` 을 추가했습니다. **rc1 배포 워크플로**입니다.

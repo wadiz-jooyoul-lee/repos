@@ -142,9 +142,9 @@ const isAdultVerificationRequired =
 
 | 앱 | 경로 상수 |
 |---|---|
-| Android | `core/model/src/main/java/com/markmount/wadiz/model/web/UrlKey.kt:63` — `STORE_DETAIL` |
-| Android | `core/legacy/wadiz-common/src/main/java/com/markmount/wadiz/common/constant/WadizConstant.kt:156` |
-| iOS | `Projects/App/Sources/Common/Constants/URLConstant.swift:18` — `storeDetail` |
+| Android | `core/model/src/main/java/com/markmount/wadiz/model/web/UrlKey.kt:64` — `STORE_DETAIL` |
+| Android | `core/common/src/main/java/com/wadiz/common/constants/Constants.kt:159` — `STORE_DETAIL`. 2026-09-24 `FE1-1990` 이 ~~`core/legacy/wadiz-common`~~ 모듈을 지우면서 `core:common` 으로 옮겼습니다 |
+| iOS | `Projects/App/Sources/Common/Constants/URLConstant.swift:19` — `storeDetail` |
 
 앱에서 여는 주소도 웹과 같은 `/web/store/detail/{projectNo}` 입니다.
 그래서 **앱 화면도 이 문서의 흐름을 그대로 탑니다.**

@@ -296,27 +296,40 @@ i18n 메시지 파일은 `MessageSource` Bean이 로드하는 `messages_{locale}
 
 ---
 
-### 4.2 `CallbackController` — 토큰 발급 디버깅 페이지 (`/v0/oauth2/callback`)
+### 4.2 ~~`CallbackController`~~ — **삭제됐습니다**
 
-- 파일: `src/main/java/kr/wadiz/oauth2/adapters/inbound/CallbackController.java:38`
-- 클래스 선언: `@Controller @RequestMapping("/")`
-- 의존성: `@Value("${spring.profiles.active}") String activeProfile`
-- 특이: **프로덕션 로그인 플로우의 일부가 아니라** `authorization_code`로 토큰을 직접 교환해 디코딩 결과를 HTML로 보여주는 **개발자/디버깅 도구**.
+> 📅 **2026-10-01 정정** — `cloud_live` `a6d9c27` 기준
 
-| 메서드 | HTTP | 경로 | 동작 | 파일:라인 |
-|--------|------|------|------|-----------|
-| `callback` | GET | `/v0/oauth2/callback?code=...` | profile에 따라 `https://account.wadiz.kr/oauth/token` 또는 `https://{profile}-account.wadiz.kr/oauth/token`을 자기 자신에게 POST 호출(`code`/`grant_type=authorization_code`/`redirect_uri`). `client_id=com_wadiz_web`, `client_password` 또한 코드에 하드코딩. 응답 `access_token`/`id_token`을 `JwtUtils.decodeJwtPayload(...)`로 디코딩 후 `test.html` 모델에 세팅. | `CallbackController.java:42-74` |
-| `testPage` | GET | `/test_page` | `hello.html` 반환. 더미. | `CallbackController.java:138-141` |
+`BE3-864`(2026-08-31, `1bfd80e1`) "clive DEBUG 로그 및 민감정보 로깅 제거" 가 지웠습니다.
+`templates/test.html`(50줄)도 함께 사라졌습니다.
 
-- 보안 관측:
-  - `getRestTemplateForHttps()` 가 TrustStrategy로 **모든 인증서를 신뢰**(self-signed 포함, `CallbackController.java:121-123`). 내부 디버그용 명칭을 따르는 것으로 보인다.
-  - `clientPassword()`에 `live=="dnrhd2Tks!"`(?) / 나머지 `"secret"` 가 **소스코드에 하드코딩**돼 있다 (`CallbackController.java:97-103`). 소스 내 `TODO : Live password needs to be changed` 주석 존재.
-- DB/외부 호출: `POST {self}/oauth/token` — 본인(Authorization Server)에게 다시 token endpoint를 호출.
-- 특이사항:
-  - `@Controller` + view 반환. REST 아님.
-  - `v0` 접두어 — v1 이전 단계 디버그용. `RequestMapping("/")`이라 `/v0/oauth2/callback`로 바로 매핑된다.
+**사라진 엔드포인트 2개**
 
----
+| 경로 | 하던 일 |
+|---|---|
+| `GET /v0/oauth2/callback?code=...` | 인가 코드를 토큰으로 바꿔 디코딩 결과를 HTML 로 보여 주던 개발자용 화면 |
+| `GET /test_page` | `hello.html` 을 돌려주던 더미 |
+
+> ✅ **예전 문서가 지적한 위험이 해소됐습니다.**
+> 이 절은 세 가지를 적어 뒀습니다 —
+> `client_password` 가 **코드에 하드코딩**돼 있고,
+> `getRestTemplateForHttps()` 가 **모든 인증서를 신뢰**하며,
+> 프로덕션 로그인 흐름이 아닌 **디버깅 도구**가 운영에 떠 있다는 점입니다.
+>
+> 삭제 커밋의 제목이 "민감정보 로깅 제거"인 것으로 보아 같은 맥락의 정리로 보입니다(추정).
+> 커밋 설명에 이 컨트롤러를 지운 이유가 따로 적혀 있지는 않습니다.
+
+**같은 커밋의 다른 정리** (34개 파일, 추가 175줄·삭제 316줄)
+
+| 무엇 | 내용 |
+|---|---|
+| 로그 레벨 | `logging.level` 에서 `kr.wadiz.oauth2: debug` 제거. **앱 루트 패키지라 한 줄로 앱 전체가 DEBUG 였습니다** |
+| 로그 양 | `log.info` 120개에서 60개로, `log.debug` 10개에서 38개로 재배치 |
+| 접근 로그 | 톰캣 접근 로그를 껐습니다. 컨테이너 안 `./logs` 에 보관 기한 없이 쌓이고 수집되지도 않았습니다 |
+| Feign | 설정 접두를 `spring.cloud.openfeign.*` 로 바로잡았습니다 |
+
+커밋 설명이 원인을 짚고 있습니다 — *"master-idc 에는 없는 클라우드 전환 회귀였다"*.
+**클라우드로 옮기면서 생긴 설정 실수**였다는 뜻입니다.
 
 ### 4.3 `SessionController` — 세션/토큰 관리 (Kotlin)
 
@@ -779,8 +792,8 @@ Apple 서버가 이 한 필드만 보낸다. 실제 이벤트 데이터는 JWS �
 | 4 | GET | `/social-signup` | `MainController.socialSignup` | public | `MainController.java:143` |
 | 5 | GET | `/social-link` | `MainController.linkUser` | public | `MainController.java:165` |
 | 6 | GET | `/reset-password/{token}`, `/find-password`, `/find-id` | `MainController.resetPassword` | public | `MainController.java:181` |
-| 7 | GET | `/v0/oauth2/callback` | `CallbackController.callback` | public | `CallbackController.java:42` |
-| 8 | GET | `/test_page` | `CallbackController.testPage` | public | `CallbackController.java:138` |
+| ~~7~~ | ~~GET~~ | ~~`/v0/oauth2/callback`~~ | **2026-08-31 삭제** (`BE3-864`) | — | ~~`CallbackController.java:42`~~ |
+| ~~8~~ | ~~GET~~ | ~~`/test_page`~~ | **2026-08-31 삭제** (`BE3-864`) | — | — |
 | 9 | POST | `/api/v1/cookie/validity` | `SessionController.isCookieValid` | `x-api-key` | `SessionController.kt:29` |
 | 10 | DELETE | `/api/v1/users/{userId}/sessions` | `SessionController.removeAllSessions(apiKey)` | `x-api-key` | `SessionController.kt:46` |
 | 11 | DELETE | `/api/v1/sessions` | `SessionController.removeAllSessions(jwt)` | Bearer JWT | `SessionController.kt:62` |
@@ -977,8 +990,10 @@ Kotlin 컨트롤러(`SessionController.kt`, `IdPasswordManagementController.kt`,
 
 본 문서는 평가가 아니라 관측 기록이지만, 코드를 읽으며 마주친 리스크 포인트를 정리한다.
 
-1. **`CallbackController`의 하드코딩된 `client_secret`** (`CallbackController.java:97-103`). 소스코드에 `live="dnrhd2Tks!"`, nonlive="secret" 이 평문으로 포함돼 있고, `permitAll` 경로에서 접근 가능하다. 디버그 의도로 추정되지만 라이브 환경에서도 활성화됨.
-2. **`CallbackController`의 all-trust TrustStrategy** (`CallbackController.java:121-123`). 모든 TLS 인증서를 신뢰하는 `RestTemplate`. 자체 호출이라 MITM 위험은 낮지만 패턴 상 위험.
+1. ~~**`CallbackController` 의 하드코딩된 `client_secret`**~~ — ✅ **2026-08-31 해소.**
+   컨트롤러가 통째로 삭제됐습니다(`BE3-864`). 평문 비밀값이 `permitAll` 경로에서 닿던 문제가 사라졌습니다.
+   **다만 그 값이 소스 이력에는 남아 있습니다.** 아직 쓰이는 값이라면 교체가 필요합니다. **확인 필요**입니다.
+2. ~~**`CallbackController` 의 모든 인증서 신뢰 설정**~~ — ✅ **2026-08-31 해소.** 같은 삭제로 함께 사라졌습니다.
 3. **`MaintenanceController.releaseNote`의 path traversal** (`MaintenanceController.java:46-51`). `Paths.get(fileName + ".txt")`가 상대 경로를 정제 없이 받아들여 `../../etc/passwd` 등 접근 가능. `permitAll`.
 4. **`PasswordValidator`의 평문 password 로깅** (`PasswordValidator.java:56-58`). 검증 실패 시 `log.warn("... inputData: {} ...", password)` — 입력 패스워드가 WARN 로그에 노출될 수 있음.
 5. **`@Tag` 중복** (`AuthenticationCodeV1Controller.java:19`, `AuthenticationCodeV2Controller.java:19`). 두 컨트롤러가 같은 Swagger Tag 이름을 써 UI에서 혼재 표시 가능.

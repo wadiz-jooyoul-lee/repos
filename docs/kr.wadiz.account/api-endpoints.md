@@ -36,13 +36,16 @@ base: `/` — 로그인·회원가입 페이지 렌더링
 | GET | `/social-link` | 소셜 연동 페이지 |
 | GET | (multi paths) | 추가 페이지 |
 
-### CallbackController (`adapters/inbound/CallbackController.java:37`)
-base: `/`
+### ~~CallbackController~~ — **2026-08-31 삭제**
 
-| Method | Path | 용도 |
-|---|---|---|
-| GET | `/v0/oauth2/callback` | 레거시 OAuth 콜백 |
-| GET | `/test_page` | 테스트 페이지 |
+`BE3-864`(`1bfd80e1`)가 지웠습니다. 토큰 발급을 눈으로 확인하던 개발자용 화면이었습니다.
+
+| 사라진 경로 | 용도 |
+|---|---|
+| ~~`GET /v0/oauth2/callback`~~ | 레거시 OAuth 콜백 |
+| ~~`GET /test_page`~~ | 테스트 페이지 |
+
+자세한 내용은 [`api-details/inbound-controllers.md`](./api-details/inbound-controllers.md) 4.2 절을 봅니다.
 
 ### MaintenanceController (`adapters/inbound/MaintenanceController.java`)
 base: (class-level 미지정, 메서드 path-level)

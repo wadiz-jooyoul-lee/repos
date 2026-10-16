@@ -49,6 +49,74 @@
 >
 > ---
 >
+> 📅 **2026-10-06 main pull 보강** (70 커밋, 26.38.1.0 → **26.40.0.7**)
+>
+> **두 덩어리가 큽니다.** 하나는 **이미지 주소 최적화 일괄 이관**(`FE1-1816`, 20커밋)이고,
+> 다른 하나는 **지지서명 기능 신설**(`FE1-1903`, 15커밋)입니다.
+>
+> ### `FE1-1816` — 이미지 주소를 표시 크기에 맞춰 요청하게 바꿨습니다
+>
+> 종전에는 **화면 높이로 정사각형 주소**를 만드는 헬퍼가 모델 계층에 4벌 있었습니다.
+> 이걸 전부 지우고, **표시 크기와 배율을 호출하는 쪽이 직접 넘기게** 했습니다.
+>
+> | 무엇 | 어디 |
+> |---|---|
+> | 새 프리미티브 | `optimizedImageURL(size:scale:)` — `Projects/Core/Sources/UI/Sources/Common/` |
+> | UIKit 쪽 진입점 | `Projects/Core/Sources/UI/Sources/Common/UIImageView+OptimizedImage.swift` (신규 55줄) |
+> | 카드 6종 공용 계약 | `Projects/Core/Sources/UI/Sources/DesignSystem/Card/CardEmblemPresentable.swift` (신규 31줄) |
+> | 확대 금지 | 원본보다 큰 크기를 요청하지 않습니다 |
+> | 배율 | `UIScreen.main.scale` 을 안에서 읽지 않고 **호출자가 넘깁니다** |
+>
+> 이관은 UIKit 3군(배너·혜택·막펀 17곳 등)과 SwiftUI 4군(연락처·상품·홈·알림함 등 48곳)으로 나눠 진행했습니다.
+> 데드코드 6타입(`MainBannerCell`·`BannerCell`·`BannerImageView`·`MainBannerListCell`·`CompactProjectCell`·`SubBannerCell`)도 함께 지웠습니다.
+>
+> ### `FE1-1903` — 지지서명 (오픈예정 카드 CTA)
+>
+> 오픈예정 프로젝트에 **지지서명**을 남기는 기능이 생겼습니다.
+>
+> | 무엇 | 내용 |
+> |---|---|
+> | 생성 API | **`POST /api/v3/supporter-signatures`** (`.api` 도메인), `ActivityAPIImpl.swift:51` |
+> | 조회 API 전환 | 더 이상 쓰지 않는 `POST /v1/wish/projects` 를 **`POST /v1/my-activity/projects`** 로 바꿨습니다 |
+> | 요청 쪼개기 | 서버가 배열마다 상한을 둡니다 — **찜·알림신청 100개, 지지서명 200개**. 호출하는 쪽이 미리 자릅니다 (`ActivityRequestChunk.swift`) |
+> | 공유 모달 | 웹이 만든 앱 전용 주소 **`/modal/support-share`** 를 엽니다 (`URLConstant.swift:18`) |
+> | 모달 높이 | 비율이 아니라 **560pt 고정**입니다. 비율이면 812pt 기기에서 474pt 가 되어 내용이 잘렸습니다 |
+> | 적용 지면 | 기획 확정으로 **메인홈·오픈예정홈 두 곳**만 켭니다. 나머지 세 곳은 지우지 않고 껐습니다 |
+>
+> ### `FE1-1985` — 쓰이지 않던 웹 브릿지를 걷어냈습니다
+>
+> 웹 화면과 앱이 주고받는 메시지 중 **받는 쪽이 없는 것**들을 쌍으로 지웠습니다.
+>
+> | 지운 것 | 무엇 |
+> |---|---|
+> | 수신 4건 | `push.on` · `push.setting.information` · `push.setting.marketing` · `isCameraAvailable` |
+> | 발신 2건 | `isCameraAvailable.result` · `webview.visibility.change` |
+> | 모달 결과 반환 | 수신 `closeModal` 과 회신 `modalResult` 를 쌍으로 제거 (`FE1-310` 기능 종료) |
+> | 지지서명 공유 | 수신 `signature.share` 와 발신 `signature.share.complete`. 유일한 쓰임이던 `Common/Share/` 3파일도 함께 |
+>
+> 모달이 닫혔다는 알림만 남겼습니다. 마감임박 피드 자동넘김을 다시 돌리는 데 쓰입니다.
+>
+> ### 나머지
+>
+> | 이슈키 | 내용 |
+> |---|---|
+> | `FE1-2035` | **백그라운드에 30분 넘게 있다 돌아오면 홈을 다시 불러옵니다.** 종전에는 최초 로드·당겨서 새로고침·로그인 변경 때만 다시 불러서, 끝난 키비주얼 광고가 메모리에 남아 계속 보였습니다 |
+> | `FE1-2011` | 막펀잡기 지면을 **흰 배경으로** 바꾸고, 그것 하나 때문에 들어왔던 **화면별 어두운 상단바 계약을 걷어냈습니다** |
+> | `FE1-1972` | 퀵메뉴를 앱 설정값으로 바꿀 때 **지정하지 않은 항목은 원본값을 유지**합니다 |
+> | `FE1-1999` | SwiftUI 알림창이 뜰 때 배경이 깜빡이던 문제를 고쳤습니다 |
+> | `SDQA-16` | 막펀잡기 상단 진행바가 끊기던 것을 고치고 채움색을 `gray400` 으로 바꿨습니다 |
+>
+> ### 본문에서 고친 것
+>
+> | 어디 | 무엇이 틀렸나 |
+> |---|---|
+> | 개요 표 | 버전이 **`26.30.2`** 로 적혀 있었습니다. 실제는 **`26.40.0` / 빌드 `26.40.0.7`** 입니다. 참조 줄번호 3개도 밀려 있었습니다 |
+> | 찜·활동 표 | 네 줄이 **`ActivityAPI.swift` 를 가리켰는데 그 파일에 없는 엔드포인트**였습니다. 실제 위치(`FundingAPI`·`WebAPI`)로 고쳤습니다 |
+> | 홈 렌더 방식 | **`IGListKit` 으로 그린다**고 돼 있었습니다. 이 문서가 스스로 "`IGListKit` 은 빠졌다"고 적어 둔 것과 모순이었습니다. 실제는 SwiftUI 입니다 |
+> | 신용카드 OCR | 브릿지 이름이 **`presentCreditCardOCR`** 로 적혀 있었습니다. 코드에 없는 이름이고 실제는 **`creditCard.scan`** 입니다 |
+> | 안드로이드 비교표 | `ServerMode.kt` 경로가 **삭제된 모듈**을 가리켰습니다 |
+>
+> ---
 > 📅 **2026-10-01 main pull 보강** (2 커밋, → **26.38.1.0**)
 >
 > | 이슈키 | 내용 |
@@ -338,12 +406,12 @@
 
 | 항목 | 값 | 참조 |
 | --- | --- | --- |
-| Bundle ID | `com.markmount.wadiz` | `Projects/App/Project.swift:94`, `Projects/App/SupportingFiles/Configuration/Base.xcconfig:9` |
-| Extension Bundle IDs | `.WadizWidget`, `.MakerStoreProjectIntents`, `.notificationservice` | `Projects/App/Project.swift:300,325,349` |
+| Bundle ID | `com.markmount.wadiz` | `Projects/App/Project.swift:122`, `Projects/App/SupportingFiles/Configuration/Base.xcconfig:9` |
+| Extension Bundle IDs | `.WadizWidget`, `.MakerStoreProjectIntents`, `.notificationservice` | `Projects/App/Project.swift:360,389,417` |
 | 지원 OS 최소 | **iOS 16.1** | `Tuist/ProjectDescriptionHelpers/Environment.swift:5` |
-| MARKETING_VERSION / BUILD | `26.30.2` / `26.30.2.0` | `Projects/App/Project.swift:7-8` |
+| MARKETING_VERSION / BUILD | **`26.40.0`** / **`26.40.0.7`** (2026-10-06 확인) | `Projects/App/Project.swift:7-8` |
 | 배포 채널 | **App Store (Release)** / **TestFlight (QA)** / Fastlane develop / Adhoc | `fastlane/Fastfile:27-55`, `.github/workflows/` |
-| Schemes | `wadiz-dev` (Debug), `wadiz-qa` (QA), `wadiz-release` (Release) | `Projects/App/Project.swift:393-441` |
+| Schemes | `wadiz-dev` (Debug), `wadiz-qa` (QA), `wadiz-release` (Release) | `Projects/App/Project.swift:483-536` |
 | Development Team | `PN5T77486L` | `Projects/App/SupportingFiles/Configuration/Release.xcconfig:12`, `Environment.swift:8` |
 | Associated Domains | **2026-09-22 확인 9개** — `applinks:` 로 `wadiz.page.link`·`wadiz.onelink.me`·`link.wadiz.kr`·`www.wadiz.kr`·`www.wadiz.ai`·**`www.wadiz.io`**·**`link.wadiz.io`**, `webcredentials:` 로 `wadiz.kr`·**`wadiz.io`**. `kr` 항목은 그대로 살아 있습니다 — 앱이 들어오는 옛 주소를 계속 받기 때문입니다 | `Projects/App/SupportingFiles/wadiz.entitlements:14-18` |
 
@@ -457,7 +525,7 @@
 | iOS | Android 등가 | 메모 |
 | --- | --- | --- |
 | `Projects/Core/Networking` | `core/network` | 거의 동일 역할 (HTTPClient ↔ BaseWadizAPIProvider) |
-| `Projects/Core/Preference` (+ ServerMode) | `core/legacy/wadiz-common/util/ServerMode.kt` + `core/datastore` (HiddenPrefs) | **iOS 는 2026-09-22 기준 5개**(`local`·`cdev`·`rc4`·`stage`·`live`). 종전의 "동일 8개" 서술은 `rc`·`rc2`·`rc3` 제거로 맞지 않습니다 |
+| `Projects/Core/Preference` (+ ServerMode) | `core/network/src/main/java/com/wadiz/network/server/ServerMode.kt` + `core/datastore` (HiddenPrefs) | **iOS 는 2026-09-22 기준 5개**(`local`·`cdev`·`rc4`·`stage`·`live`). 종전의 "동일 8개" 서술은 `rc`·`rc2`·`rc3` 제거로 맞지 않습니다 |
 | `Projects/Core/Persistence` | `core/database` (Room) | iOS 는 Core Data 대신 자체 Persistence + Macro |
 | `Projects/Core/UI` + `i18n.json` | `core:design-system` + `core:i18n` | 동일한 i18n.json 포맷 공유 |
 | `Projects/API/*` (27 타겟) | `core/network/service/**` (17 ApiService) | Android 는 `ServerMode.xxxUrl` 속성을 baseUrl 분기 키로 쓰는 반면 iOS 는 `APIDomain` enum |
@@ -678,10 +746,11 @@ CDN 네 개는 **환경과 무관하게 고정**입니다.
 
 | 모듈 | 엔드포인트 | APIDomain | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| `Service/Activity` | `POST /api/funding/wishes`, `DELETE /api/funding/wishes` | `.api` | 찜 추가/삭제 (service) | 하트 버튼. `ActivityAPI.swift:29,57` |
-| `Service/Activity` | `GET /web/apip/funding/campaigns/{id}/pre-reservation-info` | `.api` | 오픈예정 사전예약 정보 | 상세. `ActivityAPI.swift:70` |
-| `Service/Activity` | `POST /user-activity/api/v1/wish/projects` | `.platform(.activities)` | 찜 프로젝트 플랫폼 동기화 | 찜 리스트 새로고침. `ActivityAPI.swift:93` |
-| `Service/Activity` | `POST /api/funding/comingsoons/{id}/applicants`, `DELETE /api/funding/comingsoons/{id}/applicants` | `.api` | 오픈예정 알림 신청/해제 | "알림받기" 토글. `ActivityAPI.swift:119,137` |
+| `Service/Activity` | `POST /api/funding/wishes`, `DELETE /api/funding/wishes` | `.api` | 찜 추가/삭제 (service) | 하트 버튼. `ActivityServiceImpl.swift:315,328` 가 `FundingAPI` 에 위임합니다 (`FundingAPIImpl.swift:37,67`) |
+| `Service/Activity` | `GET /web/apip/funding/campaigns/{id}/pre-reservation-info` | `.api` | 오픈예정 사전예약 정보 | 상세. `WebAPI` 에 위임합니다 (`WebAPIImpl.swift:156`) |
+| `Service/Activity` | `POST /v1/my-activity/projects` | `.platform(.activities)` | 찜·오픈알림·스토어·**지지서명** 일괄 조회 | 찜 리스트 새로고침. `ActivityAPIImpl.swift:25`. 2026-10-06 `FE1-1903` 으로 ~~`/v1/wish/projects`~~ 에서 옮겼습니다. 배열마다 상한이 있어 호출하는 쪽이 쪼갭니다 — 찜·알림신청 100개, 지지서명 200개 (`ActivityRequestChunk.swift:17-18`) |
+| `Service/Activity` | `POST /api/funding/comingsoons/{id}/applicants`, `DELETE /api/funding/comingsoons/{id}/applicants` | `.api` | 오픈예정 알림 신청/해제 | "알림받기" 토글. `ActivityServiceImpl.swift:413` 가 `FundingAPI` 에 위임합니다 (`FundingAPIImpl.swift:90`) |
+| `Service/Activity` | `POST /api/v3/supporter-signatures` | `.api` | **지지서명 생성** | 오픈예정 카드 CTA. `ActivityAPIImpl.swift:51`. 2026-10-06 `FE1-1903` 신설. 응답의 `signatureId` 는 쓰지 않습니다 |
 | `App/Wish/WishesAPI` | `POST /api/funding/wishes`, `DELETE /api/funding/wishes` | `.api` | 찜 (App 레이어 중복) | 홈/리스트 하트. `API/FundingAPI` |
 | `App/Wish/WishesAPI` | `POST /api/wcampaign/comingsoon/applicant`, `POST /api/wcampaign/comingsoon/applicant-cancel` | `.api` | 오픈예정 알림 (레거시) | 레거시 화면. `API/CommonAPI` |
 | `App/Wish/WishesAPI` | `GET /api/v1/searcher/wish/project/endingsoon` | `.service` | 찜 마감임박 | GNB 뱃지. `API/WishAPI` |
@@ -775,8 +844,9 @@ CDN 네 개는 **환경과 무관하게 고정**입니다.
 - 트리거: 루트 `AppCoordinator` 가 `TabCoordinator` → `HomeCoordinator` → `HomeViewController` 생성. 최초 `viewDidLoad` → `viewModel.fetch()`.
 - `HomeViewModel` (MVVM, Combine/`AnyPublisher` 또는 async) → `HomeRepositoryImpl.fetchMain(...)`
 - Repository → `Main2API.fetchMain(MainRequest(header: encUserId, variant), query: …)` → `RequestBuilder(domain: .platform(.main2), path: "/main2/api/v9/main", method: .get)` + `set(queryName:)` chain → `HTTPClient.request` (`Interceptor adapt/retry`) → `MainResponse`
-- `HomeMapper` 가 `MainResponse` → `HomeSectionModel[]` 변환 → `HomeViewController` 의 `UICollectionView` (IGListKit) 섹션 렌더
+- `HomeMapper` 가 `MainResponse` 를 `HomeSectionModel[]` 로 바꿉니다. 그리는 쪽은 **SwiftUI** 입니다 — `HomeViewController` 가 `UIHostingController(rootView: HomeView(viewModel:))` 를 담습니다 (`HomeViewController.swift:68`). `IGListKit` 은 쓰지 않습니다
 - 병렬 호출: `fetchMainQuickMenu`, `fetchMainStoreRanking`, `fetchKeyVisualBanner`, `AdService.fetchKeyVisual`, `MainRepositoryImpl.fetchMainMyWadiz`
+- **다시 불러오는 조건**(2026-10-06 `FE1-2035`): 최초 로드, 당겨서 새로고침, 로그인 사용자 변경에 더해 **백그라운드에 30분 넘게 있다 돌아온 경우**가 생겼습니다. `CheckHomeStaleUseCase` 가 한 번 판정하고, 홈이 보이면 즉시 아니면 다음 노출 때 최상단으로 올린 뒤 새로고침과 같은 경로로 다시 요청합니다 (`HomeViewModel.swift`). 앱 안에 오래 머문 것은 만료로 보지 않습니다
 
 ### 2) 프로젝트 상세 / 결제 (서포팅)
 - iOS 도 **상세/결제 페이지는 네이티브가 아닌 WKWebView**. 진입 시 `AccountAPI.requestToken()` (`POST /api/waccount/auth/request/token`) → 쿠키 동기화 → `webOrigin + /web/campaign/detail/{id}` 로 `WKWebView` 로드.
@@ -795,7 +865,7 @@ CDN 네 개는 **환경과 무관하게 고정**입니다.
 ### 4) 서포팅 (결제)
 - 위 (2) 와 동일하게 **WKWebView 경유**. 네이티브 Alamofire 경로 없음.
 - 오픈예정은 `Service/Activity.postFundingSoonNotification` (`POST /api/funding/comingsoons/{id}/applicants`) 로 알림 신청 → 오픈 시 푸시.
-- Credit Card OCR: 웹뷰에서 `presentCreditCardOCR` 브릿지 → `Features/CreditCardOCR.CreditCardOCRHostingController` 표시.
+- Credit Card OCR: 웹뷰가 **`creditCard.scan`** 메시지를 보내면 `Features/CreditCardOCR.CreditCardOCRHostingController` 를 띄웁니다 (`ReceiveWebMessage.swift` 의 `creditCardScan`, `WebInterfaceBridge.swift:337-344`).
 
 ### 5) 신용카드 OCR (`Features/CreditCardOCR`)
 - 트리거: 결제 웹뷰 내부 "카드 스캔" 버튼 → 네이티브 브릿지 → `CreditCardOCRAssembly` 로 `HostingController` (SwiftUI) 띄움

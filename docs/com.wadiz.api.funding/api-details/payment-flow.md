@@ -50,9 +50,17 @@ NICE PG에서 인증 완료 후 form-urlencoded로 callback.
    - 반환된 `backingPaymentId`로 성공 URL redirect:
      - KR: `redirect:/web/wpurchase/reward/result10/{backingPaymentId}`
      - 해외: `redirect:/funding/payment/completed/{backingPaymentId}`
-3. 실패 시 cancel redirect:
-   - KR: `redirect:/web/wpurchase/reward/step20?token={token}&failureType={type}` *(PRODUCT-639, 2026-04-29 추가)*
-   - 해외: `redirect:/funding/payment?token={token}&failureType={type}` *(PRODUCT-639, 2026-04-29 추가)*
+3. 실패 시 cancel redirect — **컨트롤러 판(v1·v2)에 따라 국내 주소가 다릅니다** (2026-10-06 확인):
+
+   | 컨트롤러 | 국내 | 해외 |
+   |---|---|---|
+   | `OrderPaymentV2Controller` (`/api/v2/order-payment`) | `redirect:/web/funding/payment?token={token}&failureType={type}` | `redirect:/funding/payment?token={token}&failureType={type}` |
+   | `OrderPaymentController` (`/api/order-payment`, v1) | 취소는 ~~`/web/wpurchase/reward/step20?token=`~~ · 실패는 `redirect:/web/campaign/detail/{campaignId}` | 위와 같음 |
+
+   > ⚠️ **v1 의 국내 취소 주소는 이제 막다른 길입니다.** `step20` 은 `FE1-2005`(2026-09-28)로
+   > **메인으로 되돌려 보내기만** 합니다(`WWEBPurchaseRewardController.java:112-115`). 토큰이 버려집니다.
+   > v1 이 아직 국내 요청을 받는지는 코드만으로 알 수 없어 **확인 필요**로 남깁니다.
+   > 자세한 내용은 [`_flows/funding-payment.md`](../../_flows/funding-payment.md) 를 보세요.
 
 ### Response
 HTTP 302 (redirect)

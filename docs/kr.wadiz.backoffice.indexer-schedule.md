@@ -10,6 +10,30 @@
 
 ---
 
+> 📅 **2026-10-13 main pull 보강** (2 커밋)
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `SCOUT-210` | Salesforce 증분 동기화의 **갭 초과 알람과 가드를 없앴습니다** |
+> | — | 심사 카테고리 조회 방식을 바꿨습니다 |
+>
+> ### `SCOUT-210` — 갭 초과 알람·가드 제거
+>
+> Salesforce 는 영업 고객 관리 도구입니다. 증분 동기화는 "지난번 이후 바뀐 것만" 가져오는 방식입니다.
+> 그 "지난번"과 지금 사이의 간격(갭)이 너무 벌어지면 알람을 띄우고 동기화를 막던 장치가 있었는데, **그 장치를 뺐습니다.**
+>
+> | 파일 | 변화 |
+> |---|---|
+> | `.../salesforce/port/SyncSalesforceCrmService.java` | −16줄 |
+> | `.../domain/salesforce/SalesforceSyncWindow.java` | −14줄 |
+> | `.../global/properties/SalesforceProperties.java` | 관련 설정값 3줄 제거 |
+> | `src/main/resources/application.yml` | 관련 설정 4줄 제거 |
+>
+> ### 심사 카테고리 조회
+>
+> `resources/mybatis/wadiz/funding-mapper.xml` 한 줄을 고쳤습니다.
+> 심사 카테고리를 `ScreeningRewardItemCategoryLanguage` 와 이어 붙여(JOIN) 가져오도록 바꿨습니다. 다국어 이름을 함께 읽기 위한 것으로 보입니다(이 해석은 추측입니다).
+
 > 📅 **2026-09-22 main pull 보강** (9 커밋)
 >
 > ### SCOUT-178 — Salesforce 고객관리 데이터를 Snowflake 로 옮깁니다
@@ -144,6 +168,22 @@
 - `workflow_dispatch` 로 수동 실행도 가능합니다.
 - 공용 워크플로 `wadiz-gitops/workflows-container-image-build-push` 의 `build_push_container_image` · `update_image_tag` 를 호출합니다.
 - 같은 형태의 정리가 같은 날 [`co.wadiz.currency-exchange`](./co.wadiz.currency-exchange.md) 에도 적용됐습니다.
+
+## 최근 변경 (2026-10-06 · 설정만)
+
+애플리케이션 코드는 그대로입니다. **배포 설정 저장소 쪽만 바뀌었습니다.**
+
+### ⚠️ 운영(clive) 읽기 전용 DB 가 **01 에서 02 로** 바뀌었습니다 (임시)
+
+| 항목 | 내용 |
+|---|---|
+| 어디 | [`helm-charts-gitops`](./helm-charts-gitops.md) 의 `charts/service/values/backoffice/clive/indexer-schedule.yaml` |
+| 바뀐 값 | `commonConfig.rds-read-replica-01.url` 을 **`rds-read-replica-02.url`** 로 |
+| 범위 | 이 색인기가 쓰는 **데이터소스 5개 전부** — `wadiz_db` · `wadiz_store` · `wadiz_membership` · `ad_center` · `wadiz_notification_channel` |
+| 왜 | 커밋 설명: **"10/12일 오전 RDS replica 01 서버 재기동으로 02 서버 바라보도록 임시 수정"** |
+
+**되돌려야 하는 값입니다.** 재기동이 끝난 뒤에도 02 를 보고 있으면
+읽기 부하가 한쪽에 몰립니다. 되돌림 여부는 **확인 필요**입니다.
 
 ## 최근 변경 (2026-09-10 · 4커밋)
 

@@ -351,7 +351,18 @@ Spring Authorization Server 가 기본 제공. `OAuth2AuthorizationServerConfigu
 
 - **확인 필요(observability gaps)**
   - `wadiz_web` grant의 **실제 호출 주체**(어느 내부 서비스가 Client로서 `grant_type=wadiz_web&username=...` 를 호출하는지) 는 본 저장소 코드로는 관측 불가. Client 등록 DB (`iam.Client` 테이블) 에 `wadiz_web` 이 등록된 client_id 목록을 봐야 함.
-  - `setCookieDomain("wadiz.kr")` (`RememberMeConfig.java:61`) 및 `CookieRemoveFilter`(`authentication/filter/CookieRemoveFilter.java`) 의 도메인 하드코딩 — 비-prod 환경(`local.wadiz.kr`, `rc.wadiz.kr` 등) 동작은 설정/Nginx 수준에서 결정되며 본 파일들에는 환경 분기 없음.
+  - ✅ **2026-10-01 해소.** 쿠키 도메인 하드코딩이 **설정값으로 빠졌습니다.**
+    `BE3-555`(2026-06-26, `c1f3293a`) "account SSO 쿠키/로그아웃 도메인 외부화 (wadiz.co→wadiz.io)" 입니다.
+
+    | 무엇 | 내용 |
+    |---|---|
+    | 설정 키 | **`wadiz.cookie.domain`**. 기본값 `wadiz.io` (`application.yml:151-152`, 클라우드 전 환경 공통) |
+    | `CookieUtil`·`RememberMeConfig` | 하드코딩을 걷고 이 값을 읽습니다 |
+    | `CookieDomainInitializer` | **신규.** 정적 유틸인 `CookieUtil` 에 설정값을 넣어 줍니다 |
+    | 로그아웃 검증 | `WadizOidcLogoutAuthenticationConverter` 의 `post_logout_redirect_uri` 검증 도메인도 생성자 주입으로 바꿨습니다 |
+    | ~~`CookieRemoveFilter`~~ | **쓰이지 않아 함께 삭제**됐습니다 |
+
+    예전 서술이 지적한 "본 파일들에는 환경 분기 없음" 문제가 그대로 해결됐습니다.
   - LINE `HS256` id_token 디코딩 (`LineIdTokenDecoder`) 은 `client-secret` 원문을 HMAC 키로 사용 — OIDC spec 상 허용되지만 배포환경 시크릿 관리가 전제. `jwtDecoderFactory` 는 LINE 외 provider에 대해 `JwtDecoders.fromIssuerLocation` 을 쓰므로 provider 별 issuer 설정이 yml에 정확히 들어 있어야 함.
   - `WadizOidcLogoutAuthenticationConverter`의 `getQueryParameters` 에서 `queryString.contains(key)` 문자열 매칭(`:78`) — 파라미터명 간섭(예: `state` vs `state_x`) 가능성이 있음. 엄밀한 파라미터 추출과는 다르다는 점만 기록.
 

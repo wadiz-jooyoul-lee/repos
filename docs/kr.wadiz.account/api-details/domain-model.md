@@ -187,7 +187,7 @@ public static User createUserWithSocialAccount(
 | `getFirstSocialAccount()` | null/empty → `Optional.empty`; 그 외 `linkedSocials.get(0)` | `User.java:279-287` |
 | `setMobilePhoneNumber(String)` | 변경 시 `PhoneNumberInfo.create` 로 검증·포맷 → 유효하면 `callingCode` + 표준 포맷 저장 + `UserDataChangeRecord.changeMobileNumber` 추가 | `User.java:295-307` |
 | `addDeviceTypeRecord(DeviceType)` | `changeRecords` 에 device 변경 기록 추가 | `User.java:314-317` |
-| `setAccessToken(String)` | `getFirstSocialAccount().orElseThrow(...).setAccessToken(...)` — 실제 저장은 TokenStorable 구현체(Kakao/Line)에서만 (`User.java:322-326`) |
+| `setAccessToken(String)` | `getFirstSocialAccount().orElseThrow(...).setAccessToken(...)`. 실제 저장은 TokenStorable 구현체(Kakao·Line)에서만 합니다 | `User.java:322-326`) |
 | `setRefreshToken(String)` | 위와 동일 | `User.java:328-332` |
 | `getChangeRecords()` | null 방어 하에 리스트 반환 | `User.java:334-339` |
 | `getLocale()` | `new Locale(language, country)` (`@JsonIgnore`) | `User.java:346-349` |
@@ -270,7 +270,16 @@ public interface TermsPort {
 }
 ```
 
-특이하게 `port/outbound` 가 아닌 `domain/terms` 에 배치됨. **구현체**는 `adapters/outbound/externalservice/terms/TermsAdapter.java` — `@Component` 가 `terms.removeUserAgeCheck()` 선처리 후 `TermsClient.createTerms(userId, ...)` HTTP 호출 (`TermsAdapter.java:15-25`). 동일한 역할의 또 다른 port 로 `port/outbound/TermsApiPort.java:1-13` 가 있음: `void updateAgreement(Long userId, AgreedTerms termsRequest);` — **두 개의 API 가 공존**(관측 범위 내에서 TermsPort 만 실제 호출 경로 확인).
+특이하게 `port/outbound` 가 아니라 `domain/terms` 에 있습니다.
+**구현체**는 `adapters/outbound/externalservice/terms/TermsAdapter.java` 입니다.
+`terms.removeUserAgeCheck()` 로 한 항목을 걸러낸 뒤 `UserClient.acceptTerms(userId, ...)` 를 부릅니다.
+
+> ✅ **2026-10-01 정정 — 두 API 공존 문제가 해소됐습니다.**
+> 예전 서술은 *"동일한 역할의 또 다른 port 로 `port/outbound/TermsApiPort.java` 가 있음 — 두 개의 API 가 공존"* 이라고 적었습니다.
+> `BE3-555`(2026-06-26)가 ~~`TermsApiPort`~~ 와 그 구현체를 지우고 **`TermsPort.acceptTerms` 하나로 일원화**했습니다.
+> 예전 문서가 "관측 범위 내에서 TermsPort 만 실제 호출 경로 확인"이라고 본 그대로였습니다.
+>
+> 같은 작업으로 ~~`TermsClient`~~ 도 사라지고 **`UserClient` 를 공유**하게 됐습니다.
 
 #### 3.2.3 AgreedTerms (DTO/VO)
 
@@ -784,7 +793,7 @@ public class DomainEvent {
 | `Push2Port` | `push(userId, title, body, inboxTitle, targetLink, DomainCode, Locale)` | `Push2Port.java:5-7` |
 | `SubscribeNotificationPort` | `registerNotification(User)` | `SubscribeNotificationPort.java:5-7` |
 | `MarketingConsentPort` | `updateMarketingConsent(ServiceCode, Long userId)` | `MarketingConsentPort.java:5-7` |
-| `TermsApiPort` | `updateAgreement(Long userId, AgreedTerms)` (※ 본 문서 범위에선 호출 경로 미관측) | `TermsApiPort.java:5-13` |
+| ~~`TermsApiPort`~~ | ~~`updateAgreement(Long userId, AgreedTerms)`~~ | **2026-06-26 삭제** (`BE3-555`). 예전 문서가 "호출 경로 미관측"이라 본 그대로였고 `TermsPort.acceptTerms` 로 일원화됐습니다 |
 | `UserApiPort` | `updateUserTimeZoneByCountry(Long userId, String country)` | `UserApiPort.java:3-5` |
 | `UserAppContactApiPort` | `asyncReconnectContactsByMyMobileNumber(Long userId, String mobileNumber)` | `UserAppContactApiPort.java:3-5` |
 | `UserCouponPort` | `Boolean giveAwaySignupCoupons(User)` | `UserCouponPort.java:5-7` |

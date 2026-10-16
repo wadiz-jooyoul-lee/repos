@@ -19,7 +19,7 @@
 > | 4 | `ServerMode` 위치 | `core:legacy` 에 있다고 했으나 `core/network/.../server/ServerMode.kt` 로 옮겨졌습니다 |
 > | 5 | **스타트업(투자) 절** | `FE1-1349`(2026-07-23)가 **스타트업 코드를 통째로 지웠습니다.** 아이콘 몇 개와 테스트 하나만 남았습니다 |
 > | 6 | 혜택홈·CDN 설정 | CDN JSON 을 직접 읽는다고 했으나 `FE1-1169`(2026-07)로 **앱 설정 API 로 이관**됐습니다 |
-> | 7 | 비디오 홈 | `VideoDataSource.kt` 가 2026-05-21 삭제됐습니다. 지금은 재생기 기반 코드만 남았습니다 |
+> | 7 | 비디오 홈 | ~~`VideoDataSource.kt`~~ 가 2026-05-21 삭제됐습니다. 지금은 재생기 기반 코드만 남았습니다 |
 > | 8 | 웹뷰 주소 | 상세·결제 웹뷰를 `www.wadiz.kr` 로 적었습니다. **live 는 `www.wadiz.io`** 입니다 |
 >
 > ### 큰 줄기
@@ -35,21 +35,49 @@
 >
 > 📅 **2026-10-01 main pull 보강** (108 커밋, build 596 → **v26.40.0 build 597**)
 >
-> | 이슈키 | 커밋 | 무엇 |
+> ### FE1-1990 — `wadiz-common` 모듈을 없앴습니다 (가장 큰 변화)
+>
+> 레거시 공용 모듈 `core:legacy:wadiz-common` 을 **`core:common` 으로 옮기고 모듈을 지웠습니다.**
+> 지금 `core/legacy/` 아래에는 `wadiz-dialog` 하나만 남았습니다.
+>
+> | 함께 일어난 일 | 내용 |
+> |---|---|
+> | 패키지 이름 | `com.markmount.wadiz` → **`com.wadiz.common`** 으로 바뀐 파일이 많습니다 |
+> | 상수 통합 | **`WadizConstant` 가 `Constants` 로 합쳐졌습니다** |
+> | 문서 정리 | `CLAUDE.md` 의 모듈 구조에서 `wadiz-common` 을 뺐습니다 |
+> | 빌드 | PR 시험 워크플로가 컨테이너 프로젝트를 잡지 않도록 고쳤습니다 |
+>
+> ### FE1-1955 — 메이커센터 주소 하드코딩 제거
+>
+> `StudioDataSource.kt` 의 `@GET` 에 박혀 있던 `https://api.makercenter.wadiz.kr/...` 가 사라지고
+> **`UrlKey.MAKER_CENTER`**(`/web/maker/makercenter`)를 거치게 됐습니다.
+> 별도 호스트가 아니라 **서비스 경로로 들어갑니다.** 아래 본문 표에 자세히 적었습니다.
+>
+> ### FE1-1981 — 쓰지 않는 웹·앱 인터페이스 정리
+>
+> | 지운 것 | 비고 |
+> |---|---|
+> | `scrollChanged` 앱 주입 스크롤 수신기 | **웹 쪽도 같은 날 지웠습니다** — [`wadiz-frontend`](./wadiz-frontend/wadiz-frontend.md) 의 `FE1-1982` |
+> | 안 쓰는 웹 앱 인터페이스 여럿 | `app.storage.clear` 는 되돌렸습니다 |
+> | 죽은 필드와 낡은 시험 | 리뷰 반영분 |
+>
+> **앱과 웹이 같은 다리(JS Bridge)를 양쪽에서 함께 걷어내고 있습니다.**
+>
+> ### 그 밖
+>
+> | 이슈키 | 커밋 | 내용 |
 > |---|---:|---|
-> | `FE1-1970` | 16 | 가장 많습니다 |
-> | `FE1-1925` | 15 | |
-> | `FE1-2014` · `FE1-1990` · `FE1-1981` · `FE1-1955` | 각 5 | |
-> | `QA-23465` · `QA-23013` · `FE1-2055` · `FE1-2008` | 각 3 | |
+> | `FE1-1970` | 16 | `CLAUDE.md` 수정. 코드 변경 아님 |
+> | `FE1-1925` | 15 | 오픈예정 프로젝트 카드 CTA 개선 |
+> | `FE1-2014` | 5 | 막펀잡기(마감임박) 흰 배경 전환 |
+> | `QA-23465` · `QA-23013` · `FE1-2055` · `FE1-2008` | 각 3 | 커밋 제목만으로는 내용 불명 |
+>
+> `FE1-2014` 는 [`com.wadiz.wave.searcher`](./com.wadiz.wave.searcher.md) 의 `DISPLAY-1797`(막펀잡기 정렬)과 같은 기능을 양쪽에서 손본 것입니다.
 >
 > 자동 커밋도 섞여 있습니다 — 버전 자동 갱신과 `[Automated] 다국어 리소스 업데이트`.
 >
-> ⚠️ **각 이슈가 무엇을 바꿨는지는 이번 회차에 확인하지 못했습니다.**
-> 커밋 제목만으로는 내용이 드러나지 않아 본문 정정 근거로 쓰지 않았습니다.
-> 본문 점검이 필요하면 다음 회차에 다룹니다.
->
 > ---
-
+>
 > 📅 **2026-09-22 main pull 보강** (120 커밋, v26.37.0 build 595 → **v26.38.0 build 596**)
 >
 > **`kr` 도메인 코드 제거(FE1-1760, 13커밋)** 와 **막펀잡기 화면 개선(FE1-1850, 19커밋)** 이 두 축입니다.
@@ -393,7 +421,23 @@ Gradle 서브프로젝트 전수 (`settings.gradle.kts:31-69`). 각 모듈 한 �
 | `core:design-system` | WDS 컴포넌트, Compose UI 토큰, drawable |
 | `core:domain` | UseCase, 도메인 모델(+`CardValidator` 등) |
 | `core:i18n` | `Localization` 객체, 다국어 런타임 문자열(`core/i18n/src/main/kotlin/com/wadiz/i18n/…`) |
-| `core:legacy`, `core:legacy:wadiz-common`, `core:legacy:wadiz-dialog` | 점진 제거 대상 레거시 공용 코드. **`ServerMode` 는 여기가 아니라 `core/network/src/main/java/com/wadiz/network/server/ServerMode.kt` 로 옮겨졌습니다**(2026-09-22 확인) |
+| `core:legacy:wadiz-dialog` | 점진 제거 대상 레거시 공용 코드. **지금 `core/legacy/` 아래에 이것 하나만 남았습니다** |
+| `core:common` | ~~`core:legacy:wadiz-common`~~ 을 대체합니다. 파일 30개 — `cdn/`·`constants/`·`di/`·`ext/`·`util/` 등 |
+
+> ⚠️ **2026-10-01 정정 — `core:legacy:wadiz-common` 모듈이 사라졌습니다.**
+> `FE1-1990`(2026-09~10)이 `core/common` 으로 옮기고 모듈을 지웠습니다.
+> 옮겨 가면서 패키지 이름도 `com.markmount.wadiz` 에서 **`com.wadiz.common`** 으로 바뀐 파일이 많습니다.
+>
+> | 예전 | 지금 |
+> |---|---|
+> | `core/legacy/wadiz-common/.../com/markmount/wadiz/ext/JsonExt.kt` | `core/common/.../com/wadiz/common/ext/JsonExt.kt` |
+> | `core/legacy/wadiz-common/.../com/markmount/wadiz/util/AES256CipherUtil.kt` | `core/common/.../com/wadiz/common/util/AES256CipherUtil.kt` |
+> | `core/legacy/wadiz-common/.../com/wadiz/common/JsonModule.kt` | `core/common/.../com/wadiz/common/di/JsonModule.kt` |
+>
+> 같은 작업으로 **`WadizConstant` 가 `Constants` 로 합쳐졌습니다** —
+> 지금 위치는 `core/common/src/main/java/com/wadiz/common/constants/Constants.kt` 입니다.
+>
+> `ServerMode` 는 그보다 앞서 `core/network/src/main/java/com/wadiz/network/server/ServerMode.kt` 로 옮겨졌고 그대로입니다.
 | `core:model` | 순수 Kotlin 도메인 모델, 네비게이션 Key/Route |
 | `core:network` | **Retrofit ApiService 전체 + OkHttp Provider/Interceptor** (핵심) |
 | `core:security` | 루팅/바이오메트릭/세션 관련 보안 |
@@ -446,7 +490,7 @@ Gradle 서브프로젝트 전수 (`settings.gradle.kts:31-69`). 각 모듈 한 �
 
 ### API Base URL 주입
 
-Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `ServerMode.Server` 라는 Kotlin 인터페이스를 런타임에 **`WadizHiddenMenu.getServerMode()`** 가 반환하고, 이 인스턴스를 Hilt 로 주입해 `apiUrl`, `platformUrl`, `appApiUrl` 등 속성을 Retrofit `baseUrl()` 에 전달한다. (`core/legacy/wadiz-common/src/main/java/com/markmount/wadiz/util/ServerMode.kt:6-72`)
+Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `ServerMode.Server` 라는 Kotlin 인터페이스를 런타임에 **`WadizHiddenMenu.getServerMode()`** 가 반환하고, 이 인스턴스를 Hilt 로 주입해 `apiUrl`, `platformUrl`, `appApiUrl` 등 속성을 Retrofit `baseUrl()` 에 전달한다. (`core/network/src/main/java/com/wadiz/network/server/ServerMode.kt`. 예전 경로 ~~`core/legacy/wadiz-common/.../util/ServerMode.kt`~~ 는 모듈째 사라졌습니다)
 
 - `release` 빌드 타입 → `feature/src/release/java/.../WadizServerSelector.kt:41-54` 가 **고정 Live URL** 반환. 히든 메뉴 없음 (`hasMenu()=false`).
 - `debug` / `qa` 빌드 타입 → 히든 메뉴로 **`LOCAL`·`DEV`·`STAGE`·`RC4`·`LIVE` 5개** 중 선택합니다. 목록의 단일 출처는 `core/network/src/debug/java/com/wadiz/network/server/DevServer.kt` 입니다. 종전 기록의 `cdev | rc | rc2 | rc3 | stage | live | local` 중 선택, `HiddenPreferenceHelper` 에 저장 후 `exitProcess(0)` 재시작. (FE1-764: CDEV 실사용 정착에 따라 기존 `dev` 환경 제거됨. `ANDROID-3037` 으로 도입된 cdev 는 서버/앱 배포 후 전환되는 리모트 환경)
@@ -473,7 +517,7 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | `accountUrl` | `https://account.wadiz.io` | `https://account.stage.wadiz.io` | `https://account.rc4.wadiz.io` | `https://account.dev.wadiz.io` |
 
 > ⚠️ **`advertiseUrl` 과 `aiDomainUrl` 키는 없어졌습니다.**
-> `advertiseUrl` 이 가리키던 `WadizAdvertiseAPIService.kt` 는 `FE-196`(2026-04-16)로 지워졌습니다.
+> `advertiseUrl` 이 가리키던 ~~`WadizAdvertiseAPIService.kt`~~ 는 `FE-196`(2026-04-16)로 지워졌습니다.
 
 **STAGE 에는 예외가 있습니다.** `domainUrl`·`apiUrl`·`accountUrl`·`platformUrl` 넷만 stage 호스트입니다.
 나머지는 **live 를 그대로 봅니다.** 코드 주석에 이유가 적혀 있습니다.
@@ -600,13 +644,13 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | `feature:main-tab` | `GET /main2/api/v10/main` (헤더 `X-Experiment`, `X-Device-Type=ANDROID_APP`) | `platformUrl(.main)` | **홈 AI 추천 A/B 실험판** (FE1-686) — 실험 파라미터를 쿼리→헤더로 전환 | 홈 탭 렌더 시 실험군 할당된 경우. `PlatformMainAPIService.kt:37` |
 | `feature:main-tab` | `GET /main2/api/v1/quickmenu` | `platformUrl(.main)` | 홈 상단 퀵메뉴 | 홈 진입. `PlatformMainAPIService.kt:48` |
 | `feature:main-tab` | `POST /main2/api/v1/recentview` | `platformUrl(.main)` | 최근 본 프로젝트 일괄 조회 | 홈 최근 본 섹션. `PlatformMainAPIService.kt:39` |
-| `feature:main-tab` | `GET /main2/api/v3/my-wadiz` | `platformUrl(.main)` | 홈 하단 마이와디즈 요약 | 홈 스크롤 | `PlatformMainAPIService.kt:53` |
+| `feature:main-tab` | `GET /main2/api/v3/my-wadiz` | `platformUrl(.main)` | 홈 하단 마이와디즈 요약 | 홈 스크롤 시. `PlatformMainAPIService.kt:53` |
 | `feature:main-tab` | `GET /main2/api/v1/pc/ranking/{productType}` | `platformUrl(.main)` | 랭킹 | 랭킹 섹션. `PlatformMainAPIService.kt:56` |
 | `feature:main-tab` | `GET main2/api/v1/recommendation/item` | `platformUrl(.main)` | 연관 추천 | 프로젝트 상세 진입 후. `PlatformMainAPIService.kt:59` |
 | `feature:main-tab` | `GET /main/earlybird/coming-soon`, `/main/earlybird/popular`, `/main/featured/reward`, `/main/featured/equity`, `/main/display-ads/event`, `/main/display-ads/marketing`, `/main/info/{sectionCode}`, `/main/display-ads/MPB`, `/main/display-ads/{bannerList}` | `mainUrl` | public-api 홈 섹션/배너/EB | 홈 섹션별 로드. `WadizMainAPIService.kt:17-52` |
 | `feature:main-tab` | `POST /main/campaign/rate` | `mainUrl` | 캠페인 만족도 | 종료 후 팝업. `WadizMainAPIService.kt:23` |
 | `feature:main-tab` | `POST /main/v1/store/participants` | `mainUrl` | 스토어 참여 | 스토어 홈 배너 이벤트. `WadizMainAPIService.kt:67` |
-| ~~`feature:main-tab`~~ | ~~`GET keyvisual`~~ | — | **없어졌습니다.** `WadizAdvertiseAPIService.kt` 는 `FE-196`(2026-04-16)로 삭제됐고 `advertiseUrl` 키도 사라졌습니다 | — |
+| ~~`feature:main-tab`~~ | ~~`GET keyvisual`~~ | — | **없어졌습니다.** ~~`WadizAdvertiseAPIService.kt`~~ 는 `FE-196`(2026-04-16)로 삭제됐고 `advertiseUrl` 키도 사라졌습니다 | — |
 
 ### 검색 / 카테고리 (`feature:search`, `feature:category`)
 
@@ -681,13 +725,29 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | `feature:service-home` | `GET /api/maker/mywadiz/pages` | `apiUrl` | 메이커 마이와디즈 페이지 구성 | 메이커 홈. `WadizMakerPageAPIService.kt:8` |
 | `feature:service-home` | `GET /web/reward/api/makers/my/summations/campaigns` | `domainUrl` | 프로젝트 개설 이력 | "새 프로젝트 열기". `WadizDomainAPIService.kt:27` |
 | `feature:service-home` | `GET /web/apip/funding/v2/bottom-sheet/data` | `domainUrl` | 메이커 모드 선택 바텀시트 데이터 | 메이커 모드 전환. `StudioDataSource.kt:16` |
-| `feature:service-home` | `GET https://api.makercenter.wadiz.kr/api/board/user/lists?board_type=event&…` | makercenter-be (하드코딩) | 메이커센터 기획전 보드 | 메이커 홈 배너. `StudioDataSource.kt:19` |
+| `feature:service-home` | 메이커센터 기획전 보드 (`UrlKey.MAKER_CENTER` 경유) | `/web/maker/makercenter` | 메이커센터 기획전 | 메이커 홈 배너. `StudioDataSource.kt` |
+
+> ⚠️ **2026-10-01 정정 — 하드코딩 주소가 사라졌습니다.**
+> 예전에는 `StudioDataSource.kt` 의 `@GET` 에 `https://api.makercenter.wadiz.kr/...` 가 통째로 박혀 있었습니다.
+> `FE1-1955`(2026-09~10)가 걷어냈습니다.
+>
+> 지금은 **`UrlKey.MAKER_CENTER`** 를 거칩니다 (`core/model/src/main/java/com/markmount/wadiz/model/web/UrlKey.kt:96`).
+>
+> ```kotlin
+> MAKER_CENTER,  // /web/maker/makercenter  (global=/maker/makercenter)
+> ```
+>
+> 즉 **별도 호스트가 아니라 서비스 경로로 들어갑니다.** 글로벌은 접두가 다릅니다.
+> 함께 지워진 상수들입니다 — `WADIZ_COLLECTION_LIVE`·`WEB_MAKER_COLLECTION`·`WEB_MAKER_NOTICE`·`WEB_MAKER_USER_GUIDE`·`MAKER_CENTER_URI`.
+>
+> 다국어 문자열(`core/i18n/.../Localization.kt`) 안에는 `makercenter.wadiz.io` 링크가 남아 있습니다.
+> 본문에 박힌 안내 링크라 성격이 다릅니다.
 
 ### 스타트업 (투자)
 
 | Feature 모듈 | 엔드포인트 | 도메인 | 용도 | 트리거 |
 | --- | --- | --- | --- | --- |
-| ~~`feature:service-home` (startup)~~ | — | — | **스타트업 기능이 통째로 제거됐습니다.** `FE1-1349`(2026-07-23) "스타트업 코드 제거". `WadizStartupAPIService.kt` 도 함께 사라졌고 지금은 아이콘 drawable 몇 개와 테스트 하나만 남아 있습니다 | — |
+| ~~`feature:service-home` (startup)~~ | — | — | **스타트업 기능이 통째로 제거됐습니다.** `FE1-1349`(2026-07-23) "스타트업 코드 제거". ~~`WadizStartupAPIService.kt`~~ 도 함께 사라졌고 지금은 아이콘 drawable 몇 개와 테스트 하나만 남아 있습니다 | — |
 
 ### 소셜 팔로우 / 주소록 (`feature:account`, `feature:mypage`)
 
@@ -714,8 +774,8 @@ Android 는 `buildConfigField` 로 **URL 자체를 심지 않는다**. 대신 `S
 | 분석 | `POST /add` (multipart `action`, `actions`) | `analyticsUrl` | 와디태그 클릭/멀티태그 | 버튼 탭/배치 로그. `WadizAnalyticsAPIService.kt:32` |
 | 글로벌 | `GET /global/exchange-rates/{country}` | `platformUrl` | 환율 | 글로벌(일본/중국) 결제 조회. `WadizPlatformAPIService.kt:41` |
 | 글로벌 | `GET /web/v1/countries`, `GET /web/v1/countries/{code}` | `domainUrl` | 국가 리스트 / 단건 | 회원가입/배송 국가 선택. `WadizDomainAPIService.kt:76,82` |
-| ~~비디오 홈 SDUI~~ | — | — | **없어졌습니다.** `VideoDataSource.kt` 는 2026-05-21 삭제됐고 지금은 재생기 기반 코드(`core:video-player`)만 남아 있습니다 | — |
-| 앱 설정 | (앱 설정 API) | `appApiUrl` | SearchBar 마케팅·Home Swipe Lottie·Intro·LiveCommerce·Inbox 설정 등 | **CDN JSON 직접 읽기에서 앱 설정 API 로 이관**(`FE1-1169`, 2026-07-09). `WadizCdnAPIService.kt` 삭제, 지금은 `core/data/src/main/java/com/wadiz/data/repository/ClientAppSettingsRepository.kt` 와 `core/datastore/.../ClientAppSettingsDiskStore.kt` |
+| ~~비디오 홈 SDUI~~ | — | — | **없어졌습니다.** ~~`VideoDataSource.kt`~~ 는 2026-05-21 삭제됐고 지금은 재생기 기반 코드(`core:video-player`)만 남아 있습니다 | — |
+| 앱 설정 | (앱 설정 API) | `appApiUrl` | SearchBar 마케팅·Home Swipe Lottie·Intro·LiveCommerce·Inbox 설정 등 | **CDN JSON 직접 읽기에서 앱 설정 API 로 이관**(`FE1-1169`, 2026-07-09). ~~`WadizCdnAPIService.kt`~~ 삭제, 지금은 `core/data/src/main/java/com/wadiz/data/repository/ClientAppSettingsRepository.kt` 와 `core/datastore/.../ClientAppSettingsDiskStore.kt` |
 
 ---
 

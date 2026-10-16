@@ -1,3 +1,17 @@
+> 📅 **2026-10-13 main pull 보강** (2 커밋)
+>
+> 둘 다 자동 커밋입니다 — 피그마 아이콘 갱신과 그에 따른 `PDF → iOS imageset` 변환입니다.
+> 새로 생긴 아이콘은 없고, **기존 시스템 아이콘 105개 파일의 내용만 미세하게 바뀌었습니다**(대부분 몇 바이트 차이).
+
+> 📅 **2026-10-06 main pull 보강** (4 커밋)
+>
+> 넷 다 자동 커밋입니다. 와디즈 심벌 로고 하나가 새로 들어왔습니다.
+>
+> | 무엇 | 파일 |
+> |---|---|
+> | 신규 | `assets/svg/artwork-logo-wadiz-symbol-gray.svg`, `assets/pdf/artwork-logo-wadiz-symbol-gray.pdf`, `assets/xml/artwork_logo_wadiz_symbol_gray.xml` |
+> | 수정 | `assets/svg/artwork-logo-wadiz-symbol-circle-black.svg` 와 그 안드로이드 변환본 |
+
 > 📅 **2026-10-01 main pull 보강** (2 커밋)
 >
 > 둘 다 자동 커밋입니다 — 피그마 아이콘 갱신과 그에 따른 `svg → android drawable` 변환입니다.

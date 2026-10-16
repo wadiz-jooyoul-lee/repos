@@ -12,7 +12,8 @@
   - `com.wadiz.api.reward/.../batch/couponexpirationnotification/` (쿠폰 만료 알림)
   - `com.wadiz.wave.user/.../push/PushTargetController.java` (푸시 대상 조회)
   - `com.wadiz.wave.user/.../message/MessageController.java` (알림톡 수신자 관리)
-  - `wadiz-frontend/apps/global/src/pages/my-wadiz/settings/notification/` (설정 UI)
+  - `wadiz-frontend/apps/global/src/pages/my-wadiz/settings/notification/` (설정 지면 진입점)
+  - `wadiz-frontend/packages/features/src/notification-settings/` (설정 화면 조각 — `FE1-1785`, 2026-10-13 이관)
 - **외부 경계**: 플랫폼 알림 서비스(`api.wadiz.io` 의 notification 부분) 내부 로직, 실 FCM/APNs/Kakao/메일 게이트웨이.
 
 ---
@@ -87,10 +88,17 @@ oauth2/adapters/outbound/externalservice/
 ## 3. 설정 UI (wadiz-frontend)
 
 ### 3.1 서포터 알림 설정
-`apps/global/src/pages/my-wadiz/settings/notification/`
+
+지면 진입점은 `apps/global/src/pages/my-wadiz/settings/notification/` 에 있습니다.
+
 - `MyWadizSettingsNotificationPage.tsx` — 채널별 on/off 스위치
-- `MyWadizSettingsNotificationNewsPage.jsx` — 뉴스/소식 카테고리 세분
-- `MarketingNotificationSettingsContainer.jsx` — 마케팅 동의 별도
+- `news/MyWadizSettingsNotificationNewsPage.jsx` — 뉴스/소식 카테고리 세분
+- `MarketingNotificationSettingsPage.jsx` — 마케팅 동의 별도
+- `catchup/CatchupSettingPage.tsx` — 따라잡기 알림
+- `store-restock/StoreRestockPage.tsx` — 스토어 재입고 알림
+
+화면을 그리는 조각은 `packages/features/src/notification-settings/` 로 옮겼습니다(`FE1-1785`, 2026-10-13). 하위 폴더는 `ui/marketing`, `ui/news`, `ui/catchup`, `ui/store-restock`, `lib` 다섯입니다.
+국내 전용이던 레거시 묶음 `static/entries/iam/marketing-notification-settings/` 는 같은 작업에서 삭제됐습니다.
 
 ### 3.2 설정 저장 경로 (추정)
 사용자 알림 설정은 플랫폼 알림 서비스에 저장 (`api.wadiz.io` API). wave.user 의 `UserSettings` 와 구분.

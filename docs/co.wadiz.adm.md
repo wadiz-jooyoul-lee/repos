@@ -9,6 +9,14 @@
 
 ---
 
+> 📅 **2026-10-13 master pull 보강** (1 커밋)
+>
+> `RWD-6159` — 배포 워크플로 셋(`dev`·`live`·`rc4`)이 부르는 **재사용 워크플로를 `@v2` 로 올렸습니다.**
+> 배포 저장소에 접근하는 인증을 개인 토큰에서 **GitHub App** 으로 바꾸고, 사내 패키지 저장소(GPR) 인증만 `wadiz_dev_pat` 토큰을 그대로 씁니다.
+> GPR 이 GitHub App 토큰을 받지 않기 때문입니다.
+>
+> 이번 회차에 같은 한 건이 들어간 저장소가 많습니다 — `com.wadiz.api.friends`, `com.wadiz.api.funding`, `com.wadiz.api.main`, `com.wadiz.store`, `com.wadiz.wave.searcher`, `com.wadiz.web`, `kr.wadiz.catalogagent`, `main2-api`, `platform-admin` 입니다.
+
 > 📅 **2026-09-22 master pull 보강** (21 커밋)
 >
 > **PD 컨설팅 신청형(V3) 개편(RWD-5954, 17커밋)** 이 대부분입니다.

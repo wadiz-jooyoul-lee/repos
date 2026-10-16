@@ -5,6 +5,78 @@
 >
 > ⚠️ **이름이 같은 저장소가 둘입니다.** 이미지 태그(`imageVersion`)와 애플리케이션 설정(`configmap.data`)은 이 저장소가 아니라 GitOps 저장소 [`helm-charts-gitops`](./helm-charts-gitops.md)(`wadiz-gitops/helm-charts`)에 있습니다. 이 문서는 **차트·템플릿·배포 스펙** 쪽만 다룹니다.
 
+> 📅 **2026-10-13 main pull 보강** (6 커밋)
+>
+> | 무엇 | 대상 |
+> |---|---|
+> | `app-api` 의 사내 접근 허용 경로를 **크게 늘렸습니다** | dev · rc1 · rc4 · clive |
+> | 메이커 인텔리전스 두 서비스의 values 를 새로 넣었습니다 | rc1 · rc4 · clive (`CINFRA-688`·`CINFRA-689`) |
+> | `risk-monitor` values 를 새로 넣었습니다 | dev (`CINFRA-684`) |
+> | `push-agent` 의 메모리 설정을 손봤습니다 | clive |
+> | rc4 서비스 둘의 메모리 요청량을 올렸습니다 | rc4 |
+>
+> ### `app-api` 허용 경로 확대
+>
+> 직전 회차(2026-10-06)에서 사내 대역의 접근을 `/v1/settings` 하나로 좁혔습니다.
+> 이번에는 **실제로 쓰이는 경로들을 다시 열었습니다.** clive 쪽은 이번에 파일이 새로 생겼습니다(41줄).
+>
+> 추가된 경로를 묶어 보면 이렇습니다.
+>
+> | 묶음 | 경로 |
+> |---|---|
+> | 펀딩 스토리 | `/api/v1/funding/projects/{*}/story`, `.../launching-soon-story` |
+> | 짧은 주소 | `/api/v1/links`, `/api/v2/links`, `/api/links/{*}`, `/api/redirect/{**}` |
+> | 고객 문의 | `/api/v1/support/ticket-forms`, `/api/v1/support/tickets`, `.../tickets/{*}`, `.../uploads`, `.../uploads/{*}`, `/api/v1/webhooks/help-center` |
+> | 설정·이벤트 | `/v1/settings`, `/v1/event/{*}`, `/api/v1/settings`, `/api/v1/event/{*}`, `/api/v1/proxy` |
+> | 정적 파일 | `/favicon.ico`, `/robots.txt`, `/api/favicon.ico`, `/api/robots.txt` |
+>
+> ### `push-agent` 메모리 (clive)
+>
+> 자바 프로세스가 **운영체제에서 빌린 메모리를 제때 돌려주지 않는 문제**를 다루고 있습니다.
+>
+> | 설정 | 값 | 뜻 |
+> |---|---|---|
+> | `MALLOC_ARENA_MAX` | `8` | glibc(C 표준 라이브러리)가 메모리를 나눠 담는 칸(arena) 수의 상한입니다. 칸이 많으면 쓰지 않는 공간이 칸마다 쌓입니다 |
+> | `-XX:TrimNativeHeapInterval=60000` | 60초 | 자바가 **60초마다 쓰지 않는 네이티브 메모리를 운영체제에 돌려줍니다** |
+>
+> ### rc4 메모리 요청량
+>
+> | 서비스 | 종전 | 지금 |
+> |---|---|---|
+> | `funding-api` | 1.2Gi | **1.5Gi** |
+> | `nicepay-api` | 0.8Gi | **1.25Gi** |
+
+> 📅 **2026-10-06 main pull 보강** (4 커밋)
+>
+> ### `app-api` 의 사내 접근을 **경로 단위로 좁혔습니다** (dev·rc1·rc4)
+>
+> 종전에는 사내 대역 `192.168.200.0/24` 에서 오면 **어떤 경로든 통과**했습니다.
+> 이제 아래 목록에 있는 경로만 열립니다. `/v1/proxy` 는 **GET 만** 허용합니다.
+>
+> | 묶음 | 경로 |
+> |---|---|
+> | 앱 설정 | `/v1/settings` |
+> | 펀딩 본문 | `/v1/funding/projects/{*}/story`, `/v1/funding/projects/{*}/launching-soon-story` |
+> | 단축 주소 | `/v1/links`, `/v2/links`, `/links/{*}`, `/redirect/{**}` |
+> | 고객센터 | `/v1/support/ticket-forms`, `/v1/support/tickets`, `/v1/support/tickets/{*}`, `/v1/support/uploads`, `/v1/support/uploads/{*}` |
+> | 웹훅 | `/v1/webhooks/help-center` |
+> | 대리 호출 | `/v1/proxy` — **GET 만** |
+>
+> 파일은 `charts/service/values/client/{dev,rc1,rc4}/app-api.yaml` 과 `client/rc1/app-api-2.yaml` 입니다.
+>
+> ### `maker-intelligence-api` 가 dev 에 새로 생겼습니다 (CINFRA-681)
+>
+> | 항목 | 값 |
+> |---|---|
+> | 파일 | `charts/service/values/core/dev/maker-intelligence-api.yaml` (12줄) |
+> | 컨테이너 포트 | `8720` |
+> | 게이트웨이 하위 경로 | `maker-intelligence` |
+> | 생존·준비 탐침 | `/healthz` |
+>
+> 같은 날 `maker-intelligence-agent` 에도 **전용 서비스 계정**을 지정했습니다 (CINFRA-683).
+> 두 서비스 모두 서비스 계정 이름이 앱 이름과 같습니다.
+>
+> ---
 > 📅 **2026-10-01 main pull 보강** (9 커밋)
 >
 > | 대상 | 내용 |
@@ -383,8 +455,8 @@ charts/service/
 - **차트에 구현돼 있으나 실제로는 아무도 쓰지 않는 기능이 4가지**입니다. 기능 소개만 보고 "쓰고 있다"고 판단하면 안 됩니다.
   - **Canary(Argo Rollout)** — `rollout.enabled: true` 0건(`false` 명시만 2건)
   - **CronJob** — `cronjob.enabled` 설정 0건
-  - **Istio sidecar 모드** — `sidecarMode` 를 `true` 로 둔 곳이 values 전체에 **0건**이라 `authz-policy-sidecar-mode.yaml` 은 렌더된 적이 없습니다
-  - **Gateway API(HTTPRoute)** — `gatewayMode` 를 `true` 로 둔 곳도 **0건**이라 `httproute.yaml` 역시 렌더되지 않습니다
+  - **Istio sidecar 모드** — `sidecarMode` 를 `true` 로 둔 곳이 values 전체에 **0건**이라 ~~`authz-policy-sidecar-mode.yaml`~~ 은 렌더된 적이 없습니다. 그래서 2026-09-21 에 파일째 지워졌습니다
+  - **Gateway API(HTTPRoute)** — `gatewayMode` 를 `true` 로 둔 곳도 **0건**이라 ~~`httproute.yaml`~~ 역시 렌더되지 않았고, 같은 날 함께 지워졌습니다
 - 4개 네트워킹 모드(`ambientMode`·`sidecarMode`·`ingressMode`·`gatewayMode`)를 **서비스 values 에서 덮어쓰는 곳은 한 군데도 없습니다.** 전 서비스가 차트 기본값(ambient + ingress)으로만 돕니다.
 - 컨테이너 이미지 ECR 레지스트리는 **`843734097580`(클라우드 계열)** 과 **`393290902814`(기존 계열)** 두 계정으로 갈립니다. 리포지터리 네임스페이스는 `platform`·`core`·`notification`·`display-platform`·`backoffice` 등입니다.
 

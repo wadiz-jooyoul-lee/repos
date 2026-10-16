@@ -1,5 +1,14 @@
 # makercenter-fe
 
+> 📅 **2026-10-13 cloud_live pull 보강** (2 커밋)
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `FE2-1483` | 도커 실행 단계에 `apt-get upgrade` 를 넣어 **perl 의 심각(CRITICAL) 취약점 3건을 해소**했습니다 (`Dockerfile`, 3줄) |
+> | `FE2-1519` | CI 워크플로의 이미지 번호 갱신 재사용 워크플로를 `v2` 로 올리고, 개인 토큰(PAT) 비밀값을 **GitHub App 비밀값**으로 바꿨습니다 (`.github/workflows/app-makercenter-ci.yml`) |
+>
+> 같은 날 `app-api`(`FE1-2108`)와 `good-wave`(`CLIENT-323`)에도 같은 `apt-get upgrade` 한 줄이 들어갔습니다.
+
 > 📅 **2026-10-01 cloud_live pull 보강** (2 커밋, 모두 `FE2-1416`)
 >
 > | 무엇 | 내용 |
