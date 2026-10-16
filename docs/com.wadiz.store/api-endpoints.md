@@ -1,6 +1,6 @@
 # com.wadiz.store — API 엔드포인트 전수 목록
 
-> 소스 기준: `store-api` 모듈 **73개 `*Controller.java` × 254 엔드포인트**(관측 기준, 2026-08-25 cloud_live pull).
+> 소스 기준: `store-api` 모듈 **73개 `*Controller.java` × 255 엔드포인트**(관측 기준, 2026-10-15 cloud_live pull).
 > 도메인별 상세(입력 DTO / Service / SQL)는 향후 `api-details/*.md`로 확장 예정입니다.
 
 ## 작성 원칙·관측 규약
@@ -244,6 +244,7 @@ base: `/api/studio/projects` (`store-api/.../rest/project/studio/StudioProjectCo
 | GET | `/api/studio/projects/{projectNo}` | getProject | 상세 정보 | isMakerByProjectNo or isAdmin |
 | POST | `/api/studio/projects/{projectNo}/open` | open | 프로젝트 오픈 | isMakerByProjectNo or isAdmin |
 | GET | `/api/studio/projects/{projectNo}/submit-condition` | checkSubmit | 제출 조건 확인 | isMakerByProjectNo or isAdmin |
+| GET | `/api/studio/projects/{projectNo}/maker-projects` | getMakerProjects | 같은 메이커의 프로젝트 목록 | isMakerByProjectNo or isAdmin |
 
 ### `StudioProjectByFundingController` — 스튜디오 펀딩 campaignId로 조회
 base: `/api/studio/projects` (`store-api/.../rest/project/studio/StudioProjectByFundingController.java:16`, `@RestController`, `@ForceMasterDataSource`)

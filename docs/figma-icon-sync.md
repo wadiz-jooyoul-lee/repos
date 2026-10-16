@@ -1,3 +1,13 @@
+> 📅 **2026-10-15 main pull 보강** (1 커밋)
+>
+> 자동 커밋 한 건입니다. 새 아이콘은 없고 **기존 파일 2개의 내용만 바뀌었습니다.**
+>
+> - `assets/pdf/artwork-service-coupon-zone-coupon-black.pdf`
+> - `assets/pdf/artwork-service-coupon-zone-coupon-balck-downloaded.pdf`
+>
+> 두 파일 모두 쿠폰 영역에서 쓰는 쿠폰 모양 아이콘입니다.
+> 바이트 수는 그대로이고 내용만 바뀌었습니다(추가·삭제 줄 0).
+
 > 📅 **2026-10-13 main pull 보강** (2 커밋)
 >
 > 둘 다 자동 커밋입니다 — 피그마 아이콘 갱신과 그에 따른 `PDF → iOS imageset` 변환입니다.

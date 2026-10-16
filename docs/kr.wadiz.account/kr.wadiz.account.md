@@ -1,5 +1,42 @@
 # kr.wadiz.account 분석 문서
 
+> 📅 **2026-10-15 cloud_live pull 보강** (5 커밋)
+>
+> | 이슈키 | 무엇을 했나 |
+> |---|---|
+> | `BE3-1053` | 로그인·연동 실패 후 보내는 주소에서 이메일을 뺐습니다 (2커밋) |
+> | `FE1-2135` | Braze 웹 SDK 로더를 3.0 에서 7.0 으로 교체했습니다 (1커밋) |
+> | `BE3-1048` | 배포 워크플로를 공용 `@v2` 와 GitHub App 토큰으로 바꿨습니다 (2커밋) |
+>
+> ### `BE3-1053` — 리다이렉트 주소에서 이메일을 뺐습니다
+>
+> 소셜 로그인이 실패하거나 계정을 연동해야 할 때, 서버가 사용자를 다른 화면으로 보냅니다.
+> 그 주소에 `username`(이메일)이 붙어 있었습니다.
+> 주소는 브라우저 주소창과 접속 기록에 그대로 남기 때문에 이메일이 노출됩니다.
+>
+> | 경우 | 종전 주소 | 바뀐 주소 |
+> |---|---|---|
+> | 비밀번호로 계정 연동(`LINK_WITH_PASSWORD`) | `/social-link?username&returnURL` | `/social-link?returnURL` |
+> | 다른 소셜로 로그인 안내(`LOGIN_WITH_EMAIL` 등) | `/login?errorCode=…&username&(providers)` | `/login?errorCode=…&(providers)` |
+>
+> 고친 파일은 `src/main/java/kr/wadiz/oauth2/application/authentication/social/exception/EmailAlreadyRegisteredException.java` 입니다.
+> 검증용 시험 `EmailAlreadyRegisteredExceptionTest.kt` 가 새로 생겼습니다.
+> 이 정정은 [`api-details/oauth2-auth-core.md`](./api-details/oauth2-auth-core.md) 의 5.4 절 본문에도 반영했습니다.
+>
+> ### `FE1-2135` — Braze 웹 SDK 로더 교체
+>
+> Braze 는 와디즈가 쓰는 고객 메시지 도구(CRM)입니다.
+> 로그인 화면 틀 `src/main/resources/templates/layout.html` 에 들어 있는 **로더 스니펫**을 통째로 바꿨습니다.
+> 로더 스니펫은 실제 SDK 파일을 내려받기 전까지 호출을 잠시 모아 두는 짧은 코드입니다.
+>
+> | 항목 | 종전 | 지금 |
+> |---|---|---|
+> | 전역 이름 | `window.appboy` · `window.appboyQueue` | **`window.braze` · `window.brazeQueue`** |
+> | 내려받는 파일 | `https://js.appboycdn.com/web-sdk/3.0/appboy.min.js` | **`https://js.appboycdn.com/web-sdk/7.0/braze.min.js`** |
+>
+> `appboy` 는 Braze 의 옛 이름입니다. 7.0 에서는 전역 이름이 `braze` 로 바뀌었습니다.
+> 배너·기능 플래그·채팅처럼 3.0 에 없던 기능의 이름도 로더 목록에 함께 들어왔습니다.
+
 > 📅 **2026-10-13 cloud_live pull 보강** (7 커밋, 전부 `BE3-912`)
 >
 > **자동 로그인(remember-me) 처리를 전반적으로 다시 손봤습니다.** 자동 로그인은 브라우저에 쿠키를 남겨 다음에 올 때 로그인 화면을 건너뛰게 하는 기능입니다.

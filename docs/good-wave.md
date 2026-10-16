@@ -3,6 +3,44 @@
 > 와디즈 사내 TF **팀 굿웨이브**가 만드는 캠페인 웹사이트입니다. 서비스 본체와 무관한 **별도 프론트엔드 제품**이며, 기수(期)마다 새 캠페인 페이지를 만들어 한 저장소에 쌓아 갑니다.
 > Org: `wadiz-fe` (`https://github.com/wadiz-fe/good-wave.git`). 배포 이름 **`good-wave-anyone-can-challenge`**, 플랫폼 `client`.
 
+> 📅 **2026-10-15 cloud_live pull 보강** (6 커밋)
+>
+> **온프레미스 시절에 쓰던 환경을 걷어내고 `dev`·`clive` 둘만 남겼습니다.**
+> 온프레미스는 와디즈가 직접 두고 쓰던 서버이고, 지금은 클라우드로 옮긴 상태입니다.
+> 양쪽을 다 지원하느라 환경이 네 벌이었는데, 이제 두 벌로 줄었습니다.
+>
+> | 이슈키 | 무엇을 했나 |
+> |---|---|
+> | `CLIENT-342` | 환경·빌드 설정을 `dev`·`clive` 두 벌로 정리 (5커밋) |
+> | `CLIENT-341` | 이미지 태그 갱신 잡을 공용 워크플로 `@v2` 와 GitHub App 토큰으로 변경 (1커밋) |
+>
+> ### `CLIENT-342` — 무엇이 없어졌나
+>
+> | 종류 | 없어진 것 | 남은 것 |
+> |---|---|---|
+> | 환경 파일 | `apps/good-wave/.env.production.cdev` · `apps/good-wave/.env.production.live` | `.env.production.dev`(내용은 옛 `cdev` 것으로 교체) · `.env.production.clive` |
+> | 빌드 스크립트 | `build:cdev` · `build:live` · `build:odev` (`apps/good-wave/package.json`) | `build:dev` · `build:clive` |
+> | CI 환경 선택지 | `cdev` · `live` | `dev`(기본) · `clive` |
+> | CI 트리거 브랜치 | `cloud_dev` · `main` | `cloud_live` · `dev` |
+>
+> `build:dev` 의 결과물 경로도 `.next` 로 통일했습니다.
+>
+> ### `CLIENT-342` — 데이터베이스 접속 변수가 하나로 합쳐졌습니다
+>
+> `apps/good-wave/src/app/api/dataSource.ts` 에서 **클라우드인지 아닌지 가르던 분기를 지웠습니다.**
+>
+> 종전에는 `ENVIRONMENT` 값이 `cdev`·`clive` 면 클라우드용 변수를, 아니면 온프레미스용 변수를 골라 썼습니다.
+> 이제 분기 없이 클러스터 비밀값(secret) 이름 하나만 씁니다.
+>
+> | 항목 | 지금 쓰는 변수 |
+> |---|---|
+> | 비밀번호 | `mysql_wadiz_good_wave_password` |
+> | 사용자명 | `GOOD_WAVE_CLOUD_DATABASE_USER_NAME` |
+>
+> 없어진 변수는 `GOOD_WAVE_DATABASE_PASSWORD` 와 `GOOD_WAVE_DATABASE_USER_NAME` 입니다.
+>
+> 이 정리에 맞춰 아래 "브랜치 ↔ 환경 매핑" 표도 함께 고쳤습니다.
+
 > 📅 **2026-10-13 cloud_live pull 보강** (1 커밋)
 >
 > `CLIENT-323` — 도커 실행 단계(`runner`)에 `apt-get upgrade` 를 넣었습니다(`apps/good-wave/Dockerfile`, 2줄).
@@ -118,14 +156,12 @@ CI 워크플로가 **브랜치 이름을 환경 이름으로 번역**합니다 (
 
 | 브랜치 | 환경(`environment`) | ECR 계정 |
 |---|---|---|
-| `cloud_dev` | **`cdev`** | `843734097580` |
 | `cloud_live` | **`clive`** | `393290902814` |
 | `dev` | `dev` | `843734097580` |
-| `main` | **`live`** | `393290902814` |
 
 - 이미지 태그는 `{환경}-{short sha 8자리}` 형식이고, AWS 인증은 **ECR 계정 번호로 role 을 골라 OIDC** 로 받습니다.
 - 체크아웃은 **sparse-checkout**(`.github`·`apps/good-wave`·`packages`)으로 필요한 부분만 받습니다.
-- ⚠️ **README 의 배포 안내가 현행과 어긋납니다.** README 는 "환경(dev/main) 브랜치에 병합하면 CI 를 트리거" 라고만 적었는데, 실제 워크플로는 **`cloud_dev`·`cloud_live` 두 클라우드 브랜치를 더 받습니다.** 기준 브랜치도 `cloud_live` 입니다.
+- ⚠️ **README 의 배포 안내가 현행과 어긋납니다.** README 는 "환경(dev/main) 브랜치에 병합하면 CI 를 트리거" 라고만 적었는데, 실제 워크플로가 받는 브랜치는 **`cloud_live` 와 `dev` 둘뿐**입니다. `main` 은 더 이상 CI 를 트리거하지 않습니다. 기준 브랜치는 `cloud_live` 입니다.
 
 ### 쿠버네티스 배포 (helm)
 

@@ -41,10 +41,10 @@
 - **읽은 파일** (2026-10-06 재확인):
   - `wadiz-frontend/packages/api/src/web/funding/orders.service.ts:58,111,178,260,264` — 세션·주문서·금액계산 호출
   - `wadiz-frontend/apps/global/src/app/korea-routes/funding.tsx:54-92` — 새 결제 화면 라우트 3단
-  - `com.wadiz.web/web/WEB-INF/web.xml:196-204` — `/web/apip/*` 프록시 servlet
-  - `com.wadiz.web/web/WEB-INF/web.xml:121-130` — 일부 `/web/apip/*` 경로에 붙는 토큰 인증 필터
+  - `com.wadiz.web/web/WEB-INF/web.xml:198-208` — `/web/apip/*` 와 `/web/maker-proxy/*` 를 함께 받는 프록시 servlet
+  - `com.wadiz.web/web/WEB-INF/web.xml:121-132` — 일부 `/web/apip/*` 경로에 붙는 토큰 인증 필터
   - `com.wadiz.web/src/main/java/com/wadiz/api/httpproxy/ApiProxyServletDispatcher.java:1-52`
-  - `com.wadiz.web/src/main/java/com/wadiz/web/wpurchase/controller/WWEBPurchaseRewardController.java:40-213` — 지금은 **되돌려 보내기 2개 + 완료 페이지 1개**뿐
+  - `com.wadiz.web/src/main/java/com/wadiz/web/wpurchase/controller/WWEBPurchaseRewardController.java:30-145` — 지금은 **되돌려 보내기 3개**뿐. 2026-10-15(`QA-23508`)에 완료 페이지 JSP 도 없어지고 `/web/funding/payment/completed/{backingPaymentId}` 로 넘기기만 합니다
   - `com.wadiz.web/src/main/java/com/wadiz/web/fw/config/GlobalUrlMappingConfig.java:205-222` — 국내↔글로벌 결제 주소 짝
   - `com.wadiz.api.funding/adapter/application/.../orderpayment/OrderPaymentController.java` (v1) · `OrderPaymentV2Controller.java` (v2)
   - `com.wadiz.api.funding/adapter/application/.../order/OrderController.java` (v1) · `OrderV2Controller.java` (v2)
@@ -62,13 +62,13 @@
 
 | 경로 | 핸들러 | 용도 |
 |---|---|---|
-| **`/web/apip/funding/*`** | `com.wadiz.core.httpproxy.ApiProxyServlet` (`web.xml:196-204`) 역프록시 → `com.wadiz.api.funding` | **REST API** — 주문 세션·주문서·결제 리소스 |
+| **`/web/apip/funding/*`** | `com.wadiz.core.httpproxy.ApiProxyServlet` (`web.xml:198-208`) 역프록시 → `com.wadiz.api.funding` | **REST API** — 주문 세션·주문서·결제 리소스 |
 | **`/web/funding/payment*`** | `GlobalKoreaUIController` → `global-korea/index` **리액트 셸** | **결제 화면** (2026-09-28 이관) |
-| **`/web/wpurchase/reward/*`** | com.wadiz.web 자체 `@Controller` | 되돌려 보내기 2개 + **완료 페이지 JSP 1개** |
+| **`/web/wpurchase/reward/*`** | com.wadiz.web 자체 `@Controller` | 되돌려 보내기 3개 — 완료 페이지도 2026-10-15 부터 새 화면으로 넘깁니다 |
 
 **⚠️ 종전 서술 정정.** 이 자리에 "`/web/apip/funding/supporters/my/fundings` 같은 특정 URL만 다른 servlet 이 선점한다"고 적혀 있었습니다. **그렇지 않습니다.**
 
-`web.xml:121-130` 은 **servlet 이 아니라 필터 매핑**입니다. `bearerTokenAuthenticationFilter` 가 아래 네 경로에만 추가로 붙습니다. 선점이 아니라 **인증을 덧붙이는 것**입니다.
+`web.xml:121-132` 은 **servlet 이 아니라 필터 매핑**입니다. `bearerTokenAuthenticationFilter` 가 지정된 경로(2026-10-15 기준 9개)에만 추가로 붙습니다. 선점이 아니라 **인증을 덧붙이는 것**입니다.
 
 ```
 /web/apip/funding/supporters/my/fundings

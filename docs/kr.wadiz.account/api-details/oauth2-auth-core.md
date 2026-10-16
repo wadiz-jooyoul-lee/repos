@@ -262,8 +262,9 @@ Spring Authorization Server 가 기본 제공. `OAuth2AuthorizationServerConfigu
   - `DropoutHistoryExistsException` → `socialAccountRepositoryPort.removeSocialUser()` 후 `/login?errorCode=DROPOUT_HISTORY_EXISTS` (`:77-82`).
   - `HavingSocialAccount` (= `SignUpNeededException`·`SocialEmptyEmailException`) → `/social-signup?returnURL=<signup-complete-uri>` (`:160-176`). 소셜 계정은 `socialAccountRepositoryPort.saveSocialAccount(...)` 로 보관되어 signup 완료 시 재사용.
   - `EmailAlreadyRegisteredException`:
-    - `LINK_WITH_PASSWORD` → `/social-link?username&returnURL` (client의 `settings.client.signup-complete-uri` 가 `returnURL`로 사용됨, `:141-144`, `linkReturnUrlFrom`).
-    - 그 외 → `/login?errorCode=...&username&(providers)`.
+    - `LINK_WITH_PASSWORD` → `/social-link?returnURL` (client의 `settings.client.signup-complete-uri` 가 `returnURL`로 사용됨, `:141-144`, `linkReturnUrlFrom`).
+    - 그 외 → `/login?errorCode=...&(providers)`.
+    - 2026-10-15 기준 두 경로 모두 **`username`(이메일)을 더 이상 싣지 않습니다**(`BE3-1053`). 리다이렉트 주소는 브라우저 주소창과 접속 기록에 남아 이메일이 노출되기 때문입니다.
   - 그 외 → `DebugUtil.showStackTrace` 후 기본 `/login?error;` (`:63-66`).
 - **`getClientIdFrom`** — `savedRequest`에 `client_id` 가 없으면 기본값 `"com_wadiz_web"` 사용 (`:116-125`).
 

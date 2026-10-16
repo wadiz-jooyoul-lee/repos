@@ -6,7 +6,7 @@
 - **읽은 파일**:
   - `wadiz-frontend/packages/api/src/web/funding.service.ts:615-645` (`getMyFundingList`)
   - `wadiz-frontend/apps/global/src/pages/my-wadiz/orders/_ui/MyFundingList.tsx:29-44` (무한 스크롤 페이지 UI)
-  - `com.wadiz.web/web/WEB-INF/web.xml:125-130` (`bearerTokenAuthenticationFilter` 매핑)
+  - `com.wadiz.web/web/WEB-INF/web.xml:121-132` (`bearerTokenAuthenticationFilter` 매핑)
   - `com.wadiz.web/src/main/java/com/wadiz/api/httpproxy/ApiProxyServletDispatcher.java:13`
   - `com.wadiz.api.funding/adapter/application/.../supporter/SupporterController.java:26-80`
   - `com.wadiz.api.funding/adapter/infrastructure/src/main/resources/mapper/FundingMapper.xml:109-155`

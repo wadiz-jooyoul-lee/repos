@@ -5,6 +5,14 @@
 >
 > ⚠️ **이름이 같은 저장소가 둘입니다.** 이미지 태그(`imageVersion`)와 애플리케이션 설정(`configmap.data`)은 이 저장소가 아니라 GitOps 저장소 [`helm-charts-gitops`](./helm-charts-gitops.md)(`wadiz-gitops/helm-charts`)에 있습니다. 이 문서는 **차트·템플릿·배포 스펙** 쪽만 다룹니다.
 
+> 📅 **2026-10-15 main pull 보강** (1 커밋)
+>
+> **rc4 의 `fulfillment-api` 에 메모리를 더 줬습니다.**
+>
+> `charts/service/values/core/rc4/fulfillment-api.yaml` 의 `requestsMemory` 를 **`0.5Gi` 에서 `1Gi` 로** 올렸습니다.
+> `requestsMemory` 는 쿠버네티스가 이 서비스에 미리 잡아 두는 메모리 양입니다.
+> 바뀐 것은 rc4 한 환경뿐이고, 다른 환경 값 파일은 그대로입니다.
+
 > 📅 **2026-10-13 main pull 보강** (6 커밋)
 >
 > | 무엇 | 대상 |

@@ -1,3 +1,23 @@
+> 📅 **2026-10-15 cloud_live pull 보강** (2 커밋)
+>
+> `BE3-1048` — **배포 워크플로의 인증 수단을 정리했습니다.** 코드 변경은 없습니다.
+>
+> 개인 접근 토큰(PAT, Personal Access Token)은 사람 계정에 딸린 열쇠입니다.
+> 그 사람의 계정이 막히거나 토큰이 만료되면 배포가 멈춥니다.
+> GitHub App 토큰은 사람이 아니라 앱에 딸려 있어 그 위험이 없습니다.
+>
+> | 무엇이 | 어떻게 바뀌었나 |
+> |---|---|
+> | 공용 워크플로 버전 | `build_push_container_image.yaml` 과 `update_image_tag.yaml` 을 `@main` 에서 **`@v2`** 로 |
+> | 이미지 태그 갱신 인증 | `gitops_token`(`WADIZ_GITOPS_PAT`) 를 없애고 **`gitops_app_id` · `gitops_app_private_key`** 로 교체 |
+> | 빌드 단계 인증 | 처음엔 `packages_app_id` · `packages_app_private_key` 를 넣었다가, **바로 다음 커밋에서 `wadiz_dev_pat`(`WADIZ_DEV_PAT`) 로 되돌렸습니다** |
+>
+> 빌드 단계만 개인 토큰이 남은 이유는 커밋 제목에 적혀 있습니다 —
+> *"GPR 인증은 PAT 유지"*. GPR 은 GitHub Packages Registry 로, 사내 공용 라이브러리를 받아 오는 저장소입니다.
+> 그쪽 인증은 아직 앱 토큰으로 넘어가지 않았습니다.
+>
+> 바뀐 파일: `.github/workflows/aws_deploy_ecr_dev.yml` · `.github/workflows/aws_deploy_ecr_live.yml`
+
 > 📅 **2026-10-13 cloud_live pull 보강** (1 커밋)
 >
 > `BE3-1035`(DB-3020) — **팔로우 취소 처리의 갱신 질의를 다시 썼습니다.** 코드가 아니라 질의문만 바뀌었습니다.

@@ -1,5 +1,105 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-10-15 master pull 보강** (81 커밋)
+>
+> **메이커 화면(메이커 홈)을 크게 늘린 회차입니다.** 세 갈래가 동시에 들어왔습니다.
+>
+> | 이슈키 | 무엇을 하고 있나 |
+> |---|---|
+> | `RWD-6076` | **메이커 인텔리전스**(프로젝트 진단 보고서) 연동을 붙였습니다 (32커밋) |
+> | `SCOUT-174` | 정산일 목록·단건과 **선정산 신청 가능 여부** API 를 만들었습니다 (24커밋) |
+> | `RWD-5988` | 메이커 홈 대시보드 API 를 새로 만들었습니다 (11커밋) |
+> | `RWD-6156` | 어드민용 **캠페인 태그 관리** API 를 만들었습니다 (6커밋) |
+> | `RWD-6161` · `RWD-5804` · `RWD-6181` · `RWD-5964` · `QA-23505` | 그 밖 (8커밋) |
+>
+> ### `RWD-6076` — 메이커 인텔리전스 연동
+>
+> 메이커 인텔리전스는 프로젝트를 분석해 **진단 보고서를 만들어 주는 별도 서비스**(`io.wadiz.maker-intelligence`)입니다.
+> 펀딩 API 가 그 서비스를 불러 보고서를 가져오고, 새로 만들어 달라고 요청합니다.
+>
+> | HTTP | 경로 | 하는 일 |
+> |---|---|---|
+> | GET | `/api/maker-intelligence/projects/{projectNo}/report/latest` (또는 `/report`) | 최신 보고서를 HTML 로 돌려줍니다 |
+> | GET | `/api/maker-intelligence/projects/{projectNo}/report/versions/{version}` | 특정 판의 보고서 |
+> | POST | `/api/maker-intelligence/projects/{projectNo}/report/refresh` | 새로 진단해 달라고 요청합니다 |
+> | GET | `/api/maker-intelligence/projects/{projectNo}/report/refresh` | 진단이 어디까지 됐는지 봅니다 |
+>
+> 권한은 넷 다 `isMaker(#projectNo) or isAdmin()` 입니다.
+>
+> **진단에 2~4분이 걸립니다.** 그동안 웹 요청을 붙잡고 있으면 서버 자리가 묶입니다.
+> 그래서 `IntelligenceRefreshWaiter` 가 `DeferredResult` 로 응답을 **보류** 해 둡니다.
+> 주석에 그 뜻이 있습니다 — *"생성이 끝날 때까지의 대기 — DeferredResult 라 톰캣 스레드를 점유하지 않는다."*
+>
+> | 값 | 크기 | 근거(주석) |
+> |---|---|---|
+> | 대기 상한 | **270초** | *"앞단이 무응답 300초에 끊는다(내부 ALB 유휴 300초·envoy 스트림 유휴 기본 300초, 10-08 확인) — 그 전에 응답한다"* |
+> | 확인 주기 | 5초 | 메이커 인텔리전스에 끝났는지 물어보는 간격 |
+>
+> 상한에 걸려도 **진단 자체는 계속됩니다.** 마지막으로 본 상태로 응답을 닫을 뿐입니다.
+>
+> 부르는 쪽 설정은 `application.maker-intelligence-client` 입니다 — 주소 · 읽기 제한 시간 · 서비스 키 셋
+> (`adapter/infrastructure/.../client/makerintelligence/MakerIntelligenceClientProperties.java`).
+> 서비스 키는 `X-Service-Key` 헤더로 보내고 배포 환경에서는 비밀 보관소가 넣어 줍니다.
+> 실제 값은 [`helm-charts-gitops`](../helm-charts-gitops.md) 의 clive `funding-api.yaml` 에 이번에 함께 들어왔습니다(읽기 제한 2초).
+>
+> ### `RWD-5988` — 메이커 홈 대시보드
+>
+> `MakerHomeDashBoardController`(`/api/maker-home/dashboard`)에 여섯 개가 더해졌습니다.
+>
+> | 경로 | 무엇을 주나 |
+> |---|---|
+> | `/projects/summary` | 프로젝트 현황 요약 |
+> | `/projects/{projectNo}/closing-summary` | 종료 요약 |
+> | `/projects/{projectNo}/ad-bridge` | 광고로 넘어가는 안내 |
+> | `/projects/{projectNo}/trends/acquisition` | 유입 추이 |
+> | `/projects/{projectNo}/trends/payments` | 결제 추이 |
+> | `/projects/{projectNo}/trends/open-notifications` | 오픈 알림신청 추이 |
+>
+> 요약 경로는 중간에 한 번 바뀌었습니다 — `summary` 에서 **`projects/summary`** 로.
+>
+> 카드 정렬과 집계 규칙도 여러 번 손봤습니다.
+>
+> - 진행중 카드는 **오픈예정 묶음을 먼저, 그다음 본펀딩 묶음** 순서로 놓습니다.
+> - 작성중·종료 카드의 정렬과 개수 제한을 **코드가 아니라 질의로** 옮겼습니다(속도).
+> - 현황 집계를 전체가 아니라 **화면에 보이는 카드 수** 기준으로 바꿨습니다.
+> - 이미 지난 일정은 다음 일정(`nextSchedule`)에서 뺍니다.
+> - 오픈예정 지표에서 **오늘 알림신청자는 뺍니다.**
+> - 모든 구간의 카드에 **중단(비공개) 여부**와 표시 상태·사후 심사 상태를 함께 줍니다.
+>
+> 유입 추이 수치는 데이터플러스(`client/dataplus`)에서 가져옵니다.
+>
+> ### `SCOUT-174` — 정산일과 선정산
+>
+> 새 컨트롤러 `MakerHomeSettlementController`(`/api/maker-home/settlements`)가 목록과 단건을 줍니다.
+> 목록은 페이지를 나눠 주고, 정렬은 **프로젝트 오픈일 내림차순**입니다.
+>
+> 내부용으로 `GET /api/internal/settlement/{campaignId}/preliminary-settlement/availability` 가 생겼습니다.
+> 선정산은 정산일 전에 미리 받는 것이고, 이 API 는 **지금 신청할 수 있는지**를 알려 줍니다.
+>
+> | 항목 | 내용 |
+> |---|---|
+> | 신청 가능 기간 | 프로젝트 **종료일 + 10일** 까지 (처음엔 +5일이었다가 고쳤습니다) |
+> | 함께 주는 값 | 신청 마감일(`preliminarySettlementDeadline`) · 신청 가능 비율(`preliminarySettlementRate`) |
+>
+> **정산비율 표기에서 버그를 하나 잡았습니다.** 응답에서 100을 곱하던 것을 뺐습니다.
+> 커밋에 증상이 적혀 있습니다 — *"ERP 분기 퍼센트값 4000% 버그 방지"*.
+> 도메인 안에서는 소수로 다루고, **응답으로 내보낼 때만 정수 퍼센트로** 바꾸도록 통일했습니다.
+> 주석에도 그 규약을 적었습니다 — 어드민(ADM)은 소수, 스튜디오는 정수.
+>
+> ### `RWD-6156` — 어드민 캠페인 태그 관리
+>
+> `CampaignTagAdminController`(`/api/admin/campaign-tags`)가 생겼습니다. 전부 `isAdmin()` 권한입니다.
+> 조회·해제·목록·미리보기·적용에 더해 **변경 이력과 되돌리기**까지 있습니다.
+>
+> | 종류 | 경로 |
+> |---|---|
+> | 조회 | `GET /campaigns/{campaignId}` · `GET /tags` · `GET /tags/campaigns` |
+> | 변경 | `POST /preview`(미리보기) · `POST /apply`(적용) · `DELETE /campaigns/{campaignId}/tags`(해제) |
+> | 이력 | `GET /histories` · `GET /histories/{id}` · `POST /histories/{id}/rollback` |
+>
+> 이력은 몽고DB 에 쌓습니다(`mongo/admincampaigntag/CampaignTagChangeLog*`).
+> 짝이 되는 어드민 화면이 같은 날 [`co.wadiz.adm`](../co.wadiz.adm.md) 에도 들어왔습니다.
+
 > 📅 **2026-10-13 master pull 보강** (8 커밋)
 >
 > | 이슈키 | 무엇을 하고 있나 |

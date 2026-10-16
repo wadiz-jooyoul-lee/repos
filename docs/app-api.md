@@ -1,3 +1,69 @@
+> 📅 **2026-10-15 cloud_live pull 보강** (21 커밋)
+>
+> **앱 설정을 누가 언제 어떻게 바꿨는지 남기고, 되돌릴 수 있게 됐습니다.**
+> 앱 설정(`app_setting`)은 앱이 실행 중에 읽어 가는 기능 켜고 끄기 값입니다.
+> 종전에는 바꾸고 나면 이전 값이 남지 않았습니다.
+>
+> | 이슈키 | 무엇을 했나 |
+> |---|---|
+> | `FE1-2019` | 설정을 만들고 고치고 지울 때 변경 이력을 남기도록 했습니다 (2커밋) |
+> | `FE1-2020` | 이력 조회 API 를 만들었습니다 (6커밋) |
+> | `FE1-2021` | 이력 시점으로 되돌리는 API 를 만들었습니다 (6커밋) |
+> | `FE1-2027` | 어드민 화면(adm)에서 온 요청도 받고, 누가 요청했는지 이력에 남깁니다 (3커밋) |
+> | `FE1-1996` | 주석·로그의 영문 뒤 조사 띄어쓰기를 붙여 썼습니다 (1커밋) |
+>
+> ### 새로 생긴 API 두 가지
+>
+> | HTTP | 경로 | 용도 |
+> |---|---|---|
+> | GET | `/api/v1/settings/changes` | 변경 이력 조회. `platform` 과 `feature` 는 선택값이고 페이지 나누기를 지원합니다 |
+> | POST | `/api/v1/settings/changes/{changeId}/restore` | 그 이력 시점의 값으로 되돌립니다 |
+>
+> 둘 다 `AuthGuard` 를 거칩니다.
+>
+> ### 이력 테이블이 새로 생겼습니다
+>
+> `app_setting_history` 입니다. 지우거나 고치지 않고 **덧붙이기만** 합니다
+> (`src/api/settings/entities/app-setting-history.entity.ts`).
+> 코드 주석에 이유가 적혀 있습니다 — *"append-only 이력이라 updated_at이 의미가 없어 BaseEntity를 상속하지 않습니다"*.
+>
+> | 칸 | 무엇이 들어가나 |
+> |---|---|
+> | `operation` | `CREATE` · `UPDATE` · `DELETE` · `RESTORE` 중 하나 |
+> | `before_value` · `after_value` | 바뀌기 전후의 설정 값 |
+> | `actor_type` | 누가 바꿨나 — `ADMIN`(어드민 로그인) · `TOKEN`(정적 토큰) · `SYSTEM` |
+> | `actor_id` · `actor_name` | 어드민이면 회원 번호와 로그인 계정 |
+> | `client_ip` | 요청을 보낸 주소 |
+> | `change_group_id` | 한 번에 여러 건이 바뀐 경우 묶는 값 |
+> | `restored_from_history_id` | 되돌리기라면 어느 이력에서 왔는지 |
+>
+> `platform_name` 만 열거형이 아니라 글자열입니다. 주석에 그 이유가 있습니다 —
+> *"플랫폼 추가 시 이력 테이블 ALTER 누락으로 설정 변경이 막히지 않도록"*.
+>
+> ### `FE1-2027` — 어드민 토큰도 받습니다
+>
+> 종전에는 `AuthGuard` 가 환경변수 `BEARER_TOKEN` 과 글자 그대로 같은지만 봤습니다.
+> 이제 **adm 프록시가 발급한 토큰(HS256)도 받습니다.** 그 토큰의 `rol` 에 `ADMIN` 이 들어 있어야 합니다.
+> 통과한 주체는 `request.actor` 에 실려 이력의 `actor_type` · `actor_id` · `actor_name` 으로 들어갑니다.
+>
+> 본문이 있는 쓰기 요청이 JSON 이 아니면 **415** 로 거부합니다.
+> 주석에 그 뜻이 있습니다 — *"다른 출처의 JSON 요청은 CORS 사전 확인에 막히므로, 본문이 있는 쓰기를 JSON으로 한정해 위조 요청을 막습니다"*.
+>
+> ### 요청자 주소를 어디서 읽는지 바뀌었습니다
+>
+> `src/common/helpers/request.helper.ts` 의 `getClientIp` 입니다.
+>
+> 1. 먼저 `X-Envoy-External-Address` 를 봅니다. Istio 게이트웨이가 신뢰하는 프록시 수를 반영해 넣어 주는 값입니다.
+> 2. 그 헤더가 없을 때만 `X-Forwarded-For` 의 **맨 오른쪽** 값을 씁니다.
+>
+> 왼쪽 값과 `Forwarded` 헤더는 호출자가 마음대로 적을 수 있어 믿지 않습니다.
+> `Forwarded` 헤더에서 읽은 값 중 주소 모양이 아닌 것은 버립니다.
+>
+> ### 그 밖에
+>
+> - 설정을 동시에 만들거나 되돌려 **유일성 제약을 어기거나 교착이 나면 `409`** 로 응답합니다.
+> - `ADM_PROXY_JWT_SECRET` 이 설정되지 않은 환경에서는 경고를 **한 번만** 남깁니다.
+
 > 📅 **2026-10-13 cloud_live pull 보강** (3 커밋)
 >
 > 애플리케이션 코드는 이번에도 손대지 않았습니다. 셋 다 빌드·배포 설정입니다.
@@ -255,7 +321,7 @@
   - API 모듈: `Health`, `Links`, `Proxy`, `Project`, `Redirect`, `Settings`, `Support`, `Webhooks`
 - 요청 파이프라인: `HttpExceptionFilter → CORS → ValidationPipe → Controller → Service → Repository(TypeORM)` (README mermaid)
 - 공통 구성
-  - `AuthGuard` (`src/common/guards/auth.guards.ts:17-28`): 내부 `BEARER_TOKEN` 정적 비교 — `Settings` 쓰기 API에만 사용
+  - `AuthGuard` (`src/common/guards/auth.guards.ts:55-115`): 내부 `BEARER_TOKEN` 정적 비교 **또는** adm 프록시가 발급한 HS256 토큰(`ADM_PROXY_JWT_SECRET`, `rol` 에 `ADMIN` 필요) 중 하나가 맞으면 통과 — `Settings` 쓰기·이력 API에 사용. 통과한 주체는 `request.actor` 에 `{ type: 'TOKEN' }` 또는 `{ type: 'ADMIN', userId, userName }` 로 실립니다. 본문이 있는 쓰기(`POST`·`PUT`·`PATCH`)가 JSON 이 아니면 `415` 로 거부합니다(다른 출처의 위조 요청 차단). adm 프록시 토큰은 `exp` 가 없어 만료를 검사하지 않습니다(adm 세션 유지 여부에 맡김)
   - `AccountGuard` (`auth.guards.ts:53-92`): `ACCOUNT_API_OPENID_CONFIGURATION_URL`에서 OpenID 구성 로드, JWKS로 RS256 검증, `userinfo_endpoint` 호출 → `request.userInfo` 주입
   - `ZendeskWebhookGuard` (`auth.guards.ts:98-127`): `X-Zendesk-Webhook-Signature*` 헤더를 `APP_API_ZENDESK_SIGNING_SECRET`으로 HMAC-SHA256 검증 (`rawBody` 필요 → `main.ts:31`)
   - `zendeskClientProvider` (`src/common/providers/zendesk.provider.ts:12-76`): live=`wadiz6256`, 그 외=`wadiz-dev` 서브도메인 자동 분기, Basic 인증 헤더 자동 주입, 에러 재포장
@@ -280,6 +346,8 @@
 | GET | /api/v1/proxy?targetUrl=... | ProxyController.proxyImage | 외부 리소스 프록시 다운로드(SSRF 방어 포함) |
 | POST | /api/v1/settings | SettingsController.createV1 | 앱 설정 생성 (BEARER) |
 | GET | /api/v1/settings?platform=...&feature=... | SettingsController.findV1 | 앱 설정 조회(플랫폼 + COMMON 병합, 캐시) |
+| GET | /api/v1/settings/changes | SettingsController.findChangesV1 | 앱 설정 변경 이력 조회 (BEARER 또는 adm 어드민, 페이지네이션) |
+| POST | /api/v1/settings/changes/:changeId/restore | SettingsController.restoreChangeV1 | 변경 이력 시점으로 되돌리기 (BEARER 또는 adm 어드민) |
 | PATCH | /api/v1/settings/:id | SettingsController.updateV1 | 앱 설정 값 수정 (BEARER) |
 | DELETE | /api/v1/settings/:id | SettingsController.removeV1 | 앱 설정 삭제 (BEARER) |
 | GET | /api/v1/support/tickets | SupportController.getTickets | 사용자 Zendesk 티켓 목록 (AccountGuard) |
@@ -400,6 +468,7 @@
 | --- | --- | --- |
 | walink | `WalinkEntity` (`src/api/links/entities/walink.entity.ts`) | 단축 URL: walink_no PK, target_path_hash(md5, 인덱스), target_path(varchar 2000), short_id(uniq 15자), is_app_store_fallback_enabled, created_at/updated_at |
 | app_setting | `AppSettingEntity` (`src/api/settings/entities/app-setting.entity.ts`) | 앱 런타임 설정: setting_id PK, platform_name(클라이언트 common/android/ios/web + 서버 web-server), feature_name(30), setting_value(text JSON), UNIQUE(platform_name, feature_name) |
+| app_setting_history | `AppSettingHistoryEntity` (`src/api/settings/entities/app-setting-history.entity.ts`) | 앱 설정 변경 이력(덧붙이기 전용): history_id PK, setting_id, platform_name(varchar 20), feature_name(30), operation(CREATE/UPDATE/DELETE/RESTORE), before_value/after_value(text), actor_type(ADMIN/TOKEN/SYSTEM), actor_id, actor_name(100), client_ip(45), change_group_id(36), restored_from_history_id, registered_at. 인덱스 2개 — (platform_name, feature_name, registered_at) · (registered_at) |
 
 > Support/Help-Center/Proxy는 외부 Zendesk·와디즈 API를 직접 호출하므로 DB 테이블을 사용하지 않습니다.
 

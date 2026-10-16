@@ -4,10 +4,37 @@
 
 > **기록 범위**: `store-api`/`store-batch`/`store-service`/`store-shared` 소스를 직접 관측한 사실만 기록합니다. 사내 아티팩트(`reward-*`, `notification-client`, `wave-crypto` 등) 내부 구현과 Kafka 스키마 원본(Schema Registry), 배치 스케줄 주기(외부 스케줄러)는 저장소 밖이라 확인 불가입니다.
 
-- **엔드포인트 전수**: [`api-endpoints.md`](./api-endpoints.md) — 73개 컨트롤러 × **254 엔드포인트**
+- **엔드포인트 전수**: [`api-endpoints.md`](./api-endpoints.md) — 73개 컨트롤러 × **255 엔드포인트**
 - **API 진입점**: `store-api/src/main/java/com/wadiz/store/api/ApiApplication.java`, 서버 포트 **9080**
 
 ---
+
+> 📅 **2026-10-15 cloud_live pull 보강** (5 커밋)
+>
+> `RWD-5989` — **스튜디오에서 "이 메이커가 가진 다른 프로젝트"를 불러오는 조회 API 가 생겼습니다.**
+>
+> | HTTP | 경로 | 권한 |
+> |---|---|---|
+> | GET | `/api/studio/projects/{projectNo}/maker-projects` | `isMakerByProjectNo(#projectNo)` 또는 `isAdmin()` |
+>
+> 응답은 가벼운 형태입니다 — `projectNo` · `title` · `status` · `submittedAt`(제출 일시) · `registeredAt`(개설 일시) 다섯 가지뿐입니다
+> (`store-api/src/main/java/com/wadiz/store/api/rest/project/studio/payload/StudioMakerProjectResponse.java`).
+>
+> **정렬 규칙이 두 단계입니다.**
+>
+> 1. 지금 보고 있는 프로젝트를 맨 위로 올립니다.
+> 2. 그다음은 판매중인 것을 먼저 놓고 제출 일시가 최신인 순서로, 나머지는 개설 일시가 최신인 순서로 놓습니다.
+>
+> **누구의 목록인가가 중간에 한 번 바뀌었습니다.**
+>
+> 처음에는 기준 프로젝트의 `makerNo` 로 같은 메이커를 찾았습니다.
+> 그런데 `Maker` 행은 **프로젝트마다 따로 만들어집니다.** 그래서 같은 사람인데도 프로젝트가 다르면 `makerNo` 가 달라 목록이 빠졌습니다.
+> 이를 `Maker.userId`(사람 기준)로 바꿔, 프로젝트 테이블과 메이커 테이블을 이어 붙여(JOIN) 찾도록 고쳤습니다
+> (`store-service/project/infrastructure/.../ProjectJpaRepositoryImpl.java`).
+>
+> 조회 메서드 이름도 함께 바뀌었습니다 — `findAllByProjectOwner(projectNo)` 에서 **`findAllByMakerUserId(userId, currentProjectNo)`** 로.
+>
+> 세션 사용자가 아니라 **프로젝트 소유자 기준**이라, 관리자가 들여다봐도 그 메이커의 목록이 나옵니다.
 
 > 📅 **2026-10-13 cloud_live pull 보강** (9 커밋)
 >
