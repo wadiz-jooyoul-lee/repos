@@ -2,6 +2,34 @@
 
 > ⚠️ 분석은 `dev` 브랜치 기준입니다. `main` 브랜치는 README만 있는 빈 상태이며 실제 코드는 모두 `origin/dev` 에 있습니다.
 
+> 📅 **2026-10-01 main pull 보강** (3 커밋)
+>
+> | 이슈키 | 내용 |
+> |---|---|
+> | `SCOUT-199` | **OpenSearch 설정에서 프로파일 분기를 걷어내고 설정값 기반으로 바꿨습니다** |
+> | `SCOUT-199` | `rc` 브랜치에 푸시하면 **`rc1` 과 `rc4` 값 파일의 이미지 태그를 함께** 갱신합니다 |
+> | — | REST Docs 에서 인증 토큰을 빼고 환경별 Host 를 갱신했습니다 |
+>
+> **OpenSearch 설정이 어떻게 바뀌었나**
+>
+> 예전에는 `@Profile` 로 환경마다 다른 빈을 만들었습니다.
+> 지금은 설정값 하나로 가릅니다.
+>
+> ```java
+> @Value("${tls.skip-opensearch-verification:false}")
+> private boolean skipTlsVerification;
+> ```
+>
+> 이 값이 참이면 `NoopHostnameVerifier` 와 직접 만든 `SSLContext` 를 써서 **인증서 검증을 건너뜁니다.**
+> 기본값은 거짓입니다.
+>
+> > ⚠️ **확인 필요 — 어느 환경이 이 값을 참으로 두는지는 이 저장소로 알 수 없습니다.**
+> > 값이 쿠버네티스 설정맵에 있기 때문입니다. 운영에서 켜져 있다면 가운데자 공격에 노출됩니다.
+>
+> `rc1` 값 파일을 함께 갱신하기 시작한 것은 [`helm-charts-gitops`](./helm-charts-gitops.md) 의 **rc1 환경 가동**과 같은 흐름입니다.
+>
+> ---
+
 > 📅 **2026-07-10 pull 보강** (6 커밋, `dev` — CM2-175 배포/환경 통합)
 >
 > ### `clive`(cloud-live) 환경 추가

@@ -1,5 +1,12 @@
 # com.wadiz.api.funding 레포지토리 API 분석 리포트
 
+> 📅 **2026-10-01 master pull 보강** (1 커밋)
+>
+> `aws_deploy_ecr_rc1.yml` 을 추가했습니다. **rc1 배포 워크플로**입니다.
+> 코드 변경은 없습니다.
+>
+> 이번 회차에 같은 파일을 넣은 저장소가 6곳입니다 — [`helm-charts-gitops`](../helm-charts-gitops.md) 의 rc1 항목을 봅니다.
+
 > 📅 **2026-09-22 master pull 보강** (7 커밋)
 >
 > ### RWD-6073 — 주문서 금액 검증 강화 (보안)

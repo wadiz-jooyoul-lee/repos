@@ -1,5 +1,19 @@
 # kr.wadiz.account 분석 문서
 
+> 📅 **2026-10-01 cloud_live pull 보강** (2 커밋)
+>
+> | 이슈키 | 내용 |
+> |---|---|
+> | `BE3-984` | **`check_token` 토큰 조회를 access·refresh 분리로 바꿔 풀스캔을 없앴습니다** |
+> | `BE3-989` | `client-java` 를 27.0.0 으로 올려 `actuator` 상태 점검이 503 을 내던 문제를 풀었습니다 |
+>
+> **`BE3-984` 가 고친 것**
+>
+> `AuthorizationRepository` 에서 메서드 하나가 빠지고 `JpaOAuth2AuthorizationService` 가 바뀌었습니다.
+> 종전에는 토큰 하나를 찾으려고 **표를 전부 훑었습니다.**
+> 지금은 접근 토큰인지 갱신 토큰인지 가려서 해당 칼럼만 봅니다.
+> 검증 시험 `JpaOAuth2AuthorizationServiceFindByTokenTest.kt`(104줄)가 함께 붙었습니다.
+
 > 📅 **2026-09-22 cloud_live pull 보강** (2 커밋)
 >
 > 두 커밋 모두 `BE3-969` 입니다.

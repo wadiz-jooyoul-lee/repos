@@ -1,5 +1,15 @@
 # co.wadiz.api.community
 
+> 📅 **2026-10-01 cloud_live pull 보강** (2 커밋)
+>
+> | 이슈키 | 내용 |
+> |---|---|
+> | `RWD-6116` | **지지서명 단건 조회에 캠페인 안에서의 생성 순서(`order`)를 싣습니다** |
+> | `RWD-6129` | `spring.rabbitmq.password` 를 **시크릿 환경 변수 직접 참조**로 바꿨습니다 |
+>
+> `RWD-6129` 는 설정에서 비밀값을 걷어내는 흐름입니다.
+> [`kr.wadiz.account`](../kr.wadiz.account/kr.wadiz.account.md) 의 `BE3-410` 과 같은 방향입니다.
+
 > 📅 **2026-09-30 본문 점검** — `cloud_live` 브랜치 `268c0f5`(2026-09-21) 기준
 >
 > 본문에서 코드와 어긋난 곳 세 군데를 고쳤습니다.

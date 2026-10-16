@@ -5,13 +5,37 @@
 > - Point Save / Product Catalog API는 외부 마이크로서비스이며 이 repo에서는 URL 규칙·요청 DTO·응답 JSON 파싱만 확인 가능하다.
 > - MyBatis SQL 본문은 XML에서 그대로 인용하며, 추론한 SQL은 기록하지 않는다.
 
+> 📅 **2026-09-30 본문 점검** — `cloud_live` 브랜치 `a316bc16`(2026-09-21) 기준
+>
+> | 고친 곳 | 내용 |
+> |---|---|
+> | **1장 Session 도메인** | **통째로 사라졌습니다.** `IAM-3650`(2026-01-19)이 지웠습니다. 삭제 기록으로 바꿨습니다 |
+> | 3.3 Redis 캐시 키 | `catchup:events:all` 에 **환경 접두가 붙었습니다** (`BE3-699`, 2026-07-27) |
+> | 3.4 설정 클래스 이름 | `RedisTemplateForPlatform` 이 **`PlatformRestTemplateConfig`** 로 바뀌었습니다 |
+>
+> **Event Invite 와 CatchUp 컨트롤러는 모두 그대로 있습니다.**
+> 다만 CatchUp 쪽은 2026-06~08 에 손질이 이어졌습니다.
+>
+> | 이슈키 | 날짜 | 내용 |
+> |---|---|---|
+> | `BE3-464` | 2026-06 | 클라우드 적응(`javax`→`jakarta`), 상품 API 호출 풀·타임아웃 조정 |
+> | `BE3-593` | 2026-07~08 | 감사 필드를 `Date` 에서 `LocalDateTime` 으로 (DB `timestamp`→`datetime` 대응) |
+> | `BE3-654` | 2026-07-20 | 보너스 조회에 `catch_up_date` 등호 조건 적용 (파티션 잘라내기) |
+> | `BE3-677` | 2026-07-24 | 상품 풀이 비었을 때 NPE 수정. **빈 풀이면 저장하지 않고 빈 응답**을 줍니다 |
+> | `BE3-699` | 2026-07-27 | Redis 키 정리 (위) |
+> | `BE3-769` | 2026-08-07 | 따라잡기 글로벌 — 요청의 국가·언어를 `main2` 상품 API 로 전파 |
+>
+> `BE3-769` 는 `Main2CatchUpClient` 가 `LocaleContextHolder` 를 읽어
+> `wadiz-country`·`wadiz-language` 헤더를 붙입니다. 값이 비면 붙이지 않습니다.
+> **완료 POST 와 v1 은 바뀌지 않았습니다** (`main2` 를 부르지 않기 때문입니다).
+
 ---
 
 ## 컨트롤러 인벤토리
 
 | Controller | Base Path | Endpoint 수 | Storage / 외부 |
 |---|---|---|---|
-| `SessionManagerController` (`session/SessionManagerController.java:16`) | `/api/v1/users/session` | 2 | MyBatis (`webpages_UsersInRoles`) + 외부 Wave 세션 |
+| ~~`SessionManagerController`~~ | ~~`/api/v1/users/session`~~ | — | **2026-01-19 삭제** (`IAM-3650`). 1장 참고 |
 | `InviteEventManagerController` (`event/controller/InviteEventManagerController.java:17`) | `/api/v1/users/event/invite` | 3 | MyBatis master + replication |
 | `InviteEventInfoController` (`event/controller/InviteEventInfoController.java:20`) | `/api/v1/users/event/invite` | 5 | MyBatis replication |
 | `InviteEventUserController` (`event/controller/InviteEventUserController.java:17`) | `/api/v1/users/event/invite` | 3 | MyBatis master + replication + Crypto |
@@ -24,39 +48,45 @@
 
 ---
 
-## 1. Session 도메인
+## 1. ~~Session 도메인~~ — **통째로 사라졌습니다**
 
-### 배경
-`SessionManagerController`는 `JSESSIONID`를 path variable로 받아 Wave 어드민 계정(관리자) 권한등급을 조회한다. `WEBSessionUtil.getSession(jsessionid)` → `WadizAdmHttpSession.getSession(jsessionid)` 경로로 **외부 wave 세션 스토어**(공용 라이브러리 `com.wadiz.wave.session`)에서 로그인 유저 정보를 복원한다. 이 repo 안에서는 저장소 구현을 관측할 수 없다 — Redis 여부는 확인 불가.
+> 📅 **2026-09-30 정정** — `cloud_live` `a316bc16`(2026-09-21) 기준
 
-### 1.1. `GET /api/v1/users/session/{JSESSIONID}/role`
-- **코드**: `SessionManagerController.java:22` → `SessionManagerService.findUserRole(jsessionid, false)` (`session/service/SessionManagerService.java:22`)
-- **흐름**:
-  1. `validation(JSESSIONID)`: 공백 검사 후 `WEBSessionUtil.getUserInfo(jsessionid).getUserId()` 확보 (`SessionManagerService.java:63-83`).
-  2. 유효하면 `mapper.selectToAdminRole(userId)` 호출 → `SessionManager.UserRole` 빌드 (`SessionManagerService.java:40-44`).
-  3. `refreshSession(JSESSIONID)`: `WadizAdmHttpSession.refreshSession()` 호출해 세션 TTL 연장 (`SessionManagerService.java:56-61`, 주석상 기본 30분).
-  4. `ResponseWrapper.success(userRole)` 반환.
-- **검증 실패**: `ResponseWrapper.fail(..., HttpStatus.BAD_REQUEST, ...)`를 **HTTP 200**로 감싸 반환 (`SessionManagerService.java:36`). 예외 시에도 200 + 에러 메시지.
-- **Response 바디**: `ResponseWrapper` + `SessionManager.UserRole {userId, userRole, roleDesc}` (빌더 관측: `SessionManagerService.java:26-30`).
+`IAM-3650`(2026-01-19, `b770b596`)이 지웠습니다. 커밋 제목이 이유를 적고 있습니다 —
+*"SessionManager 관련 작업 제거. 더이상 WTP 어드민 사용하지 않아, 해당 API 제공할 필요 없음. wave cache도 같이 제거"*.
 
-### 1.2. `GET /api/v1/users/session/{JSESSIONID}/role/bypass`
-- **코드**: `SessionManagerController.java:29` → `findUserRole(jsessionid, true)`
-- 테스트 우회용. 세션 검증을 건너뛰고 `userId=-1, userRole=2, roleDesc="bypass"` 고정 응답 (`SessionManagerService.java:25-32`).
+**사라진 엔드포인트 2개**
 
-### 관측 가능한 DB/외부호출
-- **MySQL** `webpages_UsersInRoles` — `account-session-mapper.xml:5-9`:
-  ```xml
-  <select id="selectToAdminRole" resultType="Integer">
-      SELECT RoleId
-      FROM webpages_UsersInRoles
-      WHERE UserId = #{userId}
-  </select>
-  ```
-  Mapper namespace: `com.wadiz.wave.repository.wadiz.SessionManagerMapper`. 단일 쿼리만 정의되어 있음.
-- **외부 wave 세션** (`com.wadiz.wave.session.WadizAdmHttpSession`): `.getSession(jsessionid)`, `.getAttribute(ADM_USER_INFO)`, `.refreshSession()` 메서드만 호출. 저장 백엔드 확인 불가.
+| 경로 | 하던 일 |
+|---|---|
+| `GET /api/v1/users/session/{JSESSIONID}/role` | 어드민 계정의 권한 등급 조회 |
+| `GET /api/v1/users/session/{JSESSIONID}/role/bypass` | 시험용 우회. `userId=-1, userRole=2` 고정 응답 |
 
-### 용도 추정
-컨트롤러 주석(`어드민등급정보 조회`)과 테이블명(`webpages_UsersInRoles`) 관찰로 보아, 레거시 ASP.NET WebPages 권한 모델을 그대로 공유하는 wadiz 어드민의 role 조회 용도. JSESSIONID 값을 path에 넣는 비표준 API 형태는 서버 간 role-check 내부 호출 용도로 추정되지만 caller는 이 repo에 없음.
+**사라진 파일 (같은 커밋, 198줄 삭제)**
+
+| 파일 | 하던 일 |
+|---|---|
+| ~~`session/SessionManagerController.java`~~ | 엔드포인트 2개 |
+| ~~`session/service/SessionManagerService.java`~~ | 권한 조회와 세션 TTL 연장 |
+| ~~`session/support/WEBSessionUtil.java`~~ | 외부 wave 세션 저장소 접근 |
+| ~~`repository/wadiz/SessionManagerMapper.java`~~ | MyBatis 매퍼 인터페이스 |
+| ~~`mapper/wadiz/account/account-session-mapper.xml`~~ | `webpages_UsersInRoles` 조회 SQL |
+
+**함께 정리된 것**
+
+| 무엇 | 내용 |
+|---|---|
+| wave 캐시 | ~~`gradle/redis.gradle`~~(6줄)과 `AppConfig.java` 의 캐시 설정(12줄)이 빠졌습니다 |
+| 설정·로그 | `application.yml` 2줄, `logback-*.xml` 3개 파일에서 각 1줄 |
+
+> **레거시 하나가 닫힌 사례입니다.**
+> 예전 문서가 *"레거시 ASP.NET WebPages 권한 모델을 그대로 공유하는 wadiz 어드민의 role 조회 용도"*
+> 라고 적고 *"caller는 이 repo에 없음"* 이라고 남겨 뒀습니다.
+> 부르는 쪽(WTP 어드민)이 없어지면서 이 API 도 함께 정리됐습니다.
+
+> ⚠️ **이 문서의 제목은 그대로 둡니다.**
+> `Session / Event Invite / CatchUp` 중 Session 만 없어졌지만,
+> 파일 이름을 바꾸면 다른 문서의 링크가 끊깁니다. 여기 기록으로 남깁니다.
 
 ---
 
@@ -532,11 +562,35 @@ catchup/
 ### 3.3. Redis 캐시 / 락
 
 - **Lock** (`RedisCacheAdapter`): `RedisLockManager.LockType.CATCHUP`, 만료 60초, 15회 스핀, 5000ms 대기. `GET /today` 동시성 보호용.
-- **Event 캐시** (`JPACatchUpEventRepository`): 키 `catchup:events:all`, TTL 60 * 60 = 3600초, 값 `List<CatchUpEvent>` (`JPACatchUpEventRepository.java:26-27`). `CacheManagerService<List<CatchUpEvent>>` (공통 lib)로 set/get. `findByDateTime(now)`는 전체를 캐시에서 받아 `isOn(now)` 필터.
+- **Event 캐시** (`JPACatchUpEventRepository`): TTL 3600초, 값은 `List<CatchUpEvent>` 입니다.
+  `CacheManagerService<List<CatchUpEvent>>`(공통 라이브러리)로 넣고 꺼냅니다.
+  `findByDateTime(now)` 는 전체를 캐시에서 받아 `isOn(now)` 로 거릅니다.
+
+> ⚠️ **2026-09-30 정정 — 캐시 키에 환경 접두가 붙었습니다.**
+> 예전 키는 `catchup:events:all` 이 코드에 직접 박혀 있었습니다.
+> `BE3-699`(2026-07-27, `c5f25761`)가 고쳤습니다.
+>
+> ```java
+> // 캐시 키에 서버/환경 prefix 적용 (BE3-699) — 공유 Redis 환경 충돌 방지. 예: user:dev:catchup:events:all
+> this.cacheKey = new CacheKeyGenerator(keyPrefix, "CATCHUP").generate("events", "all");
+> ```
+>
+> 접두는 `wadiz.redis.key-prefix` 로 주입됩니다.
+> **dev·rc4 가 Redis 를 나눠 쓰는데 키가 같아 서로 덮어쓰던 버그**를 고친 것입니다.
+> 같은 시기 `kr.wadiz.account` 도 `BE3-701` 로 같은 조치를 했습니다.
+>
+> 같은 커밋이 `UserLinkCacheServiceImpl` 의 수동 키 조립도 `CacheKeyGenerator` 로 통일했습니다(출력은 동일).
 
 ### 3.4. 트랜잭션 매니저
 
-`CatchUpService`의 `@Transactional(transactionManager = "wadizJpaTransactionManager")` (`CatchUpService.java:39, 52, 223, 247, 257, 271, 285, 318`). MyBatis 트랜잭션 매니저와 분리된 JPA 전용 매니저가 bootstrap 설정에 있을 것으로 추정(확인 불가 — `application/config` 디렉터리엔 `RedisTemplateForPlatform`, `RestTemplateConfig` 2개만 관측).
+`CatchUpService` 가 `@Transactional(transactionManager = "wadizJpaTransactionManager")` 를 씁니다.
+MyBatis 트랜잭션 매니저와 분리된 JPA 전용 매니저이고, 선언 위치는 이 저장소에서 확인되지 않습니다(추정).
+
+> **2026-09-30 정정** — `application/config` 에 있는 파일 이름이 바뀌었습니다.
+> 지금은 `PlatformRestTemplateConfig.java` 와 `RestTemplateConfig.java` 둘입니다.
+> `BE3-699` 가 `RedisTemplateForPlatform` 을 **`PlatformRestTemplateConfig`** 로 고쳤습니다.
+> 커밋 설명이 이유를 적고 있습니다 — *"실제 RestTemplate 설정, Redis 무관"*.
+> **이름만 보고 Redis 설정이라고 읽으면 틀립니다.**
 
 ---
 

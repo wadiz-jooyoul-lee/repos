@@ -3,6 +3,11 @@
 > 와디즈 **메인 홈(2세대) API 서버**입니다. 메인 지면·마이와디즈·랭킹·큐레이션·추천·배너를 한곳에서 조립해 앱과 웹에 내려줍니다. 지면 데이터는 RDB 가 아니라 **MongoDB 도큐먼트**에 들어 있습니다.
 > Org: `wadiz-tech` (`https://github.com/wadiz-tech/main2-api.git`). 배포 이름 `main2-api`, 플랫폼 `display-platform`(전시플랫폼).
 
+> 📅 **2026-10-01 main pull 보강** (1 커밋)
+>
+> `aws_deploy_ecr_rc1.yml` 을 추가했습니다. **rc1 배포 워크플로**입니다.
+> 이번 회차에 같은 파일을 넣은 저장소가 6곳입니다 — [`helm-charts-gitops`](./helm-charts-gitops.md) 의 rc1 항목을 봅니다.
+
 > 📅 분석 기준: 2026-09-01 clone, **`main` 브랜치**(`861ff56`, 2026-08-26). Java 파일 251개, 테스트 1개.
 
 > ℹ️ 이 문서는 **display-platform(전시플랫폼) 팀 저장소 중 첫 분석 대상**입니다. 같은 팀의 다른 서비스 40여 개는 아직 미분석입니다 — [`helm-charts-gitops.md`](./helm-charts-gitops.md) 의 "이 저장소를 읽는 실전 요령"으로 활동 중인 서비스를 추릴 수 있습니다.
