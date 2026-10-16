@@ -42,8 +42,12 @@
 | 구매/선물 CTA 버튼 — **하드코딩** "구매하기", "선물하기", "재입고 신청할 상품을 선택해 주세요." | `packages/features/src/store/detail/ui/components/StoreProductPurchaseButton/StoreProductPurchaseButton.tsx` |
 | 스토어 결제 페이지(진입·폼) | `packages/features/src/store/payment/Payment.tsx` |
 | 배송지 정보(최근/신규 탭) — **하드코딩** "최근", "신규 배송지 입력" | `packages/features/src/store/payment/ui/components/StorePaymentShippingInfo/StorePaymentShippingInfo.tsx` |
+| 결제수단 선택 — **하드코딩** "와디즈 간편결제"/"가장빠른결제", 네이버페이(서브옵션 "네이버 카드 결제"/"네이버 포인트 결제"), 카카오페이, 애플페이(iOS 에서만 노출), "신용/체크카드". 폼 값 `paymentMode` = `simplePay`·`naverPay`·`kakaoPay`·`applePay`·`nicePay`. 결제 금액이 0원이면 이 영역 자체를 그리지 않음 | `packages/features/src/store/payment/ui/components/SettlementMethod/SettlementMethod.tsx` (노출 조건은 `ui/layout/PaymentLayout.tsx:221`) |
+| 현금영수증 — **하드코딩** "신청"/"미신청", "소득공제용"/"지출증빙용". 용도 값 `rcptType` = `'1'`(소득공제)·`'2'`(지출증빙). **네이버페이 포인트 결제를 골랐을 때만** 보임 | `packages/features/src/store/payment/ui/components/CashReceipt/CashReceipt.tsx` (노출 조건은 `ui/layout/PaymentLayout.tsx:228`) |
 | 결제 금액 앱 — **하드코딩** "기본 배송비", "추가 배송비", "쿠폰 할인 금액" | `packages/features/src/store/payment/ui/StorePriceApp/StorePriceApp.tsx` |
 | 결제 CTA — **하드코딩** "N원 결제하기", "결제 진행을 위해 결제 필수 동의에 체크해 주세요" | `packages/features/src/store/payment/ui/components/StorePaymentCTA/StorePaymentCTA.tsx` |
+| 결제 폼 제어 — 주문서 생성 → 결제수단별 승인 호출. 주문서 생성 실패 안내 모달 **하드코딩** "품절된 상품이 있습니다.", "판매가 종료된 프로젝트입니다.", "구매 가능한 수량을 초과하였습니다.", "최종 결제 금액 100원 미만은 결제할 수 없습니다.", "이 프로젝트는 5,000,000원까지 결제할 수 있어요.", "이 프로젝트는 한 번만 결제할 수 있어요…" | `packages/features/src/store/payment/ui/containers/PaymentFormControlContainer.tsx` |
+| 나이스페이 결제창 호출 래퍼 — 공용 `nicepayService.authInit` → `submitNicepayForm` 을 부르고, PC 는 결제창을 닫으면 주문서를 지운 뒤 **하드코딩** "결제가 취소 되었습니다." 알림 | `packages/features/src/store/payment/lib/utils/payment.js` |
 | 선물하기 진입/폼 (받는 사람 정보 "받으실 분/연락처/이메일/주소" **하드코딩**) | `packages/features/src/store/gift/Gift.tsx` (+ `ui/components/RecipientInfo/RecipientInfo.tsx`) |
 | 선물 수락 CTA — **하드코딩** "선물 받기", "땡큐 포인트 보내고 선물 받기" | `packages/features/src/store/gift/ui/components/GiftCTA.tsx` |
 | 결제 성공/실패 페이지 — **하드코딩** "결제가 실패되었습니다. 다시 시도해 주세요.", "유효시간이 초과되어 세션이 만료되었습니다." | `packages/features/src/store/paymentComplete/ui/pages/{PaymentSuccessPage,PaymentFailurePage}.tsx` |
